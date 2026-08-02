@@ -1,6 +1,6 @@
 # Shirtfaced
 
-T-shirt storefront for **shirtfaced.clothing**. Next.js (App Router) + Tailwind CSS,
+T-shirt storefront for **shirtfaced.au**. Next.js (App Router) + Tailwind CSS,
 built as a static export.
 
 Product catalog is static data in `src/lib/products.ts`. The cart is
@@ -35,7 +35,7 @@ Vercel, or any static host — no server runtime required.
 
 ## Next steps
 
-- Register `shirtfaced.clothing` and point it at the host
+- Point `shirtfaced.au` at the Cloudflare tunnel (see Deploy below)
 - Wire up real checkout (e.g. Stripe Checkout or Shopify)
 - Replace placeholder color-swatch product images with real photography
 - Persist products in a CMS/DB instead of the static array
