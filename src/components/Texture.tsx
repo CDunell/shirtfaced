@@ -1,65 +1,15 @@
 /* ---------------------------------------------------------------------------
-   Texture — the distressing layer.
+   Paper grain.
 
-   The brand board is built on worn screen-print: broken edges, ink bleed,
-   paper grain. Anton gets the weight and width right but arrives perfectly
-   clean, so display type is roughened at render time with a displacement
-   filter rather than shipping a second font file.
+   The display type used to run through an SVG displacement filter to fake worn
+   screen-print. That was dropped once the clean logo landed — a crisp mark
+   over roughened headlines read as two different brands. Type is now left
+   alone.
 
-   Applied via `.distressed`, and deliberately NOT applied globally — it is
-   used on the wordmark and headlines only. Body copy stays crisp because
-   legibility beats texture every time.
+   What remains is a single, very low-opacity grain over the page: enough to
+   stop large flat areas looking like plastic, not enough to notice.
 --------------------------------------------------------------------------- */
 
-export function TextureDefs() {
-  return (
-    <svg
-      aria-hidden="true"
-      focusable="false"
-      style={{ position: "absolute", width: 0, height: 0, overflow: "hidden" }}
-    >
-      <defs>
-        {/* Headline roughening — subtle, survives at large sizes */}
-        <filter id="sf-rough" x="-6%" y="-6%" width="112%" height="112%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.62"
-            numOctaves="2"
-            seed="7"
-            result="n"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="n"
-            scale="1.7"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-
-        {/* Wordmark — heavier bite, closer to a worn poster print */}
-        <filter id="sf-rough-hard" x="-8%" y="-8%" width="116%" height="116%">
-          <feTurbulence
-            type="fractalNoise"
-            baseFrequency="0.85"
-            numOctaves="3"
-            seed="3"
-            result="n"
-          />
-          <feDisplacementMap
-            in="SourceGraphic"
-            in2="n"
-            scale="2.4"
-            xChannelSelector="R"
-            yChannelSelector="G"
-          />
-        </filter>
-      </defs>
-    </svg>
-  );
-}
-
-/** Fixed paper grain over the whole page. Very low opacity — felt, not seen. */
 export function PaperGrain() {
   return (
     <div

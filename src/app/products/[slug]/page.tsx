@@ -45,7 +45,7 @@ export default async function ProductPage(props: PageProps<"/products/[slug]">) 
 
       {/* Recommendations — never a dead end */}
       <section className="mx-auto mt-14 max-w-5xl px-4 sm:px-6">
-        <h2 className="display distressed mb-5 text-[30px]">you might like</h2>
+        <h2 className="display mb-5 text-[30px]">you might like</h2>
         <div className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
           {related.map((p) => (
             <ProductCard key={p.slug} product={p} />

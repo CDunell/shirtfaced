@@ -64,7 +64,7 @@ export default function CheckoutPage() {
   if (lines.length === 0) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 sm:px-6">
-        <h1 className="display distressed text-[40px] leading-none">
+        <h1 className="display text-[40px] leading-none">
           nothing to check out
         </h1>
         <p className="mt-3 text-[15px] text-grey-dark">
@@ -114,7 +114,7 @@ export default function CheckoutPage() {
         </span>
       </div>
 
-      <h1 className="display distressed mt-2 text-[13vw] leading-[0.86] sm:text-[64px]">
+      <h1 className="display mt-2 text-[13vw] leading-[0.86] sm:text-[64px]">
         checkout
       </h1>
 

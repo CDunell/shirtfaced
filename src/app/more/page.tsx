@@ -14,7 +14,7 @@ const LINKS = [
 export default function MorePage() {
   return (
     <div className="mx-auto max-w-2xl px-4 pt-8 pb-16 sm:px-6">
-      <h1 className="display distressed text-[16vw] leading-[0.84] sm:text-[76px]">
+      <h1 className="display text-[16vw] leading-[0.84] sm:text-[76px]">
         more
       </h1>
 

@@ -27,7 +27,7 @@ export default function ShopPage() {
   return (
     <>
       <div className="mx-auto max-w-5xl px-4 pt-8 pb-1 sm:px-6">
-        <h1 className="display distressed text-[17vw] leading-[0.84] sm:text-[86px]">
+        <h1 className="display text-[17vw] leading-[0.84] sm:text-[86px]">
           shop
         </h1>
         <p className="mt-3 text-[15px] font-semibold tracking-wide uppercase">

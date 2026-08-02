@@ -68,23 +68,6 @@ body {
   line-height: 1;
 }
 
-/* Worn screen-print edges. Opt-in — display type only, never body copy.
-   Filters are defined in components/Texture.tsx. */
-.distressed {
-  filter: url(#sf-rough);
-}
-.distressed-hard {
-  filter: url(#sf-rough-hard);
-}
-/* A displacement filter on text is meaningless to a screen reader and costly
-   to composite; drop it when the user has asked for less motion/effect. */
-@media (prefers-reduced-motion: reduce) {
-  .distressed,
-  .distressed-hard {
-    filter: none;
-  }
-}
-
 /* Hide scrollbars on horizontal rails without losing scrollability. */
 .no-scrollbar {
   -ms-overflow-style: none;

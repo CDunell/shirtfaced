@@ -35,7 +35,7 @@ export default function CartPage() {
   if (lines.length === 0) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6">
-        <h1 className="display distressed text-[42px] leading-none">
+        <h1 className="display text-[42px] leading-none">
           cart&apos;s empty
         </h1>
         <p className="mt-3 max-w-[38ch] text-[15px] text-grey-dark">
@@ -66,7 +66,7 @@ export default function CartPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-6 sm:px-6">
-      <h1 className="display distressed text-[38px] leading-none">
+      <h1 className="display text-[38px] leading-none">
         cart{" "}
         <span className="text-grey tabular-nums">
           ({lines.reduce((n, l) => n + l.quantity, 0)})

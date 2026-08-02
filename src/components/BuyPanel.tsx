@@ -120,7 +120,7 @@ export function BuyPanel({ product }: { product: Product }) {
 
       {/* -------- Details -------- */}
       <div className="mx-auto max-w-2xl px-4 pt-6 sm:px-6">
-        <h1 className="display distressed text-[34px] leading-[0.92]">
+        <h1 className="display text-[34px] leading-[0.92]">
           {product.name}
         </h1>
 

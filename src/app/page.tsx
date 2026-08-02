@@ -55,7 +55,7 @@ export default function Home() {
           {/* Scrim + live type on mobile only — the desktop banner carries its
               own typography, so overlaying there would double it up. */}
           <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink via-ink/80 to-transparent px-4 pt-24 pb-6 sm:hidden">
-            <h1 className="display distressed text-[13.5vw] leading-[0.86]">
+            <h1 className="display text-[13.5vw] leading-[0.86]">
               good times.
               <br />
               <span className="text-lime">bad decisions.</span>
@@ -98,7 +98,7 @@ export default function Home() {
       {/* ---------------- New drops ---------------- */}
       <section className="mx-auto max-w-5xl px-4 pt-10 sm:px-6">
         <div className="mb-5 flex items-end justify-between">
-          <h2 className="display distressed text-[34px]">new drops</h2>
+          <h2 className="display text-[34px]">new drops</h2>
           <Link
             href="/shop?f=new"
             className="press flex items-center gap-1.5 pb-1 text-[15px] font-semibold"
@@ -133,7 +133,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/10" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink/80 via-transparent to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-6">
-            <h2 className="display distressed max-w-[10ch] text-[32px] leading-[0.92] text-paper sm:text-[44px]">
+            <h2 className="display max-w-[10ch] text-[32px] leading-[0.92] text-paper sm:text-[44px]">
               dress like you&apos;ve got better plans.
             </h2>
             <span className="mt-4 inline-flex h-12 items-center gap-2.5 rounded-[18px] bg-paper pr-4 pl-5 text-[15px] font-bold text-ink">
@@ -146,7 +146,7 @@ export default function Home() {
 
       {/* ---------------- Collections ---------------- */}
       <section className="mt-12">
-        <h2 className="display distressed mx-auto mb-5 max-w-5xl px-4 text-[34px] sm:px-6">
+        <h2 className="display mx-auto mb-5 max-w-5xl px-4 text-[34px] sm:px-6">
           collections
         </h2>
         <ul className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:px-6">
@@ -176,7 +176,7 @@ export default function Home() {
       {/* ---------------- Newsletter ---------------- */}
       <section className="mx-auto mt-12 max-w-5xl px-4 sm:px-6">
         <div className="rounded-[20px] bg-ink px-6 py-8 text-paper">
-          <h2 className="display distressed max-w-[13ch] text-[30px] leading-[0.95]">
+          <h2 className="display max-w-[13ch] text-[30px] leading-[0.95]">
             we promise fewer emails than your ex.
           </h2>
           <form className="mt-6 flex gap-2" action="/shop">

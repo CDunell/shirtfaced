@@ -4,7 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import { Header } from "@/components/Header";
 import { BottomNav } from "@/components/BottomNav";
-import { PaperGrain, TextureDefs } from "@/components/Texture";
+import { PaperGrain } from "@/components/Texture";
 
 const anton = Anton({
   variable: "--font-anton",
@@ -46,7 +46,6 @@ export default function RootLayout({
       className={`${anton.variable} ${spaceGrotesk.variable} h-full`}
     >
       <body className="min-h-full bg-paper text-ink">
-        <TextureDefs />
         <PaperGrain />
         <CartProvider>
           <a

@@ -25,7 +25,7 @@ export function PageShell({
         </Link>
       )}
 
-      <h1 className="display distressed mt-2 text-[12vw] leading-[0.86] sm:text-[60px]">
+      <h1 className="display mt-2 text-[12vw] leading-[0.86] sm:text-[60px]">
         {title}
       </h1>
 
