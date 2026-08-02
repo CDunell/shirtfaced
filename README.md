@@ -36,7 +36,10 @@ Vercel, or any static host — no server runtime required.
 ## Next steps
 
 - Point `shirtfaced.wtf` at the Cloudflare tunnel; `shirtfaced.au` is registered but stuck behind auDA identity validation
-- Wire up real checkout (e.g. Stripe Checkout or Shopify)
+- Wire up real checkout (e.g. Stripe Checkout or Shopify) — **read
+  [docs/dns.md](docs/dns.md) first**: SPF is currently `-all` (nothing may send)
+  and there is a wildcard null-DKIM record. Both MUST be changed before a
+  payment provider sends receipts, or every confirmation email is rejected.
 - Replace placeholder color-swatch product images with real photography
 - Persist products in a CMS/DB instead of the static array
 - Bump Next past 16.2.12 to clear the transitive postcss/sharp advisories
