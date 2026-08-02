@@ -8,7 +8,7 @@ import { IconArrowRight } from "@/components/Icons";
    has to sound like us. Nothing here jokes about whether checkout is actually
    secure or whether returns actually work; the attitude sits on the brand's
    side of the promise, not the customer's risk. */
-const TRUST = ["Made in Aus", "Zero apologies", "Returns, no lecture"];
+const TRUST = ["Made in Aus", "Zero apologies", "Returns easy as"];
 
 /* Photography carries these, not colour. Accents stay reserved for the things
    that actually need emphasis: primary CTA, active nav, NEW, cart count. */
