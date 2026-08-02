@@ -64,7 +64,7 @@ export default function Home() {
             </h1>
             <Link
               href="/shop"
-              className="press mt-5 inline-flex h-14 items-center gap-3 rounded-[18px] bg-lime pr-5 pl-6 text-[17px] font-bold text-ink"
+              className="press mt-5 inline-flex h-14 items-center gap-3 rounded-[18px] bg-paper pr-5 pl-6 text-[17px] font-bold text-ink"
             >
               shop the damage
               <IconArrowRight className="h-5 w-5" />
@@ -194,7 +194,7 @@ export default function Home() {
             <button
               type="submit"
               aria-label="Subscribe"
-              className="press grid h-14 w-14 shrink-0 place-items-center rounded-[16px] bg-lime text-ink"
+              className="press grid h-14 w-14 shrink-0 place-items-center rounded-[16px] bg-paper text-ink"
             >
               <IconArrowRight className="h-5 w-5" />
             </button>

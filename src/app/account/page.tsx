@@ -90,7 +90,7 @@ export default function AccountPage() {
 
       <Link
         href="/shop"
-        className="press mt-8 inline-flex h-14 items-center gap-3 rounded-[18px] bg-lime pr-5 pl-6 text-[16px] font-bold text-ink"
+        className="press mt-8 inline-flex h-14 items-center gap-3 rounded-[18px] bg-ink pr-5 pl-6 text-[16px] font-bold text-paper"
       >
         Back to the shop
         <IconArrowRight className="h-5 w-5" />
