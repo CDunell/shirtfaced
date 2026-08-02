@@ -1,0 +1,86 @@
+# Pre-go-live checklist
+
+Everything here must be settled **before** the store takes a real payment.
+
+Two categories: claims that are currently invented and need real numbers, and
+technical work that will silently break things if skipped.
+
+---
+
+## 1. Copy that is fabricated
+
+None of the following was supplied — it was written to fill out the design and
+reads as fact. All of it needs checking against reality or removing.
+
+Country-of-origin claims were already corrected (designed in Australia, printed
+anywhere). These are what's left.
+
+| Claim | Where | Status |
+|---|---|---|
+| Standard shipping $10, 3–5 business days | `src/app/shipping/page.tsx`, `src/app/checkout/page.tsx` | invented |
+| Express shipping $15, 1–2 business days | same | invented |
+| Free shipping over $130 | `src/lib/products.ts` (`FREE_SHIPPING_THRESHOLD`), cart, checkout | invented |
+| New Zealand flat $18, 5–10 days | `src/app/shipping/page.tsx` | invented |
+| Same-day dispatch before 2pm AEST | `src/app/shipping/page.tsx` | removed, but re-check before re-adding |
+| 30-day returns window | `src/app/returns/page.tsx` | invented |
+| Prepaid return label within 1 business day | `src/app/returns/page.tsx` | invented |
+| Refund within 5 business days of arrival | `src/app/returns/page.tsx` | invented |
+| Recycled mailers, no plastic filler | `src/app/shipping/page.tsx` | invented |
+| 240gsm / 230gsm combed cotton, garment-dyed | `src/app/about/page.tsx`, `src/lib/products.ts`, `src/components/BuyPanel.tsx` | invented |
+| Size chart measurements (chest/length per size) | `src/lib/products.ts` (`SIZE_CHART`), `/size-guide` | invented |
+| "Started in 2026" | `src/app/about/page.tsx` | invented |
+| Star ratings and review counts on every product | `src/lib/products.ts` (`rating`, `reviews`) | **fabricated — remove or replace with real reviews** |
+| Product descriptions (fit, weight, print detail) | `src/lib/products.ts` | invented |
+| `hello@shirtfaced.wtf` | `src/app/contact/page.tsx` | mailbox does not exist yet |
+
+**The review counts are the sharpest edge.** Displaying invented ratings on a
+live store is a misleading-conduct problem, not a copy problem. Either wire real
+reviews in or strip the rating block from `BuyPanel` and `products.ts`.
+
+---
+
+## 2. Mail records — will reject every receipt
+
+See `docs/dns.md` for the full detail. Short version:
+
+- SPF is `v=spf1 -all` — **nothing** may send as this domain
+- DMARC is `p=quarantine`
+- The wildcard `*._domainkey` null-DKIM record was removed, so a provider's real
+  DKIM can validate
+
+Before a payment provider sends order confirmations:
+
+1. Run the provider's sending-domain verification for the real records
+2. Swap SPF to `v=spf1 <their include> -all`
+3. Return DMARC to `p=reject` once mail is confirmed aligned
+
+Skipping this means confirmations are **rejected outright**, not spam-filed.
+
+---
+
+## 3. Payment
+
+Checkout deliberately has **no card fields**. Card data must be collected in a
+hosted Stripe or Shopify element, never our own inputs. `src/app/checkout/page.tsx`
+step 3 is where that goes.
+
+---
+
+## 4. Catalogue gaps
+
+- Five products still render fallback artwork instead of photography:
+  No Regrets, Handle With Care, Mentally On Annual Leave, Offline Since Birth,
+  Emotional Support Beverage. Drop shots into `public/products`, run
+  `node scripts/optimise-images.mjs`, add the path to the colourway.
+- Tanks, hoodies, hats and accessories are navigation entries with no stock
+  behind them — either stock them or remove the filters.
+- No light-background logo variant (the wordmark is white).
+
+---
+
+## 5. Legal pages that don't exist
+
+There is no Terms of Sale, Privacy Policy or Refund Policy page. A store
+collecting an email address and shipping address needs at minimum a privacy
+policy, and Australian Consumer Law guarantees should be referenced properly
+rather than only implied on `/returns`.
