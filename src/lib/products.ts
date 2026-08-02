@@ -25,8 +25,6 @@ export type Product = {
   /** Artwork key — maps to a renderer in components/TeeArt.tsx */
   art: string;
   isNew?: boolean;
-  rating: number;
-  reviews: number;
   colours: Garment[];
   sizes: SizeKey[];
   /** One line, dry, Australian. Never trying too hard. */
@@ -74,8 +72,6 @@ export const products: Product[] = [
     category: "tees",
     art: "no-regrets",
     isNew: true,
-    rating: 5,
-    reviews: 214,
     colours: [
       { ...WASHED_BLACK, images: ["/products/good-times-1.webp"] },
       VINTAGE_WHITE,
@@ -92,8 +88,6 @@ export const products: Product[] = [
     category: "tees",
     art: "bad-influence",
     isNew: true,
-    rating: 5,
-    reviews: 138,
     colours: [
       { ...WASHED_BLACK, images: ["/products/roll-the-dice-1.webp"] },
       FADED_OLIVE,
@@ -110,8 +104,6 @@ export const products: Product[] = [
     category: "tees",
     art: "send-it",
     isNew: true,
-    rating: 5,
-    reviews: 94,
     colours: [
       {
         ...VINTAGE_WHITE,
@@ -131,8 +123,6 @@ export const products: Product[] = [
     category: "tees",
     art: "cold-beer",
     isNew: true,
-    rating: 5,
-    reviews: 212,
     colours: [
       { ...WASHED_BLACK, images: ["/products/cold-beer-1.webp"] },
       VINTAGE_WHITE,
@@ -149,8 +139,6 @@ export const products: Product[] = [
     category: "tees",
     art: "bad-influence",
     isNew: true,
-    rating: 5,
-    reviews: 176,
     colours: [
       { ...WASHED_BLACK, images: ["/products/midnight-service.webp"] },
     ],
@@ -166,8 +154,6 @@ export const products: Product[] = [
     category: "tees",
     art: "bad-influence",
     isNew: true,
-    rating: 5,
-    reviews: 88,
     colours: [
       { ...VINTAGE_WHITE, images: ["/products/take-your-chances.webp"] },
     ],
@@ -183,8 +169,6 @@ export const products: Product[] = [
     category: "tees",
     art: "no-regrets",
     isNew: true,
-    rating: 5,
-    reviews: 134,
     colours: [
       { ...WASHED_BLACK, images: ["/products/love-fast-die-last.webp"] },
     ],
@@ -199,8 +183,6 @@ export const products: Product[] = [
     price: 44.95,
     category: "tees",
     art: "bad-influence",
-    rating: 5,
-    reviews: 97,
     colours: [{ ...WASHED_BLACK, images: ["/products/eight-ball.webp"] }],
     sizes: ALL_SIZES,
     blurb: "Small print. Big call.",
@@ -214,8 +196,6 @@ export const products: Product[] = [
     category: "tees",
     art: "no-regrets",
     isNew: true,
-    rating: 5,
-    reviews: 203,
     colours: [{ ...VINTAGE_WHITE, images: ["/products/not-yours.webp"] }],
     sizes: ALL_SIZES,
     blurb: "Never was, either.",
@@ -228,8 +208,6 @@ export const products: Product[] = [
     price: 49.95,
     category: "tees",
     art: "offline",
-    rating: 4,
-    reviews: 62,
     colours: [{ ...WASHED_BLACK, images: ["/products/spin-cycle.webp"] }],
     sizes: ALL_SIZES,
     blurb: "Worldwide. Allegedly.",
@@ -242,8 +220,6 @@ export const products: Product[] = [
     price: 54.95,
     category: "tees",
     art: "bad-influence",
-    rating: 5,
-    reviews: 71,
     colours: [{ ...WASHED_BLACK, images: ["/products/permanent.webp"] }],
     sizes: ALL_SIZES,
     blurb: "Bad idea. Permanent record.",
@@ -257,8 +233,6 @@ export const products: Product[] = [
     category: "tees",
     art: "handle-with-care",
     isNew: true,
-    rating: 5,
-    reviews: 118,
     colours: [{ ...VINTAGE_WHITE, images: ["/products/built-different.webp"] }],
     sizes: ALL_SIZES,
     blurb: "Break regularly.",
@@ -271,8 +245,6 @@ export const products: Product[] = [
     price: 49.95,
     category: "tees",
     art: "no-regrets",
-    rating: 5,
-    reviews: 127,
     colours: [WASHED_BLACK, VINTAGE_WHITE, FADED_OLIVE],
     sizes: ALL_SIZES,
     blurb: "No regrets, just stories.",
@@ -285,8 +257,6 @@ export const products: Product[] = [
     price: 49.95,
     category: "tees",
     art: "handle-with-care",
-    rating: 4,
-    reviews: 68,
     colours: [WASHED_BLACK, VINTAGE_WHITE],
     sizes: ALL_SIZES,
     blurb: "Fragile. Mostly emotionally.",
@@ -299,8 +269,6 @@ export const products: Product[] = [
     price: 49.95,
     category: "tees",
     art: "annual-leave",
-    rating: 5,
-    reviews: 186,
     colours: [WASHED_BLACK, VINTAGE_WHITE],
     sizes: ALL_SIZES,
     blurb: "Physically present. Barely.",
@@ -313,8 +281,6 @@ export const products: Product[] = [
     price: 49.95,
     category: "tees",
     art: "offline",
-    rating: 4,
-    reviews: 51,
     colours: [VINTAGE_WHITE, WASHED_BLACK],
     sizes: ALL_SIZES,
     blurb: "Never had the signal. Never wanted it.",
@@ -327,8 +293,6 @@ export const products: Product[] = [
     price: 49.95,
     category: "tees",
     art: "beverage",
-    rating: 5,
-    reviews: 109,
     colours: [VINTAGE_WHITE, WASHED_BLACK],
     sizes: ALL_SIZES,
     blurb: "Certified. Registered. Refillable.",

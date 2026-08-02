@@ -37,9 +37,8 @@ Vercel, or any static host — no server runtime required.
 ## Before go-live
 
 **Read [docs/pre-golive.md](docs/pre-golive.md).** Shipping rates, returns
-windows, fabric weights, size measurements and every product's star rating and
-review count are currently invented placeholder copy. The review counts in
-particular must not go live as-is.
+windows, fabric weights, size measurements and product descriptions are
+currently invented placeholder copy and need real figures before launch.
 
 ## Next steps
 

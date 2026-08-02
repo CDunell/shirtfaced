@@ -133,15 +133,6 @@ export function BuyPanel({ product }: { product: Product }) {
           </span>
         </div>
 
-        <div className="mt-2 flex items-center gap-1.5">
-          <span className="text-[13px] text-lime" aria-hidden>
-            {"★".repeat(product.rating)}
-            <span className="text-ink/20">{"★".repeat(5 - product.rating)}</span>
-          </span>
-          <span className="text-[13px] text-grey-dark tabular-nums">
-            ({product.reviews})
-          </span>
-        </div>
 
         <p className="mt-4 text-[15px] leading-relaxed text-ink/75">
           {product.description}

@@ -29,13 +29,14 @@ anywhere). These are what's left.
 | 240gsm / 230gsm combed cotton, garment-dyed | `src/app/about/page.tsx`, `src/lib/products.ts`, `src/components/BuyPanel.tsx` | invented |
 | Size chart measurements (chest/length per size) | `src/lib/products.ts` (`SIZE_CHART`), `/size-guide` | invented |
 | "Started in 2026" | `src/app/about/page.tsx` | invented |
-| Star ratings and review counts on every product | `src/lib/products.ts` (`rating`, `reviews`) | **fabricated — remove or replace with real reviews** |
 | Product descriptions (fit, weight, print detail) | `src/lib/products.ts` | invented |
 | `hello@shirtfaced.wtf` | `src/app/contact/page.tsx` | mailbox does not exist yet |
 
-**The review counts are the sharpest edge.** Displaying invented ratings on a
-live store is a misleading-conduct problem, not a copy problem. Either wire real
-reviews in or strip the rating block from `BuyPanel` and `products.ts`.
+**Ratings and review counts were removed entirely** (2026-08-03) rather than
+left as placeholders — invented ratings on a live store are a misleading-conduct
+problem, not a copy one. The `rating`/`reviews` fields are gone from the `Product`
+type as well, so nothing can render them by accident. Add them back only when
+they're backed by real reviews.
 
 ---
 
