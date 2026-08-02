@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -14,71 +15,99 @@ export type CartLine = {
   name: string;
   price: number;
   size: string;
+  colour: string;
+  art: string;
+  /** Garment body + ink so the cart thumbnail renders without a lookup */
+  body: string;
+  ink: string;
   quantity: number;
 };
 
 type CartContextValue = {
   lines: CartLine[];
   addLine: (line: Omit<CartLine, "quantity">, quantity?: number) => void;
-  removeLine: (slug: string, size: string) => void;
-  setQuantity: (slug: string, size: string, quantity: number) => void;
+  removeLine: (slug: string, size: string, colour: string) => void;
+  setQuantity: (
+    slug: string,
+    size: string,
+    colour: string,
+    quantity: number
+  ) => void;
   itemCount: number;
   subtotal: number;
+  /** Bumps on every add — drives the cart badge pop */
+  addTick: number;
+  hydrated: boolean;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = "shirtfaced-cart";
 
+const sameLine = (l: CartLine, slug: string, size: string, colour: string) =>
+  l.slug === slug && l.size === size && l.colour === colour;
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLine[]>([]);
   const [hydrated, setHydrated] = useState(false);
+  const [addTick, setAddTick] = useState(0);
 
   useEffect(() => {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
       try {
-        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage on mount
-        setLines(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time hydration from localStorage
+        if (Array.isArray(parsed)) setLines(parsed);
       } catch {
-        // ignore malformed cart data
+        // malformed cart data — start clean rather than crash the app
       }
     }
     setHydrated(true);
   }, []);
 
   useEffect(() => {
+    // Guarded on `hydrated` so the initial empty state never overwrites a
+    // stored cart before the load effect has run.
     if (hydrated) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
     }
   }, [lines, hydrated]);
 
-  const addLine: CartContextValue["addLine"] = (line, quantity = 1) => {
-    setLines((prev) => {
-      const existing = prev.find(
-        (l) => l.slug === line.slug && l.size === line.size
-      );
-      if (existing) {
-        return prev.map((l) =>
-          l === existing ? { ...l, quantity: l.quantity + quantity } : l
+  const addLine = useCallback<CartContextValue["addLine"]>(
+    (line, quantity = 1) => {
+      setLines((prev) => {
+        const existing = prev.find((l) =>
+          sameLine(l, line.slug, line.size, line.colour)
         );
-      }
-      return [...prev, { ...line, quantity }];
-    });
-  };
+        if (existing) {
+          return prev.map((l) =>
+            l === existing ? { ...l, quantity: l.quantity + quantity } : l
+          );
+        }
+        return [...prev, { ...line, quantity }];
+      });
+      setAddTick((t) => t + 1);
+    },
+    []
+  );
 
-  const removeLine: CartContextValue["removeLine"] = (slug, size) => {
-    setLines((prev) => prev.filter((l) => !(l.slug === slug && l.size === size)));
-  };
+  const removeLine = useCallback<CartContextValue["removeLine"]>(
+    (slug, size, colour) =>
+      setLines((prev) => prev.filter((l) => !sameLine(l, slug, size, colour))),
+    []
+  );
 
-  const setQuantity: CartContextValue["setQuantity"] = (slug, size, quantity) => {
-    setLines((prev) =>
-      prev
-        .map((l) =>
-          l.slug === slug && l.size === size ? { ...l, quantity } : l
-        )
-        .filter((l) => l.quantity > 0)
-    );
-  };
+  const setQuantity = useCallback<CartContextValue["setQuantity"]>(
+    (slug, size, colour, quantity) =>
+      setLines((prev) =>
+        prev
+          .map((l) =>
+            sameLine(l, slug, size, colour) ? { ...l, quantity } : l
+          )
+          .filter((l) => l.quantity > 0)
+      ),
+    []
+  );
 
   const itemCount = useMemo(
     () => lines.reduce((sum, l) => sum + l.quantity, 0),
@@ -89,13 +118,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [lines]
   );
 
-  return (
-    <CartContext.Provider
-      value={{ lines, addLine, removeLine, setQuantity, itemCount, subtotal }}
-    >
-      {children}
-    </CartContext.Provider>
+  const value = useMemo(
+    () => ({
+      lines,
+      addLine,
+      removeLine,
+      setQuantity,
+      itemCount,
+      subtotal,
+      addTick,
+      hydrated,
+    }),
+    [lines, addLine, removeLine, setQuantity, itemCount, subtotal, addTick, hydrated]
   );
+
+  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
 }
 
 export function useCart() {
@@ -103,3 +140,6 @@ export function useCart() {
   if (!ctx) throw new Error("useCart must be used within a CartProvider");
   return ctx;
 }
+
+export const money = (n: number) =>
+  n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });

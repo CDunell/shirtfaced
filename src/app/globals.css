@@ -1,26 +1,203 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ---------------------------------------------------------------------------
+   SHIRTFACED design tokens
+   Colour, radius and motion values come straight from the brand sheet.
+   Accents are rare by design — they mark emphasis, they never decorate.
+--------------------------------------------------------------------------- */
+
+@theme {
+  --color-ink: #0d0d0d;
+  --color-ink-soft: #1a1a1a;
+  --color-ink-line: #2a2a2a;
+  --color-paper: #f2f0ed;
+  --color-paper-2: #e8e5e0;
+  --color-cream: #f7e9d6;
+  --color-lime: #c6ff33;
+  --color-coral: #ff4d4d;
+  --color-pink: #ff3c8e;
+  --color-blue: #297bff;
+  --color-orange: #ff6a00;
+
+  --color-grey: #8a8a86;
+  --color-grey-dark: #5c5c58;
+
+  /* Radii — from the spec, not invented */
+  --radius-card: 20px;
+  --radius-btn: 18px;
+  --radius-input: 16px;
+  --radius-img: 20px;
+  --radius-sheet: 28px;
+  --radius-modal: 32px;
+
+  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-space-grotesk), system-ui, sans-serif;
+
+  /* Motion — 180-250ms, natural easing, never bounce */
+  --ease-out-natural: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+}
+
+/* Display type: condensed, tight, shouty. Always set as a block. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+/* The wordmark is lowercase — the only display text that is. */
+.wordmark {
+  font-family: var(--font-display);
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+/* Worn screen-print edges. Opt-in — display type only, never body copy.
+   Filters are defined in components/Texture.tsx. */
+.distressed {
+  filter: url(#sf-rough);
+}
+.distressed-hard {
+  filter: url(#sf-rough-hard);
+}
+/* A displacement filter on text is meaningless to a screen reader and costly
+   to composite; drop it when the user has asked for less motion/effect. */
+@media (prefers-reduced-motion: reduce) {
+  .distressed,
+  .distressed-hard {
+    filter: none;
+  }
+}
+
+/* Hide scrollbars on horizontal rails without losing scrollability. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Buttons depress — tactile, not bouncy. */
+.press {
+  transition: transform 180ms var(--ease-out-natural),
+    opacity 180ms var(--ease-out-natural),
+    background-color 180ms var(--ease-out-natural);
+}
+.press:active {
+  transform: scale(0.975);
+}
+
+/* Focus is always visible — never removed, only styled. */
+:focus-visible {
+  outline: 3px solid var(--color-lime);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skeletons, never spinners. */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-paper-2);
+}
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgb(255 255 255 / 0.55),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  animation: marquee 28s linear infinite;
+}
+
+/* Cart badge pop — communicates, doesn't decorate. */
+@keyframes badge-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.badge-pop {
+  animation: badge-pop 240ms var(--ease-out-natural);
+}
+
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-rise {
+  animation: fade-rise 220ms var(--ease-out-natural) both;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.sheet-up {
+  animation: sheet-up 240ms var(--ease-out-natural);
+}
+
+/* Respect the user. Motion is a preference, not a given. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
