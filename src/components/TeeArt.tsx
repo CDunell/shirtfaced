@@ -389,16 +389,24 @@ export function TeeArt({
   className?: string;
   priority?: boolean;
 }) {
+  // Defensive: a malformed cart line once reached here with undefined fields
+  // and `garment.name.replace(...)` took the entire page down. Rendering a
+  // plain tee is always better than crashing the route.
+  const safeArt = art || "default";
+  const body = garment?.body || "#1c1c1a";
+  const ink = garment?.ink || "#e8e2d5";
+  const name = garment?.name || "Tee";
+
   // Stable per-render id so multiple tees on one page don't collide on defs.
-  const uid = `${art}-${garment.name.replace(/\s+/g, "")}`;
-  const dark = garment.body === "#1c1c1a" || garment.body === "#4a4a3e";
+  const uid = `${safeArt}-${name.replace(/\s+/g, "")}`;
+  const dark = body === "#1c1c1a" || body === "#4a4a3e";
 
   return (
     <svg
       viewBox="0 0 400 440"
       className={className}
       role="img"
-      aria-label={`${art.replace(/-/g, " ")} print on ${garment.name} tee`}
+      aria-label={`${safeArt.replace(/-/g, " ")} print on ${name} tee`}
     >
       <defs>
         <linearGradient id={`${uid}-bg`} x1="0" y1="0" x2="0" y2="1">
@@ -424,7 +432,7 @@ export function TeeArt({
       <g>
         <path
           d="M152 44 L112 58 L58 104 L36 164 L88 190 L96 404 L304 404 L312 190 L364 164 L342 104 L288 58 L248 44 C238 78 162 78 152 44 Z"
-          fill={garment.body}
+          fill={body}
         />
         {/* fabric grain, clipped to the garment only */}
         <g clipPath={`url(#${uid}-clip)`}>
@@ -453,7 +461,7 @@ export function TeeArt({
 
       {/* the print */}
       <g opacity="0.94">
-        <Artwork art={art} ink={garment.ink} uid={uid} />
+        <Artwork art={safeArt} ink={ink} uid={uid} />
       </g>
     </svg>
   );
