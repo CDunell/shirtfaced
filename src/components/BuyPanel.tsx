@@ -212,7 +212,7 @@ export function BuyPanel({ product }: { product: Product }) {
           {[
             { Icon: IconSmiley, a: "100% combed cotton", b: "built for adventures" },
             { Icon: IconSmiley, a: "230gsm mid weight", b: "holds its shape" },
-            { Icon: IconTruck, a: "printed in australia", b: "not some sweat shop" },
+            { Icon: IconTruck, a: "designed in australia", b: "printed worldwide" },
             { Icon: IconArrowRight, a: "easy returns", b: "no drama" },
           ].map(({ Icon, a, b }) => (
             <li key={a} className="flex items-start gap-2.5">

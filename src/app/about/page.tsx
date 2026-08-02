@@ -31,9 +31,9 @@ export default function AboutPage() {
           <Prose>
             <p>
               240gsm combed cotton, garment-dyed, boxy fit with a dropped
-              shoulder. Screen-printed in Australia in small runs — not because
-              scarcity is a marketing tactic, but because we&apos;d rather sell
-              out than warehouse a thousand of something nobody wanted.
+              shoulder. Designed in Australia and screen-printed by specialists
+              wherever that gets it to you fastest — the design is ours, the
+              press is whoever does it properly.
             </p>
             <p>
               Prints are built to crack and fade the way a good tee should. It
@@ -45,9 +45,9 @@ export default function AboutPage() {
         <Section heading="What we won't do">
           <Prose>
             <p>
-              No dropshipping. No print-on-demand from a warehouse we&apos;ve
-              never seen. No countdown timers telling you four people are
-              looking at this right now.
+              No countdown timers telling you four people are looking at this
+              right now. No fake scarcity. No inventing an origin story we
+              can&apos;t back up.
             </p>
           </Prose>
         </Section>

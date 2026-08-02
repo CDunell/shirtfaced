@@ -21,7 +21,7 @@ export default function ShippingPage() {
   return (
     <PageShell
       title="shipping"
-      intro="Printed and packed in Australia. Orders placed before 2pm AEST on a business day go out the same day."
+      intro="Designed in Australia, printed and shipped from wherever gets it to you fastest."
     >
       <ul className="flex flex-col gap-3">
         {RATES.map((r) => (
