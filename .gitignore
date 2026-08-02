@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# chrome debug profile from scripts/shot.mjs
+.chrome-shot-profile/

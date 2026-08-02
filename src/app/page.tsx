@@ -15,12 +15,13 @@ const TRUST = [
   { Icon: IconSmiley, top: "no regrets", bottom: "returns policy" },
 ];
 
+/* Photography carries these, not colour. Accents stay reserved for the things
+   that actually need emphasis: primary CTA, active nav, NEW, cart count. */
 const COLLECTIONS = [
-  { label: "beach bums", tint: "#297bff" },
-  { label: "road trip", tint: "#ff6a00" },
-  { label: "camp legends", tint: "#c6ff33" },
-  { label: "party animals", tint: "#ff3c8e" },
-  { label: "skate rats", tint: "#f2f0ed" },
+  { label: "after dark", img: "/products/good-times-1.webp" },
+  { label: "send it", img: "/products/send-it-2.webp" },
+  { label: "warm nights", img: "/products/cold-beer-1.webp" },
+  { label: "street", img: "/products/hero-street.webp" },
 ];
 
 export default function Home() {
@@ -83,7 +84,7 @@ export default function Home() {
         <ul className="mx-auto grid max-w-5xl grid-cols-4 gap-2 px-4 pb-8 sm:px-6">
           {TRUST.map(({ Icon, top, bottom }) => (
             <li key={top} className="flex flex-col items-center gap-2 text-center">
-              <Icon className="h-7 w-7 text-lime" strokeWidth={1.8} />
+              <Icon className="h-7 w-7 text-paper/80" strokeWidth={1.8} />
               <span className="text-[11px] leading-tight text-paper/70">
                 {top}
                 <br />
@@ -116,18 +117,31 @@ export default function Home() {
 
       {/* ---------------- Promo ---------------- */}
       <section className="mx-auto mt-12 max-w-5xl px-4 sm:px-6">
-        <div className="relative overflow-hidden rounded-[20px] bg-pink px-6 py-9">
-          <h2 className="display distressed max-w-[9ch] text-[34px] leading-[0.92] text-ink sm:text-[46px]">
-            dress like you&apos;ve got better plans.
-          </h2>
-          <Link
-            href="/shop"
-            className="press mt-6 inline-flex h-12 items-center gap-2.5 rounded-[18px] bg-ink pr-4 pl-5 text-[15px] font-bold text-paper"
-          >
-            shop now
-            <IconArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+        <Link
+          href="/shop"
+          className="press relative block overflow-hidden rounded-[20px]"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- static export, no loader */}
+          <img
+            src="/products/send-it-1.webp"
+            alt="Model wearing the Send It Club tee in vintage white"
+            width={1000}
+            height={1250}
+            loading="lazy"
+            className="aspect-[4/3] w-full object-cover object-[50%_28%] sm:aspect-[21/9]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink/80 via-transparent to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-6">
+            <h2 className="display distressed max-w-[10ch] text-[32px] leading-[0.92] text-paper sm:text-[44px]">
+              dress like you&apos;ve got better plans.
+            </h2>
+            <span className="mt-4 inline-flex h-12 items-center gap-2.5 rounded-[18px] bg-paper pr-4 pl-5 text-[15px] font-bold text-ink">
+              shop now
+              <IconArrowRight className="h-4 w-4" />
+            </span>
+          </div>
+        </Link>
       </section>
 
       {/* ---------------- Collections ---------------- */}
@@ -135,20 +149,22 @@ export default function Home() {
         <h2 className="display distressed mx-auto mb-5 max-w-5xl px-4 text-[34px] sm:px-6">
           collections
         </h2>
-        <ul className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:px-6">
+        <ul className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:px-6">
           {COLLECTIONS.map((c) => (
-            <li key={c.label} className="snap-start">
+            <li key={c.label} className="snap-start shrink-0">
               <Link
                 href="/shop"
-                className="press flex w-[92px] flex-col items-center gap-2.5"
+                className="press relative block h-[188px] w-[142px] overflow-hidden rounded-[20px]"
               >
-                <span
-                  className="grid h-[84px] w-[84px] place-items-center rounded-full border-2 border-ink/10"
-                  style={{ background: c.tint }}
-                >
-                  <IconSmiley className="h-9 w-9 text-ink" strokeWidth={1.8} />
-                </span>
-                <span className="text-center text-[13px] leading-tight font-medium">
+                {/* eslint-disable-next-line @next/next/no-img-element -- static export, no loader */}
+                <img
+                  src={c.img}
+                  alt=""
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/10 to-transparent" />
+                <span className="display absolute inset-x-0 bottom-0 p-3 text-[17px] leading-tight text-paper">
                   {c.label}
                 </span>
               </Link>
@@ -159,8 +175,8 @@ export default function Home() {
 
       {/* ---------------- Newsletter ---------------- */}
       <section className="mx-auto mt-12 max-w-5xl px-4 sm:px-6">
-        <div className="rounded-[20px] bg-lime px-6 py-8">
-          <h2 className="display distressed max-w-[13ch] text-[30px] leading-[0.95] text-ink">
+        <div className="rounded-[20px] bg-ink px-6 py-8 text-paper">
+          <h2 className="display distressed max-w-[13ch] text-[30px] leading-[0.95]">
             we promise fewer emails than your ex.
           </h2>
           <form className="mt-6 flex gap-2" action="/shop">
@@ -173,17 +189,17 @@ export default function Home() {
               inputMode="email"
               autoComplete="email"
               placeholder="your@email.com"
-              className="h-14 min-w-0 flex-1 rounded-[16px] bg-paper px-4 text-[16px] placeholder:text-grey"
+              className="h-14 min-w-0 flex-1 rounded-[16px] border border-paper/15 bg-transparent px-4 text-[16px] text-paper placeholder:text-paper/40"
             />
             <button
               type="submit"
               aria-label="Subscribe"
-              className="press grid h-14 w-14 shrink-0 place-items-center rounded-[16px] bg-ink text-paper"
+              className="press grid h-14 w-14 shrink-0 place-items-center rounded-[16px] bg-lime text-ink"
             >
               <IconArrowRight className="h-5 w-5" />
             </button>
           </form>
-          <p className="mt-3 text-[13px] text-ink/65">
+          <p className="mt-3 text-[13px] text-paper/50">
             new drops, dumb jokes, the occasional life update.
           </p>
         </div>
