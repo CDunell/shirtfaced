@@ -1,19 +1,13 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
-import {
-  IconArrowRight,
-  IconLock,
-  IconSmiley,
-  IconTruck,
-} from "@/components/Icons";
+import { IconArrowRight } from "@/components/Icons";
 
-const TRUST = [
-  { Icon: IconSmiley, top: "designed in aus", bottom: "zero apologies" },
-  { Icon: IconTruck, top: "bad decisions", bottom: "ship fast" },
-  { Icon: IconLock, top: "secure checkout", bottom: "no judgement" },
-  { Icon: IconSmiley, top: "no regrets", bottom: "returns policy" },
-];
+/* Three claims, one line, no icons. The previous version was four columns of
+   icon + two-line caption: the captions wrapped to different heights, the
+   baselines never lined up, and two of the four icons were the same smiley.
+   Trust signals should reassure quietly, not compete with the hero. */
+const TRUST = ["Designed in Australia", "Secure checkout", "Easy returns"];
 
 /* Photography carries these, not colour. Accents stay reserved for the things
    that actually need emphasis: primary CTA, active nav, NEW, cart count. */
@@ -81,15 +75,11 @@ export default function Home() {
 
       {/* ---------------- Trust bar ---------------- */}
       <section className="bg-ink text-paper">
-        <ul className="mx-auto grid max-w-5xl grid-cols-4 gap-2 px-4 pb-8 sm:px-6">
-          {TRUST.map(({ Icon, top, bottom }) => (
-            <li key={top} className="flex flex-col items-center gap-2 text-center">
-              <Icon className="h-7 w-7 text-paper/80" strokeWidth={1.8} />
-              <span className="text-[11px] leading-tight text-paper/70">
-                {top}
-                <br />
-                {bottom}
-              </span>
+        <ul className="mx-auto flex max-w-5xl items-center justify-center gap-x-2 px-4 pb-7 text-[11px] tracking-wide text-paper/45 uppercase sm:gap-x-3 sm:text-[12px]">
+          {TRUST.map((t, i) => (
+            <li key={t} className="flex items-center gap-x-2 sm:gap-x-3">
+              {i > 0 && <span aria-hidden>&middot;</span>}
+              {t}
             </li>
           ))}
         </ul>
