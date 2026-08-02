@@ -3,11 +3,12 @@ import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { IconArrowRight } from "@/components/Icons";
 
-/* Three claims, one line, no icons. The previous version was four columns of
-   icon + two-line caption: the captions wrapped to different heights, the
-   baselines never lined up, and two of the four icons were the same smiley.
-   Trust signals should reassure quietly, not compete with the hero. */
-const TRUST = ["Designed in Australia", "Secure checkout", "Easy returns"];
+/* One line, no icons — the old four-column version wrapped to uneven heights
+   and repeated its icons. But clean shouldn't mean neutered: each claim still
+   has to sound like us. Nothing here jokes about whether checkout is actually
+   secure or whether returns actually work; the attitude sits on the brand's
+   side of the promise, not the customer's risk. */
+const TRUST = ["Made in Aus", "Zero apologies", "Returns, no lecture"];
 
 /* Photography carries these, not colour. Accents stay reserved for the things
    that actually need emphasis: primary CTA, active nav, NEW, cart count. */
