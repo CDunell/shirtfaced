@@ -1,52 +1,63 @@
 /**
- * Turn the supplied logo lockup (light artwork on a solid black plate) into a
- * trimmed, transparent PNG.
+ * Turn a supplied logo lockup (artwork on a solid black plate) into a trimmed,
+ * transparent PNG.
  *
- *   node scripts/make-logo.mjs <source.png>
+ *   node scripts/make-logo.mjs <source.png> [outfile]
  *
- * The plate is discarded rather than kept, because the header, drawer and any
- * future light-background usage all need the mark to sit on their own colour.
- * Alpha is taken from luminance, which preserves the antialiased edges — a
- * plain colour-key would leave a hard, jagged cut.
+ * The plate is discarded because the header, drawer and any light-background
+ * usage all need the mark on their own colour.
+ *
+ * Colour is preserved, not flattened: the lockup mixes a white wordmark with a
+ * lime sf monogram, so alpha is taken from the brightest channel rather than
+ * luminance (luminance would make the lime semi-transparent). Edge pixels are
+ * then un-premultiplied against black, which restores full colour on the
+ * antialiased rim instead of leaving a dark halo.
  */
 import sharp from "sharp";
 
 const SRC = process.argv[2];
+// NOTE: bump the filename whenever the mark changes. Cloudflare caches image
+// variants keyed on the request's Accept header, so re-uploading the same URL
+// leaves browsers (Accept: image/avif,image/webp) on the stale variant for
+// hours even after a purge of the */* copy. A new filename is a new cache key.
+const OUT = process.argv[3] || "public/logo-v2.png";
 if (!SRC) {
-  console.error("usage: node scripts/make-logo.mjs <source.png>");
+  console.error("usage: node scripts/make-logo.mjs <source.png> [outfile]");
   process.exit(1);
 }
 
-const OUT = "public/logo.png";
-const INK = [242, 240, 237]; // --color-paper
-
-// Trim the black plate, then work from the remaining artwork.
 const trimmed = await sharp(SRC).trim({ threshold: 20 }).toBuffer();
-const meta = await sharp(trimmed).metadata();
+const { width, height } = await sharp(trimmed).metadata();
 
-// Luminance becomes alpha: white artwork -> opaque, black plate -> clear.
-const { data: lum } = await sharp(trimmed)
-  .greyscale()
+const { data } = await sharp(trimmed)
+  .removeAlpha()
   .raw()
   .toBuffer({ resolveWithObject: true });
 
-const px = meta.width * meta.height;
+const px = width * height;
 const rgba = Buffer.alloc(px * 4);
+
 for (let i = 0; i < px; i++) {
-  rgba[i * 4] = INK[0];
-  rgba[i * 4 + 1] = INK[1];
-  rgba[i * 4 + 2] = INK[2];
-  rgba[i * 4 + 3] = lum[i];
+  const r = data[i * 3];
+  const g = data[i * 3 + 1];
+  const b = data[i * 3 + 2];
+
+  const a = Math.max(r, g, b); // distance from the black plate
+  if (a === 0) continue; // fully transparent, RGB irrelevant
+
+  const s = 255 / a; // un-premultiply against black
+  rgba[i * 4] = Math.min(255, Math.round(r * s));
+  rgba[i * 4 + 1] = Math.min(255, Math.round(g * s));
+  rgba[i * 4 + 2] = Math.min(255, Math.round(b * s));
+  rgba[i * 4 + 3] = a;
 }
 
-const info = await sharp(rgba, {
-  raw: { width: meta.width, height: meta.height, channels: 4 },
-})
+const info = await sharp(rgba, { raw: { width, height, channels: 4 } })
   .resize({ height: 120, withoutEnlargement: true }) // 3x a ~40px header lockup
   .png({ compressionLevel: 9 })
   .toFile(OUT);
 
 console.log(
   `${OUT}  ${info.width}x${info.height}  ${(info.size / 1024).toFixed(1)}KB` +
-    `  (source ${meta.width}x${meta.height})`
+    `  (source ${width}x${height})`
 );

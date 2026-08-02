@@ -105,6 +105,13 @@ const target = await (
 const cdp = connect(target.webSocketDebuggerUrl);
 await cdp.ready;
 await cdp.send("Page.enable");
+// The profile dir persists between runs, so Chrome will happily serve a stale
+// logo/photo from disk cache and produce a screenshot of the previous deploy.
+await cdp.send("Network.enable");
+await cdp.send("Network.setCacheDisabled", { cacheDisabled: true });
+// setCacheDisabled alone still let an already-cached image through, which
+// produced screenshots of a previous deploy's logo. Wipe the store too.
+await cdp.send("Network.clearBrowserCache");
 
 for (const p of paths) {
   const url = baseUrl.replace(/\/$/, "") + p;

@@ -69,9 +69,9 @@ export function Header() {
             {/* eslint-disable-next-line @next/next/no-img-element -- static
                 export; explicit dimensions keep CLS at zero */}
             <img
-              src="/logo.png"
+              src="/logo-v2.png"
               alt="Shirtfaced"
-              width={921}
+              width={703}
               height={120}
               className="h-[19px] w-auto sm:h-[23px]"
             />
@@ -117,9 +117,9 @@ export function Header() {
             <div className="mb-7 flex items-center justify-between">
               {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
               <img
-                src="/logo.png"
+                src="/logo-v2.png"
                 alt="Shirtfaced"
-                width={921}
+                width={703}
                 height={120}
                 className="h-[22px] w-auto"
               />
