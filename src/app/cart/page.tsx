@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useCart, money } from "@/lib/cart-context";
+import { useCart } from "@/lib/cart-context";
+import { money } from "@/lib/money";
 import { FREE_SHIPPING_THRESHOLD, products } from "@/lib/products";
 import { ProductCard } from "@/components/ProductCard";
 import { TeeArt } from "@/components/TeeArt";
@@ -234,15 +235,13 @@ export default function CartPage() {
 
       {/* Checkout — express first, per the spec */}
       <div className="mt-6 flex flex-col gap-2">
-        <button
-          type="button"
-          disabled
-          title="Payment isn't wired up yet"
-          className="press flex h-14 cursor-not-allowed items-center justify-center gap-2 rounded-[18px] bg-lime text-[16px] font-bold text-ink opacity-60"
+        <Link
+          href="/checkout"
+          className="press flex h-14 items-center justify-center gap-2 rounded-[18px] bg-lime text-[16px] font-bold text-ink"
         >
           <IconLock className="h-5 w-5" />
           Checkout
-        </button>
+        </Link>
         <p className="text-center text-[13px] text-grey-dark">
           Payment isn&apos;t connected yet — nothing will be charged.
         </p>

@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useCart, money } from "@/lib/cart-context";
+import { useCart } from "@/lib/cart-context";
+import { money } from "@/lib/money";
 import type { Product } from "@/lib/products";
 import { ProductMedia } from "./ProductMedia";
 import { IconCheck, IconHeart, IconPlus } from "./Icons";

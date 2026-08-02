@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useCart, money } from "@/lib/cart-context";
+import { useCart } from "@/lib/cart-context";
+import { money } from "@/lib/money";
 import { SIZE_CHART, type Product, type SizeKey } from "@/lib/products";
 import { ProductMedia, mediaCount } from "./ProductMedia";
 import {

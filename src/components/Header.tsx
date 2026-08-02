@@ -15,7 +15,13 @@ const MENU = [
   { href: "/shop?f=accessories", label: "accessories" },
 ];
 
-const SECONDARY = ["about", "shipping", "returns", "size guide", "contact"];
+const SECONDARY = [
+  { href: "/about", label: "about" },
+  { href: "/shipping", label: "shipping" },
+  { href: "/returns", label: "returns" },
+  { href: "/size-guide", label: "size guide" },
+  { href: "/contact", label: "contact" },
+];
 
 export function Header() {
   const { itemCount, addTick, hydrated } = useCart();
@@ -50,7 +56,7 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-ink text-paper">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -73,13 +79,13 @@ export function Header() {
               alt="Shirtfaced"
               width={703}
               height={120}
-              className="h-[19px] w-auto sm:h-[23px]"
+              className="h-[26px] w-auto sm:h-[32px]"
             />
           </Link>
 
           <div className="flex items-center">
             <Link
-              href="/shop"
+              href="/search"
               aria-label="Search"
               className="press grid h-12 w-12 place-items-center rounded-[14px]"
             >
@@ -121,7 +127,7 @@ export function Header() {
                 alt="Shirtfaced"
                 width={703}
                 height={120}
-                className="h-[22px] w-auto"
+                className="h-[30px] w-auto"
               />
               <button
                 type="button"
@@ -159,9 +165,9 @@ export function Header() {
             <div className="mt-7 border-t border-ink-line pt-6">
               <ul className="flex flex-col gap-3 text-[15px] text-paper/60">
                 {SECONDARY.map((s) => (
-                  <li key={s}>
-                    <Link href="/shop" onClick={() => setOpen(false)}>
-                      {s}
+                  <li key={s.href}>
+                    <Link href={s.href} onClick={() => setOpen(false)}>
+                      {s.label}
                     </Link>
                   </li>
                 ))}

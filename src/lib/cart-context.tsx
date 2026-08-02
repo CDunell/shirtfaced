@@ -140,6 +140,3 @@ export function useCart() {
   if (!ctx) throw new Error("useCart must be used within a CartProvider");
   return ctx;
 }
-
-export const money = (n: number) =>
-  n.toLocaleString("en-AU", { style: "currency", currency: "AUD" });

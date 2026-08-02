@@ -44,7 +44,7 @@ export function ShopGrid() {
   return (
     <>
       {/* Filter chips — one thumb, large targets, live count */}
-      <div className="sticky top-14 z-30 border-b border-ink/10 bg-paper/95 backdrop-blur">
+      <div className="sticky top-16 z-30 border-b border-ink/10 bg-paper/95 backdrop-blur">
         <ul className="no-scrollbar mx-auto flex max-w-5xl gap-2 overflow-x-auto px-4 py-3 sm:px-6">
           {CATEGORIES.map((c) => {
             const active = filter === c.key;
