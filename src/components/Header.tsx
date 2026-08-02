@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/lib/cart-context";
-import { DripMark, IconBag, IconClose, IconMenu, IconSearch } from "./Icons";
+import { IconBag, IconClose, IconMenu, IconSearch } from "./Icons";
 
 const MENU = [
   { href: "/shop", label: "shop all" },
@@ -66,10 +66,15 @@ export function Header() {
             className="press flex items-center gap-1.5"
             aria-label="Shirtfaced — home"
           >
-            <span className="wordmark distressed-hard text-[26px] leading-none">
-              shirtfaced
-            </span>
-            <DripMark className="h-7 w-6" />
+            {/* eslint-disable-next-line @next/next/no-img-element -- static
+                export; explicit dimensions keep CLS at zero */}
+            <img
+              src="/logo.png"
+              alt="Shirtfaced"
+              width={921}
+              height={120}
+              className="h-[19px] w-auto sm:h-[23px]"
+            />
           </Link>
 
           <div className="flex items-center">
@@ -110,10 +115,14 @@ export function Header() {
           />
           <nav className="sheet-up absolute inset-x-0 top-0 max-h-[92vh] overflow-y-auto rounded-b-[28px] bg-ink px-6 pt-5 pb-10 text-paper">
             <div className="mb-7 flex items-center justify-between">
-              <span className="wordmark flex items-center gap-1.5 text-[26px] leading-none">
-                <span className="distressed-hard">shirtfaced</span>
-                <DripMark className="h-7 w-6" />
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
+              <img
+                src="/logo.png"
+                alt="Shirtfaced"
+                width={921}
+                height={120}
+                className="h-[22px] w-auto"
+              />
               <button
                 type="button"
                 onClick={() => setOpen(false)}

@@ -127,9 +127,11 @@ for (const p of paths) {
   await cdp.send("Runtime.evaluate", { expression: "window.scrollTo(0,0)" });
   await sleep(600);
 
+  // Full-page grabs render sticky/fixed chrome at its scrolled position, so
+  // set VIEWPORT_ONLY=1 when you need to see the header or bottom nav in place.
   const { data } = await cdp.send("Page.captureScreenshot", {
     format: "png",
-    captureBeyondViewport: true,
+    captureBeyondViewport: !process.env.VIEWPORT_ONLY,
   });
 
   const name = (p === "/" ? "home" : p.replace(/^\//, "").replace(/\//g, "-")) + ".png";
