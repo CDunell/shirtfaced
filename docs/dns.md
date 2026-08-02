@@ -22,8 +22,7 @@ work with no config change if it ever completes.
 | CNAME | `@` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | CNAME | `www` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | TXT | `@` | `v=spf1 -all` | — |
-| TXT | `_dmarc` | `v=DMARC1; p=reject; adkim=s; aspf=s` | — |
-| TXT | `*._domainkey` | `v=DKIM1; p=` | — |
+| TXT | `_dmarc` | `v=DMARC1; p=quarantine;` | — |
 
 SSL/TLS mode: **Full**.
 
@@ -32,9 +31,10 @@ SSL/TLS mode: **Full**.
 The domain sends no email, so the posture is "reject everything":
 
 - `v=spf1 -all` — no host is authorised to send as this domain.
-- `p=reject` with strict alignment — receivers bin anything failing SPF/DKIM.
-- `v=DKIM1; p=` on a wildcard selector — an empty public key revokes every
-  selector, so a forged DKIM signature can't validate on any selector name.
+- `p=quarantine` while an outbound sender is being chosen. Goes back to
+  `p=reject` once mail is confirmed DKIM-aligned.
+- The wildcard `*._domainkey` null-key record was REMOVED 2026-08-02: it
+  revokes every selector and would block any real sending provider's DKIM.
 
 **No `rua=`** on the DMARC record: reports to an address on another domain
 require that domain to publish `shirtfaced.wtf._report._dmarc.<their-domain>`.
