@@ -94,8 +94,11 @@ export default function CheckoutPage() {
     form.suburb.trim() &&
     /^\d{4}$/.test(form.postcode);
 
+  // No width here on purpose: `w-full` plus a later `w-32`/`flex-1` are the
+  // same specificity, so the winner is whichever Tailwind emits last. Widths
+  // are set explicitly per field instead.
   const field =
-    "h-14 w-full rounded-[16px] border border-ink/15 bg-transparent px-4 text-[16px] placeholder:text-grey";
+    "h-14 rounded-[16px] border border-ink/15 bg-transparent px-4 text-[16px] placeholder:text-grey";
 
   return (
     <div className="mx-auto max-w-2xl px-4 pt-4 pb-16 sm:px-6">
@@ -147,7 +150,7 @@ export default function CheckoutPage() {
         <div className="fade-rise mt-8">
           <h2 className="display text-[22px]">Contact</h2>
           <input
-            className={`${field} mt-3`}
+            className={`${field} mt-3 w-full`}
             type="email"
             inputMode="email"
             autoComplete="email"
@@ -160,7 +163,7 @@ export default function CheckoutPage() {
           <h2 className="display mt-8 text-[22px]">Shipping address</h2>
           <div className="mt-3 flex flex-col gap-3">
             <input
-              className={field}
+              className={`${field} w-full`}
               autoComplete="name"
               placeholder="Full name"
               aria-label="Full name"
@@ -168,7 +171,7 @@ export default function CheckoutPage() {
               onChange={set("name")}
             />
             <input
-              className={field}
+              className={`${field} w-full`}
               autoComplete="street-address"
               placeholder="Street address"
               aria-label="Street address"
@@ -176,7 +179,7 @@ export default function CheckoutPage() {
               onChange={set("address")}
             />
             <input
-              className={field}
+              className={`${field} w-full`}
               autoComplete="address-level2"
               placeholder="Suburb"
               aria-label="Suburb"
@@ -185,7 +188,11 @@ export default function CheckoutPage() {
             />
             <div className="flex gap-3">
               <select
-                className={`${field} flex-1`}
+                className={`${field} min-w-0 flex-1 appearance-none bg-[length:12px] bg-[right_1rem_center] bg-no-repeat pr-10`}
+                style={{
+                  backgroundImage:
+                    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230d0d0d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E\")",
+                }}
                 autoComplete="address-level1"
                 aria-label="State"
                 value={form.state}
@@ -196,7 +203,7 @@ export default function CheckoutPage() {
                 ))}
               </select>
               <input
-                className={`${field} w-32`}
+                className={`${field} w-32 shrink-0`}
                 inputMode="numeric"
                 autoComplete="postal-code"
                 placeholder="Postcode"
