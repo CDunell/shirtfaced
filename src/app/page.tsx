@@ -49,7 +49,7 @@ export default function Home() {
 
           <div className="absolute inset-x-0 bottom-0">
             <div className="mx-auto max-w-6xl px-4 pb-7 sm:px-6 sm:pb-12">
-              <div className="tagline-box w-full sm:max-w-[46%]">
+              <div className="tagline-box w-[80%] sm:w-[46%] sm:max-w-none">
                 <h1 className="display leading-[0.86] whitespace-nowrap">
                   <span className="block" style={{ fontSize: `${LINE_ONE_SIZE}cqw` }}>
                     {LINE_ONE}
@@ -222,7 +222,9 @@ export default function Home() {
                   key={t.line}
                   className="display px-5 text-[26px] whitespace-nowrap text-paper"
                 >
-                  {LINE_ONE} <span className="text-lime">{t.line}</span>{" "}
+                  {/* The marquee reads as a running sentence, so the middle
+                     line keeps its full stop here — unlike the hero. */}
+                  {LINE_ONE} <span className="text-lime">{t.line}.</span>{" "}
                   {LINE_THREE}
                 </span>
               ))}
