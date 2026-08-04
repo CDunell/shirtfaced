@@ -27,6 +27,41 @@ into a controlled production workflow that:
 - PostgreSQL — operational state, generated assets, evaluations, approvals and audit history.
 - Git — version history for canon and deliberate state changes.
 
+## Development
+
+Full instructions are in `docs/LOCAL_RUNBOOK.md`. In short:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+cp .env.example .env               # then set DATABASE_URL and DB_SSLMODE=disable
+alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+Quality gates:
+
+```bash
+ruff check .
+ruff format --check .
+mypy app
+pytest
+```
+
+Integration tests need a real PostgreSQL database and are skipped without one. Point
+`TEST_DATABASE_URL` at a throwaway container, never at a database that holds anything
+you care about — the fixtures drop and recreate the `public` schema.
+
+Two things catch people out:
+
+- An exported `DATABASE_URL` from another project overrides `.env`, because the process
+  environment takes precedence. `DATABASE_URL` must use the `postgresql+psycopg://`
+  prefix, so a connection string for a different stack is rejected rather than used.
+- If PostgreSQL is already installed locally, publish the container on a spare port
+  (for example `-p 55432:5432`) instead of 5432, so there is no ambiguity about which
+  server you reach.
+
 ## Required reading order
 
 Codex must read:

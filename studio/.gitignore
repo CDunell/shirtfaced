@@ -1,0 +1,30 @@
+# Shirtfaced Studio (Python application)
+# The repository root has its own .gitignore for the Next.js storefront.
+
+# Environments and secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Python build and cache artefacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local runtime state: generated assets, thumbnails, databases, logs
+var/
+*.sqlite3
+*.db
+*.log
+
+# Generated working images are not committed; approved references are added deliberately.
+worlds/*/generations/

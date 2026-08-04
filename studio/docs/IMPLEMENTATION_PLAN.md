@@ -25,7 +25,7 @@ Exit:
 - copy World 1 documents;
 - implement Markdown loaders;
 - implement validators;
-- import shots into SQLite;
+- import shots into PostgreSQL;
 - calculate hashes;
 - create read-only world page.
 

@@ -120,11 +120,13 @@ Allows controlled metadata edits.
 
 ### `GET /health`
 
-Returns process and database health.
+Confirms only that the application process is alive. It performs no database or
+filesystem work, so a slow dependency cannot make a healthy process look dead.
 
 ### `GET /ready`
 
-Also validates that the world directory exists and is readable.
+Validates the dependencies: PostgreSQL is reachable, required migrations are applied,
+the world directory exists and is readable, and asset storage is writable.
 
 ## Structured model contracts
 

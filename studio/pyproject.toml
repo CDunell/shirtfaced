@@ -1,0 +1,75 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "shirtfaced-studio"
+version = "0.1.0"
+description = "Local-first creative production application for Shirtfaced photographic worlds"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "UNLICENSED" }
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.30",
+  "sqlalchemy>=2.0",
+  "psycopg[binary]>=3.2",
+  "alembic>=1.13",
+  "pydantic>=2.7",
+  "pydantic-settings>=2.3",
+  "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.2",
+  # Required by starlette.testclient; starlette deprecates plain httpx.
+  "httpx2>=2.0",
+  "ruff>=0.6",
+  "mypy>=1.11",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Ruff formats Python snippets inside Markdown. The specification documents are
+# prose, not source, so they are left exactly as written.
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "B",   # flake8-bugbear
+  "UP",  # pyupgrade
+  "C4",  # flake8-comprehensions
+  "SIM", # flake8-simplify
+  "TID", # flake8-tidy-imports
+  "RUF",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "alembic.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "integration: requires a live PostgreSQL database (set DATABASE_URL)",
+]
+filterwarnings = ["error"]
