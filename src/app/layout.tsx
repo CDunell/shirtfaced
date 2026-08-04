@@ -3,7 +3,6 @@ import { Anton, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import { Header } from "@/components/Header";
-import { BottomNav } from "@/components/BottomNav";
 import { PaperGrain } from "@/components/Texture";
 
 const anton = Anton({
@@ -55,14 +54,7 @@ export default function RootLayout({
             Skip to content
           </a>
           <Header />
-          {/* pb clears the fixed bottom nav + iOS home indicator */}
-          <main
-            id="main"
-            className="pb-[calc(84px+env(safe-area-inset-bottom))]"
-          >
-            {children}
-          </main>
-          <BottomNav />
+          <main id="main">{children}</main>
         </CartProvider>
       </body>
     </html>

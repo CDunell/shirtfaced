@@ -15,12 +15,15 @@ const MENU = [
   { href: "/shop?f=accessories", label: "accessories" },
 ];
 
+/* The bottom nav is gone, so the drawer is the only route to these. */
 const SECONDARY = [
+  { href: "/account", label: "account" },
   { href: "/about", label: "about" },
   { href: "/shipping", label: "shipping" },
   { href: "/returns", label: "returns" },
   { href: "/size-guide", label: "size guide" },
   { href: "/contact", label: "contact" },
+  { href: "/more", label: "more" },
 ];
 
 export function Header() {
@@ -111,23 +114,25 @@ export function Header() {
         </div>
       </header>
 
-      {/* Drawer */}
+      {/* Full-page menu — same treatment at every width. A drawer that only
+         partly covers a 1440px screen strands the links in a narrow column
+         with a field of empty black beside them. */}
       {open && (
-        <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-          <button
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-            className="absolute inset-0 bg-ink/70 backdrop-blur-[2px]"
-          />
-          <nav className="sheet-up absolute inset-x-0 top-0 max-h-[92vh] overflow-y-auto rounded-b-[28px] bg-ink px-6 pt-5 pb-10 text-paper">
-            <div className="mb-7 flex items-center justify-between">
+        <div
+          className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-ink text-paper"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu"
+        >
+          <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
+            <div className="mb-8 flex items-center justify-between md:mb-14">
               {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
               <img
                 src="/logo-v2.png"
                 alt="Shirtfaced"
                 width={703}
                 height={120}
-                className="h-[30px] w-auto"
+                className="h-[26px] w-auto sm:h-[32px]"
               />
               <button
                 type="button"
@@ -145,7 +150,7 @@ export function Header() {
                   <Link
                     href={m.href}
                     onClick={() => setOpen(false)}
-                    className="press block rounded-[14px] py-2.5 text-[28px] leading-tight font-medium"
+                    className="press block rounded-[14px] py-2.5 text-[30px] leading-tight font-medium md:py-3 md:text-[44px]"
                   >
                     {m.label}
                   </Link>
@@ -155,25 +160,30 @@ export function Header() {
                 <Link
                   href="/shop"
                   onClick={() => setOpen(false)}
-                  className="press block rounded-[14px] py-2.5 text-[28px] leading-tight font-medium text-pink"
+                  className="press block rounded-[14px] py-2.5 text-[30px] leading-tight font-medium text-pink md:py-3 md:text-[44px]"
                 >
                   sale
                 </Link>
               </li>
             </ul>
 
-            <div className="mt-7 border-t border-ink-line pt-6">
-              <ul className="flex flex-col gap-3 text-[15px] text-paper/60">
-                {SECONDARY.map((s) => (
-                  <li key={s.href}>
-                    <Link href={s.href} onClick={() => setOpen(false)}>
-                      {s.label}
+            {/* Pushed to the foot of the viewport so the menu fills the page
+               rather than trailing off. */}
+            <div className="mt-auto border-t border-ink-line pt-8">
+              <ul className="flex flex-wrap gap-x-7 gap-y-3 text-[15px] text-paper/55">
+                {SECONDARY.map((sec) => (
+                  <li key={sec.href}>
+                    <Link href={sec.href} onClick={() => setOpen(false)}>
+                      {sec.label}
                     </Link>
                   </li>
                 ))}
               </ul>
+              <p className="mt-6 text-[13px] text-paper/35">
+                Good times. Bad decisions. Zero regrets.
+              </p>
             </div>
-          </nav>
+          </div>
         </div>
       )}
     </>

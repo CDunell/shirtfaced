@@ -235,7 +235,7 @@ export function BuyPanel({ product }: { product: Product }) {
       </div>
 
       {/* -------- Sticky purchase bar: mobile only -------- */}
-      <div className="fixed inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-30 border-t border-ink/10 bg-paper/95 px-4 py-3 backdrop-blur sm:px-6 md:hidden">
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-ink/10 bg-paper/95 px-4 pt-3 pb-[calc(12px+env(safe-area-inset-bottom))] backdrop-blur sm:px-6 md:hidden">
         <div className="mx-auto flex max-w-2xl gap-2">
           <button
             type="button"
