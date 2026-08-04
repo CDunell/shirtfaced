@@ -1,28 +1,26 @@
 import { PageShell, Prose, Section } from "@/components/PageShell";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/products";
 import { money } from "@/lib/money";
+import { shipping } from "@/lib/content-data.generated";
 
 export const metadata = {
   title: "Shipping — Shirtfaced",
   description: "Where we ship, what it costs, and how long it takes.",
 };
 
-const RATES = [
-  { name: "Standard", time: "3–5 business days", price: "$10.00" },
-  { name: "Express", time: "1–2 business days", price: "$15.00" },
-  {
-    name: "Free standard",
-    time: "5–7 business days",
-    price: `Orders over ${money(FREE_SHIPPING_THRESHOLD)}`,
-  },
-];
-
 export default function ShippingPage() {
+  const RATES = [
+    { name: shipping.standardName, time: shipping.standardTime, price: shipping.standardPrice },
+    { name: shipping.expressName, time: shipping.expressTime, price: shipping.expressPrice },
+    {
+      name: "Free standard",
+      time: "5–7 business days",
+      price: `Orders over ${money(FREE_SHIPPING_THRESHOLD)}`,
+    },
+  ];
+
   return (
-    <PageShell
-      title="shipping"
-      intro="Designed in Australia, printed and shipped from wherever gets it to you fastest."
-    >
+    <PageShell title="shipping" intro={shipping.intro}>
       <ul className="flex flex-col gap-3">
         {RATES.map((r) => (
           <li
@@ -43,35 +41,20 @@ export default function ShippingPage() {
       <div className="mt-8 flex flex-col gap-8">
         <Section heading="Where we ship">
           <Prose>
-            <p>
-              Australia-wide, including WA and the Territories. New Zealand ships
-              at a flat $18 and takes 5–10 business days.
-            </p>
-            <p>
-              Everywhere else — we&apos;re working on it. If you&apos;re
-              overseas and desperate, get in touch and we&apos;ll quote you
-              properly rather than guess.
-            </p>
+            <p>{shipping.whereP1}</p>
+            <p>{shipping.whereP2}</p>
           </Prose>
         </Section>
 
         <Section heading="Tracking">
           <Prose>
-            <p>
-              Every order gets a tracking number by email the moment it leaves.
-              If it hasn&apos;t arrived within the window above, tell us and
-              we&apos;ll chase it — you shouldn&apos;t have to argue with a
-              courier on our behalf.
-            </p>
+            <p>{shipping.trackingP1}</p>
           </Prose>
         </Section>
 
         <Section heading="Packaging">
           <Prose>
-            <p>
-              Recycled mailers, no plastic filler, no branded tissue paper that
-              goes straight in the bin. The mailer is the packaging.
-            </p>
+            <p>{shipping.packagingP1}</p>
           </Prose>
         </Section>
       </div>

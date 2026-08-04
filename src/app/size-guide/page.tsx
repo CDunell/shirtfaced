@@ -1,19 +1,16 @@
 import { PageShell, Prose, Section } from "@/components/PageShell";
-import { SIZE_CHART } from "@/lib/products";
+import { sizeGuide } from "@/lib/content-data.generated";
 
 export const metadata = {
   title: "Size guide — Shirtfaced",
   description: "Measurements for every Shirtfaced tee. Boxy fit, sized honestly.",
 };
 
-const SIZES = Object.entries(SIZE_CHART);
+const SIZES = Object.entries(sizeGuide.chart);
 
 export default function SizeGuidePage() {
   return (
-    <PageShell
-      title="size guide"
-      intro="Everything is cut boxy and slightly oversized. If you want it fitted, size down. If you want it huge, you're already thinking correctly."
-    >
+    <PageShell title="size guide" intro={sizeGuide.intro}>
       <div className="overflow-x-auto rounded-[20px] border border-ink/12">
         <table className="w-full min-w-[380px] text-left text-[15px]">
           <caption className="sr-only">
@@ -44,38 +41,24 @@ export default function SizeGuidePage() {
         <Section heading="How to measure">
           <Prose>
             <p>
-              <strong>Chest</strong> — lay the tee flat, measure straight across
-              one centimetre below the armhole, seam to seam. That&apos;s a
-              half-chest measurement, so double it to compare against a body
-              measurement.
+              <strong>Chest</strong> — {sizeGuide.measureChest}
             </p>
             <p>
-              <strong>Length</strong> — from the highest point of the shoulder
-              straight down to the hem.
+              <strong>Length</strong> — {sizeGuide.measureLength}
             </p>
           </Prose>
         </Section>
 
         <Section heading="Between sizes?">
           <Prose>
-            <p>
-              Size up. These are meant to sit wide with a dropped shoulder, and
-              nobody has ever complained that a tee was too comfortable.
-            </p>
-            <p>
-              Measurements are taken flat and have a tolerance of about a
-              centimetre either way, because they&apos;re cut and sewn by people
-              rather than robots.
-            </p>
+            <p>{sizeGuide.betweenSizesP1}</p>
+            <p>{sizeGuide.betweenSizesP2}</p>
           </Prose>
         </Section>
 
         <Section heading="Care">
           <Prose>
-            <p>
-              Cold wash, inside out, hang dry. Don&apos;t iron the print unless
-              you want it to become someone else&apos;s problem.
-            </p>
+            <p>{sizeGuide.careP1}</p>
           </Prose>
         </Section>
       </div>

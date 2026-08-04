@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { IconArrowRight, IconLock, IconTruck } from "@/components/Icons";
+import { account } from "@/lib/content-data.generated";
 
 /**
  * Signed-out account view. There is no auth backend yet, so this collects
@@ -18,10 +19,7 @@ export default function AccountPage() {
       <h1 className="display text-[16vw] leading-[0.84] sm:text-[76px]">
         account
       </h1>
-      <p className="mt-4 max-w-[42ch] text-[16px] text-ink/70">
-        Accounts aren&apos;t open yet. You can still track an order — that&apos;s
-        the only bit anyone actually wants.
-      </p>
+      <p className="mt-4 max-w-[42ch] text-[16px] text-ink/70">{account.intro}</p>
 
       <section className="mt-9 rounded-[20px] border border-ink/12 p-5">
         <h2 className="display text-[22px]">Track an order</h2>
@@ -71,20 +69,19 @@ export default function AccountPage() {
       <section className="mt-6 rounded-[20px] bg-ink px-5 py-6 text-paper">
         <h2 className="display text-[22px]">What an account will do</h2>
         <ul className="mt-4 flex flex-col gap-4">
-          {[
-            { Icon: IconTruck, a: "Order history", b: "Everything you've regretted, itemised" },
-            { Icon: IconLock, a: "Faster checkout", b: "Saved address, no retyping" },
-            { Icon: IconArrowRight, a: "Early access", b: "Drops before they go public" },
-          ].map(({ Icon, a, b }) => (
-            <li key={a} className="flex items-start gap-3">
-              <Icon className="mt-0.5 h-5 w-5 shrink-0 text-paper/70" strokeWidth={1.8} />
-              <span className="text-[15px] leading-tight">
-                {a}
-                <br />
-                <span className="text-paper/55">{b}</span>
-              </span>
-            </li>
-          ))}
+          {[IconTruck, IconLock, IconArrowRight].map((Icon, i) => {
+            const { a, b } = account.benefits[i];
+            return (
+              <li key={a} className="flex items-start gap-3">
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-paper/70" strokeWidth={1.8} />
+                <span className="text-[15px] leading-tight">
+                  {a}
+                  <br />
+                  <span className="text-paper/55">{b}</span>
+                </span>
+              </li>
+            );
+          })}
         </ul>
       </section>
 

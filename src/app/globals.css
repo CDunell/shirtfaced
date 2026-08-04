@@ -128,7 +128,7 @@ body {
   }
 }
 .marquee-track {
-  animation: marquee 28s linear infinite;
+  animation: marquee 48s linear infinite;
 }
 
 /* Cart badge pop — communicates, doesn't decorate. */

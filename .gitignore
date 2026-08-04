@@ -43,5 +43,7 @@ next-env.d.ts
 
 # chrome debug profile from scripts/shot.mjs
 .chrome-shot-profile/
+.readonly-db-credentials.txt
+
 # local Claude permissions
 /.claude/settings.local.json

@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--", "--port", "3200"],
       "port": 3200
+    },
+    {
+      "name": "shirtfaced-admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "admin", "run", "dev", "--", "--port", "3201"],
+      "port": 3201
     }
   ]
 }

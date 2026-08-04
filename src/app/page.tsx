@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
+import { home } from "@/lib/content-data.generated";
 import {
   LINE_ONE,
   LINE_ONE_SIZE,
@@ -15,7 +16,7 @@ import { IconArrowRight } from "@/components/Icons";
    has to sound like us. Nothing here jokes about whether checkout is actually
    secure or whether returns actually work; the attitude sits on the brand's
    side of the promise, not the customer's risk. */
-const TRUST = ["Designed in Aus", "Zero apologies", "Returns easy as"];
+const TRUST = [home.trust1, home.trust2, home.trust3];
 
 /* Photography carries these, not colour. Accents stay reserved for the things
    that actually need emphasis: primary CTA, active nav, NEW, cart count. */
@@ -129,7 +130,7 @@ export default function Home() {
           {/* eslint-disable-next-line @next/next/no-img-element -- static export, no loader */}
           <img
             src="/products/send-it-1.webp"
-            alt="Model wearing the Send It Club tee in vintage white"
+            alt={home.promoAlt}
             width={1000}
             height={1250}
             loading="lazy"
@@ -139,7 +140,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-gradient-to-r from-ink/80 via-transparent to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-6">
             <h2 className="display max-w-[10ch] text-[32px] leading-[0.92] text-paper sm:text-[44px]">
-              dress like you&apos;ve got better plans.
+              {home.promoHeading}
             </h2>
             <span className="mt-4 inline-flex h-12 items-center gap-2.5 rounded-[18px] bg-paper pr-4 pl-5 text-[15px] font-bold text-ink">
               shop now
@@ -182,7 +183,7 @@ export default function Home() {
       <section className="mx-auto mt-12 max-w-6xl px-4 sm:px-6">
         <div className="rounded-[20px] bg-ink px-6 py-8 text-paper">
           <h2 className="display max-w-[13ch] text-[30px] leading-[0.95]">
-            we promise fewer emails than your ex.
+            {home.newsletterHeading}
           </h2>
           <form className="mt-6 flex max-w-md gap-2" action="/shop">
             <label htmlFor="email" className="sr-only">

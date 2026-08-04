@@ -1,0 +1,50 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "studio/**"
+      - "*.md"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync admin app
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=node_modules --exclude=.next --exclude=.env \
+            admin/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-admin/
+
+      - name: Build and restart admin app
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/deploy-admin.sh'
+
+      - name: Sync storefront
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=node_modules --exclude=.next --exclude=out \
+            --exclude=admin --exclude=studio --exclude=.env --exclude=.git \
+            --exclude=.github \
+            ./ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-site/
+
+      - name: Build and publish storefront
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/deploy-site.sh'
