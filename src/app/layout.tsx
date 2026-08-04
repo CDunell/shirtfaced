@@ -22,6 +22,7 @@ export const metadata: Metadata = {
   title: "Shirtfaced — Good times. Bad decisions. Zero regrets.",
   description:
     "Graphic tees for people with questionable judgement and excellent taste. Designed in Australia. Printed properly.",
+  manifest: "/site.webmanifest",
   openGraph: {
     title: "Shirtfaced",
     description: "Good times. Bad decisions. Zero regrets.",

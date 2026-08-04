@@ -111,11 +111,11 @@ export function Header() {
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
             <img
-              src="/logo-v2.png"
+              src="/logo-lockup.png"
               alt="Shirtfaced"
-              width={703}
-              height={120}
-              className="h-[26px] w-auto sm:h-[32px]"
+              width={531}
+              height={140}
+              className="h-[38px] w-auto sm:h-[46px]"
             />
           </Link>
 
@@ -161,11 +161,11 @@ export function Header() {
             <div className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-6">
               {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
               <img
-                src="/logo-v2.png"
+                src="/logo-lockup.png"
                 alt="Shirtfaced"
-                width={703}
-                height={120}
-                className="h-[24px] w-auto"
+                width={531}
+                height={140}
+                className="h-[36px] w-auto"
               />
               <button
                 type="button"
