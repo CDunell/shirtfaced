@@ -44,11 +44,16 @@ export default function Home() {
           rotating middle line. Live type at every width now. */}
       <section className="relative bg-ink text-paper sm:pb-6">
         <div className="relative mx-auto max-w-6xl sm:px-6">
-          <div className="hero-img relative aspect-[3/4] w-full bg-ink bg-cover sm:aspect-[16/9] sm:rounded-[20px]">
-            <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/10 sm:rounded-[20px]" />
+          <div className="hero-img relative aspect-[4/5] w-full bg-ink bg-cover sm:aspect-[21/9] sm:rounded-[20px]">
+            <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/35 via-45% to-transparent sm:rounded-[20px]" />
 
             <div className="absolute inset-x-0 bottom-0 p-5 sm:p-9">
-              <h1 className="display leading-[0.86]">
+              {/* The type measures against THIS box, not the hero. On mobile
+                 it fills the width; on desktop it fills a column so the
+                 photograph still has somewhere to be. All six middle lines
+                 stay flush with each other either way. */}
+              <div className="tagline-box w-full sm:max-w-[46%]">
+              <h1 className="display leading-[0.86] whitespace-nowrap">
                 <span className="block" style={{ fontSize: `${LINE_ONE_SIZE}cqw` }}>
                   {LINE_ONE}
                 </span>
@@ -70,6 +75,7 @@ export default function Home() {
                   {LINE_THREE}
                 </span>
               </h1>
+              </div>
 
               <Link
                 href="/shop"

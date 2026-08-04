@@ -29,39 +29,39 @@ export type Tagline = {
 
 export const TAGLINES: Tagline[] = [
   {
-    line: "BAD INFLUENCES.",
+    line: "BAD INFLUENCES",
     image: "/products/good-times-1.webp",
-    size: 12.4,
+    size: 16.4,
     position: "50% 30%",
   },
   {
-    line: "COMPLETE CHAOS.",
+    line: "COMPLETE CHAOS",
     image: "/products/permanent.webp",
-    size: 11.5,
+    size: 15.2,
     position: "50% 40%",
   },
   {
-    line: "FUCK YES.",
+    line: "FUCK YES",
     image: "/products/hero-street.webp",
-    size: 21.2,
+    size: 28.9,
     position: "50% 38%",
   },
   {
-    line: "NO PLAN.",
+    line: "NO PLAN",
     image: "/products/cold-beer-1.webp",
-    size: 23.1,
+    size: 31.7,
     position: "50% 32%",
   },
   {
-    line: "WENT SIDEWAYS.",
+    line: "WENT SIDEWAYS",
     image: "/products/midnight-service.webp",
-    size: 12.4,
+    size: 16.5,
     position: "50% 42%",
   },
   {
-    line: "DUBIOUS CHOICES.",
+    line: "DUBIOUS CHOICES",
     image: "/products/roll-the-dice-1.webp",
-    size: 11.6,
+    size: 15.4,
     position: "50% 30%",
   },
 ];
@@ -70,5 +70,5 @@ export const LINE_ONE = "GOOD TIMES.";
 export const LINE_THREE = "ZERO REGRETS.";
 
 /** Sizes for the two fixed lines, same treatment so all three flush left/right. */
-export const LINE_ONE_SIZE = 16.4;
-export const LINE_THREE_SIZE = 14.24;
+export const LINE_ONE_SIZE = 21.0;
+export const LINE_THREE_SIZE = 18.2;

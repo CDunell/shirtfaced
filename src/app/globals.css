@@ -224,8 +224,13 @@ body {
    CHOICES." (16) overflows. Sizes are measured per line.
 --------------------------------------------------------------------------- */
 .hero-img {
-  container-type: inline-size;
   background-position: 50% 35%;
+}
+/* cqw on the tagline resolves against this box. Sizing it narrower on desktop
+   scales the whole block down without breaking the flush-width relationship
+   between the six lines. */
+.tagline-box {
+  container-type: inline-size;
 }
 .tl {
   display: none;
