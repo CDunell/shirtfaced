@@ -28,8 +28,8 @@ export default function Home() {
           Art-directed: the wide banner carries its own typography and only
           works at desktop widths, so mobile gets the product shot with live
           text over it instead. <picture> means exactly one image downloads. */}
-      <section className="relative bg-ink text-paper">
-        <div className="relative mx-auto max-w-6xl sm:mb-6 sm:px-6">
+      <section className="relative bg-ink text-paper sm:pb-6">
+        <div className="relative mx-auto max-w-6xl sm:px-6">
           <picture>
             <source
               media="(min-width: 640px)"
@@ -170,7 +170,7 @@ export default function Home() {
           <h2 className="display max-w-[13ch] text-[30px] leading-[0.95]">
             we promise fewer emails than your ex.
           </h2>
-          <form className="mt-6 flex gap-2" action="/shop">
+          <form className="mt-6 flex max-w-md gap-2" action="/shop">
             <label htmlFor="email" className="sr-only">
               Email address
             </label>
