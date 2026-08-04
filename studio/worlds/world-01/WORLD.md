@@ -309,9 +309,25 @@ All consumables and packaging must also be generic, including:
 - Food wrappers
 - Convenience-store packaging
 
-No readable branding or commercial logos may appear anywhere in the image.
+No readable third-party branding or commercial logos may appear anywhere in the
+image.
 
-If any visible branding appears, the image has failed the brief.
+If any third-party branding appears, the image has failed the brief.
+
+## Shirtfaced Is The Exception
+
+This rule bans other people's brands. It does not ban Shirtfaced.
+
+The environmental easter eggs described under Environmental Branding are
+permitted: a neon slogan in a pub, a faded esky sticker, a coaster, a window
+decal, a weathered poster, street art, a hand stamp.
+
+They must remain incidental scenery. They are never the subject of the
+photograph and never read as an advertisement.
+
+The blank-garment rule above is not relaxed by this exception. Every t-shirt,
+hoodie, cap, overshirt, jacket and tote bag worn or carried in frame stays
+completely blank, and all consumables and packaging stay generic.
 
 
 ------------------------------------------------------------------------

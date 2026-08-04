@@ -242,30 +242,34 @@ a file and re-import, and the hash changes. Nothing breaks; it is a record.
 
 ---
 
-## 6. A canon conflict that needs your decision
+## 6. A canon conflict, now resolved
 
-`# Environmental Branding` and `# Global Production Rule — No Visible Branding`
-contradict each other, and both are now sent to the planning model.
+`# Environmental Branding` and `# Global Production Rule — No Visible Branding` used to
+contradict each other, and both are sent to the planning model.
 
 - **Environmental Branding** permits a neon Shirtfaced slogan in a pub, a faded esky
   sticker, a coaster, a window decal — "easter eggs, not advertisements".
-- **Global Production Rule** says "No readable branding or commercial logos may appear
+- **Global Production Rule** said "No readable branding or commercial logos may appear
   anywhere in the image" and "If any visible branding appears, the image has failed the
   brief."
 
-Read literally the second forbids the first. The likely intent is that *third-party*
-branding is forbidden while a subtle *Shirtfaced* environmental mark is permitted, but
-the document does not say that, and the rejected drift entry for the house party
-("all garments, food packaging, bottles, cans, cartons and takeaway containers must be
-generic and unbranded") pushes the other way.
+Read literally, the second forbade the first.
 
-Please resolve this in `WORLD.md` rather than leaving the model to guess. Either:
+**The owner's decision: the ban is on third-party branding only.** Shirtfaced is the
+exception. `WORLD.md` now says so under
+`## Shirtfaced Is The Exception`, and the two absolute sentences above are qualified
+with "third-party".
 
-- amend the Global Production Rule to say "no third-party or commercial branding",
-  explicitly permitting the Shirtfaced easter eggs; or
-- remove or retire the Environmental Branding section.
+Two limits were kept deliberately, because relaxing them would contradict the rejected
+drift lesson from the house party:
 
-This was not resolved in code. Canon is yours to decide.
+- Shirtfaced easter eggs are **environmental scenery only** — signage, stickers,
+  coasters, decals, posters, street art, hand stamps. They are never the subject.
+- **Garments stay blank.** Every t-shirt, hoodie, cap, overshirt, jacket and tote bag
+  in frame is still completely blank, and all consumables and packaging still generic.
+
+If either limit is wrong, say so and the section gets amended — this is canon, so it
+changes only on your word.
 
 ---
 
