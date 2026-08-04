@@ -40,6 +40,14 @@ Vercel, or any static host — no server runtime required.
 windows, fabric weights, size measurements and product descriptions are
 currently invented placeholder copy and need real figures before launch.
 
+## Studio
+
+`studio/` holds the build pack for **Shirtfaced Studio** — a separate
+local-first Python/FastAPI + PostgreSQL app for producing the brand's
+photographic worlds. It is specification only at this point (no code yet);
+start at [studio/START_CODEX.md](studio/START_CODEX.md). It does not share a
+runtime or a toolchain with the storefront above.
+
 ## Next steps
 
 - Wire up real checkout (e.g. Stripe Checkout or Shopify) — **read
