@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useCart } from "@/lib/cart-context";
+import { products } from "@/lib/products";
+import { ProductMedia } from "./ProductMedia";
 import { IconBag, IconClose, IconMenu, IconSearch } from "./Icons";
 
-const MENU = [
+const SHOP = [
   { href: "/shop", label: "shop all" },
   { href: "/shop?f=new", label: "new drops" },
   { href: "/shop?f=tees", label: "tees" },
@@ -15,8 +17,15 @@ const MENU = [
   { href: "/shop?f=accessories", label: "accessories" },
 ];
 
-/* The bottom nav is gone, so the drawer is the only route to these. */
-const SECONDARY = [
+const COLLECTIONS = [
+  { href: "/shop", label: "after dark" },
+  { href: "/shop", label: "send it" },
+  { href: "/shop", label: "warm nights" },
+  { href: "/shop", label: "street" },
+];
+
+/* No bottom nav any more, so these live in the menu only. */
+const HELP = [
   { href: "/account", label: "account" },
   { href: "/about", label: "about" },
   { href: "/shipping", label: "shipping" },
@@ -26,11 +35,46 @@ const SECONDARY = [
   { href: "/more", label: "more" },
 ];
 
+function MegaColumn({
+  heading,
+  items,
+  onNavigate,
+}: {
+  heading: string;
+  items: { href: string; label: string }[];
+  onNavigate: () => void;
+}) {
+  return (
+    <div>
+      <h3 className="text-[12px] font-semibold tracking-wider text-paper/40 uppercase">
+        {heading}
+      </h3>
+      <ul className="mt-4 flex flex-col gap-2.5">
+        {items.map((i) => (
+          <li key={i.label}>
+            <Link
+              href={i.href}
+              onClick={onNavigate}
+              className="text-[17px] text-paper/85 transition-colors duration-150 hover:text-lime"
+            >
+              {i.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function Header() {
   const { itemCount, addTick, hydrated } = useCart();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false); // mobile full-page menu
+  const [mega, setMega] = useState(false); // desktop mega panel
   const [pop, setPop] = useState(false);
   const first = useRef(true);
+  const megaWrap = useRef<HTMLDivElement>(null);
+
+  const featured = products.find((p) => p.colours[0].images) ?? products[0];
 
   // Badge pops on add — communicates, doesn't decorate.
   useEffect(() => {
@@ -51,40 +95,129 @@ export function Header() {
   }, [open]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      setOpen(false);
+      setMega(false);
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Close the mega panel when focus leaves it entirely — keyboard users need
+  // an exit that isn't "move the mouse away".
+  const onBlurCapture = (e: React.FocusEvent) => {
+    if (!megaWrap.current?.contains(e.relatedTarget as Node)) setMega(false);
+  };
+
+  const closeAll = () => {
+    setOpen(false);
+    setMega(false);
+  };
+
   return (
     <>
       <header className="sticky top-0 z-40 bg-ink text-paper">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+          {/* Mobile: hamburger. Desktop: inline nav instead. */}
           <button
             type="button"
             onClick={() => setOpen(true)}
             aria-label="Open menu"
             aria-expanded={open}
-            className="press -ml-2 grid h-12 w-12 place-items-center rounded-[14px]"
+            className="press -ml-2 grid h-12 w-12 place-items-center rounded-[14px] md:hidden"
           >
             <IconMenu className="h-6 w-6" />
           </button>
 
           <Link
             href="/"
-            className="press flex items-center gap-1.5"
+            className="press flex items-center md:order-first"
             aria-label="Shirtfaced — home"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element -- static
-                export; explicit dimensions keep CLS at zero */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
             <img
               src="/logo-v2.png"
               alt="Shirtfaced"
               width={703}
               height={120}
-              className="h-[26px] w-auto sm:h-[32px]"
+              className="h-[26px] w-auto sm:h-[30px]"
             />
           </Link>
+
+          {/* Desktop nav */}
+          <nav
+            ref={megaWrap}
+            onBlurCapture={onBlurCapture}
+            onMouseLeave={() => setMega(false)}
+            className="hidden md:flex md:flex-1 md:items-center md:gap-7"
+          >
+            <button
+              type="button"
+              onMouseEnter={() => setMega(true)}
+              onFocus={() => setMega(true)}
+              onClick={() => setMega((m) => !m)}
+              aria-expanded={mega}
+              aria-controls="mega"
+              className={`press h-16 text-[15px] font-semibold tracking-wide uppercase transition-colors ${
+                mega ? "text-lime" : "hover:text-lime"
+              }`}
+            >
+              Shop
+            </button>
+            <Link
+              href="/shop?f=new"
+              onMouseEnter={() => setMega(false)}
+              className="press text-[15px] font-semibold tracking-wide uppercase hover:text-lime"
+            >
+              New drops
+            </Link>
+            <Link
+              href="/about"
+              onMouseEnter={() => setMega(false)}
+              className="press text-[15px] font-semibold tracking-wide uppercase hover:text-lime"
+            >
+              About
+            </Link>
+
+            {/* Mega panel — anchored to the header, full bleed */}
+            {mega && (
+              <div
+                id="mega"
+                className="fade-rise absolute inset-x-0 top-16 border-t border-ink-line bg-ink"
+              >
+                <div className="mx-auto grid max-w-6xl grid-cols-[repeat(3,minmax(0,1fr))_320px] gap-10 px-6 py-10">
+                  <MegaColumn heading="Shop" items={SHOP} onNavigate={closeAll} />
+                  <MegaColumn
+                    heading="Collections"
+                    items={COLLECTIONS}
+                    onNavigate={closeAll}
+                  />
+                  <MegaColumn heading="Help" items={HELP} onNavigate={closeAll} />
+
+                  <Link
+                    href={`/products/${featured.slug}`}
+                    onClick={closeAll}
+                    className="press group"
+                  >
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-[20px] bg-paper-2">
+                      <ProductMedia
+                        product={featured}
+                        garment={featured.colours[0]}
+                        sizes="320px"
+                        className="transition-transform duration-[240ms] group-hover:scale-[1.03]"
+                      />
+                      <span className="absolute top-3 left-3 rounded-[10px] bg-lime px-2.5 py-1 text-[11px] font-bold tracking-wide text-ink uppercase">
+                        Featured
+                      </span>
+                    </div>
+                    <p className="display mt-3 text-[17px]">{featured.name}</p>
+                    <p className="text-[14px] text-paper/50">{featured.blurb}</p>
+                  </Link>
+                </div>
+              </div>
+            )}
+          </nav>
 
           <div className="flex items-center">
             <Link
@@ -114,25 +247,24 @@ export function Header() {
         </div>
       </header>
 
-      {/* Full-page menu — same treatment at every width. A drawer that only
-         partly covers a 1440px screen strands the links in a narrow column
-         with a field of empty black beside them. */}
+      {/* Mobile full-page menu. Desktop uses the mega panel above — a
+         full-bleed black page for seven links wastes a 1440px screen. */}
       {open && (
         <div
-          className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-ink text-paper"
+          className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-ink text-paper md:hidden"
           role="dialog"
           aria-modal="true"
           aria-label="Menu"
         >
           <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pt-5 pb-10 sm:px-6">
-            <div className="mb-8 flex items-center justify-between md:mb-14">
+            <div className="mb-8 flex items-center justify-between">
               {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
               <img
                 src="/logo-v2.png"
                 alt="Shirtfaced"
                 width={703}
                 height={120}
-                className="h-[26px] w-auto sm:h-[32px]"
+                className="h-[26px] w-auto"
               />
               <button
                 type="button"
@@ -145,12 +277,12 @@ export function Header() {
             </div>
 
             <ul className="flex flex-col gap-1">
-              {MENU.map((m) => (
+              {SHOP.map((m) => (
                 <li key={m.label}>
                   <Link
                     href={m.href}
-                    onClick={() => setOpen(false)}
-                    className="press block rounded-[14px] py-2.5 text-[30px] leading-tight font-medium md:py-3 md:text-[44px]"
+                    onClick={closeAll}
+                    className="press block rounded-[14px] py-2.5 text-[30px] leading-tight font-medium"
                   >
                     {m.label}
                   </Link>
@@ -159,22 +291,20 @@ export function Header() {
               <li>
                 <Link
                   href="/shop"
-                  onClick={() => setOpen(false)}
-                  className="press block rounded-[14px] py-2.5 text-[30px] leading-tight font-medium text-pink md:py-3 md:text-[44px]"
+                  onClick={closeAll}
+                  className="press block rounded-[14px] py-2.5 text-[30px] leading-tight font-medium text-pink"
                 >
                   sale
                 </Link>
               </li>
             </ul>
 
-            {/* Pushed to the foot of the viewport so the menu fills the page
-               rather than trailing off. */}
             <div className="mt-auto border-t border-ink-line pt-8">
               <ul className="flex flex-wrap gap-x-7 gap-y-3 text-[15px] text-paper/55">
-                {SECONDARY.map((sec) => (
-                  <li key={sec.href}>
-                    <Link href={sec.href} onClick={() => setOpen(false)}>
-                      {sec.label}
+                {HELP.map((h) => (
+                  <li key={h.href}>
+                    <Link href={h.href} onClick={closeAll}>
+                      {h.label}
                     </Link>
                   </li>
                 ))}
