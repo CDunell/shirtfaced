@@ -31,37 +31,37 @@ export const TAGLINES: Tagline[] = [
   {
     line: "BAD INFLUENCES",
     image: "/products/good-times-1.webp",
-    size: 16.4,
+    size: 15.6,
     position: "50% 30%",
   },
   {
     line: "COMPLETE CHAOS",
     image: "/products/permanent.webp",
-    size: 15.2,
+    size: 14.5,
     position: "50% 40%",
   },
   {
     line: "FUCK YES",
     image: "/products/hero-street.webp",
-    size: 28.9,
+    size: 27.5,
     position: "50% 38%",
   },
   {
     line: "NO PLAN",
     image: "/products/cold-beer-1.webp",
-    size: 31.7,
+    size: 30.2,
     position: "50% 32%",
   },
   {
     line: "WENT SIDEWAYS",
     image: "/products/midnight-service.webp",
-    size: 16.5,
+    size: 15.7,
     position: "50% 42%",
   },
   {
     line: "DUBIOUS CHOICES",
     image: "/products/roll-the-dice-1.webp",
-    size: 15.4,
+    size: 14.7,
     position: "50% 30%",
   },
 ];
@@ -69,6 +69,7 @@ export const TAGLINES: Tagline[] = [
 export const LINE_ONE = "GOOD TIMES.";
 export const LINE_THREE = "ZERO REGRETS.";
 
-/** Sizes for the two fixed lines, same treatment so all three flush left/right. */
-export const LINE_ONE_SIZE = 21.0;
-export const LINE_THREE_SIZE = 18.2;
+/** One shared size for the two fixed lines, so they keep their natural
+ *  ragged widths. The rotating line is measured against the wider of them. */
+export const LINE_ONE_SIZE = 17.9;
+export const LINE_THREE_SIZE = 17.9;

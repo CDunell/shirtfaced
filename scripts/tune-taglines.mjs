@@ -1,6 +1,7 @@
 /**
- * Measure each hero tagline and report the cqw size that makes it fill the
- * hero width. Anton is single-weight, so line length alone decides how wide a
+ * Measure each hero tagline against the .tagline-box — the element the type
+ * actually resolves cqw against. Lines 1 and 3 share a size and stay ragged;
+ * only the rotating line is fitted, so it holds one width as it changes. Anton is single-weight, so line length alone decides how wide a
  * string renders — the sizes in lib/taglines.ts have to be measured, not
  * guessed, or short lines strand whitespace and long ones overflow.
  *
@@ -26,8 +27,7 @@ await once("Page.loadEventFired"); await sleep(2500);
 // Target: the widest of the two fixed lines, so all three read as one block.
 const {result} = await send("Runtime.evaluate",{returnByValue:true,expression:`(async()=>{
  await document.fonts.ready;
- const hero=document.querySelector('.hero-img');
- const box=hero.clientWidth;
+ const box=document.querySelector('.tagline-box').clientWidth;
  const spans=[...document.querySelector('h1').children];
  const fixed=[spans[0],spans[2]].map(e=>({t:e.textContent.trim(),
    w:e.firstChild?e.getBoundingClientRect().width:0,
