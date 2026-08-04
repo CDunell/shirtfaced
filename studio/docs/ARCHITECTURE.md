@@ -34,7 +34,7 @@ PostgreSQL
 ```text
 shirtfaced-studio/
 ├── AGENTS.md
-├── START_CODEX.md
+├── WORKING_AGREEMENT.md
 ├── README.md
 ├── pyproject.toml
 ├── .env.example

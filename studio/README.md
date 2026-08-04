@@ -94,9 +94,19 @@ Three things catch people out:
   (for example `-p 55432:5432`) instead of 5432, so there is no ambiguity about which
   server you reach.
 
+## How the work is split
+
+`WORKING_AGREEMENT.md` records who does what: creative direction is developed wherever
+the visual thinking happens, and the result arrives here as a proposal. The
+authoritative world documents are edited, validated, imported and committed in this
+repository, because only here can a change be checked immediately and only here is it
+known which headings the planner actually reads.
+
+The repository is the source of truth. Anything exported elsewhere goes stale.
+
 ## Required reading order
 
-Codex must read:
+Read:
 
 1. `AGENTS.md`
 2. `docs/PRODUCT_SPEC.md`
@@ -109,3 +119,6 @@ Codex must read:
 9. `docs/ORACLE_CLOUD_DEPLOYMENT.md`
 
 Do not begin implementation before reading all nine documents.
+
+Anyone writing the world documents should also read `docs/HANDOVER_PHASE_2.md`, which
+describes what the application currently reads from them.
