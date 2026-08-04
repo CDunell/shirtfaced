@@ -294,7 +294,10 @@ def _build_documents(
             shot_external_id=shot.external_id,
             label=shot.title,
             reason=decision.reason or "No reason recorded.",
-            lesson=review.material_drift if review else None,
+            # Only a lesson the reviewer deliberately proposed. material_drift is
+            # ordinary review prose describing this image; promoting it to a
+            # permanent lesson would narrow the world on the strength of one frame.
+            lesson=review.new_rule_proposal if review else None,
         ),
     )
     return {CONTINUITY_DOCUMENT: continuity}

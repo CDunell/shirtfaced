@@ -620,3 +620,66 @@ def test_a_markdown_failure_leaves_the_documents_untouched(
     assert outcome.markdown_sync is SyncState.FAILED
     assert outcome.reconciliation_required
     assert continuity.read_bytes() == before
+
+
+# --- permanent lessons are never inferred ------------------------------------------
+
+
+def test_ordinary_review_prose_never_becomes_a_permanent_lesson(
+    session: Session, decidable: GenerationAttempt, worlds_root: Path, assets_root: Path
+) -> None:
+    """A permanent lesson narrows the world, so it must be deliberate.
+
+    ``material_drift`` describes what went wrong in this one frame. Only
+    ``new_rule_proposal`` is the reviewer stating a repeatable rule.
+    """
+    review = decidable.latest_review
+    assert review is not None
+    review.raw_json = {
+        **review.raw_json,
+        "material_drift": "The ute in this frame reads as an American pickup.",
+        "new_rule_proposal": None,
+    }
+    review.material_drift = "The ute in this frame reads as an American pickup."
+    session.flush()
+
+    _decide(
+        session,
+        decidable,
+        HumanDecisionKind.REJECTED,
+        worlds_root,
+        assets_root,
+        reason="The vehicle is wrong.",
+    )
+
+    continuity = (worlds_root / "world-01" / CONTINUITY_DOCUMENT).read_text(encoding="utf-8")
+    entry = subsections_of(continuity, writer.REJECTED_DRIFT_HEADING)[0]
+
+    assert "**Permanent lesson:** No new permanent lesson." in entry.body
+    assert "American pickup" not in entry.body
+
+
+def test_a_deliberate_proposal_does_become_the_lesson(
+    session: Session, decidable: GenerationAttempt, worlds_root: Path, assets_root: Path
+) -> None:
+    review = decidable.latest_review
+    assert review is not None
+    review.raw_json = {
+        **review.raw_json,
+        "new_rule_proposal": "Every ute prompt must require an open alloy tray.",
+    }
+    session.flush()
+
+    _decide(
+        session,
+        decidable,
+        HumanDecisionKind.REJECTED,
+        worlds_root,
+        assets_root,
+        reason="The vehicle is wrong.",
+    )
+
+    continuity = (worlds_root / "world-01" / CONTINUITY_DOCUMENT).read_text(encoding="utf-8")
+    entry = subsections_of(continuity, writer.REJECTED_DRIFT_HEADING)[0]
+
+    assert "open alloy tray" in entry.body

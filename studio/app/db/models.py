@@ -367,6 +367,16 @@ class AutomatedReview(Base):
 
     attempt: Mapped[GenerationAttempt] = relationship(back_populates="reviews")
 
+    @property
+    def new_rule_proposal(self) -> str | None:
+        """The rule the reviewer deliberately proposed, if any.
+
+        Distinct from ``material_drift``, which describes what went wrong in this one
+        frame. Only this becomes a permanent lesson; drift prose never does.
+        """
+        value = (self.raw_json or {}).get("new_rule_proposal")
+        return str(value).strip() or None if value else None
+
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<AutomatedReview {self.recommendation.value!r}>"
 
