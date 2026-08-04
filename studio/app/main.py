@@ -12,7 +12,7 @@ from fastapi import FastAPI
 
 from app import __version__
 from app.config import get_settings
-from app.routes import api, health
+from app.routes import api, assets, health
 from app.web import mount_interface
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ def create_app() -> FastAPI:
     # them.
     application.include_router(health.router)
     application.include_router(api.router)
+    application.include_router(assets.router)
 
     dist_root = settings.web_dist_root_resolved
     if mount_interface(application, dist_root):

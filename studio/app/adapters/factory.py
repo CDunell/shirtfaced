@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import logging
 
+from app.adapters.image_generation import (
+    FakeImageGenerationClient,
+    ImageGenerationClient,
+    OpenAIImageGenerationClient,
+)
 from app.adapters.planning import (
     FakePromptPlanningClient,
     OpenAIPromptPlanningClient,
@@ -43,5 +48,36 @@ def build_planning_client(settings: Settings) -> PromptPlanningClient:
             timeout=settings.openai_timeout_seconds,
         ),
         model=settings.openai_text_model,
+        timeout_seconds=settings.openai_timeout_seconds,
+    )
+
+
+def image_client_is_live(settings: Settings) -> bool:
+    """Whether a real, billable image client would be built."""
+    return bool(settings.openai_api_key and settings.openai_image_model)
+
+
+def build_image_client(settings: Settings) -> ImageGenerationClient:
+    """The image generation client for these settings.
+
+    Image calls are the expensive ones, so the same rule applies as for planning:
+    without both a key and an explicitly configured model, the fake runs instead.
+    """
+    if not image_client_is_live(settings):
+        logger.info(
+            "Using the fake image client: OPENAI_API_KEY and OPENAI_IMAGE_MODEL are "
+            "not both set. No image will be billed."
+        )
+        return FakeImageGenerationClient()
+
+    from openai import OpenAI
+
+    assert settings.openai_api_key is not None
+    return OpenAIImageGenerationClient(
+        client=OpenAI(
+            api_key=settings.openai_api_key.get_secret_value(),
+            timeout=settings.openai_timeout_seconds,
+        ),
+        model=settings.openai_image_model,
         timeout_seconds=settings.openai_timeout_seconds,
     )

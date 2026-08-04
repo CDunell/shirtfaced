@@ -7,7 +7,15 @@
 
 import { vi } from "vitest";
 
-import type { NextShot, PlanPreview, Shot, WorldDetail, WorldSummary } from "../api/client";
+import type {
+  Attempt,
+  GenerationResult,
+  NextShot,
+  PlanPreview,
+  Shot,
+  WorldDetail,
+  WorldSummary,
+} from "../api/client";
 
 export const HEALTH = { status: "ok", version: "0.1.0" };
 
@@ -108,6 +116,38 @@ export function planPreview(overrides: Partial<PlanPreview> = {}): PlanPreview {
   };
 }
 
+export function attempt(overrides: Partial<Attempt> = {}): Attempt {
+  return {
+    id: "attempt-1",
+    attempt_number: 1,
+    state: "generated",
+    shot: shot(),
+    selection_reason: "W01-011 chosen from 2 eligible planned shots.",
+    production_prompt: "Documentary 35mm photograph of friends reorganising a car.",
+    prompt_plan: null,
+    image_model: "a-test-model",
+    image_size: "1536x1024",
+    image_quality: "high",
+    provider_request_id: "req-1",
+    hero_product: "Tote bag",
+    camera_position: "Rear seat",
+    world_document_hash: "a".repeat(64),
+    shotlist_document_hash: "c".repeat(64),
+    failure_code: null,
+    failure_message: null,
+    parent_attempt_id: null,
+    created_at: "2026-08-05T00:00:00Z",
+    image_url: "/assets/asset-1",
+    thumbnail_url: "/assets/asset-2",
+    approved: false,
+    ...overrides,
+  };
+}
+
+export function generationResult(overrides: Partial<GenerationResult> = {}): GenerationResult {
+  return { attempt: attempt(), live: false, ...overrides };
+}
+
 export interface Routes {
   health?: unknown;
   worlds?: unknown;
@@ -117,6 +157,10 @@ export interface Routes {
   planPreview?: unknown;
   planStatus?: number;
   planDetail?: string;
+  attempts?: unknown;
+  generation?: unknown;
+  generationStatus?: number;
+  generationDetail?: string;
 }
 
 /** Install a fetch stub answering the endpoints the app uses. */
@@ -127,6 +171,20 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
     }
     if (input === "/api/worlds") {
       return Promise.resolve(new Response(JSON.stringify(routes.worlds ?? [WORLD_SUMMARY])));
+    }
+    if (input.endsWith("/attempts")) {
+      return Promise.resolve(new Response(JSON.stringify(routes.attempts ?? [])));
+    }
+    if (input.endsWith("/continue")) {
+      const generationStatus = routes.generationStatus ?? 201;
+      if (generationStatus >= 400) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ detail: routes.generationDetail ?? "refused" }), {
+            status: generationStatus,
+          }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify(routes.generation ?? generationResult())));
     }
     if (input.endsWith("/next-shot")) {
       return Promise.resolve(new Response(JSON.stringify(routes.nextShot ?? nextShot())));

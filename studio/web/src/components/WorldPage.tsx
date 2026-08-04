@@ -16,6 +16,7 @@ import { Tag, HIERARCHY, KIND as TAG_KIND } from "baseui/tag";
 import { HeadingSmall, LabelSmall, MonoLabelXSmall, ParagraphSmall } from "baseui/typography";
 
 import { ApiError, fetchWorld, fetchWorlds, type Shot, type WorldDetail } from "../api/client";
+import { GenerationPanel } from "./GenerationPanel";
 import { SelectionPanel } from "./SelectionPanel";
 import { ShotStatusTag, statusLabel } from "./ShotStatusTag";
 
@@ -178,6 +179,8 @@ export function WorldPage(): React.JSX.Element {
         })}
       >
         <SelectionPanel slug={world.slug} />
+
+        <GenerationPanel slug={world.slug} onGenerated={() => void load()} />
 
         <Card title="Loaded canon">
           <StyledBody>

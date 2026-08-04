@@ -6,6 +6,7 @@ proposals arrive with the phases that implement them.
 
 from __future__ import annotations
 
+import datetime as dt
 import uuid
 from typing import Annotated
 
@@ -14,15 +15,28 @@ from pydantic import BaseModel, ConfigDict
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
-from app.adapters.factory import build_planning_client, planning_client_is_live
+from app.adapters.asset_store import FilesystemAssetStore
+from app.adapters.factory import (
+    build_image_client,
+    build_planning_client,
+    image_client_is_live,
+    planning_client_is_live,
+)
 from app.adapters.markdown_store import WORLD_DOCUMENT, MarkdownStore
 from app.adapters.planning import PlanningError
 from app.config import Settings, get_settings
-from app.db.models import Shot, World
+from app.db.models import GenerationAttempt, Shot, World
 from app.db.session import get_db_session
-from app.domain.enums import ShotStatus, WorldStatus
+from app.domain.enums import AssetKind, AttemptState, FailureCode, ShotStatus, WorldStatus
 from app.domain.errors import StudioError
 from app.domain.schemas import PromptPlan
+from app.services.generation_orchestrator import (
+    GenerationConflict,
+    GenerationSettings,
+    NothingToGenerate,
+    run_attempt,
+    start_attempt,
+)
 from app.services.prompt_planner import build_request, create_plan
 from app.services.rotation import apply_continuity, rotation_from_shots
 from app.services.shot_selector import NoSelection, Selection, select_next_shot
@@ -124,6 +138,90 @@ class PlanPreviewResponse(BaseModel):
     plan: PromptPlan
     # Whether a billable model produced this, or the deterministic fake did.
     live: bool
+
+
+class AssetResponse(BaseModel):
+    """A stored image."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    kind: AssetKind
+    sha256: str
+    mime_type: str
+    width: int | None
+    height: int | None
+    byte_size: int
+
+    @property
+    def url(self) -> str:
+        return f"/assets/{self.id}"
+
+
+class AttemptResponse(BaseModel):
+    """One generation attempt with everything needed to explain it."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    attempt_number: int
+    state: AttemptState
+    shot: ShotResponse
+    selection_reason: str | None
+    production_prompt: str | None
+    prompt_plan: PromptPlan | None
+    image_model: str | None
+    image_size: str | None
+    image_quality: str | None
+    provider_request_id: str | None
+    # The shot and canon versions as they stood when this ran.
+    hero_product: str | None
+    camera_position: str | None
+    world_document_hash: str | None
+    shotlist_document_hash: str | None
+    failure_code: FailureCode | None
+    failure_message: str | None
+    parent_attempt_id: uuid.UUID | None
+    created_at: dt.datetime
+    image_url: str | None
+    thumbnail_url: str | None
+    # A generated image is an image, not a decision.
+    approved: bool
+
+
+def _asset_url(attempt: GenerationAttempt, kind: AssetKind) -> str | None:
+    for asset in attempt.assets:
+        if asset.kind is kind:
+            return f"/assets/{asset.id}"
+    return None
+
+
+def _attempt_response(attempt: GenerationAttempt) -> AttemptResponse:
+    plan = attempt.prompt_plan_json
+    return AttemptResponse(
+        id=attempt.id,
+        attempt_number=attempt.attempt_number,
+        state=attempt.state,
+        shot=ShotResponse.model_validate(attempt.shot),
+        selection_reason=attempt.selection_reason,
+        production_prompt=attempt.production_prompt,
+        prompt_plan=PromptPlan.model_validate(plan) if plan else None,
+        image_model=attempt.image_model,
+        image_size=attempt.image_size,
+        image_quality=attempt.image_quality,
+        provider_request_id=attempt.provider_request_id,
+        hero_product=attempt.hero_product,
+        camera_position=attempt.camera_position,
+        world_document_hash=attempt.world_document_hash,
+        shotlist_document_hash=attempt.shotlist_document_hash,
+        failure_code=attempt.failure_code,
+        failure_message=attempt.failure_message,
+        parent_attempt_id=attempt.parent_attempt_id,
+        created_at=attempt.created_at,
+        image_url=_asset_url(attempt, AssetKind.ORIGINAL),
+        thumbnail_url=_asset_url(attempt, AssetKind.THUMBNAIL),
+        approved=attempt.state is AttemptState.APPROVED,
+    )
 
 
 def _load_world(session: Session, world_slug: str) -> World:
@@ -259,3 +357,99 @@ def preview_plan(
         plan=result.plan,
         live=planning_client_is_live(settings),
     )
+
+
+class GenerationResponse(BaseModel):
+    """The result of one Continue World action."""
+
+    attempt: AttemptResponse
+    # Whether a billable model produced this, or the deterministic fakes did.
+    live: bool
+
+
+@router.post(
+    "/worlds/{world_slug}/continue",
+    summary="Continue Shirtfaced World",
+    status_code=status.HTTP_201_CREATED,
+)
+def continue_world(
+    world_slug: str, session: SessionDependency, settings: SettingsDependency
+) -> GenerationResponse:
+    """Select the next shot, plan its prompt and generate one image.
+
+    Synchronous, per ADR-010, and exactly one image per action, per ADR-009. The
+    attempt is left awaiting a human decision; nothing here approves anything.
+    """
+    world = _load_world(session, world_slug)
+
+    try:
+        attempt, selection = start_attempt(session, world)
+    except GenerationConflict as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except NothingToGenerate as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+
+    completed = run_attempt(
+        session,
+        attempt,
+        selection,
+        markdown_store=MarkdownStore(settings.worlds_root_resolved),
+        planning_client=build_planning_client(settings),
+        image_client=build_image_client(settings),
+        asset_store=FilesystemAssetStore(settings.assets_root_resolved),
+        settings=GenerationSettings(
+            model=settings.openai_image_model or "fake-image-model",
+            size=settings.openai_image_size,
+            quality=settings.openai_image_quality,
+        ),
+    )
+
+    return GenerationResponse(
+        attempt=_attempt_response(completed),
+        live=image_client_is_live(settings),
+    )
+
+
+@router.get("/worlds/{world_slug}/attempts", summary="Attempt history")
+def list_attempts(
+    world_slug: str, session: SessionDependency, limit: int = 20
+) -> list[AttemptResponse]:
+    """Attempts for a world, newest first."""
+    world = _load_world(session, world_slug)
+
+    attempts = (
+        session.execute(
+            select(GenerationAttempt)
+            .where(GenerationAttempt.world_id == world.id)
+            .order_by(GenerationAttempt.created_at.desc())
+            .limit(max(1, min(limit, 100)))
+            .options(
+                selectinload(GenerationAttempt.assets),
+                selectinload(GenerationAttempt.shot),
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    return [_attempt_response(attempt) for attempt in attempts]
+
+
+@router.get("/attempts/{attempt_id}", summary="One attempt")
+def get_attempt(attempt_id: uuid.UUID, session: SessionDependency) -> AttemptResponse:
+    """One attempt with its prompt, image and provenance."""
+    attempt = session.execute(
+        select(GenerationAttempt)
+        .where(GenerationAttempt.id == attempt_id)
+        .options(
+            selectinload(GenerationAttempt.assets),
+            selectinload(GenerationAttempt.shot),
+        )
+    ).scalar_one_or_none()
+
+    if attempt is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such attempt.")
+
+    return _attempt_response(attempt)

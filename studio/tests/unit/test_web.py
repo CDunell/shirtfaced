@@ -13,10 +13,16 @@ from app.web import mount_interface
 
 
 def _build_dist(root: Path) -> Path:
+    """A stand-in for a Vite build.
+
+    Bundles go in ``static/``, not ``assets/``: ``/assets`` serves generated images
+    from the API, and a bundle at ``/assets/index-*.js`` would be shadowed by that
+    route. Vite's ``build.assetsDir`` is set to match.
+    """
     dist = root / "dist"
-    (dist / "assets").mkdir(parents=True)
+    (dist / "static").mkdir(parents=True)
     (dist / "index.html").write_text("<!doctype html><div id=root></div>", encoding="utf-8")
-    (dist / "assets" / "app.js").write_text("console.log('studio')", encoding="utf-8")
+    (dist / "static" / "app.js").write_text("console.log('studio')", encoding="utf-8")
     return dist
 
 
@@ -65,12 +71,14 @@ def test_api_routes_are_not_shadowed_by_the_root_mount(
     assert response.json()["status"] == "ok"
 
 
-def test_built_assets_are_served(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_built_bundles_are_served_from_static(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     dist = _build_dist(tmp_path)
     monkeypatch.setenv("WEB_DIST_ROOT", str(dist))
 
     with TestClient(create_app()) as client:
-        response = client.get("/assets/app.js")
+        response = client.get("/static/app.js")
 
     assert response.status_code == 200
     assert "studio" in response.text

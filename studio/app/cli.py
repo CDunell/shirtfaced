@@ -6,6 +6,8 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli list-worlds
     python -m app.cli validate-world world-01
     python -m app.cli import-world world-01
+    python -m app.cli attempts world-01
+    python -m app.cli discard-attempt <id>
 """
 
 from __future__ import annotations
@@ -16,6 +18,7 @@ from collections.abc import Sequence
 
 from app.adapters.markdown_store import MarkdownStore
 from app.config import get_settings
+from app.db.models import GenerationAttempt, World
 from app.db.session import get_session_factory
 from app.domain.errors import StudioError, WorldValidationError
 from app.services.world_importer import import_world
@@ -75,6 +78,74 @@ def _import_world(slug: str) -> int:
     return EXIT_OK
 
 
+def _list_attempts(slug: str) -> int:
+    from sqlalchemy import select
+
+    with get_session_factory()() as session:
+        world = session.execute(select(World).where(World.slug == slug)).scalar_one_or_none()
+        if world is None:
+            print(f"error: {slug!r} has not been imported.", file=sys.stderr)
+            return EXIT_FAILED
+
+        attempts = (
+            session.execute(
+                select(GenerationAttempt)
+                .where(GenerationAttempt.world_id == world.id)
+                .order_by(GenerationAttempt.created_at.desc())
+            )
+            .scalars()
+            .all()
+        )
+
+        if not attempts:
+            print("No attempts.")
+            return EXIT_OK
+
+        for attempt in attempts:
+            active = " (active)" if attempt.is_active else ""
+            print(f"{attempt.id}  {attempt.state.value:<18}{active}")
+            print(f"    shot {attempt.shot.external_id} attempt {attempt.attempt_number}")
+            if attempt.failure_message:
+                print(f"    failure: {attempt.failure_code} — {attempt.failure_message[:120]}")
+    return EXIT_OK
+
+
+def _discard_attempt(attempt_id: str) -> int:
+    """Release a world blocked by an attempt awaiting a decision.
+
+    Operator tooling, not a creative decision. Approving and rejecting arrive with
+    human decisions in a later phase; until then a generated attempt occupies its
+    world indefinitely, and this is the way out.
+    """
+    import uuid as uuid_module
+
+    from app.domain.enums import AttemptState
+
+    try:
+        parsed = uuid_module.UUID(attempt_id)
+    except ValueError:
+        print(f"error: {attempt_id!r} is not an attempt identifier.", file=sys.stderr)
+        return EXIT_FAILED
+
+    with get_session_factory()() as session:
+        attempt = session.get(GenerationAttempt, parsed)
+        if attempt is None:
+            print(f"error: no attempt {attempt_id}.", file=sys.stderr)
+            return EXIT_FAILED
+        if not attempt.is_active:
+            print(f"Attempt {attempt_id} is already {attempt.state.value}; nothing to do.")
+            return EXIT_OK
+
+        attempt.state = AttemptState.FAILED
+        attempt.failure_code = None
+        attempt.failure_message = "Discarded by the operator."
+        session.commit()
+
+    print(f"Discarded {attempt_id}. The world is free to generate again.")
+    print("The image and its record are kept.")
+    return EXIT_OK
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     _use_utf8_output()
 
@@ -89,6 +160,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     importer = subcommands.add_parser("import-world", help="Import a world into PostgreSQL")
     importer.add_argument("slug")
 
+    attempts = subcommands.add_parser("attempts", help="List generation attempts for a world")
+    attempts.add_argument("slug")
+
+    discard = subcommands.add_parser(
+        "discard-attempt",
+        help="Release a world blocked by an active attempt. Keeps the image and record.",
+    )
+    discard.add_argument("attempt_id")
+
     arguments = parser.parse_args(argv)
 
     try:
@@ -98,6 +178,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _validate_world(arguments.slug)
         if arguments.command == "import-world":
             return _import_world(arguments.slug)
+        if arguments.command == "attempts":
+            return _list_attempts(arguments.slug)
+        if arguments.command == "discard-attempt":
+            return _discard_attempt(arguments.attempt_id)
     except WorldValidationError as error:
         print(str(error), file=sys.stderr)
         return EXIT_FAILED

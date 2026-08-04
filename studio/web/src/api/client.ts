@@ -79,6 +79,59 @@ export interface PromptPlan {
   production_prompt: string;
 }
 
+export type AttemptState =
+  | "planned"
+  | "prompt_ready"
+  | "generating"
+  | "generated"
+  | "reviewing"
+  | "awaiting_decision"
+  | "approved"
+  | "rejected"
+  | "failed";
+
+export type FailureCode =
+  | "planning_failed"
+  | "provider_error"
+  | "provider_timeout"
+  | "provider_refused"
+  | "invalid_image"
+  | "storage_failed"
+  | "configuration"
+  | "internal";
+
+export interface Attempt {
+  id: string;
+  attempt_number: number;
+  state: AttemptState;
+  shot: Shot;
+  selection_reason: string | null;
+  production_prompt: string | null;
+  prompt_plan: PromptPlan | null;
+  image_model: string | null;
+  image_size: string | null;
+  image_quality: string | null;
+  provider_request_id: string | null;
+  hero_product: string | null;
+  camera_position: string | null;
+  world_document_hash: string | null;
+  shotlist_document_hash: string | null;
+  failure_code: FailureCode | null;
+  failure_message: string | null;
+  parent_attempt_id: string | null;
+  created_at: string;
+  image_url: string | null;
+  thumbnail_url: string | null;
+  /** Generating an image is not approving it. */
+  approved: boolean;
+}
+
+export interface GenerationResult {
+  attempt: Attempt;
+  /** False when the deterministic fakes produced this, so nothing was billed. */
+  live: boolean;
+}
+
 export interface PlanPreview {
   shot: Shot;
   selection_reason: string;
@@ -155,6 +208,16 @@ export function fetchWorld(slug: string, signal?: AbortSignal): Promise<WorldDet
 /** The deterministic selection and its explanation. Calls no model. */
 export function fetchNextShot(slug: string, signal?: AbortSignal): Promise<NextShot> {
   return getJson<NextShot>(`/api/worlds/${encodeURIComponent(slug)}/next-shot`, signal);
+}
+
+/** Generate one image for the next shot. Synchronous, and the expensive one. */
+export function continueWorld(slug: string, signal?: AbortSignal): Promise<GenerationResult> {
+  return postJson<GenerationResult>(`/api/worlds/${encodeURIComponent(slug)}/continue`, signal);
+}
+
+/** Attempts for a world, newest first. */
+export function fetchAttempts(slug: string, signal?: AbortSignal): Promise<Attempt[]> {
+  return getJson<Attempt[]>(`/api/worlds/${encodeURIComponent(slug)}/attempts`, signal);
 }
 
 /** Build the production prompt without generating anything. Development only. */

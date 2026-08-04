@@ -16,40 +16,53 @@ Returns world summary, next eligible shot, rotation state and pending decisions.
 
 ### `POST /api/worlds/{world_slug}/continue`
 
-Runs planning, image generation and review synchronously for Version 1.
+Runs planning and image generation synchronously for Version 1, per ADR-010. Review
+is attached by Phase 4.
+
+Returns `201` with the attempt. `live` is `false` when the deterministic fakes
+produced the result, which is the case whenever `OPENAI_API_KEY` and the relevant
+model are not both set; nothing is billed then.
+
+The attempt is left in `generated`, which is an active state: it occupies the world
+until a human decides. `approved` is always `false` here — generating an image is not
+approving it.
 
 Response:
 
 ```json
 {
-  "attempt_id": "uuid",
-  "state": "awaiting_decision",
-  "shot": {
-    "external_id": "W01-011",
-    "title": "Car interior transition"
+  "attempt": {
+    "id": "uuid",
+    "attempt_number": 1,
+    "state": "generated",
+    "shot": { "external_id": "W01-011", "title": "Car interior transition" },
+    "selection_reason": "W01-011 chosen from 10 eligible planned shots…",
+    "production_prompt": "…",
+    "prompt_plan": {},
+    "image_model": "…",
+    "image_size": "1536x1024",
+    "hero_product": "Tote bag",
+    "camera_position": "Rear seat",
+    "world_document_hash": "…",
+    "image_url": "/assets/<uuid>",
+    "thumbnail_url": "/assets/<uuid>",
+    "failure_code": null,
+    "approved": false
   },
-  "prompt_plan": {},
-  "production_prompt": "...",
-  "image_url": "/assets/...",
-  "review": {
-    "verdict": "approved_with_note",
-    "scores": {
-      "mood": 5,
-      "australian_authenticity": 4,
-      "product_visibility": 5,
-      "documentary_credibility": 4,
-      "story": 5
-    }
-  }
+  "live": false
 }
 ```
 
 Error responses:
 
-- `409` — active generation already exists.
-- `422` — world files or model output failed validation.
-- `502` — OpenAI request failed.
-- `500` — persistence or local filesystem failure.
+- `409` — an attempt is already active for this world.
+- `422` — no shot is eligible, or the world has not been imported.
+
+Provider and storage failures do not raise. The attempt is recorded as `failed` with a
+classified `failure_code` — `planning_failed`, `provider_error`, `provider_timeout`,
+`provider_refused`, `invalid_image`, `storage_failed`, `configuration` or `internal` —
+so the failure is inspectable rather than lost in a status code. A failed attempt is
+terminal and releases the world.
 
 ### `GET /api/worlds/{world_slug}/next-shot`
 
@@ -90,15 +103,34 @@ Error responses:
 - `422` — the world files could not be read.
 - `502` — the planning model failed or returned an unusable plan.
 
-### `GET /api/worlds/{world_slug}/history`
+### `GET /api/worlds/{world_slug}/attempts`
 
-Returns paginated attempts.
+Returns attempts for a world, newest first. `limit` defaults to 20, capped at 100.
 
 ## Attempts
 
 ### `GET /api/attempts/{attempt_id}`
 
-Returns prompt, image, review, decision and audit events.
+Returns the prompt, plan, image URLs, model settings and provenance. Review, decision
+and audit events are attached by later phases.
+
+Provenance on every attempt: the shot's hero product and camera position as they stood,
+and the three canonical document hashes. The documents can be edited afterwards, so a
+generated image stays traceable to the world version that produced it.
+
+## Assets
+
+### `GET /assets/{asset_id}`
+
+Returns one stored image by its identifier. Only assets recorded in the database are
+served, and the path comes from the row rather than the request.
+
+- `404` — no such asset.
+- `503` — the asset is recorded but its file could not be read, which means the volume
+  is missing or was cleared. Deliberately not a `404`: the record exists.
+
+Built interface bundles are served from `/static`, not `/assets`, so the two never
+collide.
 
 ### `POST /api/attempts/{attempt_id}/approve`
 

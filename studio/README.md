@@ -47,7 +47,23 @@ World operations:
 python -m app.cli list-worlds
 python -m app.cli validate-world world-01   # checks the files, changes nothing
 python -m app.cli import-world world-01     # idempotent; safe to re-run after edits
+python -m app.cli attempts world-01         # generation history
+python -m app.cli discard-attempt <id>      # release a world blocked by an attempt
 ```
+
+Generation:
+
+```bash
+curl -X POST localhost:8000/api/worlds/world-01/continue
+```
+
+Without `OPENAI_API_KEY` and `OPENAI_IMAGE_MODEL` set, a deterministic local client
+draws the image instead. It costs nothing, exercises the whole pipeline, and both the
+API response and the interface say plainly that nothing was billed.
+
+One generation runs at a time per world, enforced by a PostgreSQL partial unique index
+and an advisory lock. A generated attempt occupies its world until a human decides;
+until approval and rejection exist, `discard-attempt` is the way to release it.
 
 The interface is a separate Base Web build in `web/`:
 
