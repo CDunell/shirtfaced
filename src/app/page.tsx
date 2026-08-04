@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
+import {
+  LINE_ONE,
+  LINE_ONE_SIZE,
+  LINE_THREE,
+  LINE_THREE_SIZE,
+  TAGLINES,
+} from "@/lib/taglines";
 import { IconArrowRight } from "@/components/Icons";
 
 /* One line, no icons — the old four-column version wrapped to uneven heights
@@ -25,52 +32,56 @@ export default function Home() {
   return (
     <>
       {/* ---------------- Hero ----------------
-          Art-directed: the wide banner carries its own typography and only
-          works at desktop widths, so mobile gets the product shot with live
-          text over it instead. <picture> means exactly one image downloads. */}
+          Three lines, middle one rotates. Both the line and its paired photo
+          are selected before paint by the inline script in layout.tsx, which
+          sets data-tag on <html>; CSS then reveals one line and paints one
+          background. All six lines sit in the DOM (display:none hides them
+          from assistive tech too) but only ONE image is ever fetched, because
+          a CSS background-image on a hidden rule is never requested.
+
+          Desktop no longer uses hero-good-times.webp: that shot has "GOOD
+          TIMES / BAD DECISIONS" baked into it, which flatly contradicts a
+          rotating middle line. Live type at every width now. */}
       <section className="relative bg-ink text-paper sm:pb-6">
         <div className="relative mx-auto max-w-6xl sm:px-6">
-          <picture>
-            <source
-              media="(min-width: 640px)"
-              srcSet="/products/hero-good-times.webp"
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element -- art
-                direction needs <source media>, which next/image can't express */}
-            <img
-              src="/products/hero-street.webp"
-              alt="Model in the Good Times Bad Decisions tee on a Sydney back street"
-              width={1800}
-              height={900}
-              fetchPriority="high"
-              className="aspect-[3/4] w-full object-cover object-[50%_38%] sm:aspect-[2/1] sm:rounded-[20px]"
-            />
-          </picture>
+          <div className="hero-img relative aspect-[3/4] w-full bg-ink bg-cover sm:aspect-[16/9] sm:rounded-[20px]">
+            <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/55 to-ink/10 sm:rounded-[20px]" />
 
-          {/* Scrim + live type on mobile only — the desktop banner carries its
-              own typography, so overlaying there would double it up. */}
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink via-ink/80 to-transparent px-4 pt-24 pb-6 sm:hidden">
-            <h1 className="display text-[13.5vw] leading-[0.86]">
-              good times.
-              <br />
-              <span className="text-lime">bad decisions.</span>
-              <br />
-              zero regrets.
-            </h1>
-            <Link
-              href="/shop"
-              className="press mt-5 inline-flex h-14 items-center gap-3 rounded-[18px] bg-paper pr-5 pl-6 text-[17px] font-bold text-ink"
-            >
-              shop the damage
-              <IconArrowRight className="h-5 w-5" />
-            </Link>
+            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-9">
+              <h1 className="display leading-[0.86]">
+                <span className="block" style={{ fontSize: `${LINE_ONE_SIZE}cqw` }}>
+                  {LINE_ONE}
+                </span>
+
+                {/* One of these six is revealed by CSS. */}
+                <span className="block text-lime">
+                  {TAGLINES.map((t, i) => (
+                    <span
+                      key={t.line}
+                      className={`tl tl-${i}`}
+                      style={{ fontSize: `${t.size}cqw` }}
+                    >
+                      {t.line}
+                    </span>
+                  ))}
+                </span>
+
+                <span className="block" style={{ fontSize: `${LINE_THREE_SIZE}cqw` }}>
+                  {LINE_THREE}
+                </span>
+              </h1>
+
+              <Link
+                href="/shop"
+                className="press mt-5 inline-flex h-14 items-center gap-3 rounded-[18px] bg-paper pr-5 pl-6 text-[17px] font-bold text-ink"
+              >
+                shop the damage
+                <IconArrowRight className="h-5 w-5" />
+              </Link>
+            </div>
+
+            <Link href="/shop" className="absolute inset-0" aria-label="Shop the new drop" />
           </div>
-
-          <Link
-            href="/shop"
-            className="absolute inset-0 hidden sm:block"
-            aria-label="Good Times Bad Decisions — new drop, shop now"
-          />
         </div>
       </section>
 
@@ -196,18 +207,20 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---------------- Brand line ---------------- */}
+      {/* ---------------- Brand line ----------------
+          Cycles all six rather than repeating one — same build, and it shows
+          the whole rotation to anyone who scrolls. */}
       <section className="mt-12 overflow-hidden bg-ink py-5">
         <div className="marquee-track flex w-max">
           {[0, 1].map((dup) => (
             <span key={dup} className="flex shrink-0" aria-hidden={dup === 1}>
-              {Array.from({ length: 4 }).map((_, i) => (
+              {TAGLINES.map((t) => (
                 <span
-                  key={i}
+                  key={t.line}
                   className="display px-5 text-[26px] whitespace-nowrap text-paper"
                 >
-                  good times. <span className="text-lime">bad decisions.</span>{" "}
-                  zero regrets.
+                  {LINE_ONE} <span className="text-lime">{t.line}</span>{" "}
+                  {LINE_THREE}
                 </span>
               ))}
             </span>

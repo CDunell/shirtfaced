@@ -45,6 +45,21 @@ export default function RootLayout({
       lang="en-AU"
       className={`${anton.variable} ${spaceGrotesk.variable} h-full`}
     >
+      <head>
+        {/*
+          Picks the tagline BEFORE first paint, so there's no flash of the
+          wrong line and no hydration mismatch — React renders all six and CSS
+          decides. Per session: consistent while browsing and on
+          back-navigation, but a new line on the next visit. Change
+          sessionStorage to localStorage for per-device, or key it on the date
+          for per-day.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var n=6,k="sf-tag",v=sessionStorage.getItem(k);if(v===null){v=String(Math.floor(Math.random()*n));sessionStorage.setItem(k,v)}document.documentElement.setAttribute("data-tag",v)}catch(e){document.documentElement.setAttribute("data-tag","0")}})()`,
+          }}
+        />
+      </head>
       <body className="min-h-full bg-paper text-ink">
         <PaperGrain />
         <CartProvider>
