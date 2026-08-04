@@ -16,6 +16,7 @@ import { Tag, HIERARCHY, KIND as TAG_KIND } from "baseui/tag";
 import { HeadingSmall, LabelSmall, MonoLabelXSmall, ParagraphSmall } from "baseui/typography";
 
 import { ApiError, fetchWorld, fetchWorlds, type Shot, type WorldDetail } from "../api/client";
+import { SelectionPanel } from "./SelectionPanel";
 import { ShotStatusTag, statusLabel } from "./ShotStatusTag";
 
 type State =
@@ -75,39 +76,6 @@ function CountsRow({ world }: { world: WorldDetail }): React.JSX.Element {
           </Tag>
         ))}
     </div>
-  );
-}
-
-function NextShot({ shot }: { shot: Shot | null }): React.JSX.Element {
-  const [, theme] = useStyletron();
-
-  if (!shot) {
-    return (
-      <Card title="Next shot">
-        <StyledBody>
-          <ParagraphSmall marginTop={0}>
-            No planned shots remain. Add one to SHOTLIST.md and import the world again.
-          </ParagraphSmall>
-        </StyledBody>
-      </Card>
-    );
-  }
-
-  return (
-    <Card title="Next shot">
-      <StyledBody>
-        <LabelSmall marginBottom={theme.sizing.scale300}>
-          {shot.external_id} {EM_DASH} {shot.title}
-        </LabelSmall>
-        <ParagraphSmall marginTop={0} marginBottom={theme.sizing.scale300}>
-          Hero product: {shot.hero_product ?? "unset"}. Camera: {shot.camera_position ?? "unset"}.
-        </ParagraphSmall>
-        <ParagraphSmall marginTop={0} color={theme.colors.contentSecondary}>
-          Ordered by priority then sequence. Product and camera rotation, and the recorded reason
-          for the choice, arrive with the selector.
-        </ParagraphSmall>
-      </StyledBody>
-    </Card>
   );
 }
 
@@ -209,7 +177,7 @@ export function WorldPage(): React.JSX.Element {
           marginTop: theme.sizing.scale700,
         })}
       >
-        <NextShot shot={world.next_planned_shot} />
+        <SelectionPanel slug={world.slug} />
 
         <Card title="Loaded canon">
           <StyledBody>

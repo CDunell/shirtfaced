@@ -7,7 +7,7 @@
 
 import { vi } from "vitest";
 
-import type { Shot, WorldDetail, WorldSummary } from "../api/client";
+import type { NextShot, PlanPreview, Shot, WorldDetail, WorldSummary } from "../api/client";
 
 export const HEALTH = { status: "ok", version: "0.1.0" };
 
@@ -73,11 +73,50 @@ export function worldDetail(overrides: Partial<WorldDetail> = {}): WorldDetail {
   };
 }
 
+export function nextShot(overrides: Partial<NextShot> = {}): NextShot {
+  return {
+    selected: shot(),
+    reason:
+      "W01-011 chosen from 2 eligible planned shots. Lowest priority (100), then sequence (11).",
+    eligible_count: 2,
+    set_aside: [{ external_id: "W01-001", reason: "already approved" }],
+    last_hero_product: "Cap",
+    last_camera_position: "Beside parked car",
+    ...overrides,
+  };
+}
+
+export function planPreview(overrides: Partial<PlanPreview> = {}): PlanPreview {
+  return {
+    shot: shot(),
+    selection_reason: "W01-011 chosen from 2 eligible planned shots.",
+    plan: {
+      scene_summary: "Car interior transition",
+      emotional_beat: "Renewed momentum",
+      hero_product: "Tote bag",
+      product_visibility_instruction: "Visible because it is being moved.",
+      camera_position: "Rear seat",
+      lighting_source: "Interior dome light",
+      documentary_imperfection: "The door frame crops the edge.",
+      australian_authenticity_anchors: ["Suburban Australian street"],
+      negative_constraints: ["No visible branding"],
+      selection_rationale: "Next planned shot.",
+      production_prompt: "Documentary 35mm photograph of friends reorganising a car.",
+    },
+    live: false,
+    ...overrides,
+  };
+}
+
 export interface Routes {
   health?: unknown;
   worlds?: unknown;
   world?: unknown;
   worldStatus?: number;
+  nextShot?: unknown;
+  planPreview?: unknown;
+  planStatus?: number;
+  planDetail?: string;
 }
 
 /** Install a fetch stub answering the endpoints the app uses. */
@@ -88,6 +127,20 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
     }
     if (input === "/api/worlds") {
       return Promise.resolve(new Response(JSON.stringify(routes.worlds ?? [WORLD_SUMMARY])));
+    }
+    if (input.endsWith("/next-shot")) {
+      return Promise.resolve(new Response(JSON.stringify(routes.nextShot ?? nextShot())));
+    }
+    if (input.endsWith("/plan-preview")) {
+      const planStatus = routes.planStatus ?? 200;
+      if (planStatus !== 200) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ detail: routes.planDetail ?? "refused" }), {
+            status: planStatus,
+          }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify(routes.planPreview ?? planPreview())));
     }
     if (input.startsWith("/api/worlds/")) {
       const status = routes.worldStatus ?? 200;

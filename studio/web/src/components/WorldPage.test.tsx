@@ -58,16 +58,16 @@ describe("WorldPage", () => {
     expect(screen.getByText("Approved: 1")).toBeInTheDocument();
   });
 
-  it("highlights the next planned shot with its hero product and camera", async () => {
+  it("embeds the selection panel for the loaded world", async () => {
     stubApi();
 
     renderWithBase(<WorldPage />);
 
+    // The panel's own behaviour is covered in SelectionPanel.test.tsx; what matters
+    // here is that the page wires it to this world.
     await waitFor(() => {
-      expect(screen.getByText(/W01-011.*Car interior transition/)).toBeInTheDocument();
+      expect(screen.getByText(/W01-011 — Car interior transition/)).toBeInTheDocument();
     });
-    expect(screen.getByText(/Hero product: Tote bag/)).toBeInTheDocument();
-    expect(screen.getByText(/Camera: Rear seat/)).toBeInTheDocument();
   });
 
   it("shows the loaded document hashes", async () => {
@@ -100,21 +100,6 @@ describe("WorldPage", () => {
 
     await waitFor(() => {
       expect(screen.getByText(/returned 500/)).toBeInTheDocument();
-    });
-  });
-
-  it("handles a world whose planned shots are all done", async () => {
-    stubApi({
-      world: worldDetail({
-        shots: [shot({ id: "s1", external_id: "W01-001", status: "approved" })],
-        next_planned_shot: null,
-      }),
-    });
-
-    renderWithBase(<WorldPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText(/No planned shots remain/)).toBeInTheDocument();
     });
   });
 

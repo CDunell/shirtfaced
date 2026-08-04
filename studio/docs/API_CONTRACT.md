@@ -51,6 +51,45 @@ Error responses:
 - `502` — OpenAI request failed.
 - `500` — persistence or local filesystem failure.
 
+### `GET /api/worlds/{world_slug}/next-shot`
+
+Runs the deterministic selector and returns the chosen shot, the explanation, the
+rotation state used and the shots that were set aside with the reason for each.
+
+Calls no model and changes no state, so it is safe to poll.
+
+Response:
+
+```json
+{
+  "selected": { "external_id": "W01-011", "title": "Car interior transition" },
+  "reason": "W01-011 chosen from 10 eligible planned shots. Lowest priority (100)…",
+  "eligible_count": 10,
+  "set_aside": [{ "external_id": "W01-016", "reason": "repeats the previous hero product 'Cap'" }],
+  "last_hero_product": "Cap",
+  "last_camera_position": "Beside parked car"
+}
+```
+
+`selected` is `null` when nothing is eligible; `reason` says why.
+
+### `POST /api/worlds/{world_slug}/plan-preview`
+
+Builds the production prompt for the next shot without generating an image and
+without persisting anything. Development mode only: returns `404` when `DEBUG` is
+false.
+
+`live` is `false` when the deterministic planner produced the plan, which is the case
+whenever `OPENAI_API_KEY` and `OPENAI_TEXT_MODEL` are not both set. Nothing is billed
+in that case.
+
+Error responses:
+
+- `404` — not in development mode, or the world has not been imported.
+- `409` — no shot is eligible.
+- `422` — the world files could not be read.
+- `502` — the planning model failed or returned an unusable plan.
+
 ### `GET /api/worlds/{world_slug}/history`
 
 Returns paginated attempts.
