@@ -66,6 +66,18 @@ For one user, synchronous orchestration is simpler.
 
 Persist every state transition so a background worker can be added later without redesigning the domain.
 
+**Reaffirmed 5 August 2026.** An externally drafted Phase 3 pack proposed asynchronous
+generation: a queued attempt state, a background worker and an immediate HTTP
+response. It was declined for Version 1. One user clicking one button does not need a
+job runner, and adding one to a single-process deployment buys polling in the
+interface and a larger set of failure modes to test in exchange for latency the user
+is already waiting on deliberately.
+
+The escape hatch in this ADR still applies: every state transition is persisted, so a
+worker remains a later service change rather than a redesign. The agreed attempt state
+machine is the one in `ARCHITECTURE.md`, which keeps `awaiting_decision` — the state
+that makes ADR-005's human approval gate visible in the data.
+
 ## ADR-011 — Base Web interface
 
 **Supersedes ADR-007.**
