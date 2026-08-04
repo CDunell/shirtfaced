@@ -42,29 +42,36 @@ If `SHOP_DATABASE_URL` isn't set, the sync step is a no-op and the
 last-generated file (checked into git as a fallback snapshot) is used as-is
 — a fresh clone without DB access still builds.
 
-**This means editing a product in admin does not update the live site by
-itself** — the static export only reflects whatever the catalog looked like
-at the last build. To publish admin changes: rebuild and redeploy (see
-"Deploying" below). There's no auto-deploy pipeline yet.
+**This means editing a product in admin does not update the live site
+instantly** — the static export only reflects whatever the catalog looked
+like at the last build. Publishing is now automatic on every push to `main`
+(see "Deploying" below), so in practice this means: admin edits show up on
+the next deploy, not the next request.
 
 ## Deploying
 
-Production build happens on the Oracle box itself (`/root/shirtfaced-site`),
-against the production DB, then gets synced into place:
+`.github/workflows/deploy.yml` runs on every push to `main`: it rsyncs
+`admin/` and this storefront to the Oracle box
+(`/home/ubuntu/shirtfaced-admin`, `/home/ubuntu/shirtfaced-site`), then runs
+`~/deploy-admin.sh` / `~/deploy-site.sh` on the box over SSH — `npm install
+&& npm run build`, then either a systemd restart (admin) or an `rsync` into
+`/var/www/shirtfaced` (storefront, served directly by nginx, no restart
+needed).
+
+Auth is a dedicated deploy key (`ORACLE_DEPLOY_KEY` / `ORACLE_HOST` repo
+secrets), kept separate from any personal key so it can be revoked on its
+own. Note it isn't lower-*privilege* than a personal key would be — the
+`ubuntu` account on the box has an unrestricted sudo grant from Oracle
+Cloud's own provisioning — just independently revocable.
+
+To deploy by hand instead (e.g. to debug a failed run):
 
 ```bash
-# on the box, as root
-cd /root/shirtfaced-site
-git pull  # or re-upload source if not yet a git checkout there
-npm install  # only if package.json changed
-npm run build
-rsync -a --delete out/ /var/www/shirtfaced/
+ssh ubuntu@<host> 'bash /home/ubuntu/deploy-site.sh'   # or deploy-admin.sh
 ```
 
-`/root/shirtfaced-site/.env` has its own `SHOP_DATABASE_URL` pointing at
-`127.0.0.1:5432` (the production DB is only reachable from the box itself).
-nginx serves `/var/www/shirtfaced` directly — no restart needed after
-`rsync`.
+Each app's `.env` on the box lives only there (never synced from CI) — the
+workflow's rsync excludes it.
 
 ## Structure
 
@@ -105,8 +112,5 @@ runtime or a toolchain with the storefront above.
   and there is a wildcard null-DKIM record. Both MUST be changed before a
   payment provider sends receipts, or every confirmation email is rejected.
 - Photograph the five products still on fallback artwork (see docs/pre-golive.md)
-- Automate the rebuild+redeploy step (a git hook or cron on the box, or a
-  proper CI pipeline) so admin edits reach the live site without a manual
-  SSH session
 - Bump Next past 16.2.12 to clear the transitive postcss/sharp advisories
   (do **not** run `npm audit fix --force` — it downgrades to next@9)
