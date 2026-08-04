@@ -36,7 +36,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 1. Black tote bag
 2. Hoodie tied around waist
 3. Black heavyweight hoodie
-4. Blank back-surface opportunity
+4. Black heavyweight t-shirt
 5. Black cap from a lower or side-front camera angle
 
 ---
