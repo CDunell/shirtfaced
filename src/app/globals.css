@@ -161,6 +161,30 @@ body {
   animation: fade-rise 220ms var(--ease-out-natural) both;
 }
 
+@keyframes slide-left {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+.slide-left {
+  animation: slide-left 240ms var(--ease-out-natural);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.fade-in {
+  animation: fade-in 180ms var(--ease-out-natural);
+}
+
 @keyframes sheet-up {
   from {
     transform: translateY(100%);
