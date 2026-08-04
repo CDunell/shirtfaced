@@ -1,0 +1,99 @@
+"""Which canon actually reaches the planning model.
+
+A rule the model never sees is a rule that does not exist. These tests pin the
+contract between WORLD.md's section headings and the planning request, against the
+real document.
+"""
+
+from __future__ import annotations
+
+import pytest
+
+from app.adapters.markdown_store import MarkdownStore
+from app.config import PROJECT_ROOT
+from app.services.markdown_sections import section_map
+from app.services.prompt_planner import PLANNING_CANON_HEADINGS, build_request
+from app.services.rotation import RotationState
+from tests.unit.test_shot_selector import make_shot
+
+WORLDS_ROOT = PROJECT_ROOT / "worlds"
+
+pytestmark = pytest.mark.skipif(
+    not (WORLDS_ROOT / "world-01" / "WORLD.md").is_file(),
+    reason="World 1 documents are not present.",
+)
+
+
+@pytest.fixture
+def world_text() -> str:
+    return MarkdownStore(WORLDS_ROOT).read_document("world-01", "WORLD.md").text
+
+
+@pytest.fixture
+def request_for_world(world_text: str):  # type: ignore[no-untyped-def]
+    return build_request(
+        world_slug="world-01",
+        world_name="World 01",
+        shot=make_shot("W01-011", sequence=11),
+        world_text=world_text,
+        rotation=RotationState(),
+    )
+
+
+@pytest.mark.parametrize("heading", PLANNING_CANON_HEADINGS)
+def test_every_named_section_exists_in_the_real_document(world_text: str, heading: str) -> None:
+    """A typo here would silently drop a rule from every prompt."""
+    assert heading.casefold() in section_map(world_text), (
+        f"WORLD.md has no section {heading!r}. Either the document was renamed or "
+        "PLANNING_CANON_HEADINGS is wrong; either way the rule stops reaching the model."
+    )
+
+
+def test_the_prompt_construction_protocol_is_sent(request_for_world) -> None:  # type: ignore[no-untyped-def]
+    """Required by the end-to-end workflow."""
+    headings = [excerpt.heading for excerpt in request_for_world.canon_excerpts]
+
+    assert "Prompt Construction Protocol" in headings
+
+
+def _flattened(request) -> str:  # type: ignore[no-untyped-def]
+    """All excerpt bodies with line wrapping removed, so assertions survive rewrapping."""
+    return " ".join(" ".join(excerpt.body.split()) for excerpt in request.canon_excerpts)
+
+
+def test_the_branding_rules_are_sent(request_for_world) -> None:  # type: ignore[no-untyped-def]
+    """The most frequently broken rule in the rejected drift."""
+    assert "no visible third-party branding" in _flattened(request_for_world)
+
+
+def test_the_vehicle_canon_is_sent(request_for_world) -> None:  # type: ignore[no-untyped-def]
+    """An image was already rejected for an American pickup body.
+
+    This content lives in a subsection, so it is only present if the whole subtree is
+    sent rather than the heading's own body.
+    """
+    flattened = _flattened(request_for_world)
+
+    assert "tray-back ute" in flattened
+    assert "open aluminium alloy tray" in flattened
+    assert "American pickup trucks" in flattened
+
+
+def test_product_rotation_rules_are_sent(request_for_world) -> None:  # type: ignore[no-untyped-def]
+    """Also a subsection, and the reason the shotlist rotates products at all."""
+    assert "Rotate prominence between" in _flattened(request_for_world)
+
+
+def test_role_instructions_are_not_sent(request_for_world) -> None:  # type: ignore[no-untyped-def]
+    """The Operating System section directs humans, not the image."""
+    headings = [excerpt.heading for excerpt in request_for_world.canon_excerpts]
+
+    assert "Operating System" not in headings
+    assert "Continuity Ledger" not in headings
+
+
+def test_the_request_stays_bounded(request_for_world) -> None:  # type: ignore[no-untyped-def]
+    """Only the relevant canon is sent, not the whole archive."""
+    total = sum(len(excerpt.body) for excerpt in request_for_world.canon_excerpts)
+
+    assert total < 20_000

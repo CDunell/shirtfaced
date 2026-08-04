@@ -58,6 +58,32 @@ def find_section(text: str, heading: str) -> Section | None:
     return section_map(text).get(heading.casefold())
 
 
+def section_with_subsections(text: str, heading: str) -> str | None:
+    """A section's body including everything nested beneath it.
+
+    ``find_section`` stops at the next heading of any level, which returns nothing for
+    a section whose content lives entirely in subsections — "Product Rotation &
+    Vehicle Canon" being the case that matters. For sending canon to a model, the
+    whole subtree is what is wanted, subheadings included.
+    """
+    sections = split_sections(text)
+    lines = text.splitlines()
+
+    for position, section in enumerate(sections):
+        if section.heading.casefold() != heading.casefold():
+            continue
+
+        end = len(lines)
+        for candidate in sections[position + 1 :]:
+            if candidate.level <= section.level:
+                end = candidate.line - 1
+                break
+
+        return "\n".join(lines[section.line : end]).strip()
+
+    return None
+
+
 def subsections_of(text: str, heading: str) -> list[Section]:
     """Sections nested under ``heading``, down to the next heading of the same level."""
     sections = split_sections(text)

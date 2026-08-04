@@ -15,11 +15,17 @@ from dataclasses import dataclass
 from app.adapters.planning import PlanningError, PromptPlanningClient
 from app.db.models import Shot
 from app.domain.schemas import CanonExcerpt, PromptPlan, PromptPlanRequest, ShotBrief
-from app.services.markdown_sections import find_section
+from app.services.markdown_sections import section_with_subsections
 from app.services.rotation import RotationState
 
-# Canon sections sent with every planning request. The remaining sections of WORLD.md
-# are operating instructions for the humans and roles, not rules the image must obey.
+# Canon sections sent with every planning request, in the order they are sent.
+#
+# A section of WORLD.md that is not named here is never seen by the planning model.
+# The omitted ones are operating instructions for the humans and roles — Operating
+# System, Continuity Ledger and so on — not rules the photograph must obey.
+#
+# "Prompt Construction Protocol" is required by the end-to-end workflow: it is the
+# checklist the planner must satisfy before writing a prompt.
 PLANNING_CANON_HEADINGS = (
     "Purpose",
     "Emotional Tone",
@@ -30,8 +36,11 @@ PLANNING_CANON_HEADINGS = (
     "People",
     "Wardrobe",
     "Composition",
+    "Environmental Branding",
+    "Reference Standard — The Photo We'd Post Anyway",
     "Global Production Rule — No Visible Branding",
     "Product Rotation & Vehicle Canon",
+    "Prompt Construction Protocol",
     "Success Test",
 )
 
@@ -60,10 +69,11 @@ def build_request(
     recent_continuity: list[str] | None = None,
 ) -> PromptPlanRequest:
     """Assemble the bounded context for one shot."""
+    # The whole subtree, so a section whose content sits in subsections is not lost.
     excerpts = [
-        CanonExcerpt(heading=section.heading, body=_truncate(section.body))
+        CanonExcerpt(heading=heading, body=_truncate(body))
         for heading in PLANNING_CANON_HEADINGS
-        if (section := find_section(world_text, heading)) is not None and not section.is_empty
+        if (body := section_with_subsections(world_text, heading)) is not None and body.strip()
     ]
 
     drift = [
