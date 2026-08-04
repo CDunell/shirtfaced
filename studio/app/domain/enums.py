@@ -95,6 +95,8 @@ class AuditEventType(StrEnum):
     GIT_FAILED = "git_failed"
     REFERENCE_PROMOTED = "reference_promoted"
     REFERENCE_FAILED = "reference_failed"
+    REFERENCE_ARCHIVED = "reference_archived"
+    REFERENCE_PINNED = "reference_pinned"
     RECONCILIATION_REQUIRED = "reconciliation_required"
 
 
@@ -193,6 +195,25 @@ class CanonProposalStatus(StrEnum):
     REJECTED = "rejected"
     APPLIED = "applied"
     FAILED = "failed"
+
+
+class ReferenceState(StrEnum):
+    """Where a reference frame sits in the library.
+
+    Only ``ACTIVE`` and ``PINNED`` reach the planner. The rest is history: nothing is
+    deleted, because an approved frame is a record of a decision as well as an input.
+    """
+
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+    # Exceptional frames. Never aged out automatically.
+    PINNED = "pinned"
+
+
+# The states the planner reads. Pinned frames are always among them.
+PLANNING_REFERENCE_STATES: frozenset[ReferenceState] = frozenset(
+    {ReferenceState.ACTIVE, ReferenceState.PINNED}
+)
 
 
 class AssetKind(StrEnum):

@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     assets_root: Path = PROJECT_ROOT / "var" / "assets"
     asset_store: AssetStoreKind = AssetStoreKind.FILESYSTEM
 
+    # --- References -------------------------------------------------------------
+    # How many reference frames the planner sees. The owner asked for 12 to 20;
+    # pinned frames sit outside this cap and never age out.
+    reference_active_limit: int = Field(default=16, ge=1, le=100)
+
     # --- Interface --------------------------------------------------------------
     # Built Base Web assets. In development the Vite dev server serves these instead
     # and proxies the API, so this directory may not exist.

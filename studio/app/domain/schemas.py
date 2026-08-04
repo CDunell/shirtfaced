@@ -96,6 +96,8 @@ class PromptPlanRequest(BaseModel):
     shot: ShotBrief
     canon_excerpts: list[CanonExcerpt] = Field(default_factory=list)
     recent_continuity: list[str] = Field(default_factory=list)
+    # Active and pinned reference frames. Archived ones are history, not input.
+    reference_frames: list[str] = Field(default_factory=list)
     rejected_drift: list[str] = Field(default_factory=list)
     canon_notes: list[str] = Field(default_factory=list)
     recent_hero_products: list[str] = Field(default_factory=list)

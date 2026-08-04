@@ -43,6 +43,7 @@ from app.domain.enums import (
 )
 from app.domain.errors import StudioError
 from app.services import markdown_writer as writer
+from app.services import reference_service
 from app.services.generation_orchestrator import acquire_world_lock
 from app.services.world_importer import import_world
 
@@ -214,7 +215,10 @@ def record_decision(
 
 
 def _promote_reference(
-    session: Session, attempt: GenerationAttempt, asset_store: AssetStore
+    session: Session,
+    attempt: GenerationAttempt,
+    asset_store: AssetStore,
+    active_limit: int = reference_service.DEFAULT_ACTIVE_LIMIT,
 ) -> ImageAsset:
     """Record the approved original as a reference.
 
@@ -225,6 +229,7 @@ def _promote_reference(
 
     existing = next((a for a in attempt.assets if a.kind is AssetKind.REFERENCE), None)
     if existing is not None:
+        reference_service.promote(session, attempt, active_limit=active_limit)
         return existing  # idempotent
 
     reference = ImageAsset(
@@ -239,6 +244,10 @@ def _promote_reference(
     )
     session.add(reference)
     session.flush()
+
+    # Enter the library, which then ages the weakest frame out if the active set is
+    # over its cap. Pinned frames are outside that cap.
+    reference_service.promote(session, attempt, active_limit=active_limit)
     return reference
 
 
@@ -311,6 +320,7 @@ def apply_decision_documents(
     git_store: GitStore,
     asset_store: AssetStore,
     git_enabled: bool,
+    active_limit: int = reference_service.DEFAULT_ACTIVE_LIMIT,
 ) -> DecisionOutcome:
     """Update the world documents, re-import and commit.
 
@@ -323,7 +333,7 @@ def apply_decision_documents(
 
     if outcome.decision.promote_to_reference:
         try:
-            _promote_reference(session, attempt, asset_store)
+            _promote_reference(session, attempt, asset_store, active_limit)
             outcome.reference_sync = SyncState.SUCCEEDED
             _audit(
                 session,
@@ -478,6 +488,7 @@ def decide(
     git_store: GitStore,
     asset_store: AssetStore,
     git_enabled: bool,
+    active_limit: int = reference_service.DEFAULT_ACTIVE_LIMIT,
     reason: str | None = None,
     note: str | None = None,
     instruction: str | None = None,
@@ -519,6 +530,7 @@ def decide(
         git_store=git_store,
         asset_store=asset_store,
         git_enabled=git_enabled,
+        active_limit=active_limit,
     )
 
 

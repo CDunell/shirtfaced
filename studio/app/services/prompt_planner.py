@@ -67,6 +67,7 @@ def build_request(
     rotation: RotationState,
     selection_reason: str = "",
     recent_continuity: list[str] | None = None,
+    reference_frames: list[str] | None = None,
 ) -> PromptPlanRequest:
     """Assemble the bounded context for one shot."""
     # The whole subtree, so a section whose content sits in subsections is not lost.
@@ -93,6 +94,7 @@ def build_request(
         ),
         canon_excerpts=excerpts,
         recent_continuity=(recent_continuity or [])[:RECENT_CONTINUITY_LIMIT],
+        reference_frames=reference_frames or [],
         rejected_drift=drift,
         canon_notes=rotation.canon_notes,
         recent_hero_products=rotation.recent_hero_products,

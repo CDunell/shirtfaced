@@ -38,6 +38,7 @@ from app.domain.enums import (
     FailureCode,
     HumanDecisionKind,
     ProposalClassification,
+    ReferenceState,
     ReviewRecommendation,
     ReviewVerdict,
     ShotStatus,
@@ -55,6 +56,7 @@ __all__ = [
     "GenerationAttempt",
     "HumanDecision",
     "ImageAsset",
+    "ReferenceFrame",
     "Shot",
     "ShotStatus",
     "World",
@@ -546,3 +548,65 @@ class AuditEvent(Base):
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<AuditEvent {self.event_type.value!r}>"
+
+
+class ReferenceFrame(Base):
+    """An approved image promoted to a reference.
+
+    A separate record from the asset, because a reference has a life of its own: it
+    is promoted, it ages out as stronger frames arrive, and it can be pinned so it
+    never does. The asset it points at is never copied or altered.
+
+    Only active and pinned frames reach the planner. Archived ones stay searchable,
+    because an approved frame records a decision as well as feeding one.
+    """
+
+    __tablename__ = "reference_frames"
+    __table_args__ = (
+        # One reference per attempt: promoting twice is the same promotion.
+        UniqueConstraint("attempt_id", name="uq_reference_frames_attempt_id"),
+        Index("ix_reference_frames_world_id_state", "world_id", "state"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    world_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("worlds.id", ondelete="CASCADE"), nullable=False
+    )
+    attempt_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("generation_attempts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("image_assets.id", ondelete="CASCADE"), nullable=False
+    )
+    state: Mapped[ReferenceState] = mapped_column(
+        _enum(ReferenceState, "reference_state"),
+        nullable=False,
+        default=ReferenceState.ACTIVE,
+        server_default=ReferenceState.ACTIVE.value,
+    )
+    # What the frame is, in the owner's or the reviewer's words. Sent to the planner.
+    label: Mapped[str] = mapped_column(String(200), nullable=False)
+    why_it_works: Mapped[str | None] = mapped_column(Text)
+    hero_product: Mapped[str | None] = mapped_column(String(120))
+    camera_position: Mapped[str | None] = mapped_column(String(120))
+    # Sum of the review scores at approval. Higher is stronger; ties break on recency.
+    strength: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    archived_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+
+    world: Mapped[World] = relationship()
+    attempt: Mapped[GenerationAttempt] = relationship()
+    asset: Mapped[ImageAsset] = relationship()
+
+    @property
+    def reaches_planner(self) -> bool:
+        return self.state in {ReferenceState.ACTIVE, ReferenceState.PINNED}
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<ReferenceFrame {self.label!r} {self.state.value!r}>"

@@ -217,6 +217,7 @@ def _render_request(request: PromptPlanRequest) -> str:
     for excerpt in request.canon_excerpts:
         parts += ["", f"## Canon — {excerpt.heading}", excerpt.body]
 
+    parts += _bullet_block("Approved reference frames", request.reference_frames)
     parts += _bullet_block("Recent continuity", request.recent_continuity)
     parts += _bullet_block("Rejected drift to avoid", request.rejected_drift)
     parts += _bullet_block("Current canon notes", request.canon_notes)
