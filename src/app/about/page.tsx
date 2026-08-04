@@ -1,4 +1,5 @@
 import { PageShell, Prose, Section } from "@/components/PageShell";
+import { about } from "@/lib/content-data.generated";
 
 export const metadata = {
   title: "About — Shirtfaced",
@@ -8,57 +9,31 @@ export const metadata = {
 
 export default function AboutPage() {
   return (
-    <PageShell
-      title="about"
-      intro="Shirtfaced makes graphic tees for people with questionable judgement and excellent taste. That's the entire brief."
-    >
+    <PageShell title="about" intro={about.intro}>
       <div className="flex flex-col gap-8">
         <Section heading="The idea">
           <Prose>
-            <p>
-              Most graphic tees are either forgettable or trying far too hard.
-              We wanted the ones you actually reach for — heavy cotton, cut
-              wide, printed with something worth reading from across a room.
-            </p>
-            <p>
-              Every design starts as a joke someone refused to let go of. If it
-              still lands a month later, it gets printed.
-            </p>
+            <p>{about.ideaP1}</p>
+            <p>{about.ideaP2}</p>
           </Prose>
         </Section>
 
         <Section heading="How they're made">
           <Prose>
-            <p>
-              240gsm combed cotton, garment-dyed, boxy fit with a dropped
-              shoulder. Designed in Australia and screen-printed by specialists
-              wherever that gets it to you fastest — the design is ours, the
-              press is whoever does it properly.
-            </p>
-            <p>
-              Prints are built to crack and fade the way a good tee should. It
-              will look better in a year than it does in the bag.
-            </p>
+            <p>{about.howMadeP1}</p>
+            <p>{about.howMadeP2}</p>
           </Prose>
         </Section>
 
         <Section heading="What we won't do">
           <Prose>
-            <p>
-              No countdown timers telling you four people are looking at this
-              right now. No fake scarcity. No inventing an origin story we
-              can&apos;t back up.
-            </p>
+            <p>{about.wontDoP1}</p>
           </Prose>
         </Section>
 
         <Section heading="Who's behind it">
           <Prose>
-            <p>
-              A small Australian outfit that started in 2026 and has so far made
-              exactly the decisions you&apos;d expect from people who named a
-              company this.
-            </p>
+            <p>{about.whoP1}</p>
           </Prose>
         </Section>
       </div>

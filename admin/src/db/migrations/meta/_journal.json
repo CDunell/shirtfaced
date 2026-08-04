@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1785851426930,
+      "tag": "0000_natural_whirlwind",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785856360605,
+      "tag": "0001_goofy_king_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785857432612,
+      "tag": "0002_happy_earthquake",
+      "breakpoints": true
+    }
+  ]
+}

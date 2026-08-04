@@ -21,8 +21,15 @@ work with no config change if it ever completes.
 |---|---|---|---|
 | CNAME | `@` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | CNAME | `www` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
+| CNAME | `admin` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | TXT | `@` | `v=spf1 -all` | — |
 | TXT | `_dmarc` | `v=DMARC1; p=quarantine;` | — |
+
+**`admin` is not yet added** (2026-08-04) — same tunnel, ingress rule already
+live (`/etc/cloudflared/config.yml` routes `admin.shirtfaced.wtf` →
+`localhost:4200`, the shirtfaced-admin service). The tunnel's own credential
+on the Oracle box is scoped to a different zone (`tradeninja.au`) and can't
+provision records here — this CNAME needs adding by hand in the dashboard.
 
 SSL/TLS mode: **Full**.
 

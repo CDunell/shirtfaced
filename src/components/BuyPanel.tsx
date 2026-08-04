@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { money } from "@/lib/money";
-import { SIZE_CHART, type Product, type SizeKey } from "@/lib/products";
+import type { Product, SizeKey } from "@/lib/products";
+import { sizeGuide, productPage } from "@/lib/content-data.generated";
 import { ProductMedia, mediaCount } from "./ProductMedia";
 import {
   IconArrowRight,
@@ -204,21 +205,19 @@ export function BuyPanel({ product }: { product: Product }) {
 
         {/* Features */}
         <ul className="mt-8 grid grid-cols-2 gap-y-4 border-t border-ink/10 pt-6">
-          {[
-            { Icon: IconSmiley, a: "100% combed cotton", b: "built for adventures" },
-            { Icon: IconSmiley, a: "230gsm mid weight", b: "holds its shape" },
-            { Icon: IconTruck, a: "designed in australia", b: "printed worldwide" },
-            { Icon: IconArrowRight, a: "easy returns", b: "no drama" },
-          ].map(({ Icon, a, b }) => (
-            <li key={a} className="flex items-start gap-2.5">
-              <Icon className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.8} />
-              <span className="text-[13px] leading-tight">
-                {a}
-                <br />
-                <span className="text-grey-dark">{b}</span>
-              </span>
-            </li>
-          ))}
+          {[IconSmiley, IconSmiley, IconTruck, IconArrowRight].map((Icon, i) => {
+            const { a, b } = productPage.features[i];
+            return (
+              <li key={a} className="flex items-start gap-2.5">
+                <Icon className="mt-0.5 h-5 w-5 shrink-0" strokeWidth={1.8} />
+                <span className="text-[13px] leading-tight">
+                  {a}
+                  <br />
+                  <span className="text-grey-dark">{b}</span>
+                </span>
+              </li>
+            );
+          })}
         </ul>
 
         {/* Desktop buys from here; the fixed bar is mobile-only. */}
@@ -296,8 +295,8 @@ export function BuyPanel({ product }: { product: Product }) {
                     >
                       <span className="display text-[22px] w-12">{s}</span>
                       <span className="flex-1 text-[13px] tracking-wide text-grey-dark uppercase">
-                        Chest {SIZE_CHART[s].chest} · Length{" "}
-                        {SIZE_CHART[s].length}
+                        Chest {sizeGuide.chart[s].chest} · Length{" "}
+                        {sizeGuide.chart[s].length}
                       </span>
                       {active && (
                         <span className="grid h-7 w-7 place-items-center rounded-full bg-lime">

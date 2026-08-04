@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   SHIRTFACED design tokens — ported from the storefront (src/app/globals.css)
+   so admin shares the same brand sheet. Admin adds nothing decorative of its
+   own: same colours, same radii, same type, same motion.
+--------------------------------------------------------------------------- */
+
+@theme {
+  --color-ink: #0d0d0d;
+  --color-ink-soft: #1a1a1a;
+  --color-ink-line: #2a2a2a;
+  --color-paper: #f2f0ed;
+  --color-paper-2: #e8e5e0;
+  --color-cream: #f7e9d6;
+  --color-lime: #c6ff33;
+  --color-coral: #ff4d4d;
+  --color-pink: #ff3c8e;
+  --color-blue: #297bff;
+  --color-orange: #ff6a00;
+
+  --color-grey: #8a8a86;
+  --color-grey-dark: #5c5c58;
+
+  --radius-card: 20px;
+  --radius-btn: 18px;
+  --radius-input: 16px;
+  --radius-img: 20px;
+  --radius-sheet: 28px;
+  --radius-modal: 32px;
+
+  --font-display: var(--font-anton), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-space-grotesk), system-ui, sans-serif;
+
+  --ease-out-natural: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+.press {
+  transition:
+    transform 180ms var(--ease-out-natural),
+    opacity 180ms var(--ease-out-natural),
+    background-color 180ms var(--ease-out-natural);
+}
+.press:active {
+  transform: scale(0.975);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-lime);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { IconArrowRight } from "@/components/Icons";
+import { more } from "@/lib/content-data.generated";
 
 export const metadata = { title: "More — Shirtfaced" };
 
@@ -38,12 +39,8 @@ export default function MorePage() {
       </ul>
 
       <div className="mt-10 rounded-[20px] bg-ink px-6 py-7 text-paper">
-        <p className="display text-[22px] leading-tight">
-          bad financial decisions since 2026
-        </p>
-        <p className="mt-2 text-[14px] text-paper/60">
-          Designed in Australia. Printed properly. Worn badly.
-        </p>
+        <p className="display text-[22px] leading-tight">{more.blurbHeading}</p>
+        <p className="mt-2 text-[14px] text-paper/60">{more.blurbSubline}</p>
       </div>
 
       <p className="mt-8 text-[13px] text-grey-dark">

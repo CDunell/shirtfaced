@@ -43,16 +43,7 @@ const NAV: Group[] = [
       { href: "/shop", label: "Street" },
     ],
   },
-  {
-    label: "Help",
-    items: [
-      { href: "/size-guide", label: "Size guide" },
-      { href: "/shipping", label: "Shipping" },
-      { href: "/returns", label: "Returns" },
-      { href: "/contact", label: "Contact" },
-      { href: "/more", label: "More" },
-    ],
-  },
+  { label: "More", href: "/more" },
   { label: "About", href: "/about" },
   { label: "Sale", href: "/shop", accent: true },
 ];
@@ -242,6 +233,10 @@ export function Header() {
                   Search
                 </Link>
                 <span className="text-paper/35">AUD $</span>
+                {/* Staff-facing, not a customer feature — kept last and quiet. */}
+                <a href="https://admin.shirtfaced.wtf" className="text-paper/35">
+                  Admin
+                </a>
               </div>
             </nav>
 

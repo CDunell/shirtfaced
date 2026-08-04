@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProductCard } from "@/components/ProductCard";
 import { CATEGORIES, products } from "@/lib/products";
@@ -17,8 +17,17 @@ const SORTS: { key: SortKey; label: string }[] = [
 
 export function ShopGrid() {
   const params = useSearchParams();
-  const [filter, setFilter] = useState<string>(params.get("f") ?? "all");
+  const paramFilter = params.get("f") ?? "all";
+  const [filter, setFilter] = useState<string>(paramFilter);
   const [sort, setSort] = useState<SortKey>("featured");
+
+  // Chip clicks set `filter` directly (no URL change), but a nav link to
+  // /shop?f=... while already on this page doesn't remount ShopGrid, so the
+  // initial useState value above goes stale — resync whenever the URL's
+  // filter changes.
+  useEffect(() => {
+    setFilter(paramFilter);
+  }, [paramFilter]);
 
   const visible = useMemo(() => {
     const list = products.filter((p) => {

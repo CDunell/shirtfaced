@@ -3,10 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "node scripts/sync-products.mjs && node scripts/sync-content.mjs",
     "dev": "next dev",
+    "prebuild": "node scripts/sync-products.mjs && node scripts/sync-content.mjs",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync:products": "node scripts/sync-products.mjs",
+    "sync:content": "node scripts/sync-content.mjs"
   },
   "dependencies": {
     "next": "16.2.12",
@@ -18,8 +22,10 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
+    "postgres": "^3.4.7",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
