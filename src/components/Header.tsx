@@ -93,7 +93,7 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-40 bg-ink text-paper">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+        <div className="mx-auto flex h-20 max-w-6xl items-center justify-between px-4 sm:px-6">
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -115,7 +115,7 @@ export function Header() {
               alt="Shirtfaced"
               width={531}
               height={140}
-              className="h-[38px] w-auto sm:h-[46px]"
+              className="h-[38px] w-auto translate-y-[5px] sm:h-[46px] sm:translate-y-[6px]"
             />
           </Link>
 
@@ -158,14 +158,14 @@ export function Header() {
           />
 
           <div className="slide-left absolute inset-y-0 left-0 flex w-full max-w-[400px] flex-col bg-ink text-paper">
-            <div className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-6">
+            <div className="flex h-20 shrink-0 items-center justify-between px-4 sm:px-6">
               {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
               <img
                 src="/logo-lockup.png"
                 alt="Shirtfaced"
                 width={531}
                 height={140}
-                className="h-[36px] w-auto"
+                className="h-[36px] w-auto translate-y-[5px]"
               />
               <button
                 type="button"
