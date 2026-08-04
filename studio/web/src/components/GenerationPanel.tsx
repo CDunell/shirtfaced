@@ -14,10 +14,13 @@ import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Tag, HIERARCHY, KIND as TAG_KIND, type TagKind } from "baseui/tag";
 import { LabelSmall, MonoLabelXSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
+import { ReviewPanel } from "./ReviewPanel";
+
 import {
   ApiError,
   continueWorld,
   fetchAttempts,
+  retryReview,
   type Attempt,
   type AttemptState,
 } from "../api/client";
@@ -48,8 +51,31 @@ const STATE_KINDS: Record<AttemptState, TagKind> = {
   failed: TAG_KIND.negative,
 };
 
-function AttemptCard({ attempt }: { attempt: Attempt }): React.JSX.Element {
+function AttemptCard({
+  attempt,
+  onReviewed,
+}: {
+  attempt: Attempt;
+  onReviewed: () => void;
+}): React.JSX.Element {
   const [css, theme] = useStyletron();
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  const review = useCallback(() => {
+    setReviewing(true);
+    setReviewError(null);
+    retryReview(attempt.id)
+      .then(() => {
+        onReviewed();
+      })
+      .catch((error: unknown) => {
+        setReviewError(error instanceof ApiError ? error.message : "The review could not be run.");
+      })
+      .finally(() => {
+        setReviewing(false);
+      });
+  }, [attempt.id, onReviewed]);
 
   return (
     <div
@@ -132,6 +158,30 @@ function AttemptCard({ attempt }: { attempt: Attempt }): React.JSX.Element {
             </div>
           ))}
       </dl>
+
+      {attempt.review && <ReviewPanel review={attempt.review} />}
+
+      {attempt.image_url && (
+        <div className={css({ marginTop: theme.sizing.scale500 })}>
+          <Button
+            size={SIZE.mini}
+            kind={BUTTON_KIND.tertiary}
+            onClick={review}
+            disabled={reviewing}
+          >
+            {reviewing ? "Reviewing…" : attempt.review ? "Review again" : "Review this image"}
+          </Button>
+          <ParagraphXSmall marginBottom={0} color={theme.colors.contentTertiary}>
+            Reviews the stored image. Never regenerates it.
+          </ParagraphXSmall>
+        </div>
+      )}
+
+      {reviewError && (
+        <div className={css({ marginTop: theme.sizing.scale400 })}>
+          <Notification kind={NOTIFICATION_KIND.negative}>{reviewError}</Notification>
+        </div>
+      )}
 
       {attempt.production_prompt && (
         <details className={css({ marginTop: theme.sizing.scale500 })}>
@@ -249,7 +299,15 @@ export function GenerationPanel({ slug, onGenerated }: GenerationPanelProps): Re
         {attempts.length === 0 ? (
           <ParagraphXSmall color={theme.colors.contentTertiary}>No attempts yet.</ParagraphXSmall>
         ) : (
-          attempts.map((attempt) => <AttemptCard key={attempt.id} attempt={attempt} />)
+          attempts.map((attempt) => (
+            <AttemptCard
+              key={attempt.id}
+              attempt={attempt}
+              onReviewed={() => {
+                void load();
+              }}
+            />
+          ))
         )}
       </StyledBody>
     </Card>

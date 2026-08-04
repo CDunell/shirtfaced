@@ -50,6 +50,77 @@ ACTIVE_ATTEMPT_STATES: frozenset[AttemptState] = frozenset(
 )
 
 
+class ReviewRecommendation(StrEnum):
+    """What the review model advises.
+
+    A recommendation, never a decision. The owner records the outcome separately in
+    the human decision, using the canon's own vocabulary.
+    """
+
+    APPROVE = "APPROVE_RECOMMENDED"
+    APPROVE_WITH_NOTE = "APPROVE_WITH_NOTE_RECOMMENDED"
+    REJECT = "REJECT_RECOMMENDED"
+    UNCERTAIN = "REVIEW_UNCERTAIN"
+
+
+class ReviewVerdict(StrEnum):
+    """The verdict vocabulary used by the product specification and data model.
+
+    Derived from the recommendation, so both the gate-based review contract and the
+    original three-value verdict are satisfied without inventing anything.
+    """
+
+    APPROVED = "approved"
+    APPROVED_WITH_NOTE = "approved_with_note"
+    REJECTED = "rejected"
+    UNCERTAIN = "uncertain"
+
+
+RECOMMENDATION_VERDICTS: dict[ReviewRecommendation, ReviewVerdict] = {
+    ReviewRecommendation.APPROVE: ReviewVerdict.APPROVED,
+    ReviewRecommendation.APPROVE_WITH_NOTE: ReviewVerdict.APPROVED_WITH_NOTE,
+    ReviewRecommendation.REJECT: ReviewVerdict.REJECTED,
+    ReviewRecommendation.UNCERTAIN: ReviewVerdict.UNCERTAIN,
+}
+
+
+class GateStatus(StrEnum):
+    """The outcome of one review gate."""
+
+    PASS = "PASS"
+    FAIL = "FAIL"
+    UNCERTAIN = "UNCERTAIN"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+
+
+class GateName(StrEnum):
+    """The nine gates, named after the Continuity Director's tests in WORLD.md."""
+
+    MOOD = "mood"
+    AUSTRALIAN_AUTHENTICITY = "australian_authenticity"
+    PRODUCT_VISIBILITY = "product_visibility"
+    THIRD_PARTY_BRANDING = "third_party_branding"
+    VEHICLE_CONTINUITY = "vehicle_continuity"
+    WARDROBE_BALANCE = "wardrobe_balance"
+    COMPOSITION = "composition"
+    DOCUMENTARY_CREDIBILITY = "documentary_credibility"
+    STORY = "story"
+
+
+class CanonProposalStatus(StrEnum):
+    """Lifecycle of a proposed permanent rule.
+
+    A proposal never changes WORLD.md. Only an explicit human approval can, and that
+    arrives with the canon proposal phase.
+    """
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    APPLIED = "applied"
+    FAILED = "failed"
+
+
 class AssetKind(StrEnum):
     """What a stored image is."""
 
@@ -66,6 +137,7 @@ class FailureCode(StrEnum):
     """
 
     PLANNING_FAILED = "planning_failed"
+    REVIEW_FAILED = "review_failed"
     PROVIDER_ERROR = "provider_error"
     PROVIDER_TIMEOUT = "provider_timeout"
     PROVIDER_REFUSED = "provider_refused"

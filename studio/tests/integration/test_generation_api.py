@@ -77,7 +77,9 @@ def test_continue_world_generates_one_image(client: TestClient) -> None:
 
     assert response.status_code == 201
     payload = response.json()
-    assert payload["attempt"]["state"] == "generated"
+    # Continue World generates and then reviews, so the attempt comes to rest
+    # awaiting the owner's decision.
+    assert payload["attempt"]["state"] == "awaiting_decision"
     assert payload["attempt"]["shot"]["external_id"] == "W01-011"
     assert payload["attempt"]["image_url"]
     assert payload["attempt"]["thumbnail_url"]
@@ -272,5 +274,72 @@ def test_the_attempt_is_left_for_a_human_decision(client: TestClient, session: S
 
     attempt = _attempts(session)[0]
 
-    assert attempt.state is AttemptState.GENERATED
+    assert attempt.state is AttemptState.AWAITING_DECISION
     assert attempt.is_active
+
+
+# --- review ------------------------------------------------------------------------
+
+
+def test_continue_world_attaches_a_review(client: TestClient) -> None:
+    payload = client.post("/api/worlds/world-01/continue").json()
+
+    assert payload["review"] is not None
+    assert len(payload["review"]["gates"]) == 9
+    assert payload["review"]["recommendation"] == "APPROVE_RECOMMENDED"
+
+
+def test_the_review_reports_that_nothing_was_billed(client: TestClient) -> None:
+    payload = client.post("/api/worlds/world-01/continue").json()
+
+    assert payload["review_live"] is False
+
+
+def test_the_review_carries_scores_and_compliance(client: TestClient) -> None:
+    review = client.post("/api/worlds/world-01/continue").json()["review"]
+
+    assert 1 <= review["mood_score"] <= 5
+    assert review["branding_compliant"] is True
+    assert review["vehicle_compliant"] is True
+
+
+def test_the_review_separates_blocking_and_uncertain_gates(client: TestClient) -> None:
+    """The interface expands those first, so they are reported separately."""
+    review = client.post("/api/worlds/world-01/continue").json()["review"]
+
+    assert review["blocking_gates"] == []
+    assert review["uncertain_gates"] == []
+    # The default fake marks vehicle continuity not applicable, which is neither.
+    assert review["gates"]["vehicle_continuity"]["status"] == "NOT_APPLICABLE"
+
+
+def test_a_recommendation_is_not_an_approval(client: TestClient) -> None:
+    payload = client.post("/api/worlds/world-01/continue").json()
+
+    assert payload["attempt"]["approved"] is False
+    assert payload["attempt"]["state"] == "awaiting_decision"
+
+
+def test_a_review_can_be_retried_without_regenerating(client: TestClient) -> None:
+    created = client.post("/api/worlds/world-01/continue").json()["attempt"]
+
+    response = client.post(f"/api/attempts/{created['id']}/retry-review")
+
+    assert response.status_code == 200
+    assert len(response.json()["gates"]) == 9
+
+    # The image is unchanged.
+    after = client.get(f"/api/attempts/{created['id']}").json()
+    assert after["image_url"] == created["image_url"]
+
+
+def test_retrying_a_review_on_an_unknown_attempt_returns_404(client: TestClient) -> None:
+    response = client.post("/api/attempts/00000000-0000-0000-0000-000000000000/retry-review")
+
+    assert response.status_code == 404
+
+
+def test_canon_proposals_are_listed_and_start_empty(client: TestClient) -> None:
+    client.post("/api/worlds/world-01/continue")
+
+    assert client.get("/api/worlds/world-01/canon-proposals").json() == []

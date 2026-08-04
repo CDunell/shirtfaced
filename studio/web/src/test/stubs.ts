@@ -9,9 +9,12 @@ import { vi } from "vitest";
 
 import type {
   Attempt,
+  GateName,
+  GateResult,
   GenerationResult,
   NextShot,
   PlanPreview,
+  Review,
   Shot,
   WorldDetail,
   WorldSummary,
@@ -116,6 +119,60 @@ export function planPreview(overrides: Partial<PlanPreview> = {}): PlanPreview {
   };
 }
 
+const GATE_NAMES: GateName[] = [
+  "mood",
+  "australian_authenticity",
+  "product_visibility",
+  "third_party_branding",
+  "vehicle_continuity",
+  "wardrobe_balance",
+  "composition",
+  "documentary_credibility",
+  "story",
+];
+
+export function gate(overrides: Partial<GateResult> = {}): GateResult {
+  return {
+    status: "PASS",
+    evidence: "Reads as expected.",
+    codes: [],
+    confidence: 0.85,
+    material: false,
+    ...overrides,
+  };
+}
+
+export function review(overrides: Partial<Review> = {}): Review {
+  const gates = Object.fromEntries(GATE_NAMES.map((name) => [name, gate()])) as Record<
+    GateName,
+    GateResult
+  >;
+
+  return {
+    id: "review-1",
+    review_model: "fake-review-model",
+    recommendation: "APPROVE_RECOMMENDED",
+    verdict: "approved",
+    gates,
+    mood_score: 4,
+    australian_authenticity_score: 4,
+    product_visibility_score: 4,
+    documentary_credibility_score: 4,
+    story_score: 4,
+    branding_compliant: true,
+    vehicle_compliant: true,
+    strongest_success: "The moment reads as taken rather than arranged.",
+    material_drift: null,
+    recommended_action: "APPROVE_RECOMMENDED",
+    next_hero_product: null,
+    next_camera: null,
+    created_at: "2026-08-05T00:00:00Z",
+    blocking_gates: [],
+    uncertain_gates: [],
+    ...overrides,
+  };
+}
+
 export function attempt(overrides: Partial<Attempt> = {}): Attempt {
   return {
     id: "attempt-1",
@@ -139,13 +196,14 @@ export function attempt(overrides: Partial<Attempt> = {}): Attempt {
     created_at: "2026-08-05T00:00:00Z",
     image_url: "/assets/asset-1",
     thumbnail_url: "/assets/asset-2",
+    review: review(),
     approved: false,
     ...overrides,
   };
 }
 
 export function generationResult(overrides: Partial<GenerationResult> = {}): GenerationResult {
-  return { attempt: attempt(), live: false, ...overrides };
+  return { attempt: attempt(), review: review(), live: false, review_live: false, ...overrides };
 }
 
 export interface Routes {

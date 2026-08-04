@@ -112,3 +112,30 @@ Unchanged by this decision:
 - No API key ever reaches browser JavaScript. All OpenAI calls stay server-side.
 - All rendered model output is still escaped.
 - Human approval gates (ADR-005) and one image per action (ADR-009) are untouched.
+
+## ADR-012 — Review output carries both vocabularies
+
+`PHASE_4_REVIEW_CONTRACT.md` specifies nine evidence-based gates, each with a status,
+one visible observation, stable finding codes, a confidence and whether the finding is
+material. It does not include the five 1-to-5 scores or the two compliance booleans
+that `DATA_MODEL.md`, `API_CONTRACT.md` and `WORKFLOW.md` all require.
+
+Both are kept. The review model returns the gates *and* the scores.
+
+The alternative was to derive the scores from gate statuses, which would have invented
+precision: a five-point score cannot honestly be computed from PASS, FAIL, UNCERTAIN
+and NOT_APPLICABLE. Asking for both costs a little more output and keeps every number
+attributable to the model that produced it.
+
+The three-value verdict the product specification uses is the one thing that *is*
+derived, because it is a pure renaming of the recommendation:
+
+- `APPROVE_RECOMMENDED` → `approved`
+- `APPROVE_WITH_NOTE_RECOMMENDED` → `approved_with_note`
+- `REJECT_RECOMMENDED` → `rejected`
+- `REVIEW_UNCERTAIN` → `uncertain`
+
+`uncertain` is new. The product specification lists three automated outcomes, but the
+review contract requires the reviewer to say when the evidence is insufficient rather
+than guess, and collapsing that into one of the other three would be a lie about what
+the model saw.

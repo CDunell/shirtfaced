@@ -7,6 +7,7 @@ proposals arrive with the phases that implement them.
 from __future__ import annotations
 
 import datetime as dt
+import logging
 import uuid
 from typing import Annotated
 
@@ -19,17 +20,37 @@ from app.adapters.asset_store import FilesystemAssetStore
 from app.adapters.factory import (
     build_image_client,
     build_planning_client,
+    build_review_client,
     image_client_is_live,
     planning_client_is_live,
+    review_client_is_live,
 )
 from app.adapters.markdown_store import WORLD_DOCUMENT, MarkdownStore
 from app.adapters.planning import PlanningError
+from app.adapters.review import ReviewError
 from app.config import Settings, get_settings
-from app.db.models import GenerationAttempt, Shot, World
+from app.db.models import (
+    AutomatedReview,
+    CanonProposal,
+    GenerationAttempt,
+    Shot,
+    World,
+)
 from app.db.session import get_db_session
-from app.domain.enums import AssetKind, AttemptState, FailureCode, ShotStatus, WorldStatus
+from app.domain.enums import (
+    AssetKind,
+    AttemptState,
+    CanonProposalStatus,
+    FailureCode,
+    GateName,
+    GateStatus,
+    ReviewRecommendation,
+    ReviewVerdict,
+    ShotStatus,
+    WorldStatus,
+)
 from app.domain.errors import StudioError
-from app.domain.schemas import PromptPlan
+from app.domain.schemas import GateResult, PromptPlan
 from app.services.generation_orchestrator import (
     GenerationConflict,
     GenerationSettings,
@@ -38,8 +59,11 @@ from app.services.generation_orchestrator import (
     start_attempt,
 )
 from app.services.prompt_planner import build_request, create_plan
+from app.services.review_service import NothingToReview, review_attempt
 from app.services.rotation import apply_continuity, rotation_from_shots
 from app.services.shot_selector import NoSelection, Selection, select_next_shot
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["worlds"])
 
@@ -185,6 +209,9 @@ class AttemptResponse(BaseModel):
     created_at: dt.datetime
     image_url: str | None
     thumbnail_url: str | None
+    # The most recent review, if the image has been reviewed. Reviews are immutable;
+    # retrying adds another, and the last one stands.
+    review: ReviewResponse | None = None
     # A generated image is an image, not a decision.
     approved: bool
 
@@ -220,6 +247,9 @@ def _attempt_response(attempt: GenerationAttempt) -> AttemptResponse:
         created_at=attempt.created_at,
         image_url=_asset_url(attempt, AssetKind.ORIGINAL),
         thumbnail_url=_asset_url(attempt, AssetKind.THUMBNAIL),
+        review=(
+            _review_response(attempt.latest_review) if attempt.latest_review is not None else None
+        ),
         approved=attempt.state is AttemptState.APPROVED,
     )
 
@@ -363,8 +393,11 @@ class GenerationResponse(BaseModel):
     """The result of one Continue World action."""
 
     attempt: AttemptResponse
-    # Whether a billable model produced this, or the deterministic fakes did.
+    # Null when the review failed; the attempt records why and can be retried.
+    review: ReviewResponse | None = None
+    # Whether billable models produced these, or the deterministic fakes did.
     live: bool
+    review_live: bool = False
 
 
 @router.post(
@@ -406,9 +439,20 @@ def continue_world(
         ),
     )
 
+    review: AutomatedReview | None = None
+    if completed.state is AttemptState.GENERATED:
+        # An image exists, so it is reviewed. A review failure is recorded on the
+        # attempt and leaves the image intact; retry-review is then cheap.
+        try:
+            review = _run_review(session, completed, settings)
+        except StudioError as error:
+            logger.warning("Review could not run for attempt %s: %s", completed.id, error)
+
     return GenerationResponse(
         attempt=_attempt_response(completed),
+        review=_review_response(review) if review else None,
         live=image_client_is_live(settings),
+        review_live=review_client_is_live(settings),
     )
 
 
@@ -428,6 +472,7 @@ def list_attempts(
             .options(
                 selectinload(GenerationAttempt.assets),
                 selectinload(GenerationAttempt.shot),
+                selectinload(GenerationAttempt.reviews),
             )
         )
         .scalars()
@@ -446,6 +491,7 @@ def get_attempt(attempt_id: uuid.UUID, session: SessionDependency) -> AttemptRes
         .options(
             selectinload(GenerationAttempt.assets),
             selectinload(GenerationAttempt.shot),
+            selectinload(GenerationAttempt.reviews),
         )
     ).scalar_one_or_none()
 
@@ -453,3 +499,168 @@ def get_attempt(attempt_id: uuid.UUID, session: SessionDependency) -> AttemptRes
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such attempt.")
 
     return _attempt_response(attempt)
+
+
+class ReviewResponse(BaseModel):
+    """One automated review."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    review_model: str
+    recommendation: ReviewRecommendation
+    verdict: ReviewVerdict
+    gates: dict[GateName, GateResult]
+    mood_score: int
+    australian_authenticity_score: int
+    product_visibility_score: int
+    documentary_credibility_score: int
+    story_score: int
+    branding_compliant: bool
+    vehicle_compliant: bool
+    strongest_success: str
+    material_drift: str | None
+    recommended_action: str | None
+    next_hero_product: str | None
+    next_camera: str | None
+    created_at: dt.datetime
+    # Gates that materially failed, and gates the model was unsure about. The
+    # interface expands these first.
+    blocking_gates: list[GateName]
+    uncertain_gates: list[GateName]
+
+
+class CanonProposalResponse(BaseModel):
+    """A proposed permanent rule, awaiting the owner."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    status: CanonProposalStatus
+    proposed_text: str
+    insertion_anchor: str | None
+    reason: str | None
+    created_at: dt.datetime
+
+
+def _review_response(review: AutomatedReview) -> ReviewResponse:
+    raw = review.raw_json or {}
+    gates = {
+        GateName(name): GateResult.model_validate(value)
+        for name, value in (raw.get("gates") or {}).items()
+    }
+    blocking = [
+        name
+        for name in GateName
+        if name in gates and gates[name].status is GateStatus.FAIL and gates[name].material
+    ]
+    uncertain = [
+        name for name in GateName if name in gates and gates[name].status is GateStatus.UNCERTAIN
+    ]
+
+    return ReviewResponse(
+        id=review.id,
+        review_model=review.review_model,
+        recommendation=review.recommendation,
+        verdict=review.verdict,
+        gates=gates,
+        mood_score=review.mood_score,
+        australian_authenticity_score=review.australian_authenticity_score,
+        product_visibility_score=review.product_visibility_score,
+        documentary_credibility_score=review.documentary_credibility_score,
+        story_score=review.story_score,
+        branding_compliant=review.branding_compliant,
+        vehicle_compliant=review.vehicle_compliant,
+        strongest_success=review.strongest_success,
+        material_drift=review.material_drift,
+        recommended_action=review.recommended_action,
+        next_hero_product=review.next_hero_product,
+        next_camera=review.next_camera,
+        created_at=review.created_at,
+        blocking_gates=blocking,
+        uncertain_gates=uncertain,
+    )
+
+
+def _load_attempt(session: Session, attempt_id: uuid.UUID) -> GenerationAttempt:
+    attempt = session.execute(
+        select(GenerationAttempt)
+        .where(GenerationAttempt.id == attempt_id)
+        .options(
+            selectinload(GenerationAttempt.assets),
+            selectinload(GenerationAttempt.shot),
+            selectinload(GenerationAttempt.reviews),
+        )
+    ).scalar_one_or_none()
+
+    if attempt is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such attempt.")
+    return attempt
+
+
+def _run_review(
+    session: Session, attempt: GenerationAttempt, settings: Settings
+) -> AutomatedReview | None:
+    """Review one attempt, using the same canon the planner saw."""
+    store = MarkdownStore(settings.worlds_root_resolved)
+    documents = store.read_world_documents(attempt.world.slug)
+
+    shots = sorted(attempt.world.shots, key=lambda shot: shot.sequence)
+    rotation = apply_continuity(rotation_from_shots(shots), documents["CONTINUITY.md"].text)
+
+    return review_attempt(
+        session,
+        attempt,
+        review_client=build_review_client(settings),
+        asset_store=FilesystemAssetStore(settings.assets_root_resolved),
+        world_text=documents[WORLD_DOCUMENT].text,
+        rotation=rotation,
+    )
+
+
+@router.post("/attempts/{attempt_id}/retry-review", summary="Review again")
+def retry_review(
+    attempt_id: uuid.UUID, session: SessionDependency, settings: SettingsDependency
+) -> ReviewResponse:
+    """Review the existing image again without regenerating it.
+
+    Reviews are immutable, so this adds another rather than replacing the last.
+    """
+    attempt = _load_attempt(session, attempt_id)
+
+    try:
+        review = _run_review(session, attempt, settings)
+    except NothingToReview as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except (ReviewError, StudioError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+
+    if review is None:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=attempt.failure_message or "The review failed.",
+        )
+
+    return _review_response(review)
+
+
+@router.get("/worlds/{world_slug}/canon-proposals", summary="Pending canon proposals")
+def list_canon_proposals(
+    world_slug: str, session: SessionDependency
+) -> list[CanonProposalResponse]:
+    """Rules the reviewer proposed. None of them has changed WORLD.md."""
+    world = _load_world(session, world_slug)
+
+    proposals = (
+        session.execute(
+            select(CanonProposal)
+            .where(CanonProposal.world_id == world.id)
+            .order_by(CanonProposal.created_at.desc())
+        )
+        .scalars()
+        .all()
+    )
+
+    return [CanonProposalResponse.model_validate(proposal) for proposal in proposals]
