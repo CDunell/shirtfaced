@@ -101,13 +101,13 @@ Reject if:
 
 ## 6. W01-013 — Apartment balcony
 
-**Machine values:** `Back surface` · `Inside lounge`  
+**Machine values:** `T-shirt` · `Inside lounge`  
 **Narrative position:** Camera remains inside while activity continues at the balcony threshold.  
-**Primary creative test:** Can the planner honour a normalized `Back surface` shot value while the current locked garment rule requires all garments to remain blank?
+**Primary creative test:** Can the planner reveal the blank rear surface of the nominated T-shirt through a real balcony action?
 
 Required interpretation:
 
-`Back surface` is a clear blank rear-garment visibility opportunity, not permission to generate artwork. The garment remains completely blank. Treat it as a back-surface visibility opportunity.
+The hero product is the T-shirt. “Back view” in the machine-visible scene title defines the composition opportunity; it is never a separate product and never permission to generate artwork.
 
 Expected image evidence:
 
@@ -118,7 +118,7 @@ Expected image evidence:
 
 Reject if any graphic, logo, text, label or embroidery appears on the garment.
 
-This tests that the normalized rotation value remains subordinate to the permanent blank-garment rule.
+This tests whether scene wording can carry placement intent while the hero-product column remains a real product.
 
 ## 7. W01-014 — Kitchen kick-ons II
 
@@ -180,9 +180,9 @@ Record only the strongest success, material drift, genuinely repeatable new rule
 
 ## 10. Known issues to watch
 
-### `Back surface` and blank garments
+### Back-view placement and blank garments
 
-`Back surface` is now the normalized exact rotation value. It means a naturally visible blank rear garment surface. Phase 3 must never generate artwork, text, labels or embroidery.
+W01-013 now uses the real hero product `T-shirt`; `Apartment balcony back view` carries placement intent in the parsed scene title. Phase 3 must never generate artwork, text, labels or embroidery.
 
 ### Branding note now resolved
 

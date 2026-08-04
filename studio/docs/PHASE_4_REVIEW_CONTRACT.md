@@ -67,7 +67,7 @@ Codes: `AU_GENERIC`, `AU_NORTH_AMERICAN_DRIFT`, `AU_WRONG_ARCHITECTURE`, `AU_WRO
 
 ### Product visibility and truth
 
-Tests whether the nominated hero is present, naturally visible and exact enough for the shot’s purpose. Every garment remains blank. `Back surface` means a visible blank rear garment surface, never artwork.
+Tests whether the nominated hero is present, naturally visible and exact enough for the shot’s purpose. Every garment remains blank. A back-view scene means a visible blank rear surface of the nominated real garment product, never artwork.
 
 Codes: `PRODUCT_MISSING`, `PRODUCT_NOT_CLEAR`, `PRODUCT_FORCED`, `PRODUCT_WRONG_ITEM`, `PRODUCT_WRONG_COLOUR`, `PRODUCT_INACCURATE`, `PRODUCT_INVENTED_GRAPHIC`, `PRODUCT_INVENTED_LABEL`, `PRODUCT_CAP_PANEL_HIDDEN`.
 
