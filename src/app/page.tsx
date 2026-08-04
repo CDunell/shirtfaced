@@ -29,7 +29,7 @@ export default function Home() {
           works at desktop widths, so mobile gets the product shot with live
           text over it instead. <picture> means exactly one image downloads. */}
       <section className="relative bg-ink text-paper">
-        <div className="relative sm:mx-6 sm:mb-6">
+        <div className="relative mx-auto max-w-6xl sm:mb-6 sm:px-6">
           <picture>
             <source
               media="(min-width: 640px)"
@@ -76,7 +76,7 @@ export default function Home() {
 
       {/* ---------------- Trust bar ---------------- */}
       <section className="bg-ink text-paper">
-        <ul className="mx-auto flex max-w-5xl items-center justify-center gap-x-2 px-4 pb-7 text-[11px] tracking-wide text-paper/45 uppercase sm:gap-x-3 sm:text-[12px]">
+        <ul className="mx-auto flex max-w-6xl items-center justify-center gap-x-2 px-4 pb-7 text-[11px] tracking-wide text-paper/45 uppercase sm:gap-x-3 sm:text-[12px]">
           {TRUST.map((t, i) => (
             <li key={t} className="flex items-center gap-x-2 sm:gap-x-3">
               {i > 0 && <span aria-hidden>&middot;</span>}
@@ -87,7 +87,7 @@ export default function Home() {
       </section>
 
       {/* ---------------- New drops ---------------- */}
-      <section className="mx-auto max-w-5xl px-4 pt-10 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 pt-10 sm:px-6">
         <div className="mb-5 flex items-end justify-between">
           <h2 className="display text-[34px]">new drops</h2>
           <Link
@@ -107,7 +107,7 @@ export default function Home() {
       </section>
 
       {/* ---------------- Promo ---------------- */}
-      <section className="mx-auto mt-12 max-w-5xl px-4 sm:px-6">
+      <section className="mx-auto mt-12 max-w-6xl px-4 sm:px-6">
         <Link
           href="/shop"
           className="press relative block overflow-hidden rounded-[20px]"
@@ -137,15 +137,15 @@ export default function Home() {
 
       {/* ---------------- Collections ---------------- */}
       <section className="mt-12">
-        <h2 className="display mx-auto mb-5 max-w-5xl px-4 text-[34px] sm:px-6">
+        <h2 className="display mx-auto mb-5 max-w-6xl px-4 text-[34px] sm:px-6">
           collections
         </h2>
-        <ul className="no-scrollbar flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:px-6">
+        <ul className="no-scrollbar mx-auto flex max-w-6xl snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 sm:gap-4 sm:px-6">
           {COLLECTIONS.map((c) => (
             <li key={c.label} className="snap-start shrink-0">
               <Link
                 href="/shop"
-                className="press relative block h-[188px] w-[142px] overflow-hidden rounded-[20px]"
+                className="press relative block h-[188px] w-[142px] overflow-hidden rounded-[20px] sm:h-[300px] sm:w-[228px]"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element -- static export, no loader */}
                 <img
@@ -155,7 +155,7 @@ export default function Home() {
                   className="h-full w-full object-cover"
                 />
                 <span className="absolute inset-0 bg-gradient-to-t from-ink/85 via-ink/10 to-transparent" />
-                <span className="display absolute inset-x-0 bottom-0 p-3 text-[17px] leading-tight text-paper">
+                <span className="display absolute inset-x-0 bottom-0 p-3 text-[17px] leading-tight text-paper sm:p-4 sm:text-[21px]">
                   {c.label}
                 </span>
               </Link>
@@ -165,7 +165,7 @@ export default function Home() {
       </section>
 
       {/* ---------------- Newsletter ---------------- */}
-      <section className="mx-auto mt-12 max-w-5xl px-4 sm:px-6">
+      <section className="mx-auto mt-12 max-w-6xl px-4 sm:px-6">
         <div className="rounded-[20px] bg-ink px-6 py-8 text-paper">
           <h2 className="display max-w-[13ch] text-[30px] leading-[0.95]">
             we promise fewer emails than your ex.

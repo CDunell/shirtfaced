@@ -9,7 +9,7 @@ export const metadata = {
 function GridSkeleton() {
   // Skeletons, never spinners — the layout is known, so hold its shape.
   return (
-    <div className="mx-auto max-w-5xl px-4 pt-4 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
       <div className="grid grid-cols-2 gap-x-4 gap-y-9 sm:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i}>
@@ -26,7 +26,7 @@ function GridSkeleton() {
 export default function ShopPage() {
   return (
     <>
-      <div className="mx-auto max-w-5xl px-4 pt-8 pb-1 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 pt-8 pb-1 sm:px-6">
         <h1 className="display text-[17vw] leading-[0.84] sm:text-[86px]">
           shop
         </h1>

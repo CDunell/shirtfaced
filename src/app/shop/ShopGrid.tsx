@@ -45,7 +45,7 @@ export function ShopGrid() {
     <>
       {/* Filter chips — one thumb, large targets, live count */}
       <div className="sticky top-16 z-30 border-b border-ink/10 bg-paper/95 backdrop-blur">
-        <ul className="no-scrollbar mx-auto flex max-w-5xl gap-2 overflow-x-auto px-4 py-3 sm:px-6">
+        <ul className="no-scrollbar mx-auto flex max-w-6xl gap-2 overflow-x-auto px-4 py-3 sm:px-6">
           {CATEGORIES.map((c) => {
             const active = filter === c.key;
             return (
@@ -68,7 +68,7 @@ export function ShopGrid() {
         </ul>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="flex items-center justify-between py-4">
           <p className="text-[13px] font-semibold tracking-wide text-grey-dark uppercase tabular-nums">
             {visible.length} {visible.length === 1 ? "product" : "products"}
