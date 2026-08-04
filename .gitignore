@@ -43,3 +43,5 @@ next-env.d.ts
 
 # chrome debug profile from scripts/shot.mjs
 .chrome-shot-profile/
+# local Claude permissions
+/.claude/settings.local.json
