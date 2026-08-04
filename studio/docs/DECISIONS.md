@@ -86,6 +86,13 @@ Accepted consequences:
   endpoints in `API_CONTRACT.md` become the sole interface between the two halves,
   which makes that contract load-bearing rather than advisory.
 - The UI test layer becomes a JavaScript test runner, not server-rendered assertions.
+- The interface is pinned to **React 18**. Base Web 18.2.0 relies on `defaultProps` for
+  function components, which React 19 removed; `Card` and others throw at render on 19.
+  Ninety-five Base modules use that pattern, so patching around it is not viable. This
+  is revisited when Base ships React 19 support.
+- A single `@types/react` version is forced through npm `overrides`, because a
+  transitive Base dependency pulls `@types/react` 16 and two copies make every Base
+  component fail to typecheck as a JSX element.
 
 Unchanged by this decision:
 

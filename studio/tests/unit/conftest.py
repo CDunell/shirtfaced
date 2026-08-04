@@ -12,7 +12,8 @@ from collections.abc import Iterator
 
 import pytest
 
-from app.config import Settings
+from app.config import Settings, get_settings
+from app.db.session import get_engine, get_session_factory
 
 PLACEHOLDER_DATABASE_URL = (
     "postgresql+psycopg://unit-tests:unit-tests@127.0.0.1:1/unit_tests_never_connected"
@@ -26,4 +27,11 @@ def isolated_environment(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     for key in SETTINGS_ENV_KEYS:
         monkeypatch.delenv(key, raising=False)
     monkeypatch.setenv("DATABASE_URL", PLACEHOLDER_DATABASE_URL)
+
+    # Settings and the engine are cached for the life of the process. Clear them so a
+    # test sees the environment it set, not the one an earlier test happened to leave.
+    for cached in (get_settings, get_engine, get_session_factory):
+        cached.cache_clear()
     yield
+    for cached in (get_settings, get_engine, get_session_factory):
+        cached.cache_clear()

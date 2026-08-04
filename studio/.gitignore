@@ -20,6 +20,10 @@ dist/
 .coverage
 htmlcov/
 
+# Interface toolchain and build output
+node_modules/
+web/dist/
+
 # Local runtime state: generated assets, thumbnails, databases, logs
 var/
 *.sqlite3

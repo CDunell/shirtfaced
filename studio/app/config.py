@@ -70,6 +70,11 @@ class Settings(BaseSettings):
     assets_root: Path = PROJECT_ROOT / "var" / "assets"
     asset_store: AssetStoreKind = AssetStoreKind.FILESYSTEM
 
+    # --- Interface --------------------------------------------------------------
+    # Built Base Web assets. In development the Vite dev server serves these instead
+    # and proxies the API, so this directory may not exist.
+    web_dist_root: Path = PROJECT_ROOT / "web" / "dist"
+
     # --- Application ------------------------------------------------------------
     git_enabled: bool = True
     # Bind to localhost by default; deployments put a reverse proxy in front and
@@ -98,6 +103,11 @@ class Settings(BaseSettings):
     def assets_root_resolved(self) -> Path:
         """Absolute assets directory, resolved against the project root."""
         return self._resolve(self.assets_root)
+
+    @property
+    def web_dist_root_resolved(self) -> Path:
+        """Absolute built-interface directory, resolved against the project root."""
+        return self._resolve(self.web_dist_root)
 
     @staticmethod
     def _resolve(path: Path) -> Path:

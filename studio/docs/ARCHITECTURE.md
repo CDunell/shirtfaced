@@ -5,9 +5,9 @@
 A modular monolith.
 
 ```text
-Browser
+Browser (Base Web single-page interface)
   |
-FastAPI + server-rendered UI
+FastAPI: JSON API + built interface assets
   |
 Application services
   |--- World service
@@ -68,10 +68,19 @@ shirtfaced-studio/
 │   │   ├── asset_store.py
 │   │   └── git_store.py
 │   ├── routes/
-│   │   ├── pages.py
+│   │   ├── health.py
 │   │   └── api.py
-│   ├── templates/
-│   └── static/
+│   └── web.py                  # serves the built interface
+├── web/                        # Base Web interface (ADR-011)
+│   ├── package.json
+│   ├── vite.config.ts
+│   ├── index.html
+│   └── src/
+│       ├── main.tsx
+│       ├── App.tsx
+│       ├── theme.ts
+│       ├── api/
+│       └── components/
 ├── worlds/
 │   └── world-01/
 │       ├── WORLD.md

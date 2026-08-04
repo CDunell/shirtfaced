@@ -1,6 +1,8 @@
 # Internal API Contract
 
-The Version 1 UI may use these endpoints through HTMX or standard form posts.
+The Base Web interface calls these endpoints. Since ADR-011 the interface is a
+separate build rather than server-rendered templates, so this contract is the only
+interface between the two halves: changing an endpoint shape breaks the UI.
 
 ## Worlds
 

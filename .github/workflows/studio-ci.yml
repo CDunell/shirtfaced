@@ -73,3 +73,38 @@ jobs:
 
       - name: Test
         run: pytest
+
+  web:
+    name: Interface
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: studio/web
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: studio/web/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build

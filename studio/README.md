@@ -40,7 +40,16 @@ alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-Quality gates:
+The interface is a separate Base Web build in `web/`:
+
+```bash
+cd web
+npm install
+npm run build          # FastAPI then serves it at http://127.0.0.1:8000
+npm run dev            # or: Vite on :5173, proxying the API to :8000
+```
+
+Quality gates — Python:
 
 ```bash
 ruff check .
@@ -49,11 +58,25 @@ mypy app
 pytest
 ```
 
+Quality gates — interface, from `web/`:
+
+```bash
+npm run lint
+npm run format:check
+npm run typecheck
+npm test
+```
+
 Integration tests need a real PostgreSQL database and are skipped without one. Point
 `TEST_DATABASE_URL` at a throwaway container, never at a database that holds anything
 you care about — the fixtures drop and recreate the `public` schema.
 
-Two things catch people out:
+Three things catch people out:
+
+- The interface is pinned to **React 18**. Base Web 18.2.0 still relies on
+  `defaultProps` for function components, which React 19 removed, so `Card` and others
+  throw at render on 19. `web/` has its own `node_modules`, so this is independent of
+  the React 19 storefront at the repository root.
 
 - An exported `DATABASE_URL` from another project overrides `.env`, because the process
   environment takes precedence. `DATABASE_URL` must use the `postgresql+psycopg://`

@@ -1,0 +1,50 @@
+{
+  "name": "shirtfaced-studio-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Base Web interface for Shirtfaced Studio",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "test": "vitest run"
+  },
+  "comments": {
+    "react": "Pinned to 18. Base Web 18.2.0 relies on defaultProps for function components, which React 19 removed; Card and others throw at render. See docs/DECISIONS.md ADR-011.",
+    "overrides": "A baseui dependency pulls @types/react 16. Two copies of the React types make every Base component fail to typecheck as a JSX element, so the direct dependency version is forced everywhere. '$name' means 'match our own dependency'."
+  },
+  "overrides": {
+    "@types/react": "$@types/react",
+    "@types/react-dom": "$@types/react-dom"
+  },
+  "dependencies": {
+    "baseui": "^18.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "styletron-engine-monolithic": "^1.0.0",
+    "styletron-react": "^6.1.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.3",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^6.0.5",
+    "eslint": "^10.8.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.9.0",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.9.6",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.66.0",
+    "vite": "^8.2.0",
+    "vitest": "^4.1.10"
+  }
+}
