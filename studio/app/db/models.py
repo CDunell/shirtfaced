@@ -37,6 +37,7 @@ from app.domain.enums import (
     CanonProposalStatus,
     FailureCode,
     HumanDecisionKind,
+    ProposalClassification,
     ReviewRecommendation,
     ReviewVerdict,
     ShotStatus,
@@ -412,12 +413,29 @@ class CanonProposal(Base):
     reason: Mapped[str | None] = mapped_column(Text)
     human_note: Mapped[str | None] = mapped_column(Text)
     git_commit: Mapped[str | None] = mapped_column(String(64))
+
+    # How the proposal relates to existing canon. Advisory; never decides.
+    classification: Mapped[ProposalClassification | None] = mapped_column(
+        _enum(ProposalClassification, "proposal_classification")
+    )
+    classification_reason: Mapped[str | None] = mapped_column(Text)
+    classified_by: Mapped[str | None] = mapped_column(String(120))
+    # The WORLD.md heading the rule would join. Validated against the planner
+    # allowlist, so an approved rule cannot land where the planner never looks.
+    target_heading: Mapped[str | None] = mapped_column(String(200))
+    # The model that proposed the rule, recorded per the Phase 6 contract.
+    reviewer_model: Mapped[str | None] = mapped_column(String(120))
+    # Exactly what was written, as written.
+    applied_wording: Mapped[str | None] = mapped_column(Text)
+    applied_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    failure_detail: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
     decided_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
 
     world: Mapped[World] = relationship()
+    attempt: Mapped[GenerationAttempt | None] = relationship()
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<CanonProposal {self.status.value!r}>"

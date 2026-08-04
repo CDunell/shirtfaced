@@ -17,7 +17,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.adapters.asset_store import FilesystemAssetStore
+from app.adapters.canon_classifier import ClassificationError
 from app.adapters.factory import (
+    build_canon_classifier,
     build_image_client,
     build_planning_client,
     build_review_client,
@@ -46,6 +48,7 @@ from app.domain.enums import (
     GateName,
     GateStatus,
     HumanDecisionKind,
+    ProposalClassification,
     ReviewRecommendation,
     ReviewVerdict,
     ShotStatus,
@@ -54,6 +57,14 @@ from app.domain.enums import (
 )
 from app.domain.errors import StudioError
 from app.domain.schemas import GateResult, PromptPlan
+from app.services.canon_service import (
+    InvalidTarget,
+    ProposalConflict,
+    approve_proposal,
+    build_diff,
+    classify_proposal,
+    reject_proposal,
+)
 from app.services.decision_service import (
     DecisionConflict,
     DecisionOutcome,
@@ -68,7 +79,7 @@ from app.services.generation_orchestrator import (
     run_attempt,
     start_attempt,
 )
-from app.services.prompt_planner import build_request, create_plan
+from app.services.prompt_planner import PLANNING_CANON_HEADINGS, build_request, create_plan
 from app.services.review_service import NothingToReview, review_attempt
 from app.services.rotation import apply_continuity, rotation_from_shots
 from app.services.shot_selector import NoSelection, Selection, select_next_shot
@@ -568,16 +579,32 @@ class ReviewResponse(BaseModel):
 
 
 class CanonProposalResponse(BaseModel):
-    """A proposed permanent rule, awaiting the owner."""
+    """A proposed permanent rule.
+
+    Nothing here has changed WORLD.md. The classification is advisory: it orders the
+    queue and explains a recommendation, and never decides.
+    """
 
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
     status: CanonProposalStatus
     proposed_text: str
-    insertion_anchor: str | None
     reason: str | None
+    human_note: str | None
+    classification: ProposalClassification | None
+    classification_reason: str | None
+    classified_by: str | None
+    target_heading: str | None
+    reviewer_model: str | None
+    applied_wording: str | None
+    applied_at: dt.datetime | None
+    failure_detail: str | None
+    git_commit: str | None
     created_at: dt.datetime
+    decided_at: dt.datetime | None
+    # The sections a rule may join. Anything else is invisible to the planner.
+    allowed_headings: list[str] = []
 
 
 def _review_response(review: AutomatedReview) -> ReviewResponse:
@@ -701,7 +728,7 @@ def list_canon_proposals(
         .all()
     )
 
-    return [CanonProposalResponse.model_validate(proposal) for proposal in proposals]
+    return [_proposal_response(proposal) for proposal in proposals]
 
 
 class ApproveRequest(BaseModel):
@@ -864,3 +891,146 @@ def request_variation(
         instruction=body.instruction,
         idempotency_key=body.idempotency_key,
     )
+
+
+class ProposalDiffResponse(BaseModel):
+    """The exact change a proposal would make."""
+
+    proposal_id: uuid.UUID
+    target_heading: str
+    unified_diff: str
+    applied_wording: str
+
+
+class ApproveProposalRequest(BaseModel):
+    """Approving a canon rule. The target must be a section the planner reads."""
+
+    target_heading: str | None = None
+    note: str = ""
+
+
+class RejectProposalRequest(BaseModel):
+    """Declining a canon rule."""
+
+    note: str = ""
+
+
+def _proposal_response(proposal: CanonProposal) -> CanonProposalResponse:
+    response = CanonProposalResponse.model_validate(proposal)
+    return response.model_copy(update={"allowed_headings": list(PLANNING_CANON_HEADINGS)})
+
+
+def _load_proposal(session: Session, proposal_id: uuid.UUID) -> CanonProposal:
+    proposal = session.execute(
+        select(CanonProposal).where(CanonProposal.id == proposal_id)
+    ).scalar_one_or_none()
+    if proposal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such proposal.")
+    return proposal
+
+
+def _world_text(settings: Settings, slug: str) -> str:
+    store = MarkdownStore(settings.worlds_root_resolved)
+    return store.read_world_documents(slug)[WORLD_DOCUMENT].text
+
+
+@router.post("/canon-proposals/{proposal_id}/classify", summary="Classify a proposal")
+def classify_canon_proposal(
+    proposal_id: uuid.UUID, session: SessionDependency, settings: SettingsDependency
+) -> CanonProposalResponse:
+    """Weigh the proposal against canon. Advisory only; it changes nothing."""
+    proposal = _load_proposal(session, proposal_id)
+
+    try:
+        classify_proposal(
+            session,
+            proposal,
+            classifier=build_canon_classifier(settings),
+            world_text=_world_text(settings, proposal.world.slug),
+        )
+    except (ClassificationError, StudioError) as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+
+    return _proposal_response(proposal)
+
+
+@router.get("/canon-proposals/{proposal_id}/diff", summary="The exact proposed change")
+def get_proposal_diff(
+    proposal_id: uuid.UUID,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    target_heading: str | None = None,
+) -> ProposalDiffResponse:
+    """Show precisely what would change. Nothing is written."""
+    proposal = _load_proposal(session, proposal_id)
+
+    try:
+        diff = build_diff(proposal, _world_text(settings, proposal.world.slug), target_heading)
+    except InvalidTarget as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+    except StudioError as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+
+    return ProposalDiffResponse(
+        proposal_id=proposal.id,
+        target_heading=diff.target_heading,
+        unified_diff=diff.unified_diff,
+        applied_wording=diff.applied_wording,
+    )
+
+
+@router.post("/canon-proposals/{proposal_id}/approve", summary="Apply a canon rule")
+def approve_canon_proposal(
+    proposal_id: uuid.UUID,
+    body: ApproveProposalRequest,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> CanonProposalResponse:
+    """Apply the diff to WORLD.md.
+
+    The only write the application makes to permanent canon, and only here.
+    """
+    proposal = _load_proposal(session, proposal_id)
+    worlds_root = settings.worlds_root_resolved
+
+    try:
+        approve_proposal(
+            session,
+            proposal,
+            markdown_store=MarkdownStore(worlds_root),
+            git_store=build_git_store(
+                repository_root_for(worlds_root), enabled=settings.git_enabled
+            ),
+            git_enabled=settings.git_enabled,
+            target_heading=body.target_heading,
+            note=body.note,
+        )
+    except ProposalConflict as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except InvalidTarget as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+
+    return _proposal_response(proposal)
+
+
+@router.post("/canon-proposals/{proposal_id}/reject", summary="Decline a canon rule")
+def reject_canon_proposal(
+    proposal_id: uuid.UUID, body: RejectProposalRequest, session: SessionDependency
+) -> CanonProposalResponse:
+    """Decline. WORLD.md is untouched."""
+    proposal = _load_proposal(session, proposal_id)
+
+    try:
+        reject_proposal(session, proposal, body.note)
+    except ProposalConflict as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+
+    return _proposal_response(proposal)

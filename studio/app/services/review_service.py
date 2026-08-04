@@ -36,9 +36,9 @@ from app.services.rotation import RotationState
 
 logger = logging.getLogger(__name__)
 
-# The proposal's insertion point in WORLD.md. Applying it is the canon proposal
-# phase's job; this only records where the model believed it belongs.
-DEFAULT_INSERTION_ANCHOR = "Current Canon Notes"
+# A proposal records the rule, not where it goes. Choosing and validating a target
+# section is the canon proposal phase's job, and the target must be a WORLD.md heading
+# the planner actually reads — otherwise an approved rule would be invisible.
 
 
 class NothingToReview(ReviewError):
@@ -211,7 +211,7 @@ def _record_proposal(
         status=CanonProposalStatus.PENDING,
         proposed_heading=None,
         proposed_text=proposal_text,
-        insertion_anchor=DEFAULT_INSERTION_ANCHOR,
+        insertion_anchor=None,
         reason=review.material_drift or review.strongest_success,
     )
     session.add(proposal)

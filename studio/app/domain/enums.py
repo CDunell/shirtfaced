@@ -155,6 +155,32 @@ class GateName(StrEnum):
     STORY = "story"
 
 
+class ProposalClassification(StrEnum):
+    """How a proposed rule relates to canon that already exists.
+
+    Advisory only. It orders the queue and explains the recommendation; the owner
+    decides. The two live rulings on 5 August 2026 both went against what a naive
+    reading would have said, which is why this never decides anything.
+    """
+
+    ALREADY_COVERED = "already_covered"
+    GENUINE_ADDITION = "genuine_addition"
+    REFINEMENT = "refinement"
+    CONTRADICTION = "contradiction"
+    TOO_SPECIFIC = "too_specific"
+
+
+# Classifications that do not warrant a canon change on their own. Approval is still
+# the owner's to give; these simply sort to the bottom of the queue.
+NON_ADDITIVE_CLASSIFICATIONS: frozenset[ProposalClassification] = frozenset(
+    {
+        ProposalClassification.ALREADY_COVERED,
+        ProposalClassification.TOO_SPECIFIC,
+        ProposalClassification.CONTRADICTION,
+    }
+)
+
+
 class CanonProposalStatus(StrEnum):
     """Lifecycle of a proposed permanent rule.
 

@@ -9,6 +9,11 @@ from __future__ import annotations
 
 import logging
 
+from app.adapters.canon_classifier import (
+    CanonClassifier,
+    FakeCanonClassifier,
+    OpenAICanonClassifier,
+)
 from app.adapters.image_generation import (
     FakeImageGenerationClient,
     ImageGenerationClient,
@@ -111,5 +116,36 @@ def build_review_client(settings: Settings) -> ImageReviewClient:
             timeout=settings.openai_timeout_seconds,
         ),
         model=settings.openai_review_model,
+        timeout_seconds=settings.openai_timeout_seconds,
+    )
+
+
+def classifier_is_live(settings: Settings) -> bool:
+    """Whether a real, billable classifier would be built."""
+    return bool(settings.openai_api_key and settings.openai_text_model)
+
+
+def build_canon_classifier(settings: Settings) -> CanonClassifier:
+    """The canon classifier for these settings.
+
+    Classification is advisory, so an unkeyed deployment gets the deterministic fake
+    rather than an empty queue.
+    """
+    if not classifier_is_live(settings):
+        logger.info(
+            "Using the fake canon classifier: OPENAI_API_KEY and OPENAI_TEXT_MODEL are "
+            "not both set. No request will be billed."
+        )
+        return FakeCanonClassifier()
+
+    from openai import OpenAI
+
+    assert settings.openai_api_key is not None
+    return OpenAICanonClassifier(
+        client=OpenAI(
+            api_key=settings.openai_api_key.get_secret_value(),
+            timeout=settings.openai_timeout_seconds,
+        ),
+        model=settings.openai_text_model,
         timeout_seconds=settings.openai_timeout_seconds,
     )

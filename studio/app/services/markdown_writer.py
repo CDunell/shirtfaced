@@ -234,3 +234,31 @@ def set_shot_status_marker(shotlist_text: str, external_id: str, marker: str) ->
         raise MarkdownWriteError(f"No shotlist row for {external_id}.")
 
     return "\n".join(lines) + ("\n" if shotlist_text.endswith("\n") else "")
+
+
+def append_canon_rule(world_text: str, heading: str, rule: str) -> str:
+    """Add one approved rule to the end of a ``WORLD.md`` section.
+
+    Appended as a sentence in the section's own voice rather than a new subsection,
+    so the document keeps the shape the loader validates and the planner reads. The
+    caller has already checked that the heading is one the planner sees.
+    """
+    _, _, body_end = _section_bounds(world_text, heading)
+    lines = world_text.splitlines()
+
+    # Step back over the blank lines and horizontal rules that separate sections, so
+    # the rule sits with the prose it belongs to rather than orphaned above the next
+    # heading. The section bounds would include it either way; a reader would not.
+    insert_at = body_end
+    while insert_at > 0 and _is_separator(lines[insert_at - 1]):
+        insert_at -= 1
+
+    block = ["", sanitise_inline(rule)]
+    updated = [*lines[:insert_at], *block, *lines[insert_at:]]
+    return "\n".join(updated) + ("\n" if world_text.endswith("\n") else "")
+
+
+def _is_separator(line: str) -> bool:
+    """A blank line or a horizontal rule, both of which divide rather than contain."""
+    stripped = line.strip()
+    return not stripped or (set(stripped) <= {"-", "*", "_"} and len(stripped) >= 3)

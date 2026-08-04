@@ -218,6 +218,40 @@ export interface DecisionResult {
   reconciliation: string[];
 }
 
+export type ProposalClassification =
+  "already_covered" | "genuine_addition" | "refinement" | "contradiction" | "too_specific";
+
+export type ProposalStatus = "pending" | "approved" | "rejected" | "applied" | "failed";
+
+export interface CanonProposal {
+  id: string;
+  status: ProposalStatus;
+  proposed_text: string;
+  reason: string | null;
+  human_note: string | null;
+  /** Advisory. It orders the queue and explains; it never decides. */
+  classification: ProposalClassification | null;
+  classification_reason: string | null;
+  classified_by: string | null;
+  target_heading: string | null;
+  reviewer_model: string | null;
+  applied_wording: string | null;
+  applied_at: string | null;
+  failure_detail: string | null;
+  git_commit: string | null;
+  created_at: string;
+  decided_at: string | null;
+  /** The only sections a rule may join; anything else is invisible to the planner. */
+  allowed_headings: string[];
+}
+
+export interface ProposalDiff {
+  proposal_id: string;
+  target_heading: string;
+  unified_diff: string;
+  applied_wording: string;
+}
+
 export interface GenerationResult {
   attempt: Attempt;
   /** Null when the review failed; the attempt records why and it can be retried. */
@@ -357,6 +391,58 @@ export function requestVariation(
 ): Promise<DecisionResult> {
   return postJson<DecisionResult>(
     `/api/attempts/${encodeURIComponent(attemptId)}/variation`,
+    signal,
+    body,
+  );
+}
+
+/** Canon proposals for a world. None of them has changed WORLD.md. */
+export function fetchCanonProposals(slug: string, signal?: AbortSignal): Promise<CanonProposal[]> {
+  return getJson<CanonProposal[]>(
+    `/api/worlds/${encodeURIComponent(slug)}/canon-proposals`,
+    signal,
+  );
+}
+
+/** Weigh a proposal against canon. Advisory; changes nothing. */
+export function classifyProposal(id: string, signal?: AbortSignal): Promise<CanonProposal> {
+  return postJson<CanonProposal>(`/api/canon-proposals/${encodeURIComponent(id)}/classify`, signal);
+}
+
+/** The exact change a proposal would make. Nothing is written. */
+export function fetchProposalDiff(
+  id: string,
+  targetHeading: string,
+  signal?: AbortSignal,
+): Promise<ProposalDiff> {
+  const query = `?target_heading=${encodeURIComponent(targetHeading)}`;
+  return getJson<ProposalDiff>(
+    `/api/canon-proposals/${encodeURIComponent(id)}/diff${query}`,
+    signal,
+  );
+}
+
+/** Apply the diff to WORLD.md. The only write to permanent canon. */
+export function approveProposal(
+  id: string,
+  body: { target_heading: string; note: string },
+  signal?: AbortSignal,
+): Promise<CanonProposal> {
+  return postJson<CanonProposal>(
+    `/api/canon-proposals/${encodeURIComponent(id)}/approve`,
+    signal,
+    body,
+  );
+}
+
+/** Decline. WORLD.md is untouched. */
+export function rejectProposal(
+  id: string,
+  body: { note: string },
+  signal?: AbortSignal,
+): Promise<CanonProposal> {
+  return postJson<CanonProposal>(
+    `/api/canon-proposals/${encodeURIComponent(id)}/reject`,
     signal,
     body,
   );

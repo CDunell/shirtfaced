@@ -11,6 +11,7 @@ import type {
   Attempt,
   GateName,
   GateResult,
+  CanonProposal,
   DecisionResult,
   DecisionSummary,
   GenerationResult,
@@ -249,6 +250,39 @@ export function generationResult(overrides: Partial<GenerationResult> = {}): Gen
   return { attempt: attempt(), review: review(), live: false, review_live: false, ...overrides };
 }
 
+export function canonProposal(overrides: Partial<CanonProposal> = {}): CanonProposal {
+  return {
+    id: "proposal-1",
+    status: "pending",
+    proposed_text: "Every ute must show an open aluminium alloy tray.",
+    reason: "The ute read as an American pickup.",
+    human_note: null,
+    classification: null,
+    classification_reason: null,
+    classified_by: null,
+    target_heading: null,
+    reviewer_model: "fake-review-model",
+    applied_wording: null,
+    applied_at: null,
+    failure_detail: null,
+    git_commit: null,
+    created_at: "2026-08-05T00:00:00Z",
+    decided_at: null,
+    allowed_headings: ["Wardrobe", "Composition", "Product Rotation & Vehicle Canon"],
+    ...overrides,
+  };
+}
+
+export function proposalDiff() {
+  return {
+    proposal_id: "proposal-1",
+    target_heading: "Wardrobe",
+    unified_diff:
+      "--- WORLD.md (current)\n+++ WORLD.md (proposed)\n+Every ute must show an open aluminium alloy tray.",
+    applied_wording: "Every ute must show an open aluminium alloy tray.",
+  };
+}
+
 export interface Routes {
   health?: unknown;
   worlds?: unknown;
@@ -262,6 +296,10 @@ export interface Routes {
   decision?: unknown;
   decisionStatus?: number;
   decisionDetail?: string;
+  proposals?: unknown;
+  proposalDiff?: unknown;
+  proposalStatus?: number;
+  proposalDetail?: string;
   generation?: unknown;
   generationStatus?: number;
   generationDetail?: string;
@@ -289,6 +327,33 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
         );
       }
       return Promise.resolve(new Response(JSON.stringify(routes.generation ?? generationResult())));
+    }
+    // Before the decision branch: a canon-proposal URL also ends with /reject
+    // and /approve, so ordering decides which handler answers it.
+    if (input.includes("/canon-proposals")) {
+      const isAction =
+        input.includes("/diff") ||
+        input.endsWith("/classify") ||
+        input.endsWith("/approve") ||
+        input.endsWith("/reject");
+      const proposalStatus = routes.proposalStatus ?? 200;
+
+      // The failure status applies to actions only. A listing that also failed would
+      // render nothing, so a test could not reach the control it means to exercise.
+      if (isAction && proposalStatus >= 400) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ detail: routes.proposalDetail ?? "refused" }), {
+            status: proposalStatus,
+          }),
+        );
+      }
+      if (input.includes("/diff")) {
+        return Promise.resolve(new Response(JSON.stringify(routes.proposalDiff ?? proposalDiff())));
+      }
+      if (isAction) {
+        return Promise.resolve(new Response(JSON.stringify(canonProposal())));
+      }
+      return Promise.resolve(new Response(JSON.stringify(routes.proposals ?? [])));
     }
     if (input.endsWith("/approve") || input.endsWith("/reject") || input.endsWith("/variation")) {
       const decisionStatus = routes.decisionStatus ?? 200;
