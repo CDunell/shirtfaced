@@ -258,6 +258,65 @@ def test_an_empty_library_yields_no_notes(session: Session, world: World) -> Non
     assert reference_service.reference_notes(session, world.id) == []
 
 
+def test_generation_actually_sends_the_library_to_the_planner(
+    session: Session, world: World, worlds_root: Path, assets_root: Path
+) -> None:
+    """The service can be right while the caller never asks it anything.
+
+    Every other test here drives reference_service directly, so the library could work
+    perfectly and still reach no real request. This asserts the wiring.
+    """
+    frame = _make_frame(session, world, strength=22, label="W01-011 — Car interior")
+    frame.hero_product = "Tote bag"
+    session.flush()
+
+    planning_client = FakePromptPlanningClient()
+    attempt, selection = start_attempt(session, world)
+    run_attempt(
+        session,
+        attempt,
+        selection,
+        markdown_store=MarkdownStore(worlds_root),
+        planning_client=planning_client,
+        image_client=FakeImageGenerationClient(),
+        asset_store=FilesystemAssetStore(assets_root),
+        settings=SETTINGS,
+        retry_policy=NO_RETRY,
+    )
+
+    assert planning_client.requests, "The planner was never called."
+    notes = planning_client.requests[0].reference_frames
+    assert any("W01-011" in note and "Tote bag" in note for note in notes), notes
+
+
+def test_archived_frames_do_not_reach_a_real_request(
+    session: Session, world: World, worlds_root: Path, assets_root: Path
+) -> None:
+    """Feeding archived frames back would steer towards what the library rejected."""
+    aged = _make_frame(session, world, strength=1, label="W01-099 — aged out")
+    _make_frame(session, world, strength=30, offset_seconds=10, label="W01-011 — kept")
+    reference_service.rebalance(session, world.id, active_limit=1)
+    assert aged.state is ReferenceState.ARCHIVED
+
+    planning_client = FakePromptPlanningClient()
+    attempt, selection = start_attempt(session, world)
+    run_attempt(
+        session,
+        attempt,
+        selection,
+        markdown_store=MarkdownStore(worlds_root),
+        planning_client=planning_client,
+        image_client=FakeImageGenerationClient(),
+        asset_store=FilesystemAssetStore(assets_root),
+        settings=SETTINGS,
+        retry_policy=NO_RETRY,
+    )
+
+    notes = planning_client.requests[0].reference_frames
+    assert not any("W01-099" in note for note in notes), notes
+    assert any("W01-011" in note for note in notes), notes
+
+
 # --- promotion through approval ----------------------------------------------------
 
 

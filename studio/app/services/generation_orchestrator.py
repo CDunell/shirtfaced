@@ -42,7 +42,7 @@ from app.adapters.planning import PlanningError, PromptPlanningClient
 from app.db.models import GenerationAttempt, ImageAsset, Shot, World
 from app.domain.enums import ACTIVE_ATTEMPT_STATES, AssetKind, AttemptState, FailureCode
 from app.domain.errors import StudioError
-from app.services import images
+from app.services import images, reference_service
 from app.services.prompt_planner import build_request, create_plan
 from app.services.retry import DEFAULT_POLICY, RetryPolicy, call_with_retry
 from app.services.rotation import apply_continuity
@@ -178,6 +178,10 @@ def run_attempt(
             world_text=documents[WORLD_DOCUMENT].text,
             rotation=rotation,
             selection_reason=attempt.selection_reason or "",
+            # What the world has already got right. Active and pinned frames only:
+            # archived ones are history, and feeding them back would keep steering
+            # towards frames the library has already judged weaker.
+            reference_frames=reference_service.reference_notes(session, world.id),
         )
         plan = create_plan(planning_client, request).plan
     except PlanningError as error:
