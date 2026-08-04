@@ -32,49 +32,46 @@ export default function Home() {
   return (
     <>
       {/* ---------------- Hero ----------------
-          Three lines, middle one rotates. Both the line and its paired photo
-          are selected before paint by the inline script in layout.tsx, which
-          sets data-tag on <html>; CSS then reveals one line and paints one
-          background. All six lines sit in the DOM (display:none hides them
-          from assistive tech too) but only ONE image is ever fetched, because
-          a CSS background-image on a hidden rule is never requested.
+          Full bleed: the photograph runs edge to edge at every width. The type
+          sits in the normal page column inside it, so it lines up with
+          everything below rather than floating.
 
-          Desktop no longer uses hero-good-times.webp: that shot has "GOOD
-          TIMES / BAD DECISIONS" baked into it, which flatly contradicts a
-          rotating middle line. Live type at every width now. */}
-      <section className="relative bg-ink text-paper sm:pb-6">
-        <div className="relative mx-auto max-w-6xl sm:px-6">
-          <div className="hero-img relative aspect-[4/5] w-full bg-ink bg-cover sm:aspect-[21/9] sm:rounded-[20px]">
-            <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/35 via-45% to-transparent sm:rounded-[20px]" />
+          Line and paired photo are chosen before paint by the inline script in
+          layout.tsx, which sets data-tag on <html>; CSS then reveals one line
+          and paints one background. All six lines are in the DOM but hidden
+          with display:none, which keeps them from screen readers too.
 
-            <div className="absolute inset-x-0 bottom-0 p-5 sm:p-9">
-              {/* The type measures against THIS box, not the hero. On mobile
-                 it fills the width; on desktop it fills a column so the
-                 photograph still has somewhere to be. All six middle lines
-                 stay flush with each other either way. */}
+          Photography here is placeholder — product shots standing in until
+          real hero frames exist. */}
+      <section className="relative bg-ink text-paper">
+        <div className="hero-img relative aspect-[3/4] w-full bg-ink bg-cover sm:aspect-auto sm:h-[70vh] sm:max-h-[720px] sm:min-h-[460px]">
+          <div className="absolute inset-0 bg-gradient-to-t from-ink from-10% via-ink/70 via-45% to-transparent to-90%" />
+
+          <div className="absolute inset-x-0 bottom-0">
+            <div className="mx-auto max-w-6xl px-4 pb-7 sm:px-6 sm:pb-12">
               <div className="tagline-box w-full sm:max-w-[46%]">
-              <h1 className="display leading-[0.86] whitespace-nowrap">
-                <span className="block" style={{ fontSize: `${LINE_ONE_SIZE}cqw` }}>
-                  {LINE_ONE}
-                </span>
+                <h1 className="display leading-[0.86] whitespace-nowrap">
+                  <span className="block" style={{ fontSize: `${LINE_ONE_SIZE}cqw` }}>
+                    {LINE_ONE}
+                  </span>
 
-                {/* One of these six is revealed by CSS. */}
-                <span className="block text-lime">
-                  {TAGLINES.map((t, i) => (
-                    <span
-                      key={t.line}
-                      className={`tl tl-${i}`}
-                      style={{ fontSize: `${t.size}cqw` }}
-                    >
-                      {t.line}
-                    </span>
-                  ))}
-                </span>
+                  {/* One of these six is revealed by CSS. */}
+                  <span className="block text-lime">
+                    {TAGLINES.map((t, i) => (
+                      <span
+                        key={t.line}
+                        className={`tl tl-${i}`}
+                        style={{ fontSize: `${t.size}cqw` }}
+                      >
+                        {t.line}
+                      </span>
+                    ))}
+                  </span>
 
-                <span className="block" style={{ fontSize: `${LINE_THREE_SIZE}cqw` }}>
-                  {LINE_THREE}
-                </span>
-              </h1>
+                  <span className="block" style={{ fontSize: `${LINE_THREE_SIZE}cqw` }}>
+                    {LINE_THREE}
+                  </span>
+                </h1>
               </div>
 
               <Link
@@ -85,9 +82,9 @@ export default function Home() {
                 <IconArrowRight className="h-5 w-5" />
               </Link>
             </div>
-
-            <Link href="/shop" className="absolute inset-0" aria-label="Shop the new drop" />
           </div>
+
+          <Link href="/shop" className="absolute inset-0 -z-10" aria-label="Shop the new drop" />
         </div>
       </section>
 
