@@ -1,21 +1,29 @@
 # Shirtfaced Admin
 
-Server-rendered Next.js app for managing the shop's product catalog and
-inventory, backed by Postgres. Separate from the storefront (`../src`), which
-stays a static export — this app is the only thing in the repo that talks to
-a database.
+Server-rendered Next.js app for managing the shop's product catalog,
+inventory, and site page copy, backed by Postgres. Separate from the
+storefront (`../src`), which stays a static export — this app is the only
+thing in the repo that talks to a database directly at runtime.
+
+Live at **admin.shirtfaced.wtf**.
 
 ## Scope (v1)
 
 - Products, colourways and per-size stock — full CRUD.
+- Site content for About, Shipping (incl. rates), Returns, Contact, Size
+  guide (incl. the measurements table), Home, Account, More, and the
+  per-product feature list — distinct named fields per page, not a generic
+  blob. See `src/db/schema.ts` for exactly what's covered; a few things are
+  deliberately left out (hero taglines, collection tile images, the More
+  page's link list) because they're either tied to specific photo assets
+  admin doesn't manage or are fixed navigation, not copy.
 - Single admin login (one account, env-configured).
 - A "Studio ↗" nav link out to Shirtfaced Studio, which has no deployed
   instance yet — the link is a placeholder (`STUDIO_URL` env var) until it
   does.
 
-Site content management (About/Shipping/Returns copy) and order/customer
-records are **not** built yet — the storefront still has no checkout/payment
-integration to generate real orders from.
+Order/customer records are **not** built — the storefront still has no
+checkout/payment integration to generate real orders from.
 
 ## Local development
 
@@ -24,9 +32,10 @@ got — see `.env.example`.
 
 ```bash
 npm install
-cp .env.example .env   # then fill in the values below
-npm run db:migrate     # creates products / product_colours / colour_stock
-npm run seed            # imports ../src/lib/products.ts as a starting catalog
+cp .env.example .env    # then fill in the values below
+npm run db:migrate      # creates all tables
+npm run seed             # imports ../src/lib/products.ts as a starting catalog
+npm run seed:content     # imports the storefront's current hardcoded page copy
 npm run dev
 ```
 
@@ -55,47 +64,29 @@ S/M/L/XL/XXL, matching the storefront's `SizeKey`. Editing a product rewrites
 all of its colourways and stock rows in one transaction — there's no
 diffing, so colourway IDs aren't stable across edits.
 
+Site content is 9 singleton tables (`about_content`, `shipping_content`,
+etc.) — always exactly one row (`id = 1`), no create/delete, only edit.
+
 ## Production (Oracle)
 
-Deployed at `/root/shirtfaced-admin` on the Oracle box (same host as the
-storefront's static files and the other services under `/root`), run via
-systemd as `shirtfaced-admin.service`, bound to `127.0.0.1:4200` — **not**
-yet exposed through nginx/a public domain. It uses its own Postgres role
-(`shirtfaced_admin`) and database (`shirtfaced_shop`) on the box's existing
-`main` Postgres cluster (port 5432), created specifically for this app —
-nothing shared with the other apps on that box.
+Deployed at `/home/ubuntu/shirtfaced-admin` on the Oracle box (same host as
+the storefront's static files and the other services there), run via
+systemd as `shirtfaced-admin.service` on port 4200, reverse-proxied through
+the account's existing Cloudflare Tunnel at `admin.shirtfaced.wtf`. It uses
+its own Postgres role (`shirtfaced_admin`) and database (`shirtfaced_shop`)
+on the box's existing `main` Postgres cluster (port 5432), created
+specifically for this app — nothing shared with the other apps on that box.
 
-To redeploy after code changes:
-
-```bash
-# from admin/, package everything except node_modules/.next/.env
-tar --exclude='node_modules' --exclude='.next' --exclude='.env' -czf /tmp/admin-deploy.tar.gz .
-scp /tmp/admin-deploy.tar.gz ubuntu@<host>:/tmp/
-
-# on the box (sudo):
-cd /root/shirtfaced-admin
-rm -rf src public *.ts *.mjs *.json 2>/dev/null  # or just re-extract over top
-tar -xzf /tmp/admin-deploy.tar.gz -C /root/shirtfaced-admin
-npm install   # only if package.json changed
-npm run build
-systemctl restart shirtfaced-admin
-```
+**Deploys automatically on every push to `main`** — see the root
+[README's "Deploying" section](../README.md#deploying) for how the GitHub
+Actions workflow and the box's `deploy-admin.sh` fit together.
 
 `.env` on the box has its own production credentials (different admin
-password and session secret from local dev — rotate both before this is
-ever exposed publicly, since they were generated during initial setup and
-are known outside the account owner's password manager).
+password and session secret from local dev).
 
 ### Next steps
 
-- Decide whether/how to expose this publicly (nginx site + subdomain, e.g.
-  `admin.shirtfaced.wtf`, behind Cloudflare like the storefront) — deliberately
-  left undone pending a decision, since it's currently only reachable via SSH
-  tunnel or from other services on the box.
-- Rotate the production admin password and `SESSION_SECRET` once a real
-  password manager entry replaces the generated ones.
+- Rotate the production admin password and `SESSION_SECRET` before/at
+  go-live — the current ones were generated during initial setup and are
+  known outside the account owner's password manager.
 - When Studio gets a real deployment, point `STUDIO_URL` at it.
-- Wire the storefront's build to read from this database instead of the
-  static `src/lib/products.ts` array (today the two are only connected by
-  the one-time `npm run seed` import — editing a product here does **not**
-  update the live storefront).
