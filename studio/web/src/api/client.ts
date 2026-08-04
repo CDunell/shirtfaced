@@ -122,14 +122,70 @@ export interface Attempt {
   created_at: string;
   image_url: string | null;
   thumbnail_url: string | null;
+  /** The most recent review, if the image has been reviewed. */
+  review: Review | null;
   /** Generating an image is not approving it. */
   approved: boolean;
 }
 
+export type GateStatus = "PASS" | "FAIL" | "UNCERTAIN" | "NOT_APPLICABLE";
+
+export type GateName =
+  | "mood"
+  | "australian_authenticity"
+  | "product_visibility"
+  | "third_party_branding"
+  | "vehicle_continuity"
+  | "wardrobe_balance"
+  | "composition"
+  | "documentary_credibility"
+  | "story";
+
+export interface GateResult {
+  status: GateStatus;
+  evidence: string;
+  codes: string[];
+  confidence: number;
+  /** Whether this finding could change the recommendation. */
+  material: boolean;
+}
+
+export type ReviewRecommendation =
+  | "APPROVE_RECOMMENDED"
+  | "APPROVE_WITH_NOTE_RECOMMENDED"
+  | "REJECT_RECOMMENDED"
+  | "REVIEW_UNCERTAIN";
+
+export interface Review {
+  id: string;
+  review_model: string;
+  recommendation: ReviewRecommendation;
+  verdict: "approved" | "approved_with_note" | "rejected" | "uncertain";
+  gates: Record<GateName, GateResult>;
+  mood_score: number;
+  australian_authenticity_score: number;
+  product_visibility_score: number;
+  documentary_credibility_score: number;
+  story_score: number;
+  branding_compliant: boolean;
+  vehicle_compliant: boolean;
+  strongest_success: string;
+  material_drift: string | null;
+  recommended_action: string | null;
+  next_hero_product: string | null;
+  next_camera: string | null;
+  created_at: string;
+  blocking_gates: GateName[];
+  uncertain_gates: GateName[];
+}
+
 export interface GenerationResult {
   attempt: Attempt;
+  /** Null when the review failed; the attempt records why and it can be retried. */
+  review: Review | null;
   /** False when the deterministic fakes produced this, so nothing was billed. */
   live: boolean;
+  review_live: boolean;
 }
 
 export interface PlanPreview {
@@ -218,6 +274,11 @@ export function continueWorld(slug: string, signal?: AbortSignal): Promise<Gener
 /** Attempts for a world, newest first. */
 export function fetchAttempts(slug: string, signal?: AbortSignal): Promise<Attempt[]> {
   return getJson<Attempt[]>(`/api/worlds/${encodeURIComponent(slug)}/attempts`, signal);
+}
+
+/** Review the existing image again. Adds a review; never regenerates. */
+export function retryReview(attemptId: string, signal?: AbortSignal): Promise<Review> {
+  return postJson<Review>(`/api/attempts/${encodeURIComponent(attemptId)}/retry-review`, signal);
 }
 
 /** Build the production prompt without generating anything. Development only. */

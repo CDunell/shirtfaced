@@ -167,11 +167,23 @@ This records the request. The UI may then explicitly start the variation attempt
 
 ### `POST /api/attempts/{attempt_id}/retry-review`
 
-Retries review without regenerating the image.
+Reviews the stored image again. No image is regenerated, so this costs one review.
+
+Reviews are immutable: this adds another rather than replacing the last, and the most
+recent one is the one shown.
+
+- `404` — no such attempt.
+- `409` — the attempt has no stored image to review.
+- `422` — the world files could not be read.
+- `502` — the review failed. The attempt records `failure_code: review_failed`, keeps
+  its image, and can be retried.
 
 ## Canon proposals
 
 ### `GET /api/worlds/{world_slug}/canon-proposals`
+
+Rules the reviewer has proposed, newest first. Every one is `pending` until the owner
+decides. Nothing here has changed `WORLD.md`.
 
 ### `POST /api/canon-proposals/{proposal_id}/approve`
 
@@ -225,17 +237,26 @@ Required fields:
 
 ### ImageReview
 
+Carries both vocabularies, per ADR-012: the nine evidence gates from the Phase 4
+review contract, and the scores and compliance flags the data model requires.
+
 Required fields:
 
-- `verdict`
-- `mood_score`
-- `australian_authenticity_score`
-- `product_visibility_score`
-- `documentary_credibility_score`
-- `story_score`
-- `branding_compliant`
-- `vehicle_compliant`
+- `recommendation` — `APPROVE_RECOMMENDED`, `APPROVE_WITH_NOTE_RECOMMENDED`,
+  `REJECT_RECOMMENDED` or `REVIEW_UNCERTAIN`
+- `gates` — all nine of `mood`, `australian_authenticity`, `product_visibility`,
+  `third_party_branding`, `vehicle_continuity`, `wardrobe_balance`, `composition`,
+  `documentary_credibility`, `story`. Each has `status` (`PASS`, `FAIL`, `UNCERTAIN`,
+  `NOT_APPLICABLE`), `evidence`, `codes`, `confidence` and `material`.
+- `mood_score`, `australian_authenticity_score`, `product_visibility_score`,
+  `documentary_credibility_score`, `story_score` — integers 1 to 5
+- `branding_compliant`, `vehicle_compliant`
 - `strongest_success`
-- `material_drift`
-- `recommended_action`
-- `proposed_permanent_rule`
+- `material_drift` — or null
+- `new_rule_proposal` — or null. Becomes a pending canon proposal.
+- `next_hero_product`, `next_camera` — or null
+
+`verdict` is derived from `recommendation` and is not supplied by the model.
+
+A gate only blocks when it is both `FAIL` and `material`. Uncertainty never blocks on
+its own; it asks for human inspection.

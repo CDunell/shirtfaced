@@ -4,7 +4,14 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.domain.enums import ShotStatus
+from app.domain.enums import (
+    RECOMMENDATION_VERDICTS,
+    GateName,
+    GateStatus,
+    ReviewRecommendation,
+    ReviewVerdict,
+    ShotStatus,
+)
 
 
 class ParsedShot(BaseModel):
@@ -155,3 +162,94 @@ class PromptPlan(BaseModel):
         if not cleaned:
             raise ValueError("must contain at least one non-blank entry")
         return cleaned
+
+
+class GateResult(BaseModel):
+    """One review gate.
+
+    ``evidence`` describes what is visible. Confidence is evidentiary, not
+    decorative: a low-confidence observation cannot on its own justify rejection.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    status: GateStatus
+    evidence: str = Field(min_length=1)
+    codes: list[str] = Field(default_factory=list)
+    confidence: float = Field(ge=0.0, le=1.0)
+    # Whether this finding can change the recommendation.
+    material: bool = False
+
+    @field_validator("evidence")
+    @classmethod
+    def _reject_blank_evidence(cls, value: str) -> str:
+        return _non_empty(value)
+
+    @property
+    def is_blocking(self) -> bool:
+        """A material failure. Uncertainty is never blocking on its own."""
+        return self.status is GateStatus.FAIL and self.material
+
+
+class ImageReview(BaseModel):
+    """Structured review of one generated image.
+
+    Two vocabularies are carried deliberately. ``gates`` is the evidence-based
+    contract; the five scores and two compliance booleans are what the data model and
+    the dashboard require. The model supplies both, so neither is inferred from the
+    other.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    recommendation: ReviewRecommendation
+    gates: dict[GateName, GateResult]
+
+    # Scores are 1 to 5, per the data model.
+    mood_score: int = Field(ge=1, le=5)
+    australian_authenticity_score: int = Field(ge=1, le=5)
+    product_visibility_score: int = Field(ge=1, le=5)
+    documentary_credibility_score: int = Field(ge=1, le=5)
+    story_score: int = Field(ge=1, le=5)
+
+    branding_compliant: bool
+    vehicle_compliant: bool
+
+    strongest_success: str = Field(min_length=1)
+    material_drift: str | None = None
+    # A repeatable rule not already covered by canon. Becomes a pending proposal; it
+    # never changes WORLD.md.
+    new_rule_proposal: str | None = None
+    next_hero_product: str | None = None
+    next_camera: str | None = None
+
+    @field_validator("strongest_success")
+    @classmethod
+    def _reject_blank_success(cls, value: str) -> str:
+        return _non_empty(value)
+
+    @field_validator("gates")
+    @classmethod
+    def _require_every_gate(cls, value: dict[GateName, GateResult]) -> dict[GateName, GateResult]:
+        missing = [gate.value for gate in GateName if gate not in value]
+        if missing:
+            raise ValueError(f"missing gates: {', '.join(missing)}")
+        return value
+
+    @property
+    def verdict(self) -> ReviewVerdict:
+        """The three-value verdict the product specification uses."""
+        return RECOMMENDATION_VERDICTS[self.recommendation]
+
+    @property
+    def blocking_gates(self) -> list[GateName]:
+        """Gates that materially failed, in the contract's declared order."""
+        return [name for name in GateName if self.gates[name].is_blocking]
+
+    @property
+    def uncertain_gates(self) -> list[GateName]:
+        return [name for name in GateName if self.gates[name].status is GateStatus.UNCERTAIN]
+
+    @property
+    def recommends_rejection(self) -> bool:
+        return self.recommendation is ReviewRecommendation.REJECT

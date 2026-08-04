@@ -19,6 +19,11 @@ from app.adapters.planning import (
     OpenAIPromptPlanningClient,
     PromptPlanningClient,
 )
+from app.adapters.review import (
+    FakeImageReviewClient,
+    ImageReviewClient,
+    OpenAIImageReviewClient,
+)
 from app.config import Settings
 
 logger = logging.getLogger(__name__)
@@ -79,5 +84,32 @@ def build_image_client(settings: Settings) -> ImageGenerationClient:
             timeout=settings.openai_timeout_seconds,
         ),
         model=settings.openai_image_model,
+        timeout_seconds=settings.openai_timeout_seconds,
+    )
+
+
+def review_client_is_live(settings: Settings) -> bool:
+    """Whether a real, billable review client would be built."""
+    return bool(settings.openai_api_key and settings.openai_review_model)
+
+
+def build_review_client(settings: Settings) -> ImageReviewClient:
+    """The image review client for these settings."""
+    if not review_client_is_live(settings):
+        logger.info(
+            "Using the fake review client: OPENAI_API_KEY and OPENAI_REVIEW_MODEL are "
+            "not both set. No review will be billed."
+        )
+        return FakeImageReviewClient()
+
+    from openai import OpenAI
+
+    assert settings.openai_api_key is not None
+    return OpenAIImageReviewClient(
+        client=OpenAI(
+            api_key=settings.openai_api_key.get_secret_value(),
+            timeout=settings.openai_timeout_seconds,
+        ),
+        model=settings.openai_review_model,
         timeout_seconds=settings.openai_timeout_seconds,
     )

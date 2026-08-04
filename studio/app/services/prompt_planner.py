@@ -71,13 +71,13 @@ def build_request(
     """Assemble the bounded context for one shot."""
     # The whole subtree, so a section whose content sits in subsections is not lost.
     excerpts = [
-        CanonExcerpt(heading=heading, body=_truncate(body))
+        CanonExcerpt(heading=heading, body=truncate_excerpt(body))
         for heading in PLANNING_CANON_HEADINGS
         if (body := section_with_subsections(world_text, heading)) is not None and body.strip()
     ]
 
     drift = [
-        f"{entry.title}: {_truncate(entry.body, 600)}"
+        f"{entry.title}: {truncate_excerpt(entry.body, 600)}"
         for entry in rotation.rejected_drift[:RECENT_DRIFT_LIMIT]
     ]
 
@@ -145,7 +145,12 @@ def _matches(produced: str, required: str) -> bool:
     return left == right or right in left or left in right
 
 
-def _truncate(text: str, limit: int = MAX_EXCERPT_CHARACTERS) -> str:
+def truncate_excerpt(text: str, limit: int = MAX_EXCERPT_CHARACTERS) -> str:
+    """Cap one canon excerpt so a request stays bounded.
+
+    Shared with the reviewer so an image is judged against the same excerpt the
+    planner used to build it.
+    """
     stripped = text.strip()
     if len(stripped) <= limit:
         return stripped

@@ -33,7 +33,10 @@ from app.domain.enums import (
     ACTIVE_ATTEMPT_STATES,
     AssetKind,
     AttemptState,
+    CanonProposalStatus,
     FailureCode,
+    ReviewRecommendation,
+    ReviewVerdict,
     ShotStatus,
     WorldStatus,
 )
@@ -42,6 +45,8 @@ __all__ = [
     "SHA256_HEX_LENGTH",
     "AssetKind",
     "AttemptState",
+    "AutomatedReview",
+    "CanonProposal",
     "GenerationAttempt",
     "ImageAsset",
     "Shot",
@@ -232,6 +237,16 @@ class GenerationAttempt(Base, TimestampMixin):
     assets: Mapped[list[ImageAsset]] = relationship(
         back_populates="attempt", cascade="all, delete-orphan"
     )
+    reviews: Mapped[list[AutomatedReview]] = relationship(
+        back_populates="attempt",
+        cascade="all, delete-orphan",
+        order_by="AutomatedReview.created_at",
+    )
+
+    @property
+    def latest_review(self) -> AutomatedReview | None:
+        """Reviews are immutable; a re-review adds another, so the last one stands."""
+        return self.reviews[-1] if self.reviews else None
 
     @property
     def is_active(self) -> bool:
@@ -280,3 +295,110 @@ class ImageAsset(Base):
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<ImageAsset {self.kind.value!r} {self.relative_path!r}>"
+
+
+class AutomatedReview(Base):
+    """One structured review of a generated image.
+
+    Reviews are immutable. Retrying a review adds another row rather than replacing
+    this one, so the history of what the model said is never lost.
+
+    A review is evidence for the owner. It never changes shot status, never appends
+    continuity and never edits canon.
+    """
+
+    __tablename__ = "automated_reviews"
+    __table_args__ = (Index("ix_automated_reviews_attempt_id", "attempt_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    attempt_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("generation_attempts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    review_model: Mapped[str] = mapped_column(String(120), nullable=False)
+    # Bumped when the review schema changes, so old reviews stay interpretable.
+    schema_version: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("1"))
+    provider_request_id: Mapped[str | None] = mapped_column(String(120))
+
+    recommendation: Mapped[ReviewRecommendation] = mapped_column(
+        _enum(ReviewRecommendation, "review_recommendation"), nullable=False
+    )
+    verdict: Mapped[ReviewVerdict] = mapped_column(
+        _enum(ReviewVerdict, "review_verdict"), nullable=False
+    )
+
+    mood_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    australian_authenticity_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    product_visibility_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    documentary_credibility_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    story_score: Mapped[int] = mapped_column(Integer, nullable=False)
+
+    branding_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    vehicle_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False)
+
+    strongest_success: Mapped[str] = mapped_column(Text, nullable=False)
+    material_drift: Mapped[str | None] = mapped_column(Text)
+    recommended_action: Mapped[str | None] = mapped_column(Text)
+    next_hero_product: Mapped[str | None] = mapped_column(String(120))
+    next_camera: Mapped[str | None] = mapped_column(String(120))
+
+    # The nine gates exactly as returned, so evidence and codes survive intact.
+    raw_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+
+    # The canon this image was judged against, which may differ from the canon it was
+    # generated against if the documents were edited in between.
+    world_document_hash: Mapped[str | None] = mapped_column(String(SHA256_HEX_LENGTH))
+
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    attempt: Mapped[GenerationAttempt] = relationship(back_populates="reviews")
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<AutomatedReview {self.recommendation.value!r}>"
+
+
+class CanonProposal(Base):
+    """A permanent rule the review model believes is worth adding.
+
+    Stored as a proposal and nothing more. ``WORLD.md`` changes only after the owner
+    approves it explicitly, which is the canon proposal phase's job.
+    """
+
+    __tablename__ = "canon_proposals"
+    __table_args__ = (Index("ix_canon_proposals_world_id_status", "world_id", "status"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    world_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("worlds.id", ondelete="CASCADE"), nullable=False
+    )
+    attempt_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("generation_attempts.id", ondelete="SET NULL")
+    )
+    status: Mapped[CanonProposalStatus] = mapped_column(
+        _enum(CanonProposalStatus, "canon_proposal_status"),
+        nullable=False,
+        default=CanonProposalStatus.PENDING,
+        server_default=CanonProposalStatus.PENDING.value,
+    )
+    proposed_heading: Mapped[str | None] = mapped_column(String(200))
+    proposed_text: Mapped[str] = mapped_column(Text, nullable=False)
+    insertion_anchor: Mapped[str | None] = mapped_column(String(200))
+    reason: Mapped[str | None] = mapped_column(Text)
+    human_note: Mapped[str | None] = mapped_column(Text)
+    git_commit: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    decided_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+
+    world: Mapped[World] = relationship()
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<CanonProposal {self.status.value!r}>"

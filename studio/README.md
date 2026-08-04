@@ -57,6 +57,9 @@ Generation:
 curl -X POST localhost:8000/api/worlds/world-01/continue
 ```
 
+Continue World generates one image and then reviews it, leaving the attempt awaiting
+your decision. A recommendation is not a decision.
+
 Without `OPENAI_API_KEY` and `OPENAI_IMAGE_MODEL` set, a deterministic local client
 draws the image instead. It costs nothing, exercises the whole pipeline, and both the
 API response and the interface say plainly that nothing was billed.
