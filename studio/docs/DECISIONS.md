@@ -42,6 +42,8 @@ Plain application services are easier to test, understand and control than an ag
 
 ## ADR-007 — Server-rendered interface
 
+**Superseded by ADR-011.**
+
 Jinja2 and HTMX are preferred for Version 1.
 
 The product needs a clear workflow, not a front-end platform.
@@ -63,3 +65,31 @@ Variations require another explicit action.
 For one user, synchronous orchestration is simpler.
 
 Persist every state transition so a background worker can be added later without redesigning the domain.
+
+## ADR-011 — Base Web interface
+
+**Supersedes ADR-007.**
+
+The interface uses Uber's Base design system (`baseui` with React and Styletron)
+rather than Jinja2 with HTMX.
+
+The owner's decision. The application is a daily-use creative production tool, and the
+review screen in particular carries dense state: an image, a prompt, a rationale, five
+scores, drift notes and three decision actions. A mature component library gives that
+screen a better result than hand-rolled server-rendered markup.
+
+Accepted consequences:
+
+- React, Styletron and a Node build step join a Python application, so the repository
+  has two toolchains and CI has two pipelines.
+- FastAPI serves a JSON API and static build output rather than Jinja2 templates. The
+  endpoints in `API_CONTRACT.md` become the sole interface between the two halves,
+  which makes that contract load-bearing rather than advisory.
+- The UI test layer becomes a JavaScript test runner, not server-rendered assertions.
+
+Unchanged by this decision:
+
+- The application remains a single deployable service behind one reverse proxy.
+- No API key ever reaches browser JavaScript. All OpenAI calls stay server-side.
+- All rendered model output is still escaped.
+- Human approval gates (ADR-005) and one image per action (ADR-009) are untouched.

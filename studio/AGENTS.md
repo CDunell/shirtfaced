@@ -82,16 +82,19 @@ Use:
 - SQLAlchemy 2.x with psycopg 3
 - Alembic
 - Pydantic 2
-- Jinja2 with HTMX, or another comparably simple server-rendered interface
+- React with Uber's Base design system (`baseui` and Styletron) for the interface, per ADR-011
 - official OpenAI Python SDK
 - pytest
 - Ruff
 - mypy
 - Pillow only where local image metadata or thumbnails require it
 
-Use a single deployable application.
+Use a single deployable application. The FastAPI service serves the JSON API in
+`docs/API_CONTRACT.md` and the built front-end assets.
 
-Do not introduce React unless a requirement genuinely cannot be met cleanly with server-rendered HTML and HTMX.
+The interface uses Base Web. ADR-011 supersedes the earlier Jinja2-and-HTMX direction,
+so `Do not introduce React` no longer applies. Everything else in this document stands:
+no agent framework, no microservices, no Kubernetes, no vector database.
 
 ## Required implementation behaviour
 
