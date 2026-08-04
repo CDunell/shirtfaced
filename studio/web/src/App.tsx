@@ -15,7 +15,8 @@ import {
 import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
 import { HeadingSmall, LabelMedium, ParagraphMedium } from "baseui/typography";
 
-import { PhaseNotice, ServiceStatus } from "./components/ServiceStatus";
+import { ServiceStatus } from "./components/ServiceStatus";
+import { WorldPage } from "./components/WorldPage";
 import type { ThemeName } from "./theme";
 
 export interface AppProps {
@@ -60,16 +61,10 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           A private production tool for building coherent Shirtfaced photographic worlds.
         </ParagraphMedium>
 
-        <div
-          className={css({
-            display: "grid",
-            gap: theme.sizing.scale700,
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            marginTop: theme.sizing.scale800,
-          })}
-        >
+        <WorldPage />
+
+        <div className={css({ marginTop: theme.sizing.scale900, maxWidth: "420px" })}>
           <ServiceStatus />
-          <PhaseNotice />
         </div>
       </main>
     </div>

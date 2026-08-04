@@ -12,7 +12,7 @@ import { Button, SIZE } from "baseui/button";
 import { Card, StyledBody } from "baseui/card";
 import { Spinner } from "baseui/spinner";
 import { Tag, HIERARCHY, KIND } from "baseui/tag";
-import { LabelSmall, MonoLabelSmall, ParagraphSmall } from "baseui/typography";
+import { MonoLabelSmall, ParagraphSmall } from "baseui/typography";
 
 import { ApiError, fetchHealth, type HealthResponse } from "../api/client";
 
@@ -100,35 +100,6 @@ export function ServiceStatus(): React.JSX.Element {
             Check again
           </Button>
         </div>
-      </StyledBody>
-    </Card>
-  );
-}
-
-export function PhaseNotice(): React.JSX.Element {
-  const [css, theme] = useStyletron();
-
-  return (
-    <Card title="What works so far">
-      <StyledBody>
-        <LabelSmall marginBottom={theme.sizing.scale400}>
-          Phase 0 — repository foundation
-        </LabelSmall>
-        <ParagraphSmall marginTop={0}>
-          The application, database and interface shells are in place. Loading the world canon,
-          selecting the next shot, generating an image and reviewing it arrive in the phases that
-          follow.
-        </ParagraphSmall>
-        <ul
-          className={css({
-            ...theme.typography.ParagraphSmall,
-            paddingLeft: theme.sizing.scale800,
-          })}
-        >
-          <li>Settings, PostgreSQL pooling and migrations</li>
-          <li>Liveness endpoint</li>
-          <li>Base Web interface shell</li>
-        </ul>
       </StyledBody>
     </Card>
   );

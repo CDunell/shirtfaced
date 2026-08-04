@@ -37,7 +37,16 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
 cp .env.example .env               # then set DATABASE_URL and DB_SSLMODE=disable
 alembic upgrade head
+python -m app.cli import-world world-01    # load the world files into PostgreSQL
 uvicorn app.main:app --reload
+```
+
+World operations:
+
+```bash
+python -m app.cli list-worlds
+python -m app.cli validate-world world-01   # checks the files, changes nothing
+python -m app.cli import-world world-01     # idempotent; safe to re-run after edits
 ```
 
 The interface is a separate Base Web build in `web/`:

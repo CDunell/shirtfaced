@@ -67,11 +67,13 @@ def test_world_slug_is_unique(engine: Engine) -> None:
     assert any(c["column_names"] == ["slug"] for c in unique_constraints)
 
 
-def test_alembic_version_is_at_head(engine: Engine) -> None:
+def test_alembic_version_is_at_head(engine: Engine, migrated_database: str) -> None:
     with engine.connect() as connection:
         version = connection.execute(text("SELECT version_num FROM alembic_version")).scalar_one()
 
-    assert version == "0001"
+    heads = run_alembic("heads", database_url=migrated_database)
+    assert heads.returncode == 0, heads.stderr
+    assert version in heads.stdout
 
 
 def test_upgrade_is_idempotent(migrated_database: str) -> None:

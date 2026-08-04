@@ -6,7 +6,8 @@ Markdown remains readable by humans but must follow parseable contracts.
 
 Required headings:
 
-- `# SHIRTFACED`
+- `# SHIRTFACED` — matched as a prefix, so `# SHIRTFACED --- WORLD 01` satisfies it.
+  Every other heading below must match in full, ignoring case.
 - `# Purpose`
 - `# Emotional Tone`
 - `# Lighting`
@@ -37,6 +38,19 @@ Required headings:
 Continuity updates should append or update bounded sections rather than regenerate the full document.
 
 ## SHOTLIST.md
+
+### Table format
+
+Two styles are accepted, because the file is hand-edited and different tools produce
+different output:
+
+- pipe tables, as used in `CONTINUITY.md`;
+- Pandoc simple tables, where a row of dashes marks the column widths, as the current
+  World 1 shotlist uses.
+
+Simple-table rows are read by splitting on runs of two or more spaces, falling back to
+the column positions marked by the dashed rule. Editing a cell therefore does not
+have to preserve the original column alignment.
 
 Required table columns:
 
