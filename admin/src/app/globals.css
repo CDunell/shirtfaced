@@ -55,6 +55,14 @@ body {
   text-transform: uppercase;
 }
 
+/* The wordmark is lowercase — the only display text that is. */
+.wordmark {
+  font-family: var(--font-display);
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
 .press {
   transition:
     transform 180ms var(--ease-out-natural),
@@ -69,6 +77,20 @@ body {
   outline: 3px solid var(--color-lime);
   outline-offset: 2px;
   border-radius: 4px;
+}
+
+@keyframes fade-rise {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-rise {
+  animation: fade-rise 180ms var(--ease-out-natural) both;
 }
 
 @media (prefers-reduced-motion: reduce) {
