@@ -36,7 +36,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 1. Black tote bag
 2. Hoodie tied around waist
 3. Black heavyweight hoodie
-4. Back graphic opportunity
+4. Blank back-surface opportunity
 5. Black cap from a lower or side-front camera angle
 
 ---
@@ -188,7 +188,7 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - A tray-back ute is now a locked recurring World 1 object.
 - Black clothing should be common but not universal.
 - Non-product clothing should vary naturally.
-- Commercial branding anywhere in frame is a failure.
+- Readable third-party commercial branding anywhere in frame is a failure; incidental Shirtfaced environmental easter eggs remain permitted.
 
 ---
 

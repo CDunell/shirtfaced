@@ -101,13 +101,13 @@ Reject if:
 
 ## 6. W01-013 — Apartment balcony
 
-**Machine values:** `Back graphic` · `Inside lounge`  
+**Machine values:** `Back surface` · `Inside lounge`  
 **Narrative position:** Camera remains inside while activity continues at the balcony threshold.  
-**Primary creative test:** Can the planner honour a legacy `Back graphic` shot value while the current locked garment rule requires all garments to remain blank?
+**Primary creative test:** Can the planner honour a normalized `Back surface` shot value while the current locked garment rule requires all garments to remain blank?
 
 Required interpretation:
 
-`Back graphic` is a rotation label inherited from the shotlist, not permission to generate artwork. The garment remains completely blank. Treat it as a back-surface visibility opportunity.
+`Back surface` is a clear blank rear-garment visibility opportunity, not permission to generate artwork. The garment remains completely blank. Treat it as a back-surface visibility opportunity.
 
 Expected image evidence:
 
@@ -118,7 +118,7 @@ Expected image evidence:
 
 Reject if any graphic, logo, text, label or embroidery appears on the garment.
 
-This is the highest-value canon/legacy-vocabulary test in the batch. Record whether the planner needs a deterministic clarification for `Back graphic` without changing the exact rotation value.
+This tests that the normalized rotation value remains subordinate to the permanent blank-garment rule.
 
 ## 7. W01-014 — Kitchen kick-ons II
 
@@ -180,17 +180,17 @@ Record only the strongest success, material drift, genuinely repeatable new rule
 
 ## 10. Known issues to watch
 
-### `Back graphic` versus blank garments
+### `Back surface` and blank garments
 
-The exact shotlist value remains required for rotation, but it conflicts semantically with the current blank-garment canon. Phase 3 must not generate a graphic. The likely long-term fix is a normalized product-role identifier with a separate human display label; do not casually rename the current cell because rotation is exact-string based.
+`Back surface` is now the normalized exact rotation value. It means a naturally visible blank rear garment surface. Phase 3 must never generate artwork, text, labels or embroidery.
 
 ### Branding note now resolved
 
 Commit `d8c04a1` resolves the prior conflict: third-party branding is banned; incidental Shirtfaced environmental easter eggs are permitted; garments remain blank. No unresolved-branding UI warning belongs in Phase 3.
 
-### Current canon note wording
+### Current canon note wording — resolved
 
-`CONTINUITY.md` still says “Commercial branding anywhere in frame is a failure.” Read alongside amended `WORLD.md`, this should mean third-party commercial branding. Consider clarifying the note in the authoritative continuity file through the normal human edit/validation process so it cannot reintroduce ambiguity later.
+`CONTINUITY.md` now matches amended `WORLD.md`: readable third-party commercial branding fails, while incidental Shirtfaced environmental easter eggs remain permitted.
 
 ## 11. Batch completion
 

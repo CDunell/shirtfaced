@@ -32,7 +32,7 @@ ensures the visual universe expands rather than circles back on itself.
   W01-010   City lookout              Cap            Beside parked car   ✅
   W01-011   Car interior transition   Tote bag       Rear seat           ⬜
   W01-012   Apartment lift            Hoodie waist   Inside lift         ⬜
-  W01-013   Apartment balcony         Back graphic   Inside lounge       ⬜
+  W01-013   Apartment balcony         Back surface   Inside lounge       ⬜
   W01-014   Kitchen kick-ons II       Tote bag       Hallway             ⬜
   W01-015   Sunrise balcony           Hoodie         Balcony doorway     ⬜
   W01-016   Servo breakfast run       Cap            Inside servo        ⬜

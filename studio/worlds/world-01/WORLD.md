@@ -225,8 +225,8 @@ Never because they are showing it.
 
 Allow natural opportunities for:
 
--   Front graphics
--   Back graphics
+-   Blank front surfaces
+-   Blank back surfaces
 -   Caps
 -   Hoodies
 -   Accessories

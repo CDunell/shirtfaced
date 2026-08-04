@@ -212,7 +212,7 @@ been used recently when it has.
 
 **Keep to a fixed vocabulary in those two columns.** Currently in use:
 
-- Hero Product: `T-shirt`, `Hoodie`, `Cap`, `Tote bag`, `Mixed`, `Hoodie waist`, `Back graphic`
+- Hero Product: `T-shirt`, `Hoodie`, `Cap`, `Tote bag`, `Mixed`, `Hoodie waist`, `Back surface`
 - Camera: `Across street`, `Across forecourt`, `Across road`, `Across car park`,
   `Opposite footpath`, `Nearby table`, `Dining room`, `Front gate`, `Beside parked car`,
   `Rear seat`, `Inside lift`, `Inside lounge`, `Inside servo`, `Hallway`,
