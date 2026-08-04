@@ -225,7 +225,7 @@ export function BuyPanel({ product }: { product: Product }) {
         <button
           type="button"
           onClick={onAdd}
-          className={`press mt-8 hidden h-14 w-full rounded-[18px] text-[16px] font-bold md:block ${
+          className={`press mt-8 hidden h-14 w-full max-w-[340px] rounded-[18px] text-[16px] font-bold md:block ${
             added ? "bg-ink text-lime" : "bg-lime text-ink"
           }`}
         >
