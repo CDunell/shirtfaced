@@ -33,11 +33,14 @@ from app.domain.enums import (
     ACTIVE_ATTEMPT_STATES,
     AssetKind,
     AttemptState,
+    AuditEventType,
     CanonProposalStatus,
     FailureCode,
+    HumanDecisionKind,
     ReviewRecommendation,
     ReviewVerdict,
     ShotStatus,
+    SyncState,
     WorldStatus,
 )
 
@@ -45,9 +48,11 @@ __all__ = [
     "SHA256_HEX_LENGTH",
     "AssetKind",
     "AttemptState",
+    "AuditEvent",
     "AutomatedReview",
     "CanonProposal",
     "GenerationAttempt",
+    "HumanDecision",
     "ImageAsset",
     "Shot",
     "ShotStatus",
@@ -242,6 +247,10 @@ class GenerationAttempt(Base, TimestampMixin):
         cascade="all, delete-orphan",
         order_by="AutomatedReview.created_at",
     )
+    # At most one. The uniqueness is enforced by the database, not by this mapping.
+    decision: Mapped[HumanDecision | None] = relationship(
+        back_populates="attempt", cascade="all, delete-orphan", uselist=False
+    )
 
     @property
     def latest_review(self) -> AutomatedReview | None:
@@ -402,3 +411,110 @@ class CanonProposal(Base):
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<CanonProposal {self.status.value!r}>"
+
+
+class HumanDecision(Base):
+    """The owner's final decision on one attempt.
+
+    Exactly one per attempt, enforced by a unique constraint rather than only by an
+    application check: a double-click, a refresh and a network retry all arrive as
+    separate requests.
+
+    The decision is recorded first and independently of the file and Git work that
+    follows, because those cannot share a transaction with it. Each downstream system
+    reports its own outcome, so a response can say "decided, but not yet written"
+    rather than implying the decision rolled back.
+    """
+
+    __tablename__ = "human_decisions"
+    __table_args__ = (UniqueConstraint("attempt_id", name="uq_human_decisions_attempt_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    attempt_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("generation_attempts.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    decision: Mapped[HumanDecisionKind] = mapped_column(
+        _enum(HumanDecisionKind, "human_decision_kind"), nullable=False
+    )
+    # The owner's words, verbatim. Never rewritten by a model.
+    reason: Mapped[str | None] = mapped_column(Text)
+    note: Mapped[str | None] = mapped_column(Text)
+    instruction: Mapped[str | None] = mapped_column(Text)
+    promote_to_reference: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    actor: Mapped[str] = mapped_column(String(64), nullable=False, server_default=text("'owner'"))
+    # Lets a retried request return the existing decision instead of a 409.
+    idempotency_key: Mapped[str | None] = mapped_column(String(128))
+
+    markdown_sync: Mapped[SyncState] = mapped_column(
+        _enum(SyncState, "sync_state"),
+        nullable=False,
+        default=SyncState.NOT_ATTEMPTED,
+        server_default=SyncState.NOT_ATTEMPTED.value,
+    )
+    git_sync: Mapped[SyncState] = mapped_column(
+        _enum(SyncState, "sync_state"),
+        nullable=False,
+        default=SyncState.NOT_ATTEMPTED,
+        server_default=SyncState.NOT_ATTEMPTED.value,
+    )
+    reference_sync: Mapped[SyncState] = mapped_column(
+        _enum(SyncState, "sync_state"),
+        nullable=False,
+        default=SyncState.NOT_ATTEMPTED,
+        server_default=SyncState.NOT_ATTEMPTED.value,
+    )
+    git_commit: Mapped[str | None] = mapped_column(String(64))
+    # Set when a downstream step failed. The decision stands; something needs a human.
+    reconciliation_required: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
+    reconciliation_detail: Mapped[str | None] = mapped_column(Text)
+
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    attempt: Mapped[GenerationAttempt] = relationship(back_populates="decision")
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<HumanDecision {self.decision.value!r}>"
+
+
+class AuditEvent(Base):
+    """Append-only record of what the application did.
+
+    Never updated and never deleted. Payloads carry no secrets and no signed URLs.
+    """
+
+    __tablename__ = "audit_events"
+    __table_args__ = (
+        Index("ix_audit_events_world_id_created_at", "world_id", text("created_at DESC")),
+        Index("ix_audit_events_attempt_id", "attempt_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    world_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("worlds.id", ondelete="CASCADE")
+    )
+    attempt_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("generation_attempts.id", ondelete="CASCADE")
+    )
+    event_type: Mapped[AuditEventType] = mapped_column(
+        _enum(AuditEventType, "audit_event_type"), nullable=False
+    )
+    actor: Mapped[str] = mapped_column(String(64), nullable=False, server_default=text("'owner'"))
+    payload_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<AuditEvent {self.event_type.value!r}>"

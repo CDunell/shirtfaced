@@ -32,6 +32,10 @@ class AttemptState(StrEnum):
     AWAITING_DECISION = "awaiting_decision"
     APPROVED = "approved"
     REJECTED = "rejected"
+    # Terminal, and deliberately not "rejected": the owner asked for another take,
+    # which is not the same as saying the image was wrong. Recording it as a rejection
+    # would pollute rejected-drift learning, which is the planner's strongest input.
+    VARIATION_REQUESTED = "variation_requested"
     FAILED = "failed"
 
 
@@ -48,6 +52,50 @@ ACTIVE_ATTEMPT_STATES: frozenset[AttemptState] = frozenset(
         AttemptState.AWAITING_DECISION,
     }
 )
+
+
+class HumanDecisionKind(StrEnum):
+    """What the owner decided. Final, and never inferred from a review."""
+
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    VARIATION_REQUESTED = "variation_requested"
+
+
+# The attempt state each decision moves the attempt to. All three are terminal and
+# outside the active set, so the world is released either way.
+DECISION_ATTEMPT_STATES: dict[HumanDecisionKind, AttemptState] = {
+    HumanDecisionKind.APPROVED: AttemptState.APPROVED,
+    HumanDecisionKind.REJECTED: AttemptState.REJECTED,
+    HumanDecisionKind.VARIATION_REQUESTED: AttemptState.VARIATION_REQUESTED,
+}
+
+
+class SyncState(StrEnum):
+    """Whether a downstream system caught up with the decision.
+
+    The database, the filesystem and Git cannot share a transaction, so each is
+    reported separately rather than collapsed into one success flag.
+    """
+
+    NOT_ATTEMPTED = "not_attempted"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class AuditEventType(StrEnum):
+    """Append-only record of what happened."""
+
+    DECISION_RECORDED = "decision_recorded"
+    MARKDOWN_UPDATED = "markdown_updated"
+    MARKDOWN_FAILED = "markdown_failed"
+    WORLD_REIMPORTED = "world_reimported"
+    IMPORT_FAILED = "import_failed"
+    GIT_COMMITTED = "git_committed"
+    GIT_FAILED = "git_failed"
+    REFERENCE_PROMOTED = "reference_promoted"
+    REFERENCE_FAILED = "reference_failed"
+    RECONCILIATION_REQUIRED = "reconciliation_required"
 
 
 class ReviewRecommendation(StrEnum):

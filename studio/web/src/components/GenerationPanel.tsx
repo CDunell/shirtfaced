@@ -14,6 +14,7 @@ import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Tag, HIERARCHY, KIND as TAG_KIND, type TagKind } from "baseui/tag";
 import { LabelSmall, MonoLabelXSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
+import { DecisionPanel } from "./DecisionPanel";
 import { ReviewPanel } from "./ReviewPanel";
 
 import {
@@ -160,6 +161,8 @@ function AttemptCard({
       </dl>
 
       {attempt.review && <ReviewPanel review={attempt.review} />}
+
+      <DecisionPanel attempt={attempt} onDecided={onReviewed} />
 
       {attempt.image_url && (
         <div className={css({ marginTop: theme.sizing.scale500 })}>

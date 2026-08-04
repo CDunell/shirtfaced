@@ -139,3 +139,28 @@ derived, because it is a pure renaming of the recommendation:
 review contract requires the reviewer to say when the evidence is insufficient rather
 than guess, and collapsing that into one of the other three would be a lie about what
 the model saw.
+
+## ADR-013 — `variation_requested` is a terminal attempt state
+
+`WORKFLOW.md` says a variation marks the attempt `variation_requested`, and
+`DATA_MODEL.md` lists it among the allowed human decisions. But `ARCHITECTURE.md`, the
+Python `AttemptState` enum and the PostgreSQL type ended an attempt only at `approved`,
+`rejected` or `failed`. The state existed in the decision vocabulary and nowhere else.
+
+`variation_requested` is now a terminal attempt state, added through migration 0005.
+It sits **outside** the active-attempt partial index, so asking for a variation
+releases the world for the next explicit action.
+
+The alternative — recording a variation as `rejected` — was rejected. The owner asking
+for another take is not the owner saying the image was wrong. Conflating them would put
+a false entry into `# Rejected Drift`, and the first three entries there go into every
+planning prompt. The cheapest way to corrupt the planner is to teach it a lesson that
+was never learned.
+
+A variation therefore changes no document: no shotlist marker, no continuity entry, no
+canon. It records the instruction, frees the world, and waits for an explicit Continue
+World to create the child attempt.
+
+Adding an enum member in Python does not change the PostgreSQL type. Both migration
+0004 and migration 0005 needed an explicit `ALTER TYPE ... ADD VALUE`, and in both
+cases an integration test caught the omission rather than a reviewer.

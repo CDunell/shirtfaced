@@ -61,11 +61,20 @@ describe("GenerationPanel", () => {
   });
 
   it("states that a generated image is not approved", async () => {
-    stubApi({ attempts: [attempt()] });
+    stubApi({ attempts: [attempt({ state: "generated" })] });
 
     render();
 
     expect(await screen.findByText(/Not approved/)).toBeInTheDocument();
+  });
+
+  it("offers the decision controls once an attempt is awaiting one", async () => {
+    stubApi({ attempts: [attempt()] });
+
+    render();
+
+    expect(await screen.findByRole("button", { name: "Approve" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
   });
 
   it("says when nothing was billed", async () => {

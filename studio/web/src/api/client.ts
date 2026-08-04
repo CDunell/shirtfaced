@@ -124,6 +124,8 @@ export interface Attempt {
   thumbnail_url: string | null;
   /** The most recent review, if the image has been reviewed. */
   review: Review | null;
+  /** Present once decided. The controls are disabled when it is set. */
+  decision: DecisionSummary | null;
   /** Generating an image is not approving it. */
   approved: boolean;
 }
@@ -179,6 +181,43 @@ export interface Review {
   uncertain_gates: GateName[];
 }
 
+export type DecisionKind = "approved" | "rejected" | "variation_requested";
+export type SyncState = "not_attempted" | "succeeded" | "failed";
+
+export interface DecisionSummary {
+  decision: DecisionKind;
+  reason: string | null;
+  note: string | null;
+  instruction: string | null;
+  promote_to_reference: boolean;
+  markdown_sync: SyncState;
+  git_sync: SyncState;
+  git_commit: string | null;
+  reconciliation_required: boolean;
+  reconciliation_detail: string | null;
+  created_at: string;
+}
+
+export interface DecisionResult {
+  attempt_id: string;
+  attempt_state: AttemptState;
+  decision: DecisionKind;
+  shot_external_id: string;
+  shot_status: string;
+  reason: string | null;
+  note: string | null;
+  instruction: string | null;
+  promote_to_reference: boolean;
+  /** Reported separately: these cannot succeed or fail together. */
+  markdown_sync: SyncState;
+  git_sync: SyncState;
+  reference_sync: SyncState;
+  git_commit: string | null;
+  document_hashes: Record<string, string>;
+  reconciliation_required: boolean;
+  reconciliation: string[];
+}
+
 export interface GenerationResult {
   attempt: Attempt;
   /** Null when the review failed; the attempt records why and it can be retried. */
@@ -207,12 +246,20 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, method: string, signal?: AbortSignal): Promise<T> {
+async function request<T>(
+  path: string,
+  method: string,
+  signal?: AbortSignal,
+  body?: unknown,
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
       method,
-      headers: { Accept: "application/json" },
+      headers: body
+        ? { Accept: "application/json", "Content-Type": "application/json" }
+        : { Accept: "application/json" },
+      ...(body ? { body: JSON.stringify(body) } : {}),
       ...(signal ? { signal } : {}),
     });
   } catch (cause) {
@@ -242,8 +289,8 @@ function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   return request<T>(path, "GET", signal);
 }
 
-function postJson<T>(path: string, signal?: AbortSignal): Promise<T> {
-  return request<T>(path, "POST", signal);
+function postJson<T>(path: string, signal?: AbortSignal, body?: unknown): Promise<T> {
+  return request<T>(path, "POST", signal, body);
 }
 
 /** Liveness only: this tells you the process is up, not that it is ready to work. */
@@ -274,6 +321,45 @@ export function continueWorld(slug: string, signal?: AbortSignal): Promise<Gener
 /** Attempts for a world, newest first. */
 export function fetchAttempts(slug: string, signal?: AbortSignal): Promise<Attempt[]> {
   return getJson<Attempt[]>(`/api/worlds/${encodeURIComponent(slug)}/attempts`, signal);
+}
+
+/** Approve. Marks the shot approved and records it in the world documents. */
+export function approveAttempt(
+  attemptId: string,
+  body: { promote_to_reference: boolean; note: string },
+  signal?: AbortSignal,
+): Promise<DecisionResult> {
+  return postJson<DecisionResult>(
+    `/api/attempts/${encodeURIComponent(attemptId)}/approve`,
+    signal,
+    body,
+  );
+}
+
+/** Reject with a reason. The shot stays planned; the drift is recorded. */
+export function rejectAttempt(
+  attemptId: string,
+  body: { reason: string },
+  signal?: AbortSignal,
+): Promise<DecisionResult> {
+  return postJson<DecisionResult>(
+    `/api/attempts/${encodeURIComponent(attemptId)}/reject`,
+    signal,
+    body,
+  );
+}
+
+/** Ask for another take. Records intent; generates nothing. */
+export function requestVariation(
+  attemptId: string,
+  body: { instruction: string },
+  signal?: AbortSignal,
+): Promise<DecisionResult> {
+  return postJson<DecisionResult>(
+    `/api/attempts/${encodeURIComponent(attemptId)}/variation`,
+    signal,
+    body,
+  );
 }
 
 /** Review the existing image again. Adds a review; never regenerates. */

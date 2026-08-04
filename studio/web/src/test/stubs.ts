@@ -11,6 +11,8 @@ import type {
   Attempt,
   GateName,
   GateResult,
+  DecisionResult,
+  DecisionSummary,
   GenerationResult,
   NextShot,
   PlanPreview,
@@ -177,7 +179,8 @@ export function attempt(overrides: Partial<Attempt> = {}): Attempt {
   return {
     id: "attempt-1",
     attempt_number: 1,
-    state: "generated",
+    // Generate and review both run, so an attempt comes to rest here.
+    state: "awaiting_decision",
     shot: shot(),
     selection_reason: "W01-011 chosen from 2 eligible planned shots.",
     production_prompt: "Documentary 35mm photograph of friends reorganising a car.",
@@ -197,7 +200,47 @@ export function attempt(overrides: Partial<Attempt> = {}): Attempt {
     image_url: "/assets/asset-1",
     thumbnail_url: "/assets/asset-2",
     review: review(),
+    decision: null,
     approved: false,
+    ...overrides,
+  };
+}
+
+export function decisionSummary(overrides: Partial<DecisionSummary> = {}): DecisionSummary {
+  return {
+    decision: "approved",
+    reason: null,
+    note: null,
+    instruction: null,
+    promote_to_reference: false,
+    markdown_sync: "succeeded",
+    git_sync: "succeeded",
+    git_commit: "abc123",
+    reconciliation_required: false,
+    reconciliation_detail: null,
+    created_at: "2026-08-05T00:00:00Z",
+    ...overrides,
+  };
+}
+
+export function decisionResult(overrides: Partial<DecisionResult> = {}): DecisionResult {
+  return {
+    attempt_id: "attempt-1",
+    attempt_state: "approved",
+    decision: "approved",
+    shot_external_id: "W01-011",
+    shot_status: "approved",
+    reason: null,
+    note: null,
+    instruction: null,
+    promote_to_reference: false,
+    markdown_sync: "succeeded",
+    git_sync: "succeeded",
+    reference_sync: "not_attempted",
+    git_commit: "abc123",
+    document_hashes: {},
+    reconciliation_required: false,
+    reconciliation: [],
     ...overrides,
   };
 }
@@ -216,6 +259,9 @@ export interface Routes {
   planStatus?: number;
   planDetail?: string;
   attempts?: unknown;
+  decision?: unknown;
+  decisionStatus?: number;
+  decisionDetail?: string;
   generation?: unknown;
   generationStatus?: number;
   generationDetail?: string;
@@ -243,6 +289,17 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
         );
       }
       return Promise.resolve(new Response(JSON.stringify(routes.generation ?? generationResult())));
+    }
+    if (input.endsWith("/approve") || input.endsWith("/reject") || input.endsWith("/variation")) {
+      const decisionStatus = routes.decisionStatus ?? 200;
+      if (decisionStatus >= 400) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ detail: routes.decisionDetail ?? "refused" }), {
+            status: decisionStatus,
+          }),
+        );
+      }
+      return Promise.resolve(new Response(JSON.stringify(routes.decision ?? decisionResult())));
     }
     if (input.endsWith("/next-shot")) {
       return Promise.resolve(new Response(JSON.stringify(routes.nextShot ?? nextShot())));

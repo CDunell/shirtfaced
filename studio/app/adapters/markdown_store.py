@@ -4,16 +4,25 @@ Responsible for loading files, hashing them and refusing to read outside the wor
 directory. It never calls OpenAI and holds no domain knowledge about what the
 documents mean.
 
-Writing is added by the phase that first changes a document; Version 1 reads only.
+Writes are atomic and validated by the caller before they reach here: a temporary
+sibling on the same filesystem is fsynced and renamed, so a crash leaves either the
+old document or the new one, never half of either.
 """
 
 from __future__ import annotations
 
 import hashlib
+import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.domain.errors import UnsafePathError, WorldNotFoundError
+from app.domain.errors import StudioError, UnsafePathError, WorldNotFoundError
+
+
+class MarkdownWriteFailed(StudioError):
+    """A canonical document could not be written."""
+
 
 WORLD_DOCUMENT = "WORLD.md"
 CONTINUITY_DOCUMENT = "CONTINUITY.md"
@@ -83,6 +92,47 @@ class MarkdownStore:
         if not directory.is_dir():
             raise WorldNotFoundError(f"No world directory at {directory}.")
         return {name: self.read_document(slug, name) for name in REQUIRED_DOCUMENTS}
+
+    def write_documents(self, slug: str, documents: dict[str, str]) -> dict[str, Document]:
+        """Replace one or more documents atomically.
+
+        Each candidate is written to a temporary sibling, fsynced and renamed. The
+        renames happen one after another rather than as a single transaction — the
+        filesystem offers nothing stronger — so the caller validates every candidate
+        before calling this, and reports reconciliation if a later rename fails.
+        """
+        directory = self.world_directory(slug)
+        if not directory.is_dir():
+            raise WorldNotFoundError(f"No world directory at {directory}.")
+
+        staged: list[tuple[Path, Path]] = []
+        try:
+            for name, text in documents.items():
+                target = (directory / name).resolve()
+                if target.parent != directory:
+                    raise UnsafePathError(f"{name!r} resolves outside the world directory.")
+
+                handle, temporary_name = tempfile.mkstemp(
+                    dir=directory, prefix=f".{name}.", suffix=".tmp"
+                )
+                with os.fdopen(handle, "w", encoding="utf-8", newline="") as file:
+                    file.write(text)
+                    file.flush()
+                    os.fsync(file.fileno())
+                staged.append((Path(temporary_name), target))
+
+            for temporary, target in staged:
+                os.replace(temporary, target)
+        except OSError as error:
+            for temporary, _ in staged:
+                temporary.unlink(missing_ok=True)
+            raise MarkdownWriteFailed(f"Could not write the world documents: {error}") from error
+
+        return {name: self.read_document(slug, name) for name in documents}
+
+    def snapshot(self, slug: str) -> dict[str, str]:
+        """The current text of every canonical document, for restoring after a failure."""
+        return {name: document.text for name, document in self.read_world_documents(slug).items()}
 
     def available_slugs(self) -> list[str]:
         """World directories that contain all three documents."""

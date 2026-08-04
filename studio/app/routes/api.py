@@ -9,7 +9,7 @@ from __future__ import annotations
 import datetime as dt
 import logging
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
@@ -25,6 +25,7 @@ from app.adapters.factory import (
     planning_client_is_live,
     review_client_is_live,
 )
+from app.adapters.git_store import build_git_store
 from app.adapters.markdown_store import WORLD_DOCUMENT, MarkdownStore
 from app.adapters.planning import PlanningError
 from app.adapters.review import ReviewError
@@ -44,13 +45,22 @@ from app.domain.enums import (
     FailureCode,
     GateName,
     GateStatus,
+    HumanDecisionKind,
     ReviewRecommendation,
     ReviewVerdict,
     ShotStatus,
+    SyncState,
     WorldStatus,
 )
 from app.domain.errors import StudioError
 from app.domain.schemas import GateResult, PromptPlan
+from app.services.decision_service import (
+    DecisionConflict,
+    DecisionOutcome,
+    InvalidDecision,
+    decide,
+    repository_root_for,
+)
 from app.services.generation_orchestrator import (
     GenerationConflict,
     GenerationSettings,
@@ -164,6 +174,24 @@ class PlanPreviewResponse(BaseModel):
     live: bool
 
 
+class DecisionSummary(BaseModel):
+    """The decision on an attempt, as shown in history."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    decision: HumanDecisionKind
+    reason: str | None
+    note: str | None
+    instruction: str | None
+    promote_to_reference: bool
+    markdown_sync: SyncState
+    git_sync: SyncState
+    git_commit: str | None
+    reconciliation_required: bool
+    reconciliation_detail: str | None
+    created_at: dt.datetime
+
+
 class AssetResponse(BaseModel):
     """A stored image."""
 
@@ -212,6 +240,8 @@ class AttemptResponse(BaseModel):
     # The most recent review, if the image has been reviewed. Reviews are immutable;
     # retrying adds another, and the last one stands.
     review: ReviewResponse | None = None
+    # Present once decided. The interface disables the controls when it is set.
+    decision: DecisionSummary | None = None
     # A generated image is an image, not a decision.
     approved: bool
 
@@ -249,6 +279,11 @@ def _attempt_response(attempt: GenerationAttempt) -> AttemptResponse:
         thumbnail_url=_asset_url(attempt, AssetKind.THUMBNAIL),
         review=(
             _review_response(attempt.latest_review) if attempt.latest_review is not None else None
+        ),
+        decision=(
+            DecisionSummary.model_validate(attempt.decision)
+            if attempt.decision is not None
+            else None
         ),
         approved=attempt.state is AttemptState.APPROVED,
     )
@@ -473,6 +508,7 @@ def list_attempts(
                 selectinload(GenerationAttempt.assets),
                 selectinload(GenerationAttempt.shot),
                 selectinload(GenerationAttempt.reviews),
+                selectinload(GenerationAttempt.decision),
             )
         )
         .scalars()
@@ -492,6 +528,7 @@ def get_attempt(attempt_id: uuid.UUID, session: SessionDependency) -> AttemptRes
             selectinload(GenerationAttempt.assets),
             selectinload(GenerationAttempt.shot),
             selectinload(GenerationAttempt.reviews),
+            selectinload(GenerationAttempt.decision),
         )
     ).scalar_one_or_none()
 
@@ -590,6 +627,7 @@ def _load_attempt(session: Session, attempt_id: uuid.UUID) -> GenerationAttempt:
             selectinload(GenerationAttempt.assets),
             selectinload(GenerationAttempt.shot),
             selectinload(GenerationAttempt.reviews),
+            selectinload(GenerationAttempt.decision),
         )
     ).scalar_one_or_none()
 
@@ -664,3 +702,165 @@ def list_canon_proposals(
     )
 
     return [CanonProposalResponse.model_validate(proposal) for proposal in proposals]
+
+
+class ApproveRequest(BaseModel):
+    """Approving an image."""
+
+    promote_to_reference: bool = False
+    note: str = ""
+    idempotency_key: str | None = None
+
+
+class RejectRequest(BaseModel):
+    """Rejecting an image. A reason is required."""
+
+    reason: str
+    idempotency_key: str | None = None
+
+
+class VariationRequest(BaseModel):
+    """Asking for another take. Records intent; generates nothing."""
+
+    instruction: str
+    idempotency_key: str | None = None
+
+
+class DecisionResponse(BaseModel):
+    """The decision, and what each downstream system did about it.
+
+    The four outcomes are reported separately because they cannot succeed or fail
+    together. A decision is final the moment it is recorded, even if the documents or
+    the commit did not follow.
+    """
+
+    attempt_id: uuid.UUID
+    attempt_state: AttemptState
+    decision: HumanDecisionKind
+    shot_external_id: str
+    shot_status: ShotStatus
+    reason: str | None
+    note: str | None
+    instruction: str | None
+    promote_to_reference: bool
+    markdown_sync: SyncState
+    git_sync: SyncState
+    reference_sync: SyncState
+    git_commit: str | None
+    document_hashes: dict[str, str]
+    reconciliation_required: bool
+    reconciliation: list[str]
+
+
+def _decision_response(outcome: DecisionOutcome) -> DecisionResponse:
+    decision = outcome.decision
+    return DecisionResponse(
+        attempt_id=outcome.attempt.id,
+        attempt_state=outcome.attempt.state,
+        decision=decision.decision,
+        shot_external_id=outcome.attempt.shot.external_id,
+        shot_status=outcome.attempt.shot.status,
+        reason=decision.reason,
+        note=decision.note,
+        instruction=decision.instruction,
+        promote_to_reference=decision.promote_to_reference,
+        markdown_sync=outcome.markdown_sync,
+        git_sync=outcome.git_sync,
+        reference_sync=outcome.reference_sync,
+        git_commit=outcome.git_commit,
+        document_hashes=outcome.document_hashes,
+        reconciliation_required=outcome.reconciliation_required,
+        reconciliation=outcome.reconciliation,
+    )
+
+
+def _decide(
+    session: Session,
+    settings: Settings,
+    attempt_id: uuid.UUID,
+    kind: HumanDecisionKind,
+    **fields: Any,
+) -> DecisionResponse:
+    attempt = _load_attempt(session, attempt_id)
+    worlds_root = settings.worlds_root_resolved
+
+    try:
+        outcome = decide(
+            session,
+            attempt,
+            kind,
+            markdown_store=MarkdownStore(worlds_root),
+            git_store=build_git_store(
+                repository_root_for(worlds_root), enabled=settings.git_enabled
+            ),
+            asset_store=FilesystemAssetStore(settings.assets_root_resolved),
+            git_enabled=settings.git_enabled,
+            **fields,
+        )
+    except DecisionConflict as error:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(error)) from error
+    except InvalidDecision as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+
+    return _decision_response(outcome)
+
+
+@router.post("/attempts/{attempt_id}/approve", summary="Approve an image")
+def approve_attempt(
+    attempt_id: uuid.UUID,
+    body: ApproveRequest,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> DecisionResponse:
+    """Approve. Marks the shot approved and records it in the world documents."""
+    return _decide(
+        session,
+        settings,
+        attempt_id,
+        HumanDecisionKind.APPROVED,
+        note=body.note,
+        promote_to_reference=body.promote_to_reference,
+        idempotency_key=body.idempotency_key,
+    )
+
+
+@router.post("/attempts/{attempt_id}/reject", summary="Reject an image")
+def reject_attempt(
+    attempt_id: uuid.UUID,
+    body: RejectRequest,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> DecisionResponse:
+    """Reject with a reason. The shot stays planned and the drift is recorded."""
+    return _decide(
+        session,
+        settings,
+        attempt_id,
+        HumanDecisionKind.REJECTED,
+        reason=body.reason,
+        idempotency_key=body.idempotency_key,
+    )
+
+
+@router.post("/attempts/{attempt_id}/variation", summary="Request a variation")
+def request_variation(
+    attempt_id: uuid.UUID,
+    body: VariationRequest,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> DecisionResponse:
+    """Record that another take is wanted.
+
+    Calls no model and generates nothing. The world is released so an explicit
+    Continue World can create the child attempt.
+    """
+    return _decide(
+        session,
+        settings,
+        attempt_id,
+        HumanDecisionKind.VARIATION_REQUESTED,
+        instruction=body.instruction,
+        idempotency_key=body.idempotency_key,
+    )

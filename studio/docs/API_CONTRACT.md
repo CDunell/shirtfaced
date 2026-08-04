@@ -139,9 +139,17 @@ Body:
 ```json
 {
   "promote_to_reference": false,
-  "note": ""
+  "note": "",
+  "idempotency_key": null
 }
 ```
+
+Marks the attempt and the shot approved, updates the shotlist marker, adds an approved
+entry and rotation rows to `CONTINUITY.md`, and commits when Git is enabled.
+
+Reference promotion is an option on approval, not a fourth decision. It reuses the
+approved original's path and hash, so a reference can never drift from the image that
+was approved.
 
 ### `POST /api/attempts/{attempt_id}/reject`
 
@@ -149,9 +157,18 @@ Body:
 
 ```json
 {
-  "reason": "The group reads as resigned rather than optimistic."
+  "reason": "The group reads as resigned rather than optimistic.",
+  "idempotency_key": null
 }
 ```
+
+A reason is required and is recorded verbatim. The shot stays `planned`; only the
+attempt is rejected.
+
+The drift entry is inserted at the **top** of `# Rejected Drift`, because the planner
+reads the first three subsections. Older entries stay below as history and are never
+deleted. Owner text is sanitised before it reaches the document, so a reason cannot
+create a heading or break a table.
 
 ### `POST /api/attempts/{attempt_id}/variation`
 
@@ -163,7 +180,10 @@ Body:
 }
 ```
 
-This records the request. The UI may then explicitly start the variation attempt.
+Records the request and nothing else. It calls no model, generates no image and
+changes no document. The attempt becomes `variation_requested` — terminal, and
+deliberately not `rejected` (ADR-013) — which releases the world so an explicit
+Continue World can create the child attempt.
 
 ### `POST /api/attempts/{attempt_id}/retry-review`
 
@@ -177,6 +197,37 @@ recent one is the one shown.
 - `422` — the world files could not be read.
 - `502` — the review failed. The attempt records `failure_code: review_failed`, keeps
   its image, and can be retried.
+
+### Decision responses
+
+All three decision endpoints return the same shape. The four downstream outcomes are
+reported separately because they cannot succeed or fail together:
+
+```json
+{
+  "attempt_id": "uuid",
+  "attempt_state": "approved",
+  "decision": "approved",
+  "shot_external_id": "W01-011",
+  "shot_status": "approved",
+  "markdown_sync": "succeeded",
+  "git_sync": "succeeded",
+  "reference_sync": "succeeded",
+  "git_commit": "…",
+  "document_hashes": { "SHOTLIST.md": "…", "CONTINUITY.md": "…" },
+  "reconciliation_required": false,
+  "reconciliation": []
+}
+```
+
+- `404` — no such attempt.
+- `409` — the attempt is not awaiting a decision, or a different decision already
+  exists. A repeated *identical* request returns `200` with the existing decision.
+- `422` — a missing reason or instruction, or the world documents failed validation.
+
+A decision is final the moment it is recorded. If a downstream step fails, the response
+still reports the decision as made, sets `reconciliation_required` and names the stage.
+It never implies a rollback, because there is none.
 
 ## Canon proposals
 
