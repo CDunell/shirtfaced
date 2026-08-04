@@ -57,8 +57,12 @@ export function BuyPanel({ product }: { product: Product }) {
 
   return (
     <>
+      {/* Mobile keeps the full-bleed gallery with the details below. From md up
+         that becomes two columns — an unconstrained 4:5 image on a 1920px
+         screen is ~2400px tall and pushes every detail below the fold. */}
+      <div className="mx-auto md:grid md:max-w-6xl md:grid-cols-2 md:items-start md:gap-10 md:px-6 md:pt-2 lg:gap-14">
       {/* -------- Gallery -------- */}
-      <div className="relative">
+      <div className="relative md:overflow-hidden md:rounded-[20px]">
         <div
           className="no-scrollbar flex snap-x snap-mandatory overflow-x-auto"
           onScroll={(e) => {
@@ -119,7 +123,7 @@ export function BuyPanel({ product }: { product: Product }) {
       </div>
 
       {/* -------- Details -------- */}
-      <div className="mx-auto max-w-2xl px-4 pt-6 sm:px-6">
+      <div className="mx-auto max-w-2xl px-4 pt-6 sm:px-6 md:mx-0 md:px-0 md:pt-0">
         <h1 className="display text-[34px] leading-[0.92]">
           {product.name}
         </h1>
@@ -216,10 +220,22 @@ export function BuyPanel({ product }: { product: Product }) {
             </li>
           ))}
         </ul>
+
+        {/* Desktop buys from here; the fixed bar is mobile-only. */}
+        <button
+          type="button"
+          onClick={onAdd}
+          className={`press mt-8 hidden h-14 w-full rounded-[18px] text-[16px] font-bold md:block ${
+            added ? "bg-ink text-lime" : "bg-lime text-ink"
+          }`}
+        >
+          {added ? "Added" : `Add to cart · ${money(product.price)}`}
+        </button>
+      </div>
       </div>
 
-      {/* -------- Sticky purchase bar: persistent, always the primary action -------- */}
-      <div className="fixed inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-30 border-t border-ink/10 bg-paper/95 px-4 py-3 backdrop-blur sm:px-6">
+      {/* -------- Sticky purchase bar: mobile only -------- */}
+      <div className="fixed inset-x-0 bottom-[calc(68px+env(safe-area-inset-bottom))] z-30 border-t border-ink/10 bg-paper/95 px-4 py-3 backdrop-blur sm:px-6 md:hidden">
         <div className="mx-auto flex max-w-2xl gap-2">
           <button
             type="button"

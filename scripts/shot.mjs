@@ -117,11 +117,14 @@ for (const p of paths) {
   const url = baseUrl.replace(/\/$/, "") + p;
 
   // Real device metrics — this is what --window-size fails to do.
+  // Override with W/H env vars to capture desktop breakpoints.
+  const W = Number(process.env.W) || 390;
+  const H = Number(process.env.H) || 844;
   await cdp.send("Emulation.setDeviceMetricsOverride", {
-    width: 390,
-    height: 844,
-    deviceScaleFactor: 2,
-    mobile: true,
+    width: W,
+    height: H,
+    deviceScaleFactor: W >= 1024 ? 1 : 2,
+    mobile: W < 1024,
   });
 
   await cdp.send("Page.navigate", { url });
