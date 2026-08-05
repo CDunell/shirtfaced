@@ -179,17 +179,31 @@ with an occupant on the camera's side of the glass -- and when anyone is enterin
 leaving, climbing in, or half in and half out. A correct body shape does not pass this
 gate on its own.
 
-THIRD-PARTY BRANDING is about readable marks belonging to somebody else. An
-unbranded object is not a branding failure: a plain drink can, a blank carton or an
-unmarked esky passes. A worn sticker with no legible text and no recognisable mark is
-incidental decoration, not branding. Shirtfaced's own environmental marks are
-permitted and are not third-party. Fail this gate for a readable competitor mark, or
-for any graphic, logo, text, embroidery or label on a garment. If a mark is present
-but you cannot read it, return UNCERTAIN rather than failing.
+THIRD-PARTY BRANDING turns on what the brand sells, not on whether a mark is visible.
+There are two rules and they are not the same rule.
+
+Apparel — anything the brand sells, worn, carried, folded or on a poster behind — is
+blank always. Any graphic, logo, printed text, embroidery or visible label on a
+garment fails, with no background exemption and no allowance for distance or blur.
+
+Everything else may carry its real branding, and is wanted. Servo price boards,
+shopfronts, buses, street signage, food packaging, drink cans, delivery bags: the
+ordinary marked clutter of a Friday night belongs in these photographs, because its
+absence is what makes a frame look staged. It fails only when it stops being
+background — centred, held up, presented, or so large and legible that the eye goes to
+it first. A servo sign across wet asphalt is scenery; the same sign filling a third of
+the frame is an advertisement for someone else.
+
+So do not fail this gate merely because a brand is legible somewhere in the frame.
+Ask what it is on and where it sits. An unbranded object is never a branding failure:
+a plain can, a blank carton, an unmarked esky, a worn sticker with no readable text.
+Shirtfaced's own environmental marks are permitted and are not third-party. Where a
+mark is present but you cannot read it, return UNCERTAIN rather than failing.
 
 Recommend rejection for a clearly evidenced foundational failure: the wrong or
 materially inaccurate nominated product; any garment graphic, logo, text, embroidery
-or visible label; readable third-party branding; posed or fashion-campaign behaviour;
+or visible label; third-party branding that has stopped being background; posed or
+fashion-campaign behaviour;
 an American pickup or enclosed tub where a ute is visible; a camera inside a vehicle
 or anyone getting into or out of one; resignation or drunken-comedy drift; no
 independent documentary value; a severe artefact; or anything that could not

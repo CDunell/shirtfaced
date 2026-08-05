@@ -198,7 +198,9 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - Black stays for the t-shirt, hoodie and cap; the colour of a filler item is free.
 - Black clothing should be common but not universal.
 - Non-product clothing should vary naturally.
-- Readable third-party commercial branding anywhere in frame is a failure; incidental Shirtfaced environmental easter eggs remain permitted.
+- Branding turns on what we sell, not on whether it is visible. Anything we sell is blank always, with no background exemption.
+- Anything we do not sell may carry its real branding as background clutter: never centred, never held up, never legible enough that the eye goes to it first. Its absence is what makes a photograph look staged.
+- Incidental Shirtfaced environmental easter eggs remain permitted.
 
 ---
 

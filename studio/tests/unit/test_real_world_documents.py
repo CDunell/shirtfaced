@@ -110,6 +110,32 @@ def test_no_shot_makes_the_car_the_mechanism(world) -> None:  # type: ignore[no-
     assert not offenders, f"These shots use the car as the mechanism: {offenders}"
 
 
+def test_the_two_branding_rules_do_not_contradict_each_other() -> None:
+    """WORLD.md and CONTINUITY.md both reach the planner, and both describe branding.
+
+    WORLD.md settled it as two rules: anything the brand sells is blank always, and
+    anything it does not may carry real branding as background clutter, because the
+    absence of that clutter is what makes a frame look staged. CONTINUITY.md kept an
+    earlier one-line summary saying readable third-party branding anywhere in frame is
+    a failure. That note predates the decision that replaced it and was never removed.
+
+    Both went to the planner and to the reviewer on every request, which is the most
+    likely explanation for three consecutive contradictory branding verdicts. A model
+    asked to enforce two incompatible rules will look unreliable whichever it picks.
+    """
+    documents = MarkdownStore(WORLDS_ROOT).read_world_documents("world-01")
+    rotation = apply_continuity(RotationState(), documents["CONTINUITY.md"].text)
+    notes = " ".join(rotation.canon_notes).lower()
+
+    assert "anywhere in frame is a failure" not in notes, (
+        "CONTINUITY.md is telling the planner that any readable third-party mark "
+        "fails, which contradicts WORLD.md Rule Two."
+    )
+    # The surviving rule has to actually say what it permits, not just drop the ban.
+    assert "background" in notes
+    assert "blank always" in notes
+
+
 def test_the_camera_priorities_sent_to_the_planner_stay_out_of_cars() -> None:
     """The rule has to hold in CONTINUITY.md too, not just in WORLD.md.
 

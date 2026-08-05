@@ -654,6 +654,8 @@ Each prompt shall nominate:
 - One dominant real-world light source.
 - One documentary imperfection.
 - One emotional reason the night is continuing.
+- One mood block: three or four bare words, each on its own line.
+- One closing line naming what the photograph would mean to somebody in it.
 
 ## Form
 
@@ -666,15 +668,22 @@ only for what it contains. Write in their voice.
   generated prompt and a seeded one.
 - Sentences hammer rather than describe. "Nobody is posing." stands on its own
   line. It is not folded into a clause about what somebody is holding.
-- State mood as bare words on their own lines — Peaceful. Hopeful. Content. —
-  rather than as an adjective inside an action. Mood and story are the two
-  dimensions that score lowest, and this is the device the seeds use for them.
+- The mood block is required and is the piece most often dropped. Three or four
+  bare words, each alone on its line — Peaceful. Hopeful. Content. — placed
+  after the action and before the light. Never an adjective buried inside a
+  sentence about somebody's hands. Mood and story score lowest in every review
+  to date, and a prompt written without this block has scored 3 and 2 for them
+  every single time.
 - State the blank-garment and no-branding rule **once**, at the end, under
   CRITICAL. Never per person. Repeating it in every wardrobe line dilutes it and
   costs the length that description needs.
 - Do not name anyone. "One bloke." "A woman." "Another mate." Invented first
   names lengthen every action line and carry nothing an image model can use.
-- Close on what the photograph would mean to somebody in it.
+- The closing line is required and names what the photograph would mean to
+  somebody in it, immediately before CRITICAL. The seeds end on a person, not on
+  a specification: "the photograph somebody keeps framed because it reminds them
+  exactly what friendship felt like in their twenties". Ending on the Instagram
+  line alone leaves the story gate nothing to read.
 
 Density comes from background strangers, clutter and the far side of the street,
 never from a bigger cast. Six people already crowd a frame; the seeded prompts

@@ -75,9 +75,14 @@ Codes: `PRODUCT_MISSING`, `PRODUCT_NOT_CLEAR`, `PRODUCT_FORCED`, `PRODUCT_WRONG_
 
 Tests garments, consumables, vehicles and environmental objects for **readable** third-party branding. Incidental Shirtfaced environmental easter eggs are permitted; garments and packaging remain blank/generic.
 
-The test is a readable mark belonging to someone else, not the presence of an object. An unbranded can, a blank carton or an unmarked esky passes. A worn sticker with no legible text and no recognisable mark is decoration. Where a mark is present but illegible, return `UNCERTAIN` rather than `FAIL`.
+**Branding turns on what the brand sells, not on whether a mark is visible.** These are two rules, not one:
 
-This gate was the least reliable of the nine in live use: across three consecutive frames it failed a permitted esky sticker, failed an explicitly unbranded drink can, and passed a frame it should have queried.
+- **Apparel** — worn, carried, folded, or on a poster behind — is blank always. No background exemption, no allowance for distance or blur.
+- **Everything else** may carry real branding and is *wanted*: servo boards, shopfronts, buses, signage, packaging, cans. It fails only when it stops being background — centred, held up, presented, or large and legible enough to take the eye first.
+
+An unbranded object is never a branding failure. Where a mark is present but illegible, return `UNCERTAIN` rather than `FAIL`.
+
+This gate was the least reliable of the nine in live use — across three consecutive frames it failed a permitted esky sticker, failed an explicitly unbranded drink can, and failed paper bags that "could potentially carry" a mark. That looked like a model defect and was at least partly a canon defect: `CONTINUITY.md` carried a stale note reading "readable third-party commercial branding anywhere in frame is a failure", which contradicts Rule Two above and reached the reviewer on every request. The reviewer was enforcing two incompatible rules at once. Resolved 5 August 2026 in favour of Rule Two; the note is gone and a test now fails if it returns.
 
 Codes: `BRAND_THIRD_PARTY_VISIBLE`, `BRAND_GARMENT_MARK`, `BRAND_PACKAGING_MARK`, `BRAND_SHIRTFACED_TOO_PROMINENT`.
 
