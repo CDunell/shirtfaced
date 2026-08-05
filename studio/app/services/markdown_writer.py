@@ -229,12 +229,19 @@ def set_shot_status_marker(shotlist_text: str, external_id: str, marker: str) ->
             head, _, _ = stripped.rstrip("|").rstrip().rpartition("|")
             lines[index] = f"{head}| {marker} |"
         else:
-            head, separator, _ = stripped.rpartition("  ")
-            if not separator:
+            # Replace the trailing marker itself, never "everything after the last
+            # run of two spaces". A camera value wide enough to fill its column
+            # leaves a single space before the status, and rpartition then took the
+            # separator between the previous two columns and wrote the camera value
+            # away along with the status.
+            for known in (APPROVED_MARKER, REJECTED_MARKER, PLANNED_MARKER, IN_PROGRESS_MARKER):
+                if stripped.endswith(known):
+                    lines[index] = stripped[: -len(known)] + marker
+                    break
+            else:
                 raise MarkdownWriteError(
-                    f"The row for {external_id} has no separable status column."
+                    f"The row for {external_id} does not end in a status marker."
                 )
-            lines[index] = f"{head}{separator}{marker}"
         changed = True
         break
 

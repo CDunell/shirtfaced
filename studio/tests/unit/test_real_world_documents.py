@@ -48,21 +48,15 @@ def test_the_shotlist_statuses_match_the_document(world) -> None:  # type: ignor
     assert by_id["W01-011"].status is ShotStatus.APPROVED
     assert by_id["W01-012"].status is ShotStatus.APPROVED
     assert by_id["W01-013"].status is ShotStatus.APPROVED
-    assert len(world.planned_shots) == 7
+    assert by_id["W01-014"].status is ShotStatus.APPROVED
+    assert len(world.planned_shots) == 6
 
 
-def test_the_next_planned_shot_is_the_kitchen(world) -> None:  # type: ignore[no-untyped-def]
-    """W01-014, turned around after three shots taken from behind or side-on.
-
-    Facing the camera is not acknowledging it. The reference set has someone
-    "naturally facing towards the camera so the entire front panel is clearly
-    visible", which is how a cap or a chest reads at all.
-    """
+def test_the_next_planned_shot_is_the_sunrise_balcony(world) -> None:  # type: ignore[no-untyped-def]
     upcoming = world.planned_shots[0]
 
-    assert upcoming.external_id == "W01-014"
-    assert upcoming.hero_product == "Hoodie waist"
-    assert upcoming.camera_position == "Facing from hallway"
+    assert upcoming.external_id == "W01-015"
+    assert upcoming.hero_product == "Hoodie"
 
 
 def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-untyped-def]

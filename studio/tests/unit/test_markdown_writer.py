@@ -274,3 +274,18 @@ def test_section_count_is_unchanged_by_a_marker_edit() -> None:
     updated = writer.set_shot_status_marker(VALID_SHOTLIST, "W01-011", writer.APPROVED_MARKER)
 
     assert len(split_sections(updated)) == len(split_sections(VALID_SHOTLIST))
+
+
+def test_a_status_is_replaced_when_a_column_is_full_width() -> None:
+    """A camera value that fills its column leaves one space before the status.
+
+    The parser splits cells on two or more spaces, so the writer used to replace
+    everything after the last such run -- taking the camera value with it and leaving
+    a row with an empty status. A live approval failed on exactly this and was rolled
+    back by the reconciliation path.
+    """
+    row = "  W01-014   Kitchen kick-ons II       Hoodie waist   Facing from hallway ⬜"
+
+    updated = writer.set_shot_status_marker(row, "W01-014", "✅")
+
+    assert updated == "  W01-014   Kitchen kick-ons II       Hoodie waist   Facing from hallway ✅"
