@@ -243,11 +243,32 @@ def _matches(produced: str, required: str) -> bool:
     """Agreement, not identity.
 
     The shotlist says "Tote bag"; a plan may reasonably say "Plain black tote bag".
-    One containing the other is agreement; anything else is a substitution.
+    Substring containment catches that, because the elaboration only adds words at
+    the ends.
+
+    It does not catch an elaboration that adds words in the middle. The shotlist
+    column is narrow, so its values are clipped -- "Hoodie waist" -- and the natural
+    expansion is "Hoodie tied around waist", which contains neither string. That
+    failed a live plan as a substituted hero product, which it plainly is not.
+
+    So every required word must appear in what was produced, in order. "Hoodie
+    waist" agrees with "Hoodie tied around waist" and with "Plain black hoodie tied
+    around the waist"; it disagrees with "Hoodie", which drops a required word, and
+    with "Cap", which shares none.
     """
     left = produced.strip().casefold()
     right = required.strip().casefold()
-    return left == right or right in left or left in right
+    if left == right or right in left or left in right:
+        return True
+
+    produced_words = left.split()
+    position = 0
+    for word in right.split():
+        try:
+            position = produced_words.index(word, position) + 1
+        except ValueError:
+            return False
+    return True
 
 
 def truncate_excerpt(text: str, limit: int = MAX_EXCERPT_CHARACTERS) -> str:

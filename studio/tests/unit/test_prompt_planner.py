@@ -176,6 +176,38 @@ def test_an_elaborated_hero_product_is_accepted() -> None:
     validate_plan(plan, a_request())
 
 
+def _lobby_brief() -> ShotBrief:
+    return ShotBrief(
+        external_id="W01-012",
+        title="Apartment lobby",
+        hero_product="Hoodie waist",
+        camera_position="From the entrance",
+    )
+
+
+def test_an_elaboration_that_adds_words_in_the_middle_is_accepted() -> None:
+    """The shotlist column is narrow, so its values are clipped.
+
+    "Hoodie waist" expands naturally to "Hoodie tied around waist", which contains
+    neither string. Substring matching called that a substituted hero product and
+    failed a live plan over it.
+    """
+    request = a_request(shot=_lobby_brief())
+
+    for produced in ("Hoodie tied around waist", "Plain black hoodie tied around the waist"):
+        plan = PromptPlan.model_validate(
+            {**VALID_PLAN_FIELDS, "hero_product": produced, "camera_position": "From the entrance"}
+        )
+        validate_plan(plan, request)
+
+
+def test_dropping_a_required_word_is_still_a_substitution() -> None:
+    plan = PromptPlan.model_validate({**VALID_PLAN_FIELDS, "hero_product": "Cap"})
+
+    with pytest.raises(PlanningError):
+        validate_plan(plan, a_request(shot=_lobby_brief()))
+
+
 def test_a_shot_without_a_required_product_accepts_any() -> None:
     plan = PromptPlan.model_validate({**VALID_PLAN_FIELDS, "hero_product": "Anything"})
     request = a_request(
