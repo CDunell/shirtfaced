@@ -237,6 +237,20 @@ Nobody acknowledges the camera.
 
 People interact with each other rather than the photographer.
 
+And they interact with each other rather than merely occupying the same
+place. Most of the group is doing something with somebody: passing food
+across, laughing at what the one beside them just said, two heads over
+one phone, wearing another's jumper.
+
+A frame where every person is busy alone is a room of strangers who
+happen to be standing together. It is the most common way one of these
+photographs dies, and it dies quietly, because each individual action
+looks perfectly natural on its own.
+
+Some of them alone is right — tying a lace, checking the time, holding
+a door. A group all interacting at once is as staged as a group where
+nobody does.
+
 ------------------------------------------------------------------------
 
 # Wardrobe

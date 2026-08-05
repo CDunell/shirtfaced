@@ -153,6 +153,13 @@ For each of the ten gates report what is actually visible.
   no vehicle is visible.
 - Mark a finding material only if it could change the recommendation.
 
+STORY and DOCUMENTARY CREDIBILITY both turn on whether these people are together.
+Look for interaction, not just occupation: food passed across, one laughing at what
+another said, two heads over one phone, someone wearing another's jumper. A frame
+where every person is busy alone is a room of strangers standing in the same place,
+and it fails quietly, because each individual action looks natural by itself. Some
+of the cast alone is correct; all of them alone is not.
+
 STRUCTURAL PLAUSIBILITY asks one question the other nine do not: could the thing in
 this photograph exist? Judge the physical object, not the mood.
 
