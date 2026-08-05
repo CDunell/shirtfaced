@@ -30,6 +30,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 | 08 | Closed bottle shop | Mixed placement | Mixed | REJECTED |
 | 09 | Apartment kick-ons arrival | Black cap | Front panel | APPROVED |
 | 10 | City lookout | Black cap | Front panel | APPROVED |
+| W01-011 | Kerbside window chat | T-shirt | Recorded | APPROVED |
 
 ## Next Rotation Priority
 
@@ -56,6 +57,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 | 09B | Apartment arrival alternate | Inside gate, facing arrivals | APPROVED |
 | 10 | Lookout | Beside another parked car | APPROVED |
 | 10B | Lookout alternate | Elevated rear three-quarter | REJECTED — incorrect ute body |
+| W01-011 | Kerbside window chat | Footpath at window | APPROVED |
 
 ## Next Camera Priority
 
@@ -130,6 +132,19 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 - City is secondary to the friendship.
 
 ---
+
+## W01-011 — Kerbside window chat
+
+**Status:** APPROVED
+
+**Hero product:** T-shirt
+
+**Camera position:** Footpath at window
+
+**Why it works:** Australian takeaway environment captured, showing some social interaction.
+
+**Owner's note:** Approved by the owner. Structurally sound, camera outside, seated passenger at the open window.
+
 
 # Rejected Drift
 
