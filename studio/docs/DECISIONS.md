@@ -164,3 +164,40 @@ World to create the child attempt.
 Adding an enum member in Python does not change the PostgreSQL type. Both migration
 0004 and migration 0005 needed an explicit `ALTER TYPE ... ADD VALUE`, and in both
 cases an integration test caught the omission rather than a reviewer.
+
+## ADR-014 — `gpt-image-1-mini` is not used, and drafting stays unused with it
+
+Drafting was wired up so framing and geometry could be checked cheaply, on the theory
+that a fifth of the cost buys most of the information. The first genuine mini draft —
+the first one where the draft model was actually called rather than merely recorded —
+settled it the other way.
+
+The prompt for that frame explicitly asked for: nobody posing, nobody acknowledging
+the camera, two strangers arguing beside a scooter rack, a blurred bus with unreadable
+markings, motion blur, imperfect framing, a cropped shoulder at the left edge, and a
+blurred parking sign pole in front of the lens.
+
+`gpt-image-1-mini` returned six cast members in an evenly spaced arc, every face lit,
+readable and turned toward the lens, with none of the occlusion, cropping, background
+life or foreground obstruction that had been asked for. A group portrait. The same
+canon and the same instructions produce documentary frames on `gpt-image-2`, so this
+is not a prompt or canon failure — the model does not follow the documentary
+instructions that matter most to this world.
+
+It also contained an orphaned car door: a panel and a window frame with no vehicle
+behind them, at the wrong scale, at footpath level.
+
+**Decision.** Mini is out. It is not used for production or for drafts. A cheap model
+earns its place only by producing frames of the standard of the seeded reference set;
+until one does, iteration happens on the full model and costs what it costs.
+
+The draft path is kept rather than reverted. It is correct now — the model is chosen
+at client construction, a draft that cannot run refuses instead of silently costing
+full price, and the attempt records the model actually called. The mechanism is sound
+and the only cheap model available fails on quality. When a better one exists, setting
+`OPENAI_IMAGE_DRAFT_MODEL` is the whole change.
+
+The practical consequence: there is no cheap iteration loop. Every experiment costs a
+full frame, which raises the value of the checks that cost nothing — previewing the
+production prompt, confirming a rule reaches the planner, and confirming no canon
+section is truncated — before spending anything.
