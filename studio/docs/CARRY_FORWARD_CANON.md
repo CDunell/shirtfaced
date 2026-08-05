@@ -16,9 +16,10 @@ real.
 
 ## Vehicles
 
-**The rule.** The camera never sits inside a vehicle. Nobody is ever entering or
-leaving one. People are photographed on or around a vehicle, never in transit
-into or out of it. The vehicle is a prop, never the hero.
+**The rule.** Never shot inside. The camera never sits inside a vehicle, and
+nobody is ever entering or leaving one. People are photographed on or around a
+vehicle, never in transit into or out of it. The vehicle is a prop, never the
+hero.
 
 Recorded in `worlds/world-01/WORLD.md` under `Product Rotation & Vehicle Canon`.
 Copy it forward whole; the World 01 wording also covers the near vehicle's own
@@ -48,14 +49,20 @@ behind. A vehicle parked in the middle distance while the frame belongs to the
 people. What is out is the shot that needs someone climbing in, climbing out,
 riding along, or leaning through an opening.
 
-**Open question for the owner.** World 01 permits a passenger already seated,
-with the exchange happening through an open window — decided on 5 August 2026,
-after the interior ban. "They are never in the car" could be read as removing
-that exception in future worlds. It has not been removed here, because it was an
-explicit decision and the frame it produced was the first one that held together
-structurally. If the stricter reading is intended for beach, 4WD and road-trip
-worlds, it should be settled in the document before those worlds are written
-rather than left for the model to guess.
+**"Never in the car" means never shot inside.** Settled by the owner on 5 August
+2026, and it carries to every world.
+
+The ban is on the camera and on the act, not on the existence of an occupant. A
+passenger already sitting in the vehicle is fine, and the exchange through an
+open window remains a good frame — it was the first frame in World 01 that held
+together structurally, with the cast on the footpath and the seated woman's arm
+out through a window sill at shoulder height.
+
+What is out is: the camera inside the cabin; anyone entering or leaving; anyone
+half in and half out, climbing in, mid-transfer, or leaning through a door
+opening; and anyone riding along. If the photographer would have to be sitting in
+the vehicle to take the shot, it is the wrong shot, however the brief describes
+it.
 
 ---
 
