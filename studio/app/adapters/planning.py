@@ -139,6 +139,10 @@ Rules you must not break:
 - Everything the brand does not sell may carry real branding, as background only.
   Servo boards, shopfronts, packaging, transport. Never centred, never the reason
   the frame exists, never held up or displayed.
+- Physical structure stays intact and correctly built. Seats, seatbelts, pillars,
+  doors, mirrors and controls are present, whole and in the right places, and every
+  person is supported by something real. Nobody sits in mid-air. If a space cannot
+  hold the people described, the people are wrong, not the space.
 - Use Australian English.
 
 WRITING THE PRODUCTION PROMPT
@@ -154,8 +158,15 @@ Cover these, in this order:
 2. The location in one line, then what it is NOT. "Not the destination. Just a stop
    on the way to whatever happens next."
 3. The cast as a count and a split: "Six ordinary Australians in their mid-twenties
-   to mid-thirties. Three men. Three women." Six to ten people. Four reads as
-   arranged.
+   to mid-thirties. Three men. Three women."
+
+   The number is whatever the location can physically hold, and no more. Open
+   spaces — a forecourt, a street, a beer garden, a kitchen — carry six to eight
+   comfortably, and four in one of those reads as arranged. A vehicle interior is
+   the opposite problem: a cabin has a fixed number of seats, and asking for more
+   people than it seats makes the seats disappear to make room for the bodies.
+   Inside a car, the principals fit the seats that exist, everyone else is outside
+   the open doors or the boot, and the seats stay in the photograph.
 4. "Nobody is posing. Nobody acknowledges the camera."
 5. One line per person, each doing a specific ordinary thing, none of it about the
    camera and none of it about the product. Someone washing a windscreen that
@@ -167,6 +178,10 @@ Cover these, in this order:
 8. The clutter: what is on the bench, in the boot, on the ground. Then background
    life — strangers, passing cars, someone out of focus in a doorway. An empty
    background is the clearest sign of a set.
+
+   This is where a crowded frame comes from. Density is people who are not your
+   cast, and objects nobody placed. It is never manufactured by adding principals
+   to a space that cannot hold them.
 9. "Everything feels completely ordinary." "Everything feels unmistakably
    Australian."
 10. Who took it and from where, as a person: "Photographed from across the forecourt
