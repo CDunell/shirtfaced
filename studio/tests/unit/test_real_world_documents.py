@@ -46,26 +46,22 @@ def test_the_shotlist_statuses_match_the_document(world) -> None:  # type: ignor
     # Approved by the owner on 5 August 2026, after seven attempts and the vehicle
     # canon that came out of them.
     assert by_id["W01-011"].status is ShotStatus.APPROVED
-    assert len(world.planned_shots) == 9
+    assert by_id["W01-012"].status is ShotStatus.APPROVED
+    assert len(world.planned_shots) == 8
 
 
-def test_the_next_planned_shot_is_the_lobby(world) -> None:  # type: ignore[no-untyped-def]
-    """The lift became a lobby, which is the rule rather than a preference.
+def test_the_next_planned_shot_is_the_balcony(world) -> None:  # type: ignore[no-untyped-def]
+    """W01-013, after the lobby was approved.
 
-    Subjects stay out of small built enclosures -- car cabins, lifts, tents -- and
-    stand next to, in front of, or sitting on them instead. So the shot moved twice:
-    first the camera came out of the lift, then the cast did, and what is left is the
-    room the lift is in.
-
-    That is the general form of everything the vehicle canon was reaching for. A
-    model cannot delete the seats from a room that does not need any.
+    "Inside lounge" is compliant with the observer rule: the subjects are on the
+    balcony and the camera watches from the next room through the doorway.
     """
     upcoming = world.planned_shots[0]
 
-    assert upcoming.external_id == "W01-012"
-    assert upcoming.title == "Apartment lobby"
-    assert upcoming.hero_product == "Hoodie waist"
-    assert upcoming.camera_position == "From the entrance"
+    assert upcoming.external_id == "W01-013"
+    assert upcoming.title == "Apartment balcony back view"
+    assert upcoming.hero_product == "T-shirt"
+    assert upcoming.camera_position == "Inside lounge"
 
 
 def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-untyped-def]

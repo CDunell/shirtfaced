@@ -148,6 +148,11 @@ named. The atmosphere stated in bare words. What nobody is doing, about the nigh
 rather than about the camera. Background that keeps moving. Garments last. It closes
 on what the photograph would mean to somebody in it.
 
+The interaction is between the people. Things happen around them, not to them: an
+event the group has to deal with becomes a clean-up, and two of those in a row is a
+rut. Somebody losing a fight with their own kebab is a mishap the group laughs at.
+Let the incidental stay incidental.
+
 Describe the scene; do not choreograph it. The reference says "one bloke sits
 casually on the edge of a white Australian tray-back ute" and leaves the rest to the
 picture. Assigning every person a separate precise action, and every object a precise
