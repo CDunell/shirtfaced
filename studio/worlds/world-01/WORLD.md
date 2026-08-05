@@ -659,37 +659,20 @@ Each prompt shall nominate:
 
 ## Form
 
-The seeded reference prompts are the model for **how** a prompt is written, not
-only for what it contains. Write in their voice.
+Write in the voice of the seeded prompts.
 
-- One short declarative per line. In the seeded set the median line is five
-  words and the mean under seven; lines over twenty-five words are effectively
-  absent. Long compound sentences are the single clearest difference between a
-  generated prompt and a seeded one.
-- Sentences hammer rather than describe. "Nobody is posing." stands on its own
-  line. It is not folded into a clause about what somebody is holding.
-- The mood block is required and is the piece most often dropped. Three or four
-  bare words, each alone on its line — Peaceful. Hopeful. Content. — placed
-  after the action and before the light. Never an adjective buried inside a
-  sentence about somebody's hands. Mood and story score lowest in every review
-  to date, and a prompt written without this block has scored 3 and 2 for them
-  every single time.
-- Do not write the blank-garment rule at all. The application appends the
-  CRITICAL block to every prompt, so it is guaranteed and does not need a line
-  of yours. Describe each garment's colour and cut and stop: "a washed black
-  hoodie", not "a plain blank washed black hoodie with no logos or labels".
-  Repeating blankness per person spends the length that description needs.
-- Do not name anyone. "One bloke." "A woman." "Another mate." Invented first
-  names lengthen every action line and carry nothing an image model can use.
-- The closing line is required and names what the photograph would mean to
-  somebody in it, immediately before CRITICAL. The seeds end on a person, not on
-  a specification: "the photograph somebody keeps framed because it reminds them
-  exactly what friendship felt like in their twenties". Ending on the Instagram
-  line alone leaves the story gate nothing to read.
-
-Density comes from background strangers, clutter and the far side of the street,
-never from a bigger cast. Six people already crowd a frame; the seeded prompts
-get their life from what is happening behind and around them.
+- One short declarative per line. Five or six words. Never over twenty-five.
+- Sentences hammer. "Nobody is posing." stands alone, not folded into a clause
+  about what somebody is holding.
+- Mood is a block of three or four bare words, each alone on its line, after the
+  action and before the light. Peaceful. Hopeful. Content.
+- Close on what the photograph would mean to somebody in it. End on a person,
+  not a specification.
+- Name nobody. "One bloke." "A woman." "Another mate."
+- Never write the blank-garment rule; the application appends it. Give a
+  garment's colour and cut and stop. "A washed black hoodie", not "a plain blank
+  washed black hoodie with no logos".
+- Density comes from background strangers and clutter, never from a bigger cast.
 
 ------------------------------------------------------------------------
 
