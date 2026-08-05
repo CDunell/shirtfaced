@@ -194,7 +194,12 @@ def test_an_elaboration_that_adds_words_in_the_middle_is_accepted() -> None:
     """
     request = a_request(shot=_lobby_brief())
 
-    for produced in ("Hoodie tied around waist", "Plain black hoodie tied around the waist"):
+    for produced in (
+        "Hoodie tied around waist",
+        "Plain black hoodie tied around the waist",
+        # A trailing full stop is not a different product. This one failed a live run.
+        "Black heavyweight hoodie tied around the waist.",
+    ):
         plan = PromptPlan.model_validate(
             {**VALID_PLAN_FIELDS, "hero_product": produced, "camera_position": "From the entrance"}
         )

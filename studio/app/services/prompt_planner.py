@@ -239,6 +239,10 @@ def validate_plan(plan: PromptPlan, request: PromptPlanRequest) -> None:
         )
 
 
+# Enough for a product name; nothing here contains a dash that matters.
+_PUNCTUATION = ".,;:!?\"'()[]-"
+
+
 def _matches(produced: str, required: str) -> bool:
     """Agreement, not identity.
 
@@ -261,11 +265,13 @@ def _matches(produced: str, required: str) -> bool:
     if left == right or right in left or left in right:
         return True
 
-    produced_words = left.split()
+    # Punctuation is not part of a product name. A plan returning "hoodie tied around
+    # the waist." failed against "Hoodie waist" purely on the full stop.
+    produced_words = [word.strip(_PUNCTUATION) for word in left.split()]
     position = 0
-    for word in right.split():
+    for required_word in (word.strip(_PUNCTUATION) for word in right.split()):
         try:
-            position = produced_words.index(word, position) + 1
+            position = produced_words.index(required_word, position) + 1
         except ValueError:
             return False
     return True
