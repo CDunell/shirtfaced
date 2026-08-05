@@ -190,6 +190,7 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - A ute has a bonnet in front of the cab. Cab-over and forward-control trucks are wrong bodies.
 - Ute colour, cab configuration and age are open; it only has to read as a working Australian vehicle.
 - A foreground obstruction must belong to the scene, not be a stray wing mirror with no car attached.
+- Never put the near car's own window rubber, door frame, pillar or mirror in front of the lens; that puts the camera in the cabin.
 - We sell t-shirts, crops, hoodies, jumpers and hats (caps, beanies, bucket hats); everything else is cart filler and never the hero.
 - The range is the current one, not a closed set, and will expand over time.
 - The tote is an accessory, carried incidentally, and no frame is composed around it.

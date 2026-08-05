@@ -136,6 +136,14 @@ floating at the edge of frame reads as a mistake, not as reportage,
 because a real photographer standing there would have been standing
 somewhere.
 
+And never the near vehicle's own window rubber, door frame, pillar or
+mirror. Putting those in front of the lens is the same instruction as
+sitting the camera in the cabin, and the model will read it that way
+however the shot is otherwise described: one frame said the
+photographer stood on the footpath and still came back shot from the
+passenger seat, because the prompt had asked for window rubber in
+front of the lens. Obstruct with the world outside the car.
+
 The photograph should feel discovered rather than directed.
 
 ------------------------------------------------------------------------

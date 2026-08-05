@@ -59,7 +59,8 @@ def test_the_next_planned_shot_is_at_the_car(world) -> None:  # type: ignore[no-
     assert upcoming.external_id == "W01-011"
     assert upcoming.title == "Kerbside window chat"
     assert upcoming.hero_product == "T-shirt"
-    assert upcoming.camera_position == "At the car window"
+    # "At the car window" was ambiguous enough to be read as inside it, and was.
+    assert upcoming.camera_position == "Footpath at window"
 
 
 def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-untyped-def]
