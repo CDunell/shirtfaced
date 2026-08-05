@@ -108,7 +108,7 @@ def test_a_generated_image_receives_a_validated_review(
     review = _review(session, generated, worlds_root, assets_root)
 
     assert review is not None
-    assert len(review.raw_json["gates"]) == 9
+    assert len(review.raw_json["gates"]) == len(GateName)
     assert review.recommendation is ReviewRecommendation.APPROVE
 
 

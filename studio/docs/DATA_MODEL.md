@@ -100,6 +100,7 @@ Allowed status:
 - `story_score`
 - `branding_compliant`
 - `vehicle_compliant`
+- `structurally_sound` — whether what is shown could physically exist
 - `strongest_success`
 - `material_drift`
 - `recommended_action`

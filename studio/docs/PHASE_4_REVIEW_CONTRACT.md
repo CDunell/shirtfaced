@@ -73,15 +73,23 @@ Codes: `PRODUCT_MISSING`, `PRODUCT_NOT_CLEAR`, `PRODUCT_FORCED`, `PRODUCT_WRONG_
 
 ### Third-party branding
 
-Tests garments, consumables, vehicles and environmental objects for readable third-party branding. Incidental Shirtfaced environmental easter eggs are permitted; garments and packaging remain blank/generic.
+Tests garments, consumables, vehicles and environmental objects for **readable** third-party branding. Incidental Shirtfaced environmental easter eggs are permitted; garments and packaging remain blank/generic.
+
+The test is a readable mark belonging to someone else, not the presence of an object. An unbranded can, a blank carton or an unmarked esky passes. A worn sticker with no legible text and no recognisable mark is decoration. Where a mark is present but illegible, return `UNCERTAIN` rather than `FAIL`.
+
+This gate was the least reliable of the nine in live use: across three consecutive frames it failed a permitted esky sticker, failed an explicitly unbranded drink can, and passed a frame it should have queried.
 
 Codes: `BRAND_THIRD_PARTY_VISIBLE`, `BRAND_GARMENT_MARK`, `BRAND_PACKAGING_MARK`, `BRAND_SHIRTFACED_TOO_PROMINENT`.
 
 ### Vehicle continuity
 
-Where a ute appears, tests Australian tray-back form, open aluminium alloy tray and secondary narrative role. If no relevant vehicle appears, return `NOT_APPLICABLE`.
+Where a vehicle appears, tests Australian form, secondary narrative role, **where the camera is**, and **what people are doing with the vehicle**. If no relevant vehicle appears, return `NOT_APPLICABLE`.
 
-Codes: `VEHICLE_AMERICAN_PICKUP`, `VEHICLE_ENCLOSED_TUB`, `VEHICLE_LIFESTYLE_HERO`, `VEHICLE_TOO_PROMINENT`.
+Colour, cab configuration and age are open — a black dual cab is an ordinary Australian work vehicle. What fails is the wrong body shape, the camera inside the cabin, or anyone getting into or out of the vehicle.
+
+A correct body shape does not pass this gate on its own. A live review returned `vehicle_compliant: true` for a photograph taken from the passenger seat, which the oldest rule in the vehicle canon forbids.
+
+Codes: `VEHICLE_AMERICAN_PICKUP`, `VEHICLE_ENCLOSED_TUB`, `VEHICLE_LIFESTYLE_HERO`, `VEHICLE_TOO_PROMINENT`, `VEHICLE_CAB_OVER`, `VEHICLE_CAMERA_INSIDE`, `VEHICLE_ENTERING_OR_EXITING`, `VEHICLE_OCCUPANT_MISORIENTED`.
 
 ### Wardrobe balance
 
@@ -107,6 +115,21 @@ Tests a clear social action, a plausible five seconds before/after and a reason 
 
 Codes: `STORY_NO_ACTION`, `STORY_NO_BEFORE_AFTER`, `STORY_REPEATED_BEAT`, `STORY_NO_CONTINUATION`, `STORY_PRODUCT_IS_PLOT`.
 
+### Structural plausibility
+
+Tests whether the thing photographed could physically exist. This is a fact check, not a taste judgement, and it is the only gate that asks the question.
+
+- Is anything missing that must be there — seats, a vehicle's rear body, a floor?
+- Is every person supported by a surface that is visible or clearly implied?
+- Does the furniture match the people: a row built for two cannot seat three, and a seat faces the way it is bolted down?
+- Counts and joins: limbs, fingers, chair legs, wheels, doors, and reflections that disagree with the scene.
+
+Set `structurally_sound` false whenever this gate fails.
+
+The other nine gates all judge taste and intent. A frame can be beautiful, documentary and unmistakably Australian while showing something impossible, and in live use it repeatedly was: a car with no front seats scored documentary credibility 4/5, and a van whose entire rear body was absent — the road visible straight through the opening — scored 5/5 and passed vehicle continuity. Neither score was wrong. Nothing in the rubric named physical structure, so nothing looked at it.
+
+Codes: `STRUCTURE_MISSING_ELEMENT`, `STRUCTURE_UNSUPPORTED_BODY`, `STRUCTURE_IMPOSSIBLE_SEATING`, `STRUCTURE_GEOMETRY_CONFLICT`, `STRUCTURE_ANATOMY`, `STRUCTURE_REFLECTION_CONFLICT`.
+
 ## 6. Material failure rules
 
 Recommend rejection when any clearly evidenced foundational failure occurs:
@@ -118,7 +141,11 @@ Recommend rejection when any clearly evidenced foundational failure occurs:
 - American pickup or prohibited ute body where visible;
 - emotional resignation or unsafe/drunken-comedy drift;
 - image has no independent documentary value;
-- severe generation artefact compromising people, product or scene.
+- severe generation artefact compromising people, product or scene;
+- anything that could not physically exist — missing structure, an unsupported body, seating that does not fit;
+- a camera inside a vehicle, or anyone entering or leaving one.
+
+A structural failure is material whatever the gate's `material` flag says, because the photograph shows something that cannot be. The recommended-action summary reports it separately for that reason: an unmarked gate must not be able to bury it.
 
 Recommend approval with note only when the image belongs to World 01 and the note records a non-blocking continuity fact or genuinely repeatable rule. Do not use it to excuse a foundational failure.
 
@@ -150,8 +177,10 @@ No long generic critique. A new rule proposal must describe a repeatable failure
     "wardrobe_balance": {},
     "composition": {},
     "documentary_credibility": {},
-    "story": {}
+    "story": {},
+    "structural_plausibility": {}
   },
+  "structurally_sound": true,
   "strongest_success": "string",
   "material_drift": null,
   "new_rule_proposal": null,
@@ -179,7 +208,7 @@ Low confidence cannot support a material failure by itself. It can request human
 
 ## 11. Human review presentation
 
-Show image, prompt, rationale, recommendation, nine gate summaries, strongest success, material drift and any proposed rule. Failed/uncertain gates are expanded first. The owner can approve, reject or request variation independently of the recommendation.
+Show image, prompt, rationale, recommendation, ten gate summaries, strongest success, material drift and any proposed rule. Failed/uncertain gates are expanded first. The owner can approve, reject or request variation independently of the recommendation.
 
 Any proposed permanent rule enters the Phase 6 proposal path; it never changes `WORLD.md` during review.
 
@@ -198,4 +227,15 @@ The Phase 4 test set should include:
 9. miserable hangover interpretation;
 10. ambiguous tiny environmental mark requiring `UNCERTAIN`.
 
+Added after live use, each one a frame the original nine gates passed:
+
+11. car with no front seats — every creative gate passes, `structural_plausibility` fails;
+12. van with no rear end — scored documentary credibility 5/5 and `vehicle_compliant` true in the live review;
+13. camera inside the cabin — correct vehicle body, forbidden camera position;
+14. plain unbranded can in the foreground — `third_party_branding` must pass.
+
 Each fixture has expected material gate outcomes, not pixel-perfect prose.
+
+## 13. Gate count
+
+Ten. Tests assert `len(GateName)` rather than a literal, so adding the eleventh does not require finding every hardcoded `9` — which, when the tenth was added, appeared in six places across three files.

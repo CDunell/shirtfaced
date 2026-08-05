@@ -52,6 +52,7 @@ def build_review(
         "story_score": 4,
         "branding_compliant": True,
         "vehicle_compliant": True,
+        "structurally_sound": True,
         "strongest_success": "The moment reads as taken rather than arranged.",
         "material_drift": None,
         "new_rule_proposal": None,
@@ -217,6 +218,90 @@ def ambiguous_environmental_mark() -> ImageReview:
     )
 
 
+def car_with_no_seats() -> ImageReview:
+    """11. The failure the first nine gates could not see.
+
+    Scored documentary credibility 4/5 by a live reviewer, correctly: the frame was
+    convincingly photographic. It showed a car with no front seats.
+    """
+    return build_review(
+        recommendation=ReviewRecommendation.REJECT,
+        overrides={
+            GateName.STRUCTURAL_PLAUSIBILITY: gate(
+                "The front row has no seats and a passenger is sitting on empty air.",
+                GateStatus.FAIL,
+                codes=["STRUCTURE_MISSING_ELEMENT", "STRUCTURE_UNSUPPORTED_BODY"],
+                confidence=0.94,
+                material=True,
+            )
+        },
+        structurally_sound=False,
+        material_drift="The car has no front seats.",
+    )
+
+
+def van_with_no_rear_end() -> ImageReview:
+    """12. Structurally impossible while every creative gate passes.
+
+    The live review of this frame returned documentary credibility 5/5 and
+    vehicle_compliant true. Both were defensible. Nothing asked whether the van had a
+    back.
+    """
+    return build_review(
+        recommendation=ReviewRecommendation.REJECT,
+        overrides={
+            GateName.STRUCTURAL_PLAUSIBILITY: gate(
+                "The road is visible through the opening where the van's rear body should be.",
+                GateStatus.FAIL,
+                codes=["STRUCTURE_MISSING_ELEMENT"],
+                confidence=0.91,
+                material=True,
+            )
+        },
+        structurally_sound=False,
+        material_drift="The van has no rear end.",
+    )
+
+
+def camera_inside_the_cabin() -> ImageReview:
+    """13. Vehicle continuity is about where the camera is, not only the body shape.
+
+    A live review passed this as vehicle_compliant true. The photograph was taken from
+    the passenger seat, which the oldest rule in the vehicle canon forbids.
+    """
+    return build_review(
+        recommendation=ReviewRecommendation.REJECT,
+        overrides={
+            GateName.VEHICLE_CONTINUITY: gate(
+                "The frame looks out over a door sill with an occupant inside the glass.",
+                GateStatus.FAIL,
+                codes=["VEHICLE_CAMERA_INSIDE"],
+                confidence=0.9,
+                material=True,
+            )
+        },
+        vehicle_compliant=False,
+        material_drift="The photograph is taken from inside the vehicle.",
+    )
+
+
+def unbranded_can_is_not_branding() -> ImageReview:
+    """14. An unmarked object is not a branding failure.
+
+    A live review failed a frame for "unbranded drink can in the foreground", which is
+    the gate firing on the presence of an object rather than on a readable mark.
+    """
+    return build_review(
+        overrides={
+            GateName.THIRD_PARTY_BRANDING: gate(
+                "A plain drink can sits on the kerb with no legible mark.",
+                GateStatus.PASS,
+                confidence=0.86,
+            )
+        },
+    )
+
+
 ACCEPTANCE_SET: dict[str, ImageReview] = {
     "correct_car_interior": correct_car_interior(),
     "branded_chip_packet": branded_chip_packet(),
@@ -228,4 +313,9 @@ ACCEPTANCE_SET: dict[str, ImageReview] = {
     "quiet_optimistic_sunrise": quiet_optimistic_sunrise(),
     "miserable_hangover": miserable_hangover(),
     "ambiguous_environmental_mark": ambiguous_environmental_mark(),
+    # Added after four live frames slipped through the original nine.
+    "car_with_no_seats": car_with_no_seats(),
+    "van_with_no_rear_end": van_with_no_rear_end(),
+    "camera_inside_the_cabin": camera_inside_the_cabin(),
+    "unbranded_can_is_not_branding": unbranded_can_is_not_branding(),
 }

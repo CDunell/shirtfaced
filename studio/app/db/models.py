@@ -356,6 +356,11 @@ class AutomatedReview(Base):
 
     branding_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False)
     vehicle_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    # Whether what is shown could physically exist. The other gates judge taste and
+    # intent; a car with no seats passes all of them.
+    structurally_sound: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("true")
+    )
 
     strongest_success: Mapped[str] = mapped_column(Text, nullable=False)
     material_drift: Mapped[str | None] = mapped_column(Text)
@@ -363,7 +368,7 @@ class AutomatedReview(Base):
     next_hero_product: Mapped[str | None] = mapped_column(String(120))
     next_camera: Mapped[str | None] = mapped_column(String(120))
 
-    # The nine gates exactly as returned, so evidence and codes survive intact.
+    # The ten gates exactly as returned, so evidence and codes survive intact.
     raw_json: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
 
     # The canon this image was judged against, which may differ from the canon it was

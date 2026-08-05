@@ -23,7 +23,10 @@ from app.domain.schemas import CanonExcerpt, ImageReview
 
 logger = logging.getLogger(__name__)
 
-REVIEW_SCHEMA_VERSION = 1
+# 2 added the structural_plausibility gate and the structurally_sound field. A
+# version 1 review has neither, and its silence about structure is absence of
+# assessment rather than a pass.
+REVIEW_SCHEMA_VERSION = 2
 
 
 class ReviewError(StudioError):
@@ -99,6 +102,7 @@ IMAGE_REVIEW_JSON_SCHEMA: dict[str, Any] = {
         "story_score",
         "branding_compliant",
         "vehicle_compliant",
+        "structurally_sound",
         "strongest_success",
         "material_drift",
         "new_rule_proposal",
@@ -123,6 +127,7 @@ IMAGE_REVIEW_JSON_SCHEMA: dict[str, Any] = {
         "story_score": {"type": "integer", "minimum": 1, "maximum": 5},
         "branding_compliant": {"type": "boolean"},
         "vehicle_compliant": {"type": "boolean"},
+        "structurally_sound": {"type": "boolean"},
         "strongest_success": {"type": "string"},
         "material_drift": {"type": ["string", "null"]},
         "new_rule_proposal": {"type": ["string", "null"]},
@@ -137,7 +142,7 @@ You are the Continuity Director for a private photographic production tool.
 Judge the supplied image against the supplied canon. Assess the image, not the prompt:
 what the prompt asked for is not evidence of what was drawn.
 
-For each of the nine gates report what is actually visible.
+For each of the ten gates report what is actually visible.
 
 - Evidence is one concise observation of something visible. Not aesthetic commentary.
 - Confidence is evidentiary. Return UNCERTAIN rather than guessing about tiny labels,
@@ -148,14 +153,47 @@ For each of the nine gates report what is actually visible.
   no vehicle is visible.
 - Mark a finding material only if it could change the recommendation.
 
+STRUCTURAL PLAUSIBILITY asks one question the other nine do not: could the thing in
+this photograph exist? Judge the physical object, not the mood.
+
+- Is anything missing that must be there? A car with no seats. A vehicle whose rear
+  end is absent, showing the background through where the body should be. A room with
+  no floor.
+- Is every person supported by something? Weight has to rest on a surface that is
+  visible or clearly implied. Someone perched where there is nothing to sit on fails,
+  however natural their posture looks.
+- Does the furniture match the people? A row built for two cannot seat three. A seat
+  faces the way it is bolted down; a passenger squared to a side door means the seat
+  has been silently rotated.
+- Counts and joins: limbs, fingers, legs of chairs, wheels, doors. Reflections that
+  disagree with the scene.
+
+A frame can be beautiful, documentary and perfectly Australian and still fail this
+gate. It is a fact check, not a taste judgement, and it is the one an approving
+reader is most likely to skip. Set structurally_sound false whenever this gate fails.
+
+VEHICLE CONTINUITY also covers where the camera is and what people are doing with the
+vehicle, not only its body shape. Fail it when the photograph is taken from inside a
+vehicle -- looking out over a door sill, past window rubber or an interior pillar,
+with an occupant on the camera's side of the glass -- and when anyone is entering,
+leaving, climbing in, or half in and half out. A correct body shape does not pass this
+gate on its own.
+
+THIRD-PARTY BRANDING is about readable marks belonging to somebody else. An
+unbranded object is not a branding failure: a plain drink can, a blank carton or an
+unmarked esky passes. A worn sticker with no legible text and no recognisable mark is
+incidental decoration, not branding. Shirtfaced's own environmental marks are
+permitted and are not third-party. Fail this gate for a readable competitor mark, or
+for any graphic, logo, text, embroidery or label on a garment. If a mark is present
+but you cannot read it, return UNCERTAIN rather than failing.
+
 Recommend rejection for a clearly evidenced foundational failure: the wrong or
 materially inaccurate nominated product; any garment graphic, logo, text, embroidery
 or visible label; readable third-party branding; posed or fashion-campaign behaviour;
-an American pickup or enclosed tub where a ute is visible; resignation or
-drunken-comedy drift; no independent documentary value; or a severe artefact.
-
-Incidental Shirtfaced environmental marks are permitted. Third-party branding is not,
-and garments and packaging stay blank and generic regardless.
+an American pickup or enclosed tub where a ute is visible; a camera inside a vehicle
+or anyone getting into or out of one; resignation or drunken-comedy drift; no
+independent documentary value; a severe artefact; or anything that could not
+physically exist.
 
 Recommend approval with a note only when the image belongs in the world and the note
 records a genuinely repeatable rule. Never use it to excuse a foundational failure.
@@ -236,6 +274,9 @@ def default_fake_review(request: ImageReviewRequest) -> ImageReview:
                     "People are engaged with each other, not the camera."
                 ),
                 GateName.STORY: gate("A clear social action is under way."),
+                GateName.STRUCTURAL_PLAUSIBILITY: gate(
+                    "Everyone is supported, and nothing is missing from the scene."
+                ),
             },
             "mood_score": 4,
             "australian_authenticity_score": 4,
@@ -244,6 +285,7 @@ def default_fake_review(request: ImageReviewRequest) -> ImageReview:
             "story_score": 4,
             "branding_compliant": True,
             "vehicle_compliant": True,
+            "structurally_sound": True,
             "strongest_success": "The moment reads as taken rather than arranged.",
             "material_drift": None,
             "new_rule_proposal": None,

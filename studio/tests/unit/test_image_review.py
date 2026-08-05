@@ -22,6 +22,7 @@ from app.adapters.review import (
 from app.config import Settings
 from app.domain.enums import GateName, GateStatus, ReviewRecommendation, ReviewVerdict
 from app.domain.schemas import ImageReview
+from app.services.review_service import _recommended_action
 from tests.fixtures.reviews import ACCEPTANCE_SET, build_review, gate
 
 PNG = b"\x89PNG\r\n\x1a\nfake"
@@ -45,7 +46,7 @@ def test_a_complete_review_validates() -> None:
     review = build_review()
 
     assert review.recommendation is ReviewRecommendation.APPROVE
-    assert len(review.gates) == 9
+    assert len(review.gates) == len(GateName)
 
 
 def test_every_gate_is_required() -> None:
@@ -147,7 +148,7 @@ def test_not_applicable_is_not_a_failure() -> None:
 
 @pytest.mark.parametrize("name", sorted(ACCEPTANCE_SET))
 def test_every_acceptance_fixture_is_a_valid_review(name: str) -> None:
-    assert len(ACCEPTANCE_SET[name].gates) == 9
+    assert len(ACCEPTANCE_SET[name].gates) == len(GateName)
 
 
 @pytest.mark.parametrize(
@@ -157,13 +158,74 @@ def test_every_acceptance_fixture_is_a_valid_review(name: str) -> None:
         ("american_pickup", GateName.VEHICLE_CONTINUITY),
         ("invented_back_graphic", GateName.PRODUCT_VISIBILITY),
         ("miserable_hangover", GateName.MOOD),
+        ("car_with_no_seats", GateName.STRUCTURAL_PLAUSIBILITY),
+        ("van_with_no_rear_end", GateName.STRUCTURAL_PLAUSIBILITY),
+        ("camera_inside_the_cabin", GateName.VEHICLE_CONTINUITY),
     ],
 )
 def test_material_failures_block_the_expected_gate(name: str, expected_gate: GateName) -> None:
     review = ACCEPTANCE_SET[name]
 
     assert expected_gate in review.blocking_gates
-    assert review.recommends_rejection
+
+
+# --- the tenth gate ----------------------------------------------------------------
+#
+# Every case here is a real live review that the original nine gates passed. They are
+# not hypotheticals: a seatless car scored documentary credibility 4/5 and a van with
+# no rear end scored 5/5 and vehicle_compliant true.
+
+
+@pytest.mark.parametrize("name", ["car_with_no_seats", "van_with_no_rear_end"])
+def test_a_structural_failure_is_recorded_as_not_sound(name: str) -> None:
+    assert ACCEPTANCE_SET[name].structurally_sound is False
+
+
+def test_a_frame_can_pass_every_creative_gate_and_still_be_impossible() -> None:
+    """The reason this gate exists, stated as an assertion.
+
+    The van frame was genuinely well composed, genuinely Australian and genuinely
+    documentary. It also had no back end. Nothing in the first nine gates is wrong
+    about it, which is why a tenth was needed rather than a stricter ninth.
+    """
+    review = ACCEPTANCE_SET["van_with_no_rear_end"]
+
+    creative = [name for name in GateName if name is not GateName.STRUCTURAL_PLAUSIBILITY]
+    assert all(review.gates[name].status is not GateStatus.FAIL for name in creative)
+    assert review.blocking_gates == [GateName.STRUCTURAL_PLAUSIBILITY]
+
+
+def test_an_unbranded_object_is_not_a_branding_failure() -> None:
+    """A live review failed a frame over an "unbranded drink can in the foreground"."""
+    review = ACCEPTANCE_SET["unbranded_can_is_not_branding"]
+
+    assert review.branding_compliant is True
+    assert GateName.THIRD_PARTY_BRANDING not in review.blocking_gates
+
+
+def test_a_structural_failure_is_reported_even_when_the_gate_is_not_marked_material() -> None:
+    """The summary cannot let an impossible frame read as a clean pass.
+
+    A model that sets structurally_sound false but leaves the gate non-material would
+    otherwise produce a recommended_action mentioning nothing at all. Something that
+    could not exist is material whatever the gate says.
+    """
+    review = build_review(
+        overrides={
+            GateName.STRUCTURAL_PLAUSIBILITY: gate(
+                "The rear wheel is not attached to the vehicle.",
+                GateStatus.FAIL,
+                material=False,
+            )
+        },
+        structurally_sound=False,
+    )
+    assert review.blocking_gates == []
+
+    # The model even recommended approval here, which is exactly the case that has to
+    # not read as clean.
+    assert review.recommendation is ReviewRecommendation.APPROVE
+    assert "structurally implausible" in _recommended_action(review)
 
 
 @pytest.mark.parametrize(
@@ -211,7 +273,7 @@ def test_a_rejection_can_carry_a_proposed_rule() -> None:
 def test_the_fake_returns_a_valid_review() -> None:
     result = FakeImageReviewClient().review(REQUEST)
 
-    assert len(result.review.gates) == 9
+    assert len(result.review.gates) == len(GateName)
     assert result.model == "fake-review-model"
 
 

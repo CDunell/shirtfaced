@@ -590,6 +590,7 @@ class ReviewResponse(BaseModel):
     story_score: int
     branding_compliant: bool
     vehicle_compliant: bool
+    structurally_sound: bool
     strongest_success: str
     material_drift: str | None
     recommended_action: str | None
@@ -659,6 +660,7 @@ def _review_response(review: AutomatedReview) -> ReviewResponse:
         story_score=review.story_score,
         branding_compliant=review.branding_compliant,
         vehicle_compliant=review.vehicle_compliant,
+        structurally_sound=review.structurally_sound,
         strongest_success=review.strongest_success,
         material_drift=review.material_drift,
         recommended_action=review.recommended_action,

@@ -19,7 +19,7 @@ from app.adapters.markdown_store import MarkdownStore
 from app.config import Settings, get_settings
 from app.db.models import GenerationAttempt, World
 from app.db.session import get_db_session
-from app.domain.enums import AttemptState
+from app.domain.enums import AttemptState, GateName
 from app.main import create_app
 from app.services.world_importer import import_world
 from tests.fixtures.worlds import write_world
@@ -378,7 +378,7 @@ def test_continue_world_attaches_a_review(client: TestClient) -> None:
     payload = client.post("/api/worlds/world-01/continue").json()
 
     assert payload["review"] is not None
-    assert len(payload["review"]["gates"]) == 9
+    assert len(payload["review"]["gates"]) == len(GateName)
     assert payload["review"]["recommendation"] == "APPROVE_RECOMMENDED"
 
 
@@ -419,7 +419,7 @@ def test_a_review_can_be_retried_without_regenerating(client: TestClient) -> Non
     response = client.post(f"/api/attempts/{created['id']}/retry-review")
 
     assert response.status_code == 200
-    assert len(response.json()["gates"]) == 9
+    assert len(response.json()["gates"]) == len(GateName)
 
     # The image is unchanged.
     after = client.get(f"/api/attempts/{created['id']}").json()

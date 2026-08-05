@@ -144,7 +144,14 @@ class GateStatus(StrEnum):
 
 
 class GateName(StrEnum):
-    """The nine gates, named after the Continuity Director's tests in WORLD.md."""
+    """The ten gates, named after the Continuity Director's tests in WORLD.md.
+
+    ``STRUCTURAL_PLAUSIBILITY`` is not one of the Continuity Director's creative
+    tests. It was added because the other nine are all judgements of taste and
+    intent, and none of them asks whether the thing photographed could exist. A car
+    with no front seats scored documentary credibility 4/5; a van whose entire rear
+    was missing scored 5/5. Both were right by every rubric that was being applied.
+    """
 
     MOOD = "mood"
     AUSTRALIAN_AUTHENTICITY = "australian_authenticity"
@@ -155,6 +162,7 @@ class GateName(StrEnum):
     COMPOSITION = "composition"
     DOCUMENTARY_CREDIBILITY = "documentary_credibility"
     STORY = "story"
+    STRUCTURAL_PLAUSIBILITY = "structural_plausibility"
 
 
 class ProposalClassification(StrEnum):

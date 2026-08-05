@@ -216,6 +216,9 @@ class ImageReview(BaseModel):
 
     branding_compliant: bool
     vehicle_compliant: bool
+    # Whether what is shown could physically exist. Separate from every other gate
+    # because the rest judge taste and intent, and a seatless car passes all of them.
+    structurally_sound: bool
 
     strongest_success: str = Field(min_length=1)
     material_drift: str | None = None

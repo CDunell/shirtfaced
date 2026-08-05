@@ -169,6 +169,7 @@ def _persist(
         story_score=review.story_score,
         branding_compliant=review.branding_compliant,
         vehicle_compliant=review.vehicle_compliant,
+        structurally_sound=review.structurally_sound,
         strongest_success=review.strongest_success,
         material_drift=review.material_drift,
         recommended_action=_recommended_action(review),
@@ -188,6 +189,13 @@ def _recommended_action(review: ImageReview) -> str:
     if blocking:
         names = ", ".join(gate.value for gate in blocking)
         return f"{review.recommendation.value} — material failures: {names}"
+
+    # A structural failure is material whatever the model said, because the
+    # photograph shows something that could not exist. Surfaced separately so a gate
+    # left unmarked cannot bury it: that is precisely how a van with no rear end came
+    # back recommending nothing worse than a weak story.
+    if not review.structurally_sound:
+        return f"{review.recommendation.value} — structurally implausible"
 
     uncertain = review.uncertain_gates
     if uncertain:
