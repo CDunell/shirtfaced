@@ -180,6 +180,12 @@ rubber with an occupant on the camera's side of the glass. Being in an interior 
 fine. A kitchen photographed from the dining room is an observer; a lift photographed
 from inside the lift is a passenger.
 
+COMPOSITION also covers where the subjects are. They stay out of small built
+enclosures — car cabins, lifts, tents, phone boxes — and are next to, in front of, or
+sitting on them instead. The exception is interaction at an opening: someone already
+seated in a car talking out through the window, someone at a tent entrance. A group
+crowded inside a lift is the failure; the same group in the lobby is not.
+
 VEHICLE CONTINUITY also covers what people are doing with the vehicle, not only its
 body shape. Fail it when anyone is entering, leaving, climbing in, or half in and half
 out. A correct body shape does not pass this gate on its own.

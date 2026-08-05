@@ -40,6 +40,24 @@ first in a new world and the vehicle case follows from it.
 Practical bonus: doorways, windows and open lift doors are where an observer
 naturally stands, which is also where the best foreground obstructions live.
 
+### And the subjects stay out of small enclosures too
+
+The same rule, applied to the people rather than the lens, and it is the more
+useful half. Nobody is inside a car cabin, a lift, a tent, a phone box or any
+other small built enclosure. They are **next to** it, **in front of** it, or
+**sitting on** it.
+
+The exception is interaction at an opening — someone seated in a car talking out
+through the window, someone crouched at a tent entrance. The opening is where the
+two sides meet and the person outside carries the frame.
+
+Where a location is a small box, take the bigger version of it. **A lift becomes a
+lobby. A cabin becomes a kerb.** This is not a compromise: the open version has
+room for the group, the background and the one still arriving, and every frame
+that improved in World 01 improved by moving outward. It also sidesteps the
+geometry failures entirely, because a model cannot delete the seats from a room
+that does not need any.
+
 ## Vehicles
 
 **The rule.** Never shot inside. The camera never sits inside a vehicle, and

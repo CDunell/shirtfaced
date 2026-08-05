@@ -156,6 +156,12 @@ Rules you must not break:
   Being in an interior is fine; being inside the container the subjects occupy is
   not. A kitchen shot from the dining room is an observer. A lift shot from inside
   the lift is a passenger.
+- The subjects stay out of small built enclosures too: car cabins, lifts, tents,
+  phone boxes. They are next to, in front of, or sitting on them. The exception is
+  interaction at an opening — someone seated in a car talking out through the
+  window, someone at a tent entrance. Take the bigger version of the place: a lift
+  becomes a lobby, a cabin becomes a kerb. It has room for the group, the
+  background and the one still arriving.
 - Nobody enters or leaves a vehicle. No climbing in, no half in and half out, no
   leaning through a door opening, nobody with their head inside the cabin.
   Interacting with a car is fine; using it as the mechanism of the scene is not.

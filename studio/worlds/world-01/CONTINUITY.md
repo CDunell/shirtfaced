@@ -201,6 +201,9 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - A tray-back ute is now a locked recurring World 1 object.
 - We are observers, so the camera stands outside what it watches; never inside the lift, car or room the group is in.
 - Being in an interior is fine; being inside the container the subjects occupy is not. A kitchen from the dining room is an observer.
+- Subjects stay out of small built enclosures too — car cabins, lifts, tents, phone boxes. Next to, in front of, or sitting on.
+- The exception is interaction at an opening: a car window, a tent entrance.
+- Take the bigger version of the place. A lift becomes a lobby, a cabin becomes a kerb.
 - Nobody enters or leaves a vehicle; the scene happens beside the car, not through it.
 - The car is a prop, never the hero.
 - The cast stands on the footpath; nobody leans through a door opening or puts their head inside the cabin.
@@ -223,21 +226,21 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 
 # Next Prompt Brief
 
-**Scene:** Apartment lobby, the group getting into the lift on the way up to kick-ons.
+**Scene:** Apartment lobby on the way up to kick-ons. Nobody is in the lift.
 
 **Time:** Approximately 3:41am.
 
 **Hero product:** Black heavyweight hoodie tied around the waist.
 
-**Camera position:** From the lobby, looking into the open lift. The photographer has not got in yet.
+**Camera position:** From the entrance doors, looking across the lobby.
 
-**Main action:** Friends filling the lift, someone holding the door with a shoulder, someone still finishing a chip in the lobby. The camera stays out in the lobby with the last of them.
+**Main action:** Friends waiting in the lobby — someone sitting on the letterbox bank, someone leaning on the wall by the lift buttons, someone still coming through the doors with the food. The lift is a feature of the room, not a place anyone is standing.
 
 **Mood:** Renewed momentum.
 
-**Lighting:** Flat lobby downlights, with the lift's own brighter interior light spilling out through the open doors.
+**Lighting:** Flat lobby downlights, spill from the street through the glass entrance doors.
 
-**Documentary imperfection:** The lift door frame crops the near edge, and one person is cut by it. The photographer is plainly the one still standing outside.
+**Documentary imperfection:** The entrance door frame crops the near edge and one person is cut by it. The photographer is plainly the one who came in last.
 
 **Avoid:**
 
@@ -248,7 +251,8 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - Everyone dressed entirely in black.
 - Heroic automotive photography.
 - Anyone entering, leaving or climbing into a vehicle.
-- The camera standing inside the lift. It looks in from the lobby.
+- Anyone standing inside the lift, and the camera standing in it either.
+- Crowding the group into any small built enclosure when the open version of the place exists.
 - Anyone leaning through a door opening or putting their head inside the cabin.
 - Cab-over or forward-control trucks.
 - Composing the frame around the tote bag.

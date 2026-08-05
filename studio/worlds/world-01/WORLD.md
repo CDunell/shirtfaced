@@ -150,6 +150,23 @@ fine; being inside the container the subjects are in is not. A kitchen
 photographed from the dining room is an observer. A lift photographed from
 inside the lift is a passenger.
 
+## Subjects stay out of small enclosed spaces too
+
+Not just the camera. Nobody is inside a car cabin, a lift, a tent, a phone
+box or any other small built enclosure. They are **next to** it, **in front
+of** it, or **sitting on** it: leaning on the car, waiting in the lobby,
+sitting on the tray, standing at the tent.
+
+The exception is interaction at an opening. Someone already seated in a car
+talking out through the window; someone crouched at a tent entrance handing
+something in. The opening is where the two sides meet, and the person
+outside carries the frame.
+
+So take the bigger version of the place. A lift becomes a lobby. A cabin
+becomes a kerb. The open version of a location is nearly always the better
+photograph anyway — it has room for the group, for the background, and for
+the one still arriving.
+
 Foreground objects may partially obscure the frame, but the object has
 to be something that is actually there. A shoulder, a pole, a doorway,
 the tray of the ute in the shot. Not a part of some other vehicle

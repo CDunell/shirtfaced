@@ -49,22 +49,23 @@ def test_the_shotlist_statuses_match_the_document(world) -> None:  # type: ignor
     assert len(world.planned_shots) == 9
 
 
-def test_the_next_planned_shot_is_the_lift(world) -> None:  # type: ignore[no-untyped-def]
-    """W01-012, photographed from the lobby rather than from inside the lift.
+def test_the_next_planned_shot_is_the_lobby(world) -> None:  # type: ignore[no-untyped-def]
+    """The lift became a lobby, which is the rule rather than a preference.
 
-    The enclosed box was left as an interior deliberately, against the suspicion that
-    it would break the way car cabins did. It did not: the frame came back with a
-    coherent lift, correct button panel and everyone supported. So this is not the
-    vehicle rule extended -- it is a camera choice made on the picture. Looking into
-    a lift from the lobby puts the doors, the lit interior and the last person still
-    outside in the frame, which the view from inside cannot show.
+    Subjects stay out of small built enclosures -- car cabins, lifts, tents -- and
+    stand next to, in front of, or sitting on them instead. So the shot moved twice:
+    first the camera came out of the lift, then the cast did, and what is left is the
+    room the lift is in.
+
+    That is the general form of everything the vehicle canon was reaching for. A
+    model cannot delete the seats from a room that does not need any.
     """
     upcoming = world.planned_shots[0]
 
     assert upcoming.external_id == "W01-012"
-    assert upcoming.title == "Apartment lift"
+    assert upcoming.title == "Apartment lobby"
     assert upcoming.hero_product == "Hoodie waist"
-    assert upcoming.camera_position == "Into the open lift"
+    assert upcoming.camera_position == "From the entrance"
 
 
 def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-untyped-def]
