@@ -88,13 +88,15 @@ def test_the_vehicle_canon_is_sent(request_for_world) -> None:  # type: ignore[n
     This content lives in a subsection, so it is only present if the whole subtree is
     sent rather than the heading's own body.
     """
-    flattened = _flattened(request_for_world)
+    # Lowercased: these rules get reworded, and a capital letter is not the contract.
+    flattened = _flattened(request_for_world).lower()
 
     assert "tray-back ute" in flattened
-    assert "open aluminium alloy tray" in flattened
-    assert "American pickup trucks" in flattened
+    assert "american pickup trucks" in flattened
     assert "never the hero" in flattened
     assert "getting in, getting out" in flattened
+    # Colour, cab and age are deliberately open. Only the wrong body shapes are named.
+    assert "cab configuration and age are open" in flattened
 
 
 def test_no_canon_section_is_truncated(request_for_world) -> None:  # type: ignore[no-untyped-def]

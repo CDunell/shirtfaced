@@ -58,8 +58,25 @@ def test_the_next_planned_shot_is_at_the_car(world) -> None:  # type: ignore[no-
 
     assert upcoming.external_id == "W01-011"
     assert upcoming.title == "Kerbside window chat"
-    assert upcoming.hero_product == "Tote bag"
+    assert upcoming.hero_product == "T-shirt"
     assert upcoming.camera_position == "At the car window"
+
+
+def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-untyped-def]
+    """The tote is an accessory, not a lead product.
+
+    Black is the documented seller for the t-shirt, hoodie and cap; nothing
+    establishes it for the tote, and nothing makes the tote worth composing a frame
+    around. A subject carrying one is incidental. It sat at the top of the rotation
+    for three shots and scored 2/5 for visibility every time it was asked to lead.
+    """
+    offenders = [
+        shot.external_id
+        for shot in world.shots
+        if "tote" in (shot.hero_product or "").strip().lower()
+    ]
+
+    assert not offenders, f"These shots make the tote the hero: {offenders}"
 
 
 def test_no_camera_position_is_inside_a_vehicle(world) -> None:  # type: ignore[no-untyped-def]

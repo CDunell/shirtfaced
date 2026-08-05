@@ -128,7 +128,13 @@ Natural motion blur is welcome.
 
 People are sometimes cropped.
 
-Foreground objects may partially obscure the frame.
+Foreground objects may partially obscure the frame, but the object has
+to be something that is actually there. A shoulder, a pole, a doorway,
+the tray of the ute in the shot. Not a part of some other vehicle
+hanging in the foreground with no car attached to it — a wing mirror
+floating at the edge of frame reads as a mistake, not as reportage,
+because a real photographer standing there would have been standing
+somewhere.
 
 The photograph should feel discovered rather than directed.
 
@@ -295,7 +301,8 @@ So the test is not whether branding is visible. It is two questions, in order.
 If Shirtfaced makes it, no other brand's version of it appears anywhere in
 frame.
 
-Every t-shirt, hoodie, cap, overshirt, jacket and tote bag carries:
+Every t-shirt, crop, hoodie, jumper, cap, hat, overshirt, jacket and tote
+bag carries:
 
 - No logos
 - No graphics
@@ -358,10 +365,29 @@ Do not repeatedly favour the same garment.
 Rotate prominence between:
 
 - Vintage-washed black heavyweight t-shirt
+- Crop
 - Black heavyweight hoodie
-- Black cap
-- Hoodie tied around the waist
-- Black tote bag
+- Jumper
+- Hat — cap, beanie or bucket hat
+
+The hoodie tied around the waist is a way of wearing the hoodie rather
+than a separate product, and it counts as the hoodie's turn.
+
+What we sell is t-shirts, crops, hoodies, jumpers and hats, and hats
+means caps, beanies and bucket hats. Everything else is cart filler: it
+may appear, but it is never the hero of a frame, and no composition is
+built around making it legible. The tote bag is the case that keeps
+coming up. Either it is photographed deliberately as a product, which
+is a different job from these scenes, or a subject simply happens to be
+carrying one, which is incidental.
+
+The range will expand. This list is what we sell today, not a closed
+set, so read it as the current range rather than a permanent one, and
+expect to add to it rather than rewrite it.
+
+Black is the documented seller for the t-shirt, the hoodie and the cap,
+so those stay black. It is not established for anything else, and the
+colour of a filler item is free.
 
 The cap must regularly be photographed front-on so the front panel is
 clearly visible.
@@ -389,16 +415,25 @@ sitting on the tray, standing at the kerb, talking through an open
 window to whoever is already sitting in it. A seated passenger is fine.
 The act of getting in or out is not.
 
+The cast stands on the footpath. Nobody leans through a door opening
+and nobody puts their head and shoulders inside the cabin — that is
+half-entering by another name, and it is what forces the model to
+invent room that is not there. The window is where the two sides meet,
+and it stays a window: the opening is at the shoulder of a seated
+person, not a doorway down to the seat.
+
 The car is a prop, never the hero.
 
 Where a ute appears it shall always be recognisably Australian.
 
-Preferred vehicle:
+Colour, cab configuration and age are open. A white single-cab tray-back
+is a fine default, not a requirement: dual cabs are common on Australian
+worksites and a black one is not a fault. What matters is that it reads
+as a working vehicle someone actually owns rather than a marketing one.
 
-- White tray-back ute
-- Open aluminium alloy tray
-- Single cab or extra cab
-- 2000–2015 era
+Typical:
+
+- Tray-back ute with an open tray
 - Tradie specification
 - Slightly used but well cared for
 
@@ -406,8 +441,10 @@ Never generate:
 
 - American pickup trucks
 - Enclosed pickup tubs
-- Lifestyle dual-cab hero trucks
+- Glossy lifestyle hero trucks, whatever the cab configuration
 - Oversized lifted 4WDs
+- Cab-over or forward-control trucks, where the cab sits over the front
+  axle and the vehicle has no bonnet
 
 
 ------------------------------------------------------------------------

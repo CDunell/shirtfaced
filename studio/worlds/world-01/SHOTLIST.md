@@ -30,14 +30,14 @@ ensures the visual universe expands rather than circles back on itself.
   W01-008   Bottle shop after close   Mixed          Across road         ❌
   W01-009   Apartment arrival         Cap            Front gate          ✅
   W01-010   City lookout              Cap            Beside parked car   ✅
-  W01-011   Kerbside window chat      Tote bag       At the car window   ⬜
+  W01-011   Kerbside window chat      T-shirt        At the car window   ⬜
   W01-012   Apartment lift            Hoodie waist   Inside lift         ⬜
   W01-013   Apartment balcony back view  T-shirt        Inside lounge       ⬜
-  W01-014   Kitchen kick-ons II       Tote bag       Hallway             ⬜
+  W01-014   Kitchen kick-ons II       Hoodie waist   Hallway             ⬜
   W01-015   Sunrise balcony           Hoodie         Balcony doorway     ⬜
   W01-016   Servo breakfast run       Cap            Inside servo        ⬜
   W01-017   Bakery queue              T-shirt        Behind queue        ⬜
-  W01-018   Beach sunrise detour      Tote bag       Dune path           ⬜
+  W01-018   Beach sunrise detour      Cap            Dune path           ⬜
   W01-019   Bunnings sausage stop     Hoodie         Carpark             ⬜
   W01-020   Sunday recovery café      Cap            Window seat         ⬜
 

@@ -105,7 +105,7 @@ def continuity_text() -> str:
 def test_reads_the_authors_next_product_priority(continuity_text: str) -> None:
     state = apply_continuity(RotationState(), continuity_text)
 
-    assert state.next_product_priority[0] == "Black tote bag"
+    assert state.next_product_priority[0] == "Black heavyweight t-shirt"
     assert "Hoodie tied around waist" in state.next_product_priority
 
 

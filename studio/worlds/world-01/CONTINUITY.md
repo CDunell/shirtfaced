@@ -33,11 +33,10 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 
 ## Next Rotation Priority
 
-1. Black tote bag
+1. Black heavyweight t-shirt
 2. Hoodie tied around waist
 3. Black heavyweight hoodie
-4. Black heavyweight t-shirt
-5. Black cap from a lower or side-front camera angle
+4. Black cap from a lower or side-front camera angle
 
 ---
 
@@ -187,6 +186,14 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - A tray-back ute is now a locked recurring World 1 object.
 - Nobody enters or leaves a vehicle; the scene happens beside the car, not through it.
 - The car is a prop, never the hero.
+- The cast stands on the footpath; nobody leans through a door opening or puts their head inside the cabin.
+- A ute has a bonnet in front of the cab. Cab-over and forward-control trucks are wrong bodies.
+- Ute colour, cab configuration and age are open; it only has to read as a working Australian vehicle.
+- A foreground obstruction must belong to the scene, not be a stray wing mirror with no car attached.
+- We sell t-shirts, crops, hoodies, jumpers and hats (caps, beanies, bucket hats); everything else is cart filler and never the hero.
+- The range is the current one, not a closed set, and will expand over time.
+- The tote is an accessory, carried incidentally, and no frame is composed around it.
+- Black stays for the t-shirt, hoodie and cap; the colour of a filler item is free.
 - Black clothing should be common but not universal.
 - Non-product clothing should vary naturally.
 - Readable third-party commercial branding anywhere in frame is a failure; incidental Shirtfaced environmental easter eggs remain permitted.
@@ -199,17 +206,19 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 
 **Time:** Approximately 3:32am.
 
-**Hero product:** Plain black tote bag.
+**Hero product:** Vintage-washed black heavyweight t-shirt.
+
+**Vehicle:** Tray-back ute with a bonnet in front of the cab, tradie specification. Colour and cab configuration are open. Not a cab-over or forward-control truck.
 
 **Camera position:** From the footpath, level with an open car window.
 
-**Main action:** Friends on the footpath working out the next stop with whoever is already sitting in the car, talking through the open window.
+**Main action:** Friends standing on the footpath working out the next stop with the one person already sitting in the car, talking through the open window. Everyone outside stays outside; nobody leans through a door opening.
 
 **Mood:** Renewed momentum.
 
 **Lighting:** Streetlight spill on the footpath, with weaker dashboard glow inside the car.
 
-**Documentary imperfection:** A parked car's roofline crops the foreground; one person is cut by the frame edge.
+**Documentary imperfection:** One person is cut by the frame edge, and the ute's own tray crowds the near side. No stray object floating in front of the lens.
 
 **Avoid:**
 
@@ -220,3 +229,6 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - Everyone dressed entirely in black.
 - Heroic automotive photography.
 - Anyone entering, leaving or climbing into a vehicle.
+- Anyone leaning through a door opening or putting their head inside the cabin.
+- Cab-over or forward-control trucks.
+- Composing the frame around the tote bag.
