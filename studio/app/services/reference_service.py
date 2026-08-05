@@ -115,7 +115,11 @@ def promote(
         asset_id=asset.id,
         state=ReferenceState.ACTIVE,
         label=(label or f"{attempt.shot.external_id} — {attempt.shot.title}")[:200],
-        why_it_works=review.strongest_success if review else None,
+        # The owner's note first: this string is sent to the planner with every
+        # request once a frame is a reference, so it steers future generations. The
+        # reviewer's summary is a fallback, not the preferred source.
+        why_it_works=(attempt.decision.note if attempt.decision else None)
+        or (review.strongest_success if review else None),
         hero_product=attempt.hero_product,
         camera_position=attempt.camera_position,
         strength=_strength(attempt),

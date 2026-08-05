@@ -111,10 +111,18 @@ class ApprovedEntry:
             f"**Camera position:** {sanitise_inline(self.camera_position or 'unset')}",
         ]
 
-        if self.strongest_success:
-            lines += ["", f"**Why it works:** {sanitise_inline(self.strongest_success)}"]
+        # The owner's words are the reason a frame works. The reviewer's are recorded
+        # under its own name or not at all: it is a model whose branding, vehicle and
+        # structural verdicts have all been measured wrong, and "Why it works" on an
+        # owner-approved frame is a load-bearing line. It is also fed back into every
+        # planning request once a frame becomes a reference, so an unreliable
+        # sentence here does not stay here.
         if self.note:
-            lines += ["", f"**Owner's note:** {sanitise_inline(self.note)}"]
+            lines += ["", f"**Why it works:** {sanitise_inline(self.note)}"]
+            if self.strongest_success:
+                lines += ["", f"**Reviewer said:** {sanitise_inline(self.strongest_success)}"]
+        elif self.strongest_success:
+            lines += ["", f"**Reviewer said:** {sanitise_inline(self.strongest_success)}"]
         if self.is_reference:
             lines += ["", "**Reference:** promoted to an approved reference frame."]
 

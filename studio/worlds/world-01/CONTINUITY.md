@@ -141,9 +141,9 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 
 **Camera position:** Footpath at window
 
-**Why it works:** Australian takeaway environment captured, showing some social interaction.
+**Why it works:** Approved by the owner. Structurally sound, camera outside, seated passenger at the open window.
 
-**Owner's note:** Approved by the owner. Structurally sound, camera outside, seated passenger at the open window.
+**Reviewer said:** Australian takeaway environment captured, showing some social interaction.
 
 
 # Rejected Drift

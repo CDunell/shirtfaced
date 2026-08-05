@@ -43,24 +43,26 @@ def test_the_shotlist_statuses_match_the_document(world) -> None:  # type: ignor
 
     assert by_id["W01-001"].status is ShotStatus.APPROVED
     assert by_id["W01-008"].status is ShotStatus.REJECTED
-    assert by_id["W01-011"].status is ShotStatus.PLANNED
-    assert len(world.planned_shots) == 10
+    # Approved by the owner on 5 August 2026, after seven attempts and the vehicle
+    # canon that came out of them.
+    assert by_id["W01-011"].status is ShotStatus.APPROVED
+    assert len(world.planned_shots) == 9
 
 
-def test_the_next_planned_shot_is_at_the_car(world) -> None:  # type: ignore[no-untyped-def]
-    """Matches the Next Prompt Brief at the foot of CONTINUITY.md.
+def test_the_next_planned_shot_is_the_lift(world) -> None:  # type: ignore[no-untyped-def]
+    """W01-012, and it is deliberately left as an interior.
 
-    The car is a prop the scene happens beside, not the mechanism the scene runs on.
-    Interiors produced cars with no seats; people piling in produced a van with no
-    back end. Interacting with the car is fine, so the frame is the open window.
+    A lift is the same shape as the problem the vehicle canon exists for: a small
+    built box with fixed geometry, which is what produced cars with no seats. The
+    owner's ruling was not to extend the rule pre-emptively and to see how it goes,
+    so the camera stays inside the lift and the frame is evidence either way.
     """
     upcoming = world.planned_shots[0]
 
-    assert upcoming.external_id == "W01-011"
-    assert upcoming.title == "Kerbside window chat"
-    assert upcoming.hero_product == "T-shirt"
-    # "At the car window" was ambiguous enough to be read as inside it, and was.
-    assert upcoming.camera_position == "Footpath at window"
+    assert upcoming.external_id == "W01-012"
+    assert upcoming.title == "Apartment lift"
+    assert upcoming.hero_product == "Hoodie waist"
+    assert upcoming.camera_position == "Inside lift"
 
 
 def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-untyped-def]

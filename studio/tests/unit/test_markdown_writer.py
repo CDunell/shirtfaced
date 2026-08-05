@@ -154,10 +154,26 @@ def test_an_approved_entry_records_facts_not_narrative() -> None:
     assert "**Camera position:** Rear seat" in rendered
 
 
-def test_an_approved_entry_records_the_owners_note() -> None:
+def test_the_owners_note_is_why_a_frame_works_and_the_reviewer_is_attributed() -> None:
+    """The owner says why an approved frame works. The reviewer is quoted, not adopted.
+
+    "Why it works" is load-bearing: once a frame is promoted to a reference, that
+    string is sent to the planner with every request, so it steers what comes next.
+    Letting an unreliable reviewer's sentence occupy it puts model opinion into canon
+    and then into future prompts, which AGENTS.md rule 7 exists to prevent.
+    """
     rendered = _approved(note="Keep this framing.").render()
 
-    assert "**Owner's note:** Keep this framing." in rendered
+    assert "**Why it works:** Keep this framing." in rendered
+    assert "**Reviewer said:** The moment reads as taken." in rendered
+    assert "**Why it works:** The moment reads as taken." not in rendered
+
+
+def test_without_an_owner_note_the_reviewer_is_still_only_quoted() -> None:
+    rendered = _approved().render()
+
+    assert "**Reviewer said:**" in rendered
+    assert "**Why it works:**" not in rendered
 
 
 def test_a_reference_promotion_is_recorded() -> None:
