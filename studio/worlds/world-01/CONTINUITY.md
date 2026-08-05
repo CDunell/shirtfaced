@@ -31,6 +31,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 | 09 | Apartment kick-ons arrival | Black cap | Front panel | APPROVED |
 | 10 | City lookout | Black cap | Front panel | APPROVED |
 | W01-011 | Kerbside window chat | T-shirt | Recorded | APPROVED |
+| W01-012 | Apartment lobby | Hoodie waist | Recorded | APPROVED |
 
 ## Next Rotation Priority
 
@@ -58,6 +59,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 | 10 | Lookout | Beside another parked car | APPROVED |
 | 10B | Lookout alternate | Elevated rear three-quarter | REJECTED — incorrect ute body |
 | W01-011 | Kerbside window chat | Footpath at window | APPROVED |
+| W01-012 | Apartment lobby | From the entrance | APPROVED |
 
 ## Next Camera Priority
 
@@ -144,6 +146,19 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 **Why it works:** Approved by the owner. Structurally sound, camera outside, seated passenger at the open window.
 
 **Reviewer said:** Australian takeaway environment captured, showing some social interaction.
+
+## W01-012 — Apartment lobby
+
+**Status:** APPROVED
+
+**Hero product:** Hoodie waist
+
+**Camera position:** From the entrance
+
+**Why it works:** Keeper. The group carries it.
+
+**Reviewer said:** Authentic Australian location and atmosphere are evident, despite weaknesses in interaction and composition.
+
 
 
 # Rejected Drift
