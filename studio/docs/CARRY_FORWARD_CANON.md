@@ -101,6 +101,26 @@ present, is everyone supported, do the counts add up. Zoom in. The failures of t
 kind are usually in a corner, behind a person, or below the waistline of the frame,
 because that is where the model puts what it could not resolve.
 
+## The automated review is evidence, not a verdict
+
+Carry this with the vehicle rule. Across seven frames in one day the reviewer
+rejected every single one, including the structurally soundest, and its stated
+reasons were verifiably wrong often enough that the recommendation cannot be used
+as a filter.
+
+What proved trustworthy: Australian authenticity, and documentary credibility as a
+judgement of staging. What did not: branding, vehicle continuity, structural
+plausibility, and mood and story, which did not move at all in response to prompts
+written specifically to move them.
+
+Read the gate evidence. It is frequently sharper than the verdict it is attached to
+— "the road is visible through the opening beneath the tailgate" is useful whatever
+score accompanies it. Then decide from the photograph.
+
+And do not tune prompts against the scores. Measure a prompt against the seeded
+reference set instead: it is a fixed human artefact, it does not drift, and it is
+the only yardstick in this project that improved anything.
+
 ## Two traps worth carrying forward
 
 **A rule only one document agrees with is not in force.** World 01 banned vehicle

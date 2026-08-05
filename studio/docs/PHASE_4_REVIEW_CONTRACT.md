@@ -258,6 +258,33 @@ Added after live use, each one a frame the original nine gates passed:
 
 Each fixture has expected material gate outcomes, not pixel-perfect prose.
 
-## 13. Gate count
+## 13. Gate reliability, measured
+
+Seven frames were generated on 5 August 2026 and every gate verdict was checked
+against the image by hand, zooming in. This is what that found. It is recorded because
+the recommendation reads with the same authority whether it is right or wrong, and
+nothing else in the repository says which parts to believe.
+
+| Gate | Verdict |
+|---|---|
+| `australian_authenticity` | Reliable. Scored 4–5 throughout and never disagreed with the image. |
+| `documentary_credibility` | Reliable on staging. Says nothing about whether the scene is possible. |
+| `structural_plausibility` | Unreliable. Passed an orphaned car door at two model tiers. See above. |
+| `vehicle_continuity` | Unreliable in both directions. Passed a van with no rear end and a camera inside a cabin; failed three frames that obeyed the canon, twice describing a seated passenger at an open window as the camera being inside the car. |
+| `third_party_branding` | Unreliable. Four verified wrong calls in seven frames, before and after the instructions were rewritten: a permitted esky sticker, an explicitly unbranded drink can, bags that "could potentially carry" a mark, and illegible packaging that should have returned `UNCERTAIN`. |
+| `mood`, `story` | Unresponsive. Scored 2–3 on every frame regardless of prompt, including after the mood block and closing line were added specifically to address them. |
+
+Two consequences.
+
+The recommendation is not a filter. It has rejected every frame produced this session,
+including the structurally soundest one, and its stated reasons have frequently been
+wrong about what is in the image. Read the gate **evidence**, which is often sharper
+than the verdict it supports, and decide from the photograph.
+
+Do not tune prompts against these scores. A day was spent doing that. The prompt was
+measurably improved by comparison against the seeded reference set — a fixed, human
+artefact — and not at all by chasing gate numbers that do not move.
+
+## 14. Gate count
 
 Ten. Tests assert `len(GateName)` rather than a literal, so adding the eleventh does not require finding every hardcoded `9` — which, when the tenth was added, appeared in six places across three files.
