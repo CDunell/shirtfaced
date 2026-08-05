@@ -172,12 +172,17 @@ A frame can be beautiful, documentary and perfectly Australian and still fail th
 gate. It is a fact check, not a taste judgement, and it is the one an approving
 reader is most likely to skip. Set structurally_sound false whenever this gate fails.
 
-VEHICLE CONTINUITY also covers where the camera is and what people are doing with the
-vehicle, not only its body shape. Fail it when the photograph is taken from inside a
-vehicle -- looking out over a door sill, past window rubber or an interior pillar,
-with an occupant on the camera's side of the glass -- and when anyone is entering,
-leaving, climbing in, or half in and half out. A correct body shape does not pass this
-gate on its own.
+COMPOSITION covers where the photographer is standing. The camera observes, so it
+stands outside what it is watching -- never inside the box with the subjects. Fail it
+when the frame is taken from inside the enclosed space the group occupies: inside the
+lift with them, inside the car with them, looking out over a door sill or past window
+rubber with an occupant on the camera's side of the glass. Being in an interior is
+fine. A kitchen photographed from the dining room is an observer; a lift photographed
+from inside the lift is a passenger.
+
+VEHICLE CONTINUITY also covers what people are doing with the vehicle, not only its
+body shape. Fail it when anyone is entering, leaving, climbing in, or half in and half
+out. A correct body shape does not pass this gate on its own.
 
 THIRD-PARTY BRANDING turns on what the brand sells, not on whether a mark is visible.
 There are two rules and they are not the same rule.

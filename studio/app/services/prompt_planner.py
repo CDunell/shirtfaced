@@ -40,7 +40,11 @@ PLANNING_CANON_HEADINGS = (
     "Environmental Branding",
     "Reference Standard — The Photo We'd Post Anyway",
     "Global Production Rule — Branding",
-    "Product Rotation & Vehicle Canon",
+    # Split from one "Product Rotation & Vehicle Canon" heading, which reached 95% of
+    # the excerpt cap and tripped it twice in a day. Two headings, two budgets: the
+    # rules stop competing for room with each other.
+    "Product Rotation",
+    "Vehicle Canon",
     "Prompt Construction Protocol",
     "Success Test",
 )

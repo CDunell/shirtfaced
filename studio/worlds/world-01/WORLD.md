@@ -128,6 +128,28 @@ Natural motion blur is welcome.
 
 People are sometimes cropped.
 
+## The camera observes, so it stands outside
+
+We are observers. An observer is outside the thing being observed, and that
+is not a stylistic preference — it is what the word means.
+
+So the camera is never in the box with the subjects. Not in the lift with
+them, not in the car with them, not wedged into the same small space. It is
+in the next room, out in the hallway, on the footpath, at the far table,
+looking in through the doorway. Close enough to be there. Outside enough to
+be watching.
+
+Somebody inside the moment cannot record it. That distance is the whole
+point, and it is why doorways, windows and open lift doors keep earning
+their place in these frames: the edge of a space is where an observer
+naturally stands.
+
+Where the action is inside an enclosed space — a lift, a cabin, a small
+room — the camera is outside that space looking in. Being in an interior is
+fine; being inside the container the subjects are in is not. A kitchen
+photographed from the dining room is an observer. A lift photographed from
+inside the lift is a passenger.
+
 Foreground objects may partially obscure the frame, but the object has
 to be something that is actually there. A shoulder, a pole, a doorway,
 the tray of the ute in the shot. Not a part of some other vehicle
@@ -136,13 +158,11 @@ floating at the edge of frame reads as a mistake, not as reportage,
 because a real photographer standing there would have been standing
 somewhere.
 
-And never the near vehicle's own window rubber, door frame, pillar or
-mirror. Putting those in front of the lens is the same instruction as
-sitting the camera in the cabin, and the model will read it that way
-however the shot is otherwise described: one frame said the
-photographer stood on the footpath and still came back shot from the
-passenger seat, because the prompt had asked for window rubber in
-front of the lens. Obstruct with the world outside the car.
+Obstruct with something on the observer's side of the space, never with
+the near edge of the space being observed. A prompt that asked for a car's
+own window rubber in front of the lens came back shot from the passenger
+seat, despite saying in as many words that the photographer stood on the
+footpath.
 
 The photograph should feel discovered rather than directed.
 
@@ -361,9 +381,8 @@ The blank-garment rule under **One** is not relaxed by anything here.
 
 ------------------------------------------------------------------------
 
-# Product Rotation & Vehicle Canon
+# Product Rotation
 
-## Product Rotation
 
 Across the World 1 image series, every Shirtfaced product shall naturally
 become the most visible product at different times.
@@ -403,10 +422,11 @@ clearly visible.
 Product visibility must arise naturally from the scene, never from
 modelling or deliberate display.
 
-## Vehicle Canon
+# Vehicle Canon
 
-The camera never sits inside a vehicle, and nobody is ever entering or
-leaving one.
+A vehicle is the clearest case of the observer rule in Photography
+Language: the camera never sits inside one. Nobody is ever entering or
+leaving one either, which is this section's own rule.
 
 Interacting with a car is fine. Using it as the mechanism of the scene
 is not. Once the photograph depends on the vehicle working — getting
@@ -414,18 +434,15 @@ in, getting out, being carried from one place to the next — the
 geometry has to be right, and it is not. A cabin produced cars with no
 seats and three across a front row built for two; piling in produced a
 van with no back end. A body is asked to occupy space the structure
-does not have, so the structure is deleted to make room, and fixing
-that costs more attempts than the frame is worth.
+does not have, so the structure is deleted to make room.
 
 The scene happens beside the car, not through it: leaning on it,
 sitting on the tray, standing at the kerb, talking through an open
-window to whoever is already sitting in it. A seated passenger is fine.
-The act of getting in or out is not.
-
-The cast stands on the footpath. Nobody leans through a door opening or
-puts their head inside the cabin — that is half-entering by another
-name. The window stays a window: the opening is at the shoulder of a
-seated person, not a doorway down to the seat.
+window to whoever is already sitting in it. A seated passenger is fine;
+the act of getting in or out is not. Nobody leans through a door
+opening or puts their head inside the cabin — that is half-entering by
+another name. The window stays a window: the opening is at the shoulder
+of a seated person, not a doorway down to the seat.
 
 Whoever is sitting in the car sits the way a car seat makes you sit:
 hips and torso toward the windscreen, head and at most one shoulder

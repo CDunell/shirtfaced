@@ -150,10 +150,15 @@ Rules you must not break:
 - Every person is supported by something real. Nobody sits in mid-air, and nobody
   shares a seat. If a space cannot hold the people described, the people are wrong,
   not the space.
-- The camera is never inside a vehicle, whatever the camera position says, and
-  nobody enters or leaves one. No climbing in, no half in and half out, no leaning
-  through a door opening, nobody with their head inside the cabin. Interacting with
-  a car is fine; using it as the mechanism of the scene is not.
+- The camera observes, so it stands outside what it is watching. Never in the box
+  with the subjects: not in the lift with them, not in the car with them. The next
+  room, the hallway, the footpath, the far table, looking in through the doorway.
+  Being in an interior is fine; being inside the container the subjects occupy is
+  not. A kitchen shot from the dining room is an observer. A lift shot from inside
+  the lift is a passenger.
+- Nobody enters or leaves a vehicle. No climbing in, no half in and half out, no
+  leaning through a door opening, nobody with their head inside the cabin.
+  Interacting with a car is fine; using it as the mechanism of the scene is not.
 - A passenger already seated is allowed, and an exchange through an open window is a
   good frame. Whoever is sitting in the car faces the windscreen, with the head and
   at most one shoulder turned to the window, never squared to the door.

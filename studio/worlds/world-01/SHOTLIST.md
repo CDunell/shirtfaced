@@ -31,7 +31,7 @@ ensures the visual universe expands rather than circles back on itself.
   W01-009   Apartment arrival         Cap            Front gate          ✅
   W01-010   City lookout              Cap            Beside parked car   ✅
   W01-011   Kerbside window chat      T-shirt        Footpath at window  ✅
-  W01-012   Apartment lift            Hoodie waist   Inside lift         ⬜
+  W01-012   Apartment lift            Hoodie waist   Into the open lift  ⬜
   W01-013   Apartment balcony back view  T-shirt        Inside lounge       ⬜
   W01-014   Kitchen kick-ons II       Hoodie waist   Hallway             ⬜
   W01-015   Sunrise balcony           Hoodie         Balcony doorway     ⬜

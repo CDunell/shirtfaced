@@ -14,6 +14,32 @@ real.
 
 ---
 
+## The camera observes, so it stands outside
+
+The most general rule here, and the one the vehicle rule turns out to be a special
+case of. Copy it into every world before anything else.
+
+We are observers. An observer is outside the thing being observed — that is what
+the word means, not a stylistic preference. So the camera is never in the box with
+the subjects: not in the lift with them, not in the car with them. It is in the
+next room, the hallway, the footpath, the far table, looking in through the
+doorway. Close enough to be there, outside enough to be watching. Somebody inside
+the moment cannot record it.
+
+Being in an interior is fine. Being inside the container the subjects occupy is
+not. A kitchen photographed from the dining room is an observer; a lift
+photographed from inside the lift is a passenger.
+
+This arrived late and from the wrong direction. The vehicle rule was written first,
+as a fix for cabins that came back with no seats, and treated as being about cars.
+It is not about cars. When a lift shot was then framed from inside the lift, the
+question was raised as a per-shot camera choice — and corrected: it is canon,
+because we are observers and that inherently means outside. Write the general rule
+first in a new world and the vehicle case follows from it.
+
+Practical bonus: doorways, windows and open lift doors are where an observer
+naturally stands, which is also where the best foreground obstructions live.
+
 ## Vehicles
 
 **The rule.** Never shot inside. The camera never sits inside a vehicle, and

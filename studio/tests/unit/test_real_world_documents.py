@@ -50,19 +50,21 @@ def test_the_shotlist_statuses_match_the_document(world) -> None:  # type: ignor
 
 
 def test_the_next_planned_shot_is_the_lift(world) -> None:  # type: ignore[no-untyped-def]
-    """W01-012, and it is deliberately left as an interior.
+    """W01-012, photographed from the lobby rather than from inside the lift.
 
-    A lift is the same shape as the problem the vehicle canon exists for: a small
-    built box with fixed geometry, which is what produced cars with no seats. The
-    owner's ruling was not to extend the rule pre-emptively and to see how it goes,
-    so the camera stays inside the lift and the frame is evidence either way.
+    The enclosed box was left as an interior deliberately, against the suspicion that
+    it would break the way car cabins did. It did not: the frame came back with a
+    coherent lift, correct button panel and everyone supported. So this is not the
+    vehicle rule extended -- it is a camera choice made on the picture. Looking into
+    a lift from the lobby puts the doors, the lit interior and the last person still
+    outside in the frame, which the view from inside cannot show.
     """
     upcoming = world.planned_shots[0]
 
     assert upcoming.external_id == "W01-012"
     assert upcoming.title == "Apartment lift"
     assert upcoming.hero_product == "Hoodie waist"
-    assert upcoming.camera_position == "Inside lift"
+    assert upcoming.camera_position == "Into the open lift"
 
 
 def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-untyped-def]
@@ -82,17 +84,36 @@ def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-unt
     assert not offenders, f"These shots make the tote the hero: {offenders}"
 
 
-def test_no_camera_position_is_inside_a_vehicle(world) -> None:  # type: ignore[no-untyped-def]
-    """The rule, not just the one shot that broke it."""
-    inside_a_vehicle = {"rear seat", "front seat", "driver's seat", "passenger seat", "in the car"}
+def test_no_camera_is_in_the_box_with_the_subjects(world) -> None:  # type: ignore[no-untyped-def]
+    """We are observers, and an observer is outside the thing observed.
+
+    The general rule, of which the vehicle canon is a special case. It is about small
+    enclosed containers -- a cabin, a lift -- not interiors as such. "Inside lounge"
+    is compliant: the subjects are on the balcony and the camera watches them through
+    the doorway from the next room, which is exactly the shape the rule wants.
+    """
+    in_the_box = {
+        "rear seat",
+        "front seat",
+        "driver's seat",
+        "passenger seat",
+        "in the car",
+        "inside the car",
+        "inside lift",
+        "in the lift",
+        "inside the lift",
+    }
 
     offenders = [
         shot.external_id
         for shot in world.shots
-        if (shot.camera_position or "").strip().lower() in inside_a_vehicle
+        if (shot.camera_position or "").strip().lower() in in_the_box
     ]
 
-    assert not offenders, f"These shots put the camera inside a vehicle: {offenders}"
+    assert not offenders, (
+        f"These shots put the camera inside the space the subjects occupy: {offenders}. "
+        "The camera watches from the next room, the hallway or the footpath."
+    )
 
 
 def test_no_shot_makes_the_car_the_mechanism(world) -> None:  # type: ignore[no-untyped-def]

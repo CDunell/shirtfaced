@@ -199,6 +199,8 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - The cap must periodically face the camera with the full front panel visible.
 - The image must remain desirable without any product.
 - A tray-back ute is now a locked recurring World 1 object.
+- We are observers, so the camera stands outside what it watches; never inside the lift, car or room the group is in.
+- Being in an interior is fine; being inside the container the subjects occupy is not. A kitchen from the dining room is an observer.
 - Nobody enters or leaves a vehicle; the scene happens beside the car, not through it.
 - The car is a prop, never the hero.
 - The cast stands on the footpath; nobody leans through a door opening or puts their head inside the cabin.
@@ -221,23 +223,21 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 
 # Next Prompt Brief
 
-**Scene:** Kerbside pause between the lookout and kick-ons, beside a parked car.
+**Scene:** Apartment lobby, the group getting into the lift on the way up to kick-ons.
 
-**Time:** Approximately 3:32am.
+**Time:** Approximately 3:41am.
 
-**Hero product:** Vintage-washed black heavyweight t-shirt.
+**Hero product:** Black heavyweight hoodie tied around the waist.
 
-**Vehicle:** Tray-back ute with a bonnet in front of the cab, tradie specification. Colour and cab configuration are open. Not a cab-over or forward-control truck.
+**Camera position:** From the lobby, looking into the open lift. The photographer has not got in yet.
 
-**Camera position:** From the footpath, level with an open car window.
-
-**Main action:** Friends standing on the footpath working out the next stop with the one person already sitting in the car, talking through the open window. Everyone outside stays outside; nobody leans through a door opening.
+**Main action:** Friends filling the lift, someone holding the door with a shoulder, someone still finishing a chip in the lobby. The camera stays out in the lobby with the last of them.
 
 **Mood:** Renewed momentum.
 
-**Lighting:** Streetlight spill on the footpath, with weaker dashboard glow inside the car.
+**Lighting:** Flat lobby downlights, with the lift's own brighter interior light spilling out through the open doors.
 
-**Documentary imperfection:** One person is cut by the frame edge, and the ute's own tray crowds the near side. No stray object floating in front of the lens.
+**Documentary imperfection:** The lift door frame crops the near edge, and one person is cut by it. The photographer is plainly the one still standing outside.
 
 **Avoid:**
 
@@ -248,6 +248,7 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - Everyone dressed entirely in black.
 - Heroic automotive photography.
 - Anyone entering, leaving or climbing into a vehicle.
+- The camera standing inside the lift. It looks in from the lobby.
 - Anyone leaning through a door opening or putting their head inside the cabin.
 - Cab-over or forward-control trucks.
 - Composing the frame around the tote bag.
