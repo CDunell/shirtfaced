@@ -62,8 +62,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 
 - Low seated curb perspective.
 - Through an open doorway.
-- Inside a car looking outward.
-- From the rear seat through an open door.
+- From the footpath to an open car window.
 - Tight side-front documentary frame.
 - High angle from a balcony, but not surveillance-like.
 
@@ -186,6 +185,8 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - The cap must periodically face the camera with the full front panel visible.
 - The image must remain desirable without any product.
 - A tray-back ute is now a locked recurring World 1 object.
+- Nobody enters or leaves a vehicle; the scene happens beside the car, not through it.
+- The car is a prop, never the hero.
 - Black clothing should be common but not universal.
 - Non-product clothing should vary naturally.
 - Readable third-party commercial branding anywhere in frame is a failure; incidental Shirtfaced environmental easter eggs remain permitted.
@@ -194,21 +195,21 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 
 # Next Prompt Brief
 
-**Scene:** Interior car transition between the lookout and kick-ons.
+**Scene:** Kerbside pause between the lookout and kick-ons, beside a parked car.
 
 **Time:** Approximately 3:32am.
 
 **Hero product:** Plain black tote bag.
 
-**Camera position:** From the rear seat through an open passenger door.
+**Camera position:** From the footpath, level with an open car window.
 
-**Main action:** Friends reorganising seats, food and drinks while arguing cheerfully about the next stop.
+**Main action:** Friends on the footpath working out the next stop with whoever is already sitting in the car, talking through the open window.
 
 **Mood:** Renewed momentum.
 
-**Lighting:** Interior dome light, dashboard glow and streetlight spill.
+**Lighting:** Streetlight spill on the footpath, with weaker dashboard glow inside the car.
 
-**Documentary imperfection:** Door frame obscures part of the image; one person is cropped.
+**Documentary imperfection:** A parked car's roofline crops the foreground; one person is cut by the frame edge.
 
 **Avoid:**
 
@@ -218,3 +219,4 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - Branded packaging.
 - Everyone dressed entirely in black.
 - Heroic automotive photography.
+- Anyone entering, leaving or climbing into a vehicle.

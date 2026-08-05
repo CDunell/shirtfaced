@@ -10,6 +10,7 @@ Two responsibilities:
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 from app.adapters.planning import PlanningError, PromptPlanningClient
@@ -44,10 +45,19 @@ PLANNING_CANON_HEADINGS = (
     "Success Test",
 )
 
+logger = logging.getLogger(__name__)
+
 RECENT_CONTINUITY_LIMIT = 3
 RECENT_DRIFT_LIMIT = 3
 # Long canon sections are truncated so the request stays bounded.
-MAX_EXCERPT_CHARACTERS = 2000
+#
+# Sized to fit every section of the real WORLD.md whole, with headroom. At 2000 this
+# silently cut the last line off the branding rule -- "The blank-garment rule under
+# One is not relaxed by anything here" -- which is the clause that stops the
+# Shirtfaced exception being read as permission to brand a garment. Neither model
+# ever saw it. The whole canon is around 11,000 characters, so the cap was never
+# holding back anything that mattered; it was only deciding which rule to drop.
+MAX_EXCERPT_CHARACTERS = 4000
 
 
 @dataclass(frozen=True)
@@ -71,11 +81,25 @@ def build_request(
 ) -> PromptPlanRequest:
     """Assemble the bounded context for one shot."""
     # The whole subtree, so a section whose content sits in subsections is not lost.
-    excerpts = [
-        CanonExcerpt(heading=heading, body=truncate_excerpt(body))
-        for heading in PLANNING_CANON_HEADINGS
-        if (body := section_with_subsections(world_text, heading)) is not None and body.strip()
-    ]
+    excerpts: list[CanonExcerpt] = []
+    for heading in PLANNING_CANON_HEADINGS:
+        body = section_with_subsections(world_text, heading)
+        if body is None or not body.strip():
+            continue
+
+        excerpt = truncate_excerpt(body)
+        # Truncation drops whatever sits at the end of a section, and what sits at the
+        # end of a rule is usually the qualifier that closes the loophole. Losing it
+        # quietly looks exactly like the rule working, so say so.
+        if len(body.strip()) > len(excerpt):
+            logger.warning(
+                "Canon section %r is %d characters and was cut to %d before being sent. "
+                "The end of it does not reach the model.",
+                heading,
+                len(body.strip()),
+                len(excerpt),
+            )
+        excerpts.append(CanonExcerpt(heading=heading, body=excerpt))
 
     drift = [
         f"{entry.title}: {truncate_excerpt(entry.body, 600)}"

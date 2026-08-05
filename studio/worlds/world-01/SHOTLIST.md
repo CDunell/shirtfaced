@@ -30,7 +30,7 @@ ensures the visual universe expands rather than circles back on itself.
   W01-008   Bottle shop after close   Mixed          Across road         ❌
   W01-009   Apartment arrival         Cap            Front gate          ✅
   W01-010   City lookout              Cap            Beside parked car   ✅
-  W01-011   Piling into the car       Tote bag       Beside open doors   ⬜
+  W01-011   Kerbside window chat      Tote bag       At the car window   ⬜
   W01-012   Apartment lift            Hoodie waist   Inside lift         ⬜
   W01-013   Apartment balcony back view  T-shirt        Inside lounge       ⬜
   W01-014   Kitchen kick-ons II       Tote bag       Hallway             ⬜
@@ -70,7 +70,7 @@ Before selecting the next scene:
 
 -   Elevator
 -   Stairwell
--   Rear seat
+-   Kerbside window
 -   Petrol station
 -   Walk home
 

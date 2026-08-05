@@ -371,17 +371,25 @@ modelling or deliberate display.
 
 ## Vehicle Canon
 
-The camera never sits inside a vehicle.
+The camera never sits inside a vehicle, and nobody is ever entering or
+leaving one.
 
-A cabin is a small space with a fixed number of seats, and asking for a
-group inside one produces cars with no seats, people sitting in mid-air,
-and three across a front row built for two. It is not worth the trouble,
-and nothing in this world needs it.
+Interacting with a car is fine. Using it as the mechanism of the scene
+is not. Once the photograph depends on the vehicle working — getting
+in, getting out, being carried from one place to the next — the
+geometry has to be right, and it is not. A cabin produced cars with no
+seats and three across a front row built for two. Piling in produced a
+van with no back end, the road visible through the opening beneath a
+correctly raised tailgate. A body is asked to occupy space the
+structure does not have, so the structure is deleted to make room, and
+fixing that costs more attempts than the frame is worth.
 
-Where a car carries the story, it is photographed from outside: doors
-open, boot up, people leaning in, sitting on the tray, standing at the
-kerb, half in and half out. The transition between one place and the
-next reads better from the footpath than from the back seat.
+The scene happens beside the car, not through it: leaning on it,
+sitting on the tray, standing at the kerb, talking through an open
+window to whoever is already sitting in it. A seated passenger is fine.
+The act of getting in or out is not.
+
+The car is a prop, never the hero.
 
 Where a ute appears it shall always be recognisably Australian.
 

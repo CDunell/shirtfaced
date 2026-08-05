@@ -11,6 +11,7 @@ import pytest
 from app.adapters.markdown_store import MarkdownStore
 from app.config import PROJECT_ROOT
 from app.domain.enums import ShotStatus
+from app.services.rotation import RotationState, apply_continuity
 from app.services.world_loader import load_world
 
 WORLDS_ROOT = PROJECT_ROOT / "worlds"
@@ -49,16 +50,16 @@ def test_the_shotlist_statuses_match_the_document(world) -> None:  # type: ignor
 def test_the_next_planned_shot_is_at_the_car(world) -> None:  # type: ignore[no-untyped-def]
     """Matches the Next Prompt Brief at the foot of CONTINUITY.md.
 
-    Photographed from outside. Vehicle interiors are out of canon: a cabin seats a
-    fixed number of people, and asking for a group inside one produced cars with no
-    seats and three abreast in a front row built for two.
+    The car is a prop the scene happens beside, not the mechanism the scene runs on.
+    Interiors produced cars with no seats; people piling in produced a van with no
+    back end. Interacting with the car is fine, so the frame is the open window.
     """
     upcoming = world.planned_shots[0]
 
     assert upcoming.external_id == "W01-011"
-    assert upcoming.title == "Piling into the car"
+    assert upcoming.title == "Kerbside window chat"
     assert upcoming.hero_product == "Tote bag"
-    assert upcoming.camera_position == "Beside open doors"
+    assert upcoming.camera_position == "At the car window"
 
 
 def test_no_camera_position_is_inside_a_vehicle(world) -> None:  # type: ignore[no-untyped-def]
@@ -72,6 +73,46 @@ def test_no_camera_position_is_inside_a_vehicle(world) -> None:  # type: ignore[
     ]
 
     assert not offenders, f"These shots put the camera inside a vehicle: {offenders}"
+
+
+def test_no_shot_makes_the_car_the_mechanism(world) -> None:  # type: ignore[no-untyped-def]
+    """Nobody enters or leaves a vehicle.
+
+    Getting in and out is what forces the geometry to be right, and it is not worth
+    the attempts it costs. Standing beside a car is fine; being carried by one is not.
+    """
+    getting_in_or_out = ("piling into", "climbing in", "getting in", "getting out", "half in")
+
+    offenders = [
+        shot.external_id
+        for shot in world.shots
+        if any(phrase in (shot.title or "").strip().lower() for phrase in getting_in_or_out)
+    ]
+
+    assert not offenders, f"These shots use the car as the mechanism: {offenders}"
+
+
+def test_the_camera_priorities_sent_to_the_planner_stay_out_of_cars() -> None:
+    """The rule has to hold in CONTINUITY.md too, not just in WORLD.md.
+
+    ``Next Camera Priority`` is parsed into rotation state and rendered into the
+    planning message as "Preferred next camera positions". When vehicle interiors
+    were banned in WORLD.md, "Inside a car looking outward" and "From the rear seat
+    through an open door" stayed behind here, so the planner went on being told to do
+    the banned thing by a document nobody thought to check. A rule that only one
+    document agrees with is not in force.
+    """
+    documents = MarkdownStore(WORLDS_ROOT).read_world_documents("world-01")
+    rotation = apply_continuity(RotationState(), documents["CONTINUITY.md"].text)
+
+    banned = ("inside a car", "rear seat", "front seat", "climbing in", "getting in")
+    offenders = [
+        entry
+        for entry in rotation.next_camera_priority
+        if any(phrase in entry.lower() for phrase in banned)
+    ]
+
+    assert not offenders, f"These camera priorities contradict the vehicle canon: {offenders}"
 
 
 def test_hero_products_and_cameras_are_read(world) -> None:  # type: ignore[no-untyped-def]

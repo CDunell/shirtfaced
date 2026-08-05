@@ -12,7 +12,11 @@ import pytest
 from app.adapters.markdown_store import MarkdownStore
 from app.config import PROJECT_ROOT
 from app.services.markdown_sections import section_map
-from app.services.prompt_planner import PLANNING_CANON_HEADINGS, build_request
+from app.services.prompt_planner import (
+    MAX_EXCERPT_CHARACTERS,
+    PLANNING_CANON_HEADINGS,
+    build_request,
+)
 from app.services.rotation import RotationState
 from tests.unit.test_shot_selector import make_shot
 
@@ -89,6 +93,29 @@ def test_the_vehicle_canon_is_sent(request_for_world) -> None:  # type: ignore[n
     assert "tray-back ute" in flattened
     assert "open aluminium alloy tray" in flattened
     assert "American pickup trucks" in flattened
+    assert "never the hero" in flattened
+    assert "getting in, getting out" in flattened
+
+
+def test_no_canon_section_is_truncated(request_for_world) -> None:  # type: ignore[no-untyped-def]
+    """Every named section reaches the model whole.
+
+    Truncation takes the end of a section, and the end of a rule is where the
+    qualifier lives. At a 2000-character cap this quietly removed the last line of
+    the branding rule -- the one saying the blank-garment rule is not relaxed by the
+    Shirtfaced exception -- and every other test still passed. Writing prose above an
+    existing rule is enough to push it out, so length is checked, not just presence.
+    """
+    truncated = [
+        excerpt.heading
+        for excerpt in request_for_world.canon_excerpts
+        if excerpt.body.endswith("…") or len(excerpt.body) >= MAX_EXCERPT_CHARACTERS
+    ]
+
+    assert not truncated, (
+        f"These canon sections do not reach the model whole: {truncated}. "
+        "Shorten the section or raise MAX_EXCERPT_CHARACTERS."
+    )
 
 
 def test_product_rotation_rules_are_sent(request_for_world) -> None:  # type: ignore[no-untyped-def]

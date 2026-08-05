@@ -113,7 +113,7 @@ def test_reads_the_authors_next_product_priority(continuity_text: str) -> None:
 def test_reads_the_authors_next_camera_priority(continuity_text: str) -> None:
     state = apply_continuity(RotationState(), continuity_text)
 
-    assert any("rear seat" in entry.lower() for entry in state.next_camera_priority)
+    assert any("open car window" in entry.lower() for entry in state.next_camera_priority)
 
 
 @pytestmark_real
