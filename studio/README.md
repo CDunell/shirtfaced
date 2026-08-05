@@ -141,3 +141,8 @@ Do not begin implementation before reading all nine documents.
 
 Anyone writing the world documents should also read `docs/HANDOVER_PHASE_2.md`, which
 describes what the application currently reads from them.
+
+Anyone **starting a new world** should read `docs/CARRY_FORWARD_CANON.md` first. It
+holds the rules proven in World 01 that are not specific to it — the vehicle rule
+above all — and which have to be copied into the new world's `WORLD.md` to have any
+effect.
