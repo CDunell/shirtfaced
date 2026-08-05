@@ -52,6 +52,11 @@ class Settings(BaseSettings):
     openai_text_model: str = ""
     openai_review_model: str = ""
     openai_image_model: str = ""
+    # The cheap model for iteration. Roughly a fifth of the cost on image output, at
+    # the price of fine texture and small text -- which is where garments live, so a
+    # draft is for checking framing and composition, not for judging the product.
+    # Unset means drafting is simply unavailable; it never silently falls back.
+    openai_image_draft_model: str = ""
     openai_image_size: str = "1536x1024"
     openai_image_quality: str = "high"
     openai_timeout_seconds: float = Field(default=180.0, gt=0)

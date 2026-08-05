@@ -164,6 +164,17 @@ def record_decision(
 
     _require_decidable(session, attempt)
 
+    # Checked here, before anything is written. The same guard sits in
+    # reference_service.promote(), but that runs after the world documents have been
+    # updated, and failing there would leave the decision recorded and the documents
+    # changed with no reference to show for it.
+    if promote_to_reference and kind is HumanDecisionKind.APPROVED and attempt.is_draft:
+        raise reference_service.DraftNotPromotable(
+            f"Attempt {attempt.attempt_number} ran on the draft model "
+            f"({attempt.image_model or 'unknown'}), so it cannot become a reference "
+            "frame. Approve it without promotion, or re-run the shot on the full model."
+        )
+
     decision = HumanDecision(
         attempt_id=attempt.id,
         decision=kind,

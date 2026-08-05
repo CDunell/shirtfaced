@@ -380,6 +380,89 @@ def test_promotion_is_idempotent(session: Session, world: World) -> None:
     assert len(session.execute(select(ReferenceFrame)).scalars().all()) == 1
 
 
+# --- drafts stay out of the library ------------------------------------------------
+
+
+def test_a_draft_cannot_become_a_reference(session: Session, world: World) -> None:
+    """Review scores are not comparable across image models.
+
+    Strength is the sum of those scores, so admitting a draft would let a frame
+    handicapped by its model compete against — and age out — a real one.
+    """
+    frame = _make_frame(session, world, strength=10)
+    attempt = session.get(GenerationAttempt, frame.attempt_id)
+    assert attempt is not None
+    session.delete(frame)
+    attempt.is_draft = True
+    attempt.image_model = "gpt-image-1-mini"
+    session.flush()
+
+    with pytest.raises(reference_service.DraftNotPromotable, match="gpt-image-1-mini"):
+        reference_service.promote(session, attempt)
+
+    assert reference_service.counts(session, world.id).active == 0
+
+
+def test_approving_a_draft_with_promotion_is_refused_before_anything_is_written(
+    session: Session, world: World, worlds_root: Path, assets_root: Path
+) -> None:
+    """The refusal has to land before the world documents change."""
+    store = MarkdownStore(worlds_root)
+    before = {name: doc.text for name, doc in store.read_world_documents("world-01").items()}
+
+    attempt, selection = start_attempt(session, world)
+    run_attempt(
+        session,
+        attempt,
+        selection,
+        markdown_store=store,
+        planning_client=FakePromptPlanningClient(),
+        image_client=FakeImageGenerationClient(),
+        asset_store=FilesystemAssetStore(assets_root),
+        settings=GenerationSettings(
+            model="gpt-image-1-mini", size="1024x1024", quality="medium", is_draft=True
+        ),
+        retry_policy=NO_RETRY,
+    )
+    assert attempt.is_draft
+    documents = store.read_world_documents("world-01")
+    review_attempt(
+        session,
+        attempt,
+        review_client=FakeImageReviewClient(result=build_review(mood_score=5, story_score=5)),
+        asset_store=FilesystemAssetStore(assets_root),
+        world_text=documents["WORLD.md"].text,
+        rotation=apply_continuity(
+            rotation_from_shots(sorted(world.shots, key=lambda s: s.sequence)),
+            documents[CONTINUITY_DOCUMENT].text,
+        ),
+    )
+
+    with pytest.raises(reference_service.DraftNotPromotable):
+        decide(
+            session,
+            attempt,
+            HumanDecisionKind.APPROVED,
+            markdown_store=store,
+            git_store=DisabledGitStore(),
+            asset_store=FilesystemAssetStore(assets_root),
+            git_enabled=False,
+            promote_to_reference=True,
+        )
+
+    after = {name: doc.text for name, doc in store.read_world_documents("world-01").items()}
+    assert after == before, "The refusal came too late; documents were already changed."
+    assert session.execute(select(ReferenceFrame)).scalars().all() == []
+
+
+def test_a_full_model_attempt_is_not_a_draft(session: Session, world: World) -> None:
+    """The flag records what actually ran, so history stays honest."""
+    frame = _make_frame(session, world, strength=10)
+    attempt = session.get(GenerationAttempt, frame.attempt_id)
+    assert attempt is not None
+    assert attempt.is_draft is False
+
+
 def test_a_frame_without_a_review_scores_zero(session: Session, world: World) -> None:
     """An unreviewed frame has not earned a place ahead of a reviewed one."""
     shot = sorted(world.shots, key=lambda s: s.sequence)[0]

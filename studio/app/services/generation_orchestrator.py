@@ -69,6 +69,9 @@ class GenerationSettings:
     model: str
     size: str
     quality: str
+    # A draft runs on the cheap model to check framing and composition. Its review
+    # scores are not comparable with a full frame's, so it cannot become a reference.
+    is_draft: bool = False
 
 
 def acquire_world_lock(session: Session, world: World) -> None:
@@ -193,6 +196,7 @@ def run_attempt(
     attempt.image_model = settings.model
     attempt.image_size = settings.size
     attempt.image_quality = settings.quality
+    attempt.is_draft = settings.is_draft
     attempt.state = AttemptState.PROMPT_READY
     session.flush()
     # Committed before the paid call: if the process dies mid-generation, the prompt

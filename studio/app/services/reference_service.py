@@ -25,8 +25,14 @@ from sqlalchemy.orm import Session
 
 from app.db.models import AuditEvent, GenerationAttempt, ImageAsset, ReferenceFrame
 from app.domain.enums import AssetKind, AuditEventType, ReferenceState
+from app.domain.errors import StudioError
 
 logger = logging.getLogger(__name__)
+
+
+class DraftNotPromotable(StudioError):
+    """A draft ran on the cheap model, so it cannot join the reference library."""
+
 
 OWNER = "owner"
 DEFAULT_ACTIVE_LIMIT = 16
@@ -82,6 +88,18 @@ def promote(
     ).scalar_one_or_none()
     if existing is not None:
         return existing
+
+    # Strength is the sum of the five review scores, and those scores are not
+    # comparable across image models: a draft on the cheap model loses marks for
+    # texture and product legibility that a full frame never risked. Letting one in
+    # would either park a handicapped frame in the active set or, worse, let it age a
+    # real frame out. Drafts are for framing and composition, and stop there.
+    if attempt.is_draft:
+        raise DraftNotPromotable(
+            f"Attempt {attempt.id} ran on the draft model "
+            f"({attempt.image_model or 'unknown'}) and cannot become a reference frame. "
+            "Re-run the shot on the full model first."
+        )
 
     asset = next(
         (a for a in attempt.assets if a.kind is AssetKind.REFERENCE),
@@ -247,6 +265,7 @@ def counts(session: Session, world_id: object) -> LibraryCounts:
 __all__ = [
     "DEFAULT_ACTIVE_LIMIT",
     "PLANNER_REFERENCE_LIMIT",
+    "DraftNotPromotable",
     "ImageAsset",
     "LibraryCounts",
     "counts",

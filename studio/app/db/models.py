@@ -227,6 +227,12 @@ class GenerationAttempt(Base, TimestampMixin):
     image_size: Mapped[str | None] = mapped_column(String(32))
     image_quality: Mapped[str | None] = mapped_column(String(32))
     image_format: Mapped[str | None] = mapped_column(String(16))
+    # A draft ran on the cheap model. Review scores are not comparable across models,
+    # and reference strength is the sum of those scores, so a draft never enters the
+    # library: it would compete on a handicap it did not earn.
+    is_draft: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=text("false")
+    )
     # Logged for provider support. Never a key, never a payload.
     provider_request_id: Mapped[str | None] = mapped_column(String(120))
 
