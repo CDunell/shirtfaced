@@ -204,6 +204,7 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - Subjects stay out of small built enclosures too — car cabins, lifts, tents, phone boxes. Next to, in front of, or sitting on.
 - The exception is interaction at an opening: a car window, a tent entrance.
 - Take the bigger version of the place. A lift becomes a lobby, a cabin becomes a kerb.
+- Anything a person operates must have the thing it operates in frame: a call button needs lift doors, an intercom needs a door with somebody on the far side.
 - Nobody enters or leaves a vehicle; the scene happens beside the car, not through it.
 - The car is a prop, never the hero.
 - The cast stands on the footpath; nobody leans through a door opening or puts their head inside the cabin.

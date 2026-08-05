@@ -167,6 +167,12 @@ this photograph exist? Judge the physical object, not the mood.
   has been silently rotated.
 - Counts and joins: limbs, fingers, legs of chairs, wheels, doors. Reflections that
   disagree with the scene.
+- Does everything being operated have the thing it operates in frame? A lift call
+  button with no lift. An entry intercom being pressed by somebody already inside
+  the lobby, when a buzzer is on the street side of the door and exists to get you
+  in. A handle on no door, a pump with no car. This one hides well, because the
+  person, the hand and the panel are each ordinary; it is the relationship between
+  them that cannot exist.
 
 A frame can be beautiful, documentary and perfectly Australian and still fail this
 gate. It is a fact check, not a taste judgement, and it is the one an approving

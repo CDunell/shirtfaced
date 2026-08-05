@@ -58,6 +58,18 @@ that improved in World 01 improved by moving outward. It also sidesteps the
 geometry failures entirely, because a model cannot delete the seats from a room
 that does not need any.
 
+**When you remove the enclosure, remove its controls with it.** The first lobby
+frame came back with a man pressing an entry intercom from inside the lobby — a
+buzzer exists to get you in, and he was already in. The lift had been taken out of
+the brief; its call panel had not, so the action survived with nothing to belong
+to. Anything a person operates needs the thing it operates in shot. If it is not
+there, change the action rather than keeping the object.
+
+This kind of failure hides better than a missing wall. The person, the hand and
+the panel are each entirely ordinary — only the relationship between them is
+impossible — and it passed the structural gate, which is the third time that gate
+has waved through exactly what it exists to catch.
+
 ## Vehicles
 
 **The rule.** Never shot inside. The camera never sits inside a vehicle, and

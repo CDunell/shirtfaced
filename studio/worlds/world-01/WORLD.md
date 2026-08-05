@@ -167,6 +167,17 @@ becomes a kerb. The open version of a location is nearly always the better
 photograph anyway — it has room for the group, for the background, and for
 the one still arriving.
 
+When you take the enclosure out, take its controls out with it. Anything a
+person operates must have the thing it operates in the frame. A lift call
+button needs lift doors. An entry intercom needs somebody on the other side
+of the door, and belongs on the street side of it — a person already inside
+the lobby pressing the buzzer to get in is nonsense, and it got past every
+gate because each part of it looks ordinary on its own. A handle needs a
+door. A pump needs a car.
+
+If the object it serves is not in shot, cut the action rather than the
+object: the person is doing something else, not miming at a panel.
+
 Foreground objects may partially obscure the frame, but the object has
 to be something that is actually there. A shoulder, a pole, a doorway,
 the tray of the ute in the shot. Not a part of some other vehicle

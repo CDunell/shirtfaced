@@ -162,6 +162,11 @@ Rules you must not break:
   window, someone at a tent entrance. Take the bigger version of the place: a lift
   becomes a lobby, a cabin becomes a kerb. It has room for the group, the
   background and the one still arriving.
+- Anything a person operates must have the thing it operates in frame. A lift call
+  button needs lift doors. An entry intercom is on the street side of the door and
+  is pressed by someone trying to get in, never by someone already in the lobby. If
+  the object it serves is not in shot, give that person a different action rather
+  than leaving them miming at a panel.
 - Nobody enters or leaves a vehicle. No climbing in, no half in and half out, no
   leaning through a door opening, nobody with their head inside the cabin.
   Interacting with a car is fine; using it as the mechanism of the scene is not.
