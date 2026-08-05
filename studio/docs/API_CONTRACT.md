@@ -23,6 +23,26 @@ Returns `201` with the attempt. `live` is `false` when the deterministic fakes
 produced the result, which is the case whenever `OPENAI_API_KEY` and the relevant
 model are not both set; nothing is billed then.
 
+The world's reference library is sent with every generation, `REFERENCE_IMAGE_LIMIT`
+images of it, locked first. A world with no references generates from text alone.
+
+**Query parameters**
+
+| Name | Type | Default | Meaning |
+|---|---|---|---|
+| `draft` | bool | `false` | Generate on `OPENAI_IMAGE_DRAFT_MODEL` instead of `OPENAI_IMAGE_MODEL`. |
+
+A draft is for checking framing and geometry cheaply. It is flagged `is_draft` on the
+attempt, cannot be promoted to a reference, and its review scores are not comparable
+with a full frame's.
+
+`draft=true` returns `422` when a key is configured and `OPENAI_IMAGE_DRAFT_MODEL` is
+not. It never falls back to the full model, because falling back is how a draft
+quietly costs full price.
+
+`image_model` on the response is the model that was **actually called**, not the one
+requested. These can differ: the client fixes its model at construction.
+
 The attempt is left in `generated`, which is an active state: it occupies the world
 until a human decides. `approved` is always `false` here — generating an image is not
 approving it.

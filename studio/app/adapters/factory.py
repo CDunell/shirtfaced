@@ -62,21 +62,38 @@ def build_planning_client(settings: Settings) -> PromptPlanningClient:
     )
 
 
-def image_client_is_live(settings: Settings) -> bool:
+def image_model_for(settings: Settings, *, draft: bool = False) -> str:
+    """The model a run will actually be billed for.
+
+    The client bakes its model in at construction and ignores the one on the request,
+    so this is the only thing that decides what gets called. Asking for a draft
+    without OPENAI_IMAGE_DRAFT_MODEL set returns empty rather than quietly falling
+    back to the full model: a silent fallback is how a draft ends up costing full
+    price while the record says otherwise.
+    """
+    return settings.openai_image_draft_model if draft else settings.openai_image_model
+
+
+def image_client_is_live(settings: Settings, *, draft: bool = False) -> bool:
     """Whether a real, billable image client would be built."""
-    return bool(settings.openai_api_key and settings.openai_image_model)
+    return bool(settings.openai_api_key and image_model_for(settings, draft=draft))
 
 
-def build_image_client(settings: Settings) -> ImageGenerationClient:
+def build_image_client(settings: Settings, *, draft: bool = False) -> ImageGenerationClient:
     """The image generation client for these settings.
 
     Image calls are the expensive ones, so the same rule applies as for planning:
     without both a key and an explicitly configured model, the fake runs instead.
+
+    ``draft`` selects the cheap model. It has to be decided here rather than per
+    request, because the request's model field is ignored by the real client.
     """
-    if not image_client_is_live(settings):
+    model = image_model_for(settings, draft=draft)
+    if not image_client_is_live(settings, draft=draft):
         logger.info(
-            "Using the fake image client: OPENAI_API_KEY and OPENAI_IMAGE_MODEL are "
-            "not both set. No image will be billed."
+            "Using the fake image client: OPENAI_API_KEY and %s are not both set. "
+            "No image will be billed.",
+            "OPENAI_IMAGE_DRAFT_MODEL" if draft else "OPENAI_IMAGE_MODEL",
         )
         return FakeImageGenerationClient()
 
@@ -88,7 +105,7 @@ def build_image_client(settings: Settings) -> ImageGenerationClient:
             api_key=settings.openai_api_key.get_secret_value(),
             timeout=settings.openai_timeout_seconds,
         ),
-        model=settings.openai_image_model,
+        model=model,
         timeout_seconds=settings.openai_timeout_seconds,
     )
 

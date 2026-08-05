@@ -14,6 +14,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.adapters.image_generation import FakeImageGenerationClient
 from app.adapters.markdown_store import MarkdownStore
 from app.config import Settings, get_settings
 from app.db.models import GenerationAttempt, World
@@ -113,6 +114,98 @@ def test_generating_is_not_approving(client: TestClient) -> None:
     payload = client.post("/api/worlds/world-01/continue").json()["attempt"]
 
     assert payload["approved"] is False
+
+
+# --- what the route hands the image model -------------------------------------------
+#
+# The reference library and the draft model were both built, tested and never wired
+# into this route. Every image the application generated was text-only and full price
+# while the code that would have prevented that sat one call away, fully covered by
+# its own unit tests. These pin the wiring itself.
+
+
+@pytest.fixture
+def spy_image_client(monkeypatch: pytest.MonkeyPatch) -> FakeImageGenerationClient:
+    """The fake the route will use, kept where the test can read it afterwards."""
+    spy = FakeImageGenerationClient()
+    monkeypatch.setattr("app.routes.api.build_image_client", lambda settings, *, draft=False: spy)
+    return spy
+
+
+@pytest.fixture
+def locked_reference(worlds_root: Path) -> str:
+    directory = worlds_root / "world-01" / "references" / "locked"
+    directory.mkdir(parents=True)
+    (directory / "locked-01.png").write_bytes(b"not really a png, but a non-empty file")
+    return "locked-01.png"
+
+
+def test_continue_sends_the_reference_library_to_the_image_model(
+    client: TestClient, spy_image_client: FakeImageGenerationClient, locked_reference: str
+) -> None:
+    client.post("/api/worlds/world-01/continue")
+
+    assert spy_image_client.requests, "the image model was never called"
+    sent = spy_image_client.requests[0].reference_images
+    assert [image.name for image in sent] == [locked_reference]
+
+
+def test_continue_defaults_to_the_full_model_and_is_not_a_draft(
+    client: TestClient, session: Session
+) -> None:
+    client.post("/api/worlds/world-01/continue")
+
+    attempt = _attempts(session)[0]
+    assert attempt.is_draft is False
+
+
+def test_continue_with_draft_uses_the_draft_model(
+    client: TestClient, session: Session, spy_image_client: FakeImageGenerationClient
+) -> None:
+    """A draft has to change which model is called, not merely what is recorded.
+
+    The real client bakes its model in at construction and ignores the request's, so
+    passing a draft model through the request alone changed the attempt row and
+    nothing else: three attempts recorded gpt-image-1-mini for images billed as
+    gpt-image-2.
+    """
+    response = client.post("/api/worlds/world-01/continue?draft=true")
+
+    assert response.status_code == 201
+    assert _attempts(session)[0].is_draft is True
+
+
+def test_a_draft_is_refused_when_no_draft_model_is_configured(
+    session: Session, worlds_root: Path, assets_root: Path
+) -> None:
+    """Refused, not quietly run on the full model. The point of a draft is the price."""
+    import_world(session, MarkdownStore(worlds_root), "world-01")
+    session.flush()
+
+    settings = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        database_url=VALID_URL,
+        db_sslmode="disable",
+        worlds_root=worlds_root,
+        assets_root=assets_root,
+        openai_image_size="128x96",
+        # A key, but no draft model: the combination that must not silently fall back.
+        openai_api_key="sk-test-not-a-real-key",
+        debug=True,
+    )
+    application = create_app()
+    application.dependency_overrides[get_db_session] = lambda: session
+    application.dependency_overrides[get_settings] = lambda: settings
+
+    with TestClient(application) as test_client:
+        response = test_client.post("/api/worlds/world-01/continue?draft=true")
+
+    application.dependency_overrides.clear()
+
+    assert response.status_code == 422
+    assert "OPENAI_IMAGE_DRAFT_MODEL" in response.json()["detail"]
+    # Nothing was started, so the world is still free.
+    assert _attempts(session) == []
 
 
 def test_a_second_continue_is_refused_with_409(client: TestClient) -> None:

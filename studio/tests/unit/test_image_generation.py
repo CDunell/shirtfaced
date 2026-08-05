@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from app.adapters.factory import build_image_client, image_client_is_live
+from app.adapters.factory import build_image_client, image_client_is_live, image_model_for
 from app.adapters.image_generation import (
     FakeImageGenerationClient,
     ImageGenerationError,
@@ -304,3 +304,62 @@ def test_a_live_image_client_needs_both() -> None:
     settings = _settings(openai_api_key="sk-test", openai_image_model="an-image-model")
 
     assert image_client_is_live(settings) is True
+
+
+# --- which model actually gets billed ------------------------------------------------
+#
+# The real client bakes its model in at construction and ignores the one on the
+# request, so this choice is the only thing that decides the bill. Passing a draft
+# model on the request alone changed the recorded value and nothing else.
+
+
+def test_the_draft_model_is_chosen_only_when_a_draft_is_asked_for() -> None:
+    settings = _settings(
+        openai_image_model="the-expensive-one", openai_image_draft_model="the-cheap-one"
+    )
+
+    assert image_model_for(settings) == "the-expensive-one"
+    assert image_model_for(settings, draft=True) == "the-cheap-one"
+
+
+def test_a_draft_never_falls_back_to_the_full_model() -> None:
+    """Falling back is how a draft quietly costs full price."""
+    settings = _settings(openai_image_model="the-expensive-one")
+
+    assert image_model_for(settings, draft=True) == ""
+    assert image_client_is_live(settings, draft=True) is False
+
+
+def test_a_live_draft_client_is_built_on_the_draft_model(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    settings = _settings(
+        openai_api_key="sk-test",
+        openai_image_model="the-expensive-one",
+        openai_image_draft_model="the-cheap-one",
+    )
+    assert image_client_is_live(settings, draft=True) is True
+
+    captured: dict[str, Any] = {}
+
+    def _capture(*, client: Any, model: str, timeout_seconds: float) -> Any:
+        captured["model"] = model
+        return FakeImageGenerationClient()
+
+    # The real OpenAI client is never constructed here; only the model it would
+    # have been given is checked, because that is the value that gets billed.
+    monkeypatch.setattr("app.adapters.factory.OpenAIImageGenerationClient", _capture)
+    build_image_client(settings, draft=True)
+
+    assert captured["model"] == "the-cheap-one"
+
+
+def test_the_generated_image_reports_the_model_that_was_called() -> None:
+    """The attempt records this, not what was requested, so a row cannot misreport."""
+    client = FakeImageGenerationClient()
+
+    generated = client.generate(
+        ImageGenerationRequest(prompt="a prompt", model="asked-for", size="8x8", quality="low")
+    )
+
+    assert generated.model == "asked-for"

@@ -24,12 +24,14 @@ from app.adapters.factory import (
     build_planning_client,
     build_review_client,
     image_client_is_live,
+    image_model_for,
     planning_client_is_live,
     review_client_is_live,
 )
 from app.adapters.git_store import build_git_store
 from app.adapters.markdown_store import WORLD_DOCUMENT, MarkdownStore
 from app.adapters.planning import PlanningError
+from app.adapters.reference_images import FilesystemReferenceImageStore
 from app.adapters.review import ReviewError
 from app.config import Settings, get_settings
 from app.db.models import (
@@ -452,14 +454,31 @@ class GenerationResponse(BaseModel):
     status_code=status.HTTP_201_CREATED,
 )
 def continue_world(
-    world_slug: str, session: SessionDependency, settings: SettingsDependency
+    world_slug: str,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    draft: bool = False,
 ) -> GenerationResponse:
     """Select the next shot, plan its prompt and generate one image.
 
     Synchronous, per ADR-010, and exactly one image per action, per ADR-009. The
     attempt is left awaiting a human decision; nothing here approves anything.
+
+    ``draft`` runs the cheap model for checking framing and geometry. A draft cannot
+    be promoted to a reference and its scores are not comparable with a full frame's.
     """
     world = _load_world(session, world_slug)
+
+    # Refused rather than quietly run at full price, which is the whole point of
+    # asking for a draft.
+    if draft and settings.openai_api_key and not settings.openai_image_draft_model:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=(
+                "Drafting is unavailable: OPENAI_IMAGE_DRAFT_MODEL is not set. "
+                "Generating without it would cost full price."
+            ),
+        )
 
     try:
         attempt, selection = start_attempt(session, world)
@@ -476,13 +495,18 @@ def continue_world(
         selection,
         markdown_store=MarkdownStore(settings.worlds_root_resolved),
         planning_client=build_planning_client(settings),
-        image_client=build_image_client(settings),
+        image_client=build_image_client(settings, draft=draft),
         asset_store=FilesystemAssetStore(settings.assets_root_resolved),
         settings=GenerationSettings(
-            model=settings.openai_image_model or "fake-image-model",
+            model=image_model_for(settings, draft=draft) or "fake-image-model",
             size=settings.openai_image_size,
             quality=settings.openai_image_quality,
+            is_draft=draft,
+            reference_image_limit=settings.reference_image_limit,
         ),
+        # Without this the world's reference library never reaches the image model
+        # and every frame is generated from text alone.
+        reference_store=FilesystemReferenceImageStore(settings.worlds_root_resolved),
     )
 
     review: AutomatedReview | None = None
@@ -497,7 +521,7 @@ def continue_world(
     return GenerationResponse(
         attempt=_attempt_response(completed),
         review=_review_response(review) if review else None,
-        live=image_client_is_live(settings),
+        live=image_client_is_live(settings, draft=draft),
         review_live=review_client_is_live(settings),
     )
 

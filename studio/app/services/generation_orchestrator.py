@@ -234,6 +234,11 @@ def run_attempt(
     except ImageGenerationError as error:
         return _fail(session, attempt, error.code, str(error))
 
+    # What was actually called, which is not necessarily what was asked for: the real
+    # client bakes its model in at construction and ignores the request's. Recording
+    # the requested model here once produced three attempt rows reading
+    # "gpt-image-1-mini" for images billed as gpt-image-2, and marked them drafts.
+    attempt.image_model = generated.model
     attempt.image_format = generated.output_format
     attempt.provider_request_id = generated.provider_request_id
 
