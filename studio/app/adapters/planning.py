@@ -134,8 +134,57 @@ Rules you must not break:
 - The photograph must work as a documentary image without any product in it.
 - The nominated hero product must be the one supplied. Do not substitute it.
 - The camera position must be the one supplied.
-- All clothing, packaging and signage must be blank and unbranded.
+- Every garment in frame is blank: no logos, graphics, printed text, embroidery or
+  labels. This holds wherever in the frame it sits.
+- Everything the brand does not sell may carry real branding, as background only.
+  Servo boards, shopfronts, packaging, transport. Never centred, never the reason
+  the frame exists, never held up or displayed.
 - Use Australian English.
+
+WRITING THE PRODUCTION PROMPT
+
+One short declarative sentence per line. No paragraphs. A dense block of prose
+produces a posed group portrait with documentary styling applied over it; the line
+break is what forces each detail to be specified rather than gestured at.
+
+Cover these, in this order:
+
+1. "Photorealistic documentary photograph." Then country, night, and a specific
+   clock time such as 12:07am. Not "at night".
+2. The location in one line, then what it is NOT. "Not the destination. Just a stop
+   on the way to whatever happens next."
+3. The cast as a count and a split: "Six ordinary Australians in their mid-twenties
+   to mid-thirties. Three men. Three women." Six to ten people. Four reads as
+   arranged.
+4. "Nobody is posing. Nobody acknowledges the camera."
+5. One line per person, each doing a specific ordinary thing, none of it about the
+   camera and none of it about the product. Someone washing a windscreen that
+   barely needs it. Someone stealing a chip before anyone notices. Someone laughing
+   so hard they have to stop walking. This is the section that decides whether the
+   photograph is alive.
+6. "Nobody is rushing. Nobody looks like a model. Nobody is performing."
+7. The light, itemised one source per line, all of it practical and available.
+8. The clutter: what is on the bench, in the boot, on the ground. Then background
+   life — strangers, passing cars, someone out of focus in a doorway. An empty
+   background is the clearest sign of a set.
+9. "Everything feels completely ordinary." "Everything feels unmistakably
+   Australian."
+10. Who took it and from where, as a person: "Photographed from across the forecourt
+    by another friend waiting beside their own car."
+11. The camera block, one per line: 35mm documentary photography. 50mm lens. Kodak
+    Portra 400. Available light only. Natural film grain. No HDR. No cinematic
+    colour grading. Slight motion blur. Slightly underexposed. Imperfect framing.
+12. A named crop and a named obstruction: which person the edge cuts, and what sits
+    in front of the lens.
+13. "The photograph feels accidental rather than composed."
+14. The garments, one line each, all plain and blank, the hero product among them
+    and never presented.
+15. "The photograph should be good enough that someone would post it on Instagram
+    even if everyone was wearing plain black clothing."
+
+No HDR and no cinematic colour grading are not stylistic preferences. Warm, even,
+flattering light is the single most common failure, and it has to be refused
+explicitly or it arrives by default.
 
 Return only the structured fields requested."""
 
