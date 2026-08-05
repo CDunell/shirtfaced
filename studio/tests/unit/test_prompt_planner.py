@@ -26,6 +26,9 @@ VALID_PLAN_FIELDS = {
     "australian_authenticity_anchors": ["Suburban Australian street"],
     "negative_constraints": ["No visible branding"],
     "mood_words": ["Hopeful", "Loose", "Possible"],
+    "motion_primary": "One friend hands a bag across.",
+    "motion_secondary": "Another shifts weight and laughs.",
+    "motion_environment": "Traffic keeps moving behind them.",
     "selection_rationale": "Next planned shot.",
     "production_prompt": "Documentary 35mm photograph of friends reorganising a car.",
 }

@@ -83,7 +83,6 @@ def _import_world(slug: str) -> int:
 
 
 def _list_attempts(slug: str) -> int:
-    from sqlalchemy import select
 
     with get_session_factory()() as session:
         world = session.execute(select(World).where(World.slug == slug)).scalar_one_or_none()
@@ -114,69 +113,41 @@ def _list_attempts(slug: str) -> int:
     return EXIT_OK
 
 
-def _write_prompt(slug: str, external_id: str | None, destination: str | None) -> int:
-    """Produce one production prompt and stop.
-
-    No image is generated, no attempt is recorded and the world is not locked. This
-    is for taking a prompt somewhere else to run: the application's job here is to
-    assemble the canon correctly and write the prompt the canon implies.
-    """
-    from app.adapters.factory import build_planning_client, planning_client_is_live
-    from app.adapters.markdown_store import WORLD_DOCUMENT
-    from app.services.prompt_planner import build_request, create_plan
-    from app.services.rotation import RotationState, apply_continuity, rotation_from_shots
-    from app.services.shot_selector import NoSelection, select_next_shot
+def _write_prompt(
+    slug: str, external_id: str | None, destination: str | None, video: bool = False
+) -> int:
+    """Write one prompt and stop. No image, no attempt, no lock."""
+    from app.services.prompt_service import NothingToPlan, prompts_for_shot
 
     settings = get_settings()
-    store = _store()
+    try:
+        with get_session_factory()() as session:
+            prompts = prompts_for_shot(
+                session,
+                settings=settings,
+                store=_store(),
+                world_slug=slug,
+                external_id=external_id,
+            )
+            shot_id, title = prompts.shot.external_id, prompts.shot.title
+            hero, camera = prompts.shot.hero_product, prompts.shot.camera_position
+            text = prompts.video_prompt if video else prompts.image_prompt
+            live = prompts.live
+    except NothingToPlan as error:
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_FAILED
 
-    with get_session_factory()() as session:
-        world = session.execute(select(World).where(World.slug == slug)).scalar_one_or_none()
-        if world is None:
-            print(f"error: no world named {slug!r} has been imported.", file=sys.stderr)
-            return EXIT_FAILED
-
-        shots = sorted(world.shots, key=lambda item: item.sequence)
-        rotation: RotationState
-        if external_id:
-            found = next((item for item in shots if item.external_id == external_id), None)
-            if found is None:
-                print(f"error: {slug} has no shot {external_id!r}.", file=sys.stderr)
-                return EXIT_FAILED
-            # Asked for by name, so the selector's eligibility rules do not apply. The
-            # rotation state still comes from what has been approved.
-            shot, reason, rotation = found, f"{external_id} requested.", rotation_from_shots(shots)
-        else:
-            outcome = select_next_shot(world, shots)
-            if isinstance(outcome, NoSelection):
-                print(f"Nothing to plan: {outcome.reason}")
-                return EXIT_FAILED
-            shot, reason, rotation = outcome.shot, outcome.reason, outcome.rotation
-
-        documents = store.read_world_documents(slug)
-        request = build_request(
-            world_slug=slug,
-            world_name=world.name,
-            shot=shot,
-            world_text=documents[WORLD_DOCUMENT].text,
-            rotation=apply_continuity(rotation, documents["CONTINUITY.md"].text),
-            selection_reason=reason,
-        )
-        plan = create_plan(build_planning_client(settings), request).plan
-
-    if not planning_client_is_live(settings):
-        print("(the deterministic fake wrote this: OPENAI_API_KEY and", file=sys.stderr)
-        print(" OPENAI_TEXT_MODEL are not both set, so nothing was billed)", file=sys.stderr)
-
-    print(f"# {shot.external_id} — {shot.title}", file=sys.stderr)
-    print(f"# hero: {shot.hero_product}   camera: {shot.camera_position}", file=sys.stderr)
+    if not live:
+        print("(written by the deterministic fake: no key or text model set)", file=sys.stderr)
+    print(f"# {shot_id} — {title}", file=sys.stderr)
+    print(f"# hero: {hero}   camera: {camera}", file=sys.stderr)
     print(file=sys.stderr)
 
     if destination:
-        Path(destination).write_text(plan.production_prompt + "\n", encoding="utf-8")
+        Path(destination).write_text(text + "\n", encoding="utf-8")
         print(f"Written to {destination}", file=sys.stderr)
     else:
-        print(plan.production_prompt)
+        print(text)
     return EXIT_OK
 
 
@@ -246,6 +217,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     prompt.add_argument("slug")
     prompt.add_argument("--shot", help="Shot to plan, such as W01-015. Defaults to the next one.")
     prompt.add_argument("--out", help="Write to this file instead of standard output.")
+    prompt.add_argument(
+        "--video",
+        action="store_true",
+        help="Write the image-to-video prompt instead. Upload the frame separately.",
+    )
 
     arguments = parser.parse_args(argv)
 
@@ -257,7 +233,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         if arguments.command == "import-world":
             return _import_world(arguments.slug)
         if arguments.command == "prompt":
-            return _write_prompt(arguments.slug, arguments.shot, arguments.out)
+            return _write_prompt(arguments.slug, arguments.shot, arguments.out, arguments.video)
         if arguments.command == "attempts":
             return _list_attempts(arguments.slug)
         if arguments.command == "discard-attempt":

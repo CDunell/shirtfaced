@@ -205,6 +205,37 @@ def build_request(
     )
 
 
+def build_video_prompt(plan: PromptPlan) -> str:
+    """Compose the image-to-video prompt from the plan's motion fields.
+
+    Written here rather than by the model. An image-to-video prompt is short and
+    almost entirely invariant: the still already carries the cast, the wardrobe, the
+    light and the location, so repeating any of that competes with the frame instead
+    of directing it. What varies is three lines of motion.
+
+    Seedance defaults per the video pipeline architecture -- 9:16, five seconds,
+    720p, audio off. The source frame is uploaded separately, so nothing here names
+    it.
+    """
+    return "\n".join(
+        [
+            "Animate this photograph.",
+            "Keep every person, garment and object exactly as they are.",
+            "",
+            plan.motion_primary.strip(),
+            plan.motion_secondary.strip(),
+            plan.motion_environment.strip(),
+            "",
+            "The camera is a friend holding a phone: almost still, slight handheld drift.",
+            "No pan. No zoom. No dolly. No orbit.",
+            "Nobody enters frame. Nobody leaves frame. Nobody looks at the camera.",
+            "One continuous take. No cuts.",
+            "Available light only. Natural film grain. No added colour grading.",
+            "Five seconds.",
+        ]
+    )
+
+
 def create_plan(client: PromptPlanningClient, request: PromptPlanRequest) -> PlanOutcome:
     """Ask for a plan, validate it against the brief, and guarantee the branding block."""
     plan = client.create_plan(request)

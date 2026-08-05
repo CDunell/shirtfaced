@@ -144,6 +144,12 @@ class PromptPlan(BaseModel):
     # write the block produced it in three prompts out of five, including once when it
     # was explicitly required. The schema is the only thing the model cannot skip.
     mood_words: list[str] = Field(min_length=3, max_length=4)
+    # How the scene moves, for image-to-video. Fields rather than a written video
+    # prompt: the prompt's shape is invariant and belongs in code, and a motion
+    # description a model composes freely comes back as a shot list.
+    motion_primary: str = Field(min_length=1)
+    motion_secondary: str = Field(min_length=1)
+    motion_environment: str = Field(min_length=1)
     selection_rationale: str = Field(min_length=1)
     production_prompt: str = Field(min_length=1)
 
@@ -155,6 +161,9 @@ class PromptPlan(BaseModel):
         "camera_position",
         "lighting_source",
         "documentary_imperfection",
+        "motion_primary",
+        "motion_secondary",
+        "motion_environment",
         "selection_rationale",
         "production_prompt",
     )

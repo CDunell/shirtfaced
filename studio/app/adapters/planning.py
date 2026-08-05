@@ -81,6 +81,9 @@ class FakePromptPlanningClient:
                 "No posing or acknowledgement of the camera",
             ],
             mood_words=["Hopeful", "Loose", "Possible"],
+            motion_primary="One friend leans in and hands something across.",
+            motion_secondary="Two others shift their weight and keep talking.",
+            motion_environment="Traffic moves in the background and the light flickers.",
             selection_rationale=(
                 request.selection_reason or f"{shot.external_id} is the next planned shot."
             ),
@@ -109,6 +112,9 @@ PROMPT_PLAN_JSON_SCHEMA: dict[str, Any] = {
         "australian_authenticity_anchors",
         "negative_constraints",
         "mood_words",
+        "motion_primary",
+        "motion_secondary",
+        "motion_environment",
         "selection_rationale",
         "production_prompt",
     ],
@@ -128,6 +134,9 @@ PROMPT_PLAN_JSON_SCHEMA: dict[str, Any] = {
             "minItems": 3,
             "maxItems": 4,
         },
+        "motion_primary": {"type": "string"},
+        "motion_secondary": {"type": "string"},
+        "motion_environment": {"type": "string"},
         "selection_rationale": {"type": "string"},
         "production_prompt": {"type": "string"},
     },
@@ -168,6 +177,11 @@ Two things are not yours to change, because the shotlist depends on them:
 
 Obey the canon you have been given. Where it and this instruction disagree, the canon
 wins.
+
+Motion. The scene is also generated as five seconds of video from the still, so
+say how it moves. Keep it to what would actually happen in five seconds: one clear
+movement, one smaller one, and the world carrying on behind. Nobody arrives, nobody
+leaves, nothing is edited. The camera is a friend holding a phone, so it barely moves.
 
 Use Australian English. Return only the structured fields requested."""
 

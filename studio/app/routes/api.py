@@ -82,6 +82,7 @@ from app.services.generation_orchestrator import (
     start_attempt,
 )
 from app.services.prompt_planner import PLANNING_CANON_HEADINGS, build_request, create_plan
+from app.services.prompt_service import NothingToPlan, prompts_for_shot
 from app.services.review_service import NothingToReview, review_attempt
 from app.services.rotation import apply_continuity, rotation_from_shots
 from app.services.shot_selector import NoSelection, Selection, select_next_shot
@@ -446,6 +447,54 @@ class GenerationResponse(BaseModel):
     # Whether billable models produced these, or the deterministic fakes did.
     live: bool
     review_live: bool = False
+
+
+class PromptsResponse(BaseModel):
+    """Both prompts for one shot. Nothing was generated and nothing was recorded."""
+
+    shot: ShotResponse
+    selection_reason: str
+    image_prompt: str
+    video_prompt: str
+    # Whether a billable model wrote these, or the deterministic fake did.
+    live: bool
+
+
+@router.post("/worlds/{world_slug}/prompts", summary="Write the prompts for a shot")
+def write_prompts(
+    world_slug: str,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    shot: str | None = None,
+) -> PromptsResponse:
+    """Plan one shot and stop.
+
+    No image, no attempt row, no world lock, no decision. ``shot`` names a shot such
+    as W01-015; without it the next eligible shot is planned. Generation happens
+    elsewhere, so this is the endpoint that actually gets used.
+    """
+    try:
+        prompts = prompts_for_shot(
+            session,
+            settings=settings,
+            store=MarkdownStore(settings.worlds_root_resolved),
+            world_slug=world_slug,
+            external_id=shot,
+        )
+    except NothingToPlan as error:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
+        ) from error
+    except PlanningError as error:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
+
+    return PromptsResponse(
+        shot=ShotResponse.model_validate(prompts.shot),
+        selection_reason=prompts.selection_reason,
+        image_prompt=prompts.image_prompt,
+        video_prompt=prompts.video_prompt,
+        live=prompts.live,
+    )
 
 
 @router.post(
