@@ -178,6 +178,14 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 
 # Rejected Drift
 
+### W01-015 — Sunrise balcony
+
+**Status:** REJECTED
+
+**Reason:** Phantom hand gripping his forearm, belonging to nobody. And the group looks eight hours rested at sunrise after an all-nighter.
+
+**Permanent lesson:** No new permanent lesson.
+
 ### W01-012 — Apartment lobby
 
 **Status:** REJECTED
