@@ -15,8 +15,10 @@ import base64
 import binascii
 import logging
 from dataclasses import dataclass
+from io import BytesIO
 from typing import Any, Protocol, runtime_checkable
 
+from app.adapters.reference_images import ReferenceImage
 from app.domain.enums import FailureCode
 from app.domain.errors import StudioError
 
@@ -46,6 +48,13 @@ class ImageGenerationRequest:
     size: str
     quality: str
     output_format: str = "png"
+    # The images the frame should look like it came from. Empty means text alone,
+    # which is what produced four different casts for the same shot.
+    reference_images: tuple[ReferenceImage, ...] = ()
+
+    @property
+    def has_references(self) -> bool:
+        return bool(self.reference_images)
 
 
 @dataclass(frozen=True)
@@ -172,14 +181,35 @@ class OpenAIImageGenerationClient:
 
     def generate(self, request: ImageGenerationRequest) -> GeneratedImage:
         try:
-            response = self._client.images.generate(
-                model=self._model,
-                prompt=request.prompt,
-                size=request.size,
-                quality=request.quality,
-                n=1,
-                timeout=self._timeout,
-            )
+            if request.has_references:
+                # The edits endpoint is the only way to put an image in front of the
+                # model. Text can describe a look; only this can carry one.
+                logger.info(
+                    "Generating with %d reference image(s): %s",
+                    len(request.reference_images),
+                    ", ".join(image.name for image in request.reference_images),
+                )
+                response = self._client.images.edit(
+                    model=self._model,
+                    image=[
+                        (image.name, BytesIO(image.data), image.mime_type)
+                        for image in request.reference_images
+                    ],
+                    prompt=request.prompt,
+                    size=request.size,
+                    quality=request.quality,
+                    n=1,
+                    timeout=self._timeout,
+                )
+            else:
+                response = self._client.images.generate(
+                    model=self._model,
+                    prompt=request.prompt,
+                    size=request.size,
+                    quality=request.quality,
+                    n=1,
+                    timeout=self._timeout,
+                )
         except Exception as error:
             raise _classify(error) from error
 

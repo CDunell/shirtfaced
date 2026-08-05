@@ -39,6 +39,7 @@ from app.adapters.markdown_store import (
     MarkdownStore,
 )
 from app.adapters.planning import PlanningError, PromptPlanningClient
+from app.adapters.reference_images import NoReferenceImageStore, ReferenceImageStore
 from app.db.models import GenerationAttempt, ImageAsset, Shot, World
 from app.domain.enums import ACTIVE_ATTEMPT_STATES, AssetKind, AttemptState, FailureCode
 from app.domain.errors import StudioError
@@ -72,6 +73,8 @@ class GenerationSettings:
     # A draft runs on the cheap model to check framing and composition. Its review
     # scores are not comparable with a full frame's, so it cannot become a reference.
     is_draft: bool = False
+    # How many reference images ride along. Zero means text-only generation.
+    reference_image_limit: int = 0
 
 
 def acquire_world_lock(session: Session, world: World) -> None:
@@ -157,6 +160,7 @@ def run_attempt(
     asset_store: AssetStore,
     settings: GenerationSettings,
     retry_policy: RetryPolicy = DEFAULT_POLICY,
+    reference_store: ReferenceImageStore | None = None,
 ) -> GenerationAttempt:
     """Plan, generate and store. Failures are recorded, never raised past here.
 
@@ -165,6 +169,7 @@ def run_attempt(
     """
     world = attempt.world
     shot = attempt.shot
+    reference_store = reference_store or NoReferenceImageStore()
 
     try:
         documents = markdown_store.read_world_documents(world.slug)
@@ -208,11 +213,20 @@ def run_attempt(
     session.flush()
     session.commit()
 
+    # Loaded after planning, so a failure reading them costs nothing: the image call
+    # has not been made yet. An empty set is not an error — a world with no references
+    # yet generates from text, exactly as it did before.
+    try:
+        references = reference_store.load(world.slug, limit=settings.reference_image_limit)
+    except StudioError as error:
+        return _fail(session, attempt, FailureCode.INTERNAL, str(error))
+
     image_request = ImageGenerationRequest(
         prompt=plan.production_prompt,
         model=settings.model,
         size=settings.size,
         quality=settings.quality,
+        reference_images=tuple(references),
     )
 
     try:

@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     openai_image_draft_model: str = ""
     openai_image_size: str = "1536x1024"
     openai_image_quality: str = "high"
+    # How many reference images accompany each generation. Every one is uploaded and
+    # billed as image input, so this is a cost dial as well as a fidelity one. Zero
+    # disables references entirely and falls back to text-only generation.
+    reference_image_limit: int = Field(default=4, ge=0, le=16)
     openai_timeout_seconds: float = Field(default=180.0, gt=0)
 
     # --- PostgreSQL -------------------------------------------------------------
