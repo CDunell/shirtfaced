@@ -148,6 +148,14 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 
 # Rejected Drift
 
+### W01-012 — Apartment lobby
+
+**Status:** REJECTED
+
+**Reason:** Rejected by the owner. A man presses an entry intercom from inside the lobby, for a lift that is not in the frame. And everyone is doing something but nobody is doing anything with anybody else.
+
+**Permanent lesson:** No new permanent lesson.
+
 ## Closed Bottle Shop
 
 **Status:** REJECTED
@@ -205,6 +213,7 @@ All garments, food packaging, bottles, cans, cartons and takeaway containers mus
 - The exception is interaction at an opening: a car window, a tent entrance.
 - Take the bigger version of the place. A lift becomes a lobby, a cabin becomes a kerb.
 - Anything a person operates must have the thing it operates in frame: a call button needs lift doors, an intercom needs a door with somebody on the far side.
+- Most of the group is doing something *with* somebody, not each busy alone. Everyone occupied separately is a room of strangers.
 - Nobody enters or leaves a vehicle; the scene happens beside the car, not through it.
 - The car is a prop, never the hero.
 - The cast stands on the footpath; nobody leans through a door opening or puts their head inside the cabin.
