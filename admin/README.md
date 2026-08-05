@@ -48,6 +48,7 @@ npm run dev
 | `ADMIN_PASSWORD_HASH`   | scrypt hash — generate with a one-off `tsx` script using `hashPassword` from `src/lib/password.ts`. |
 | `SESSION_SECRET`        | 32+ random bytes (hex), signs the session cookie.                   |
 | `STUDIO_URL`            | Where the "Studio" nav link points.                                  |
+| `STUDIO_API_URL`        | Where the Prompts page calls Studio server-side. Falls back to `STUDIO_URL`. |
 
 **Why `SHOP_DATABASE_URL` and not `DATABASE_URL`:** on a shared dev machine
 with other projects, a generic env var name is a real collision risk — an
