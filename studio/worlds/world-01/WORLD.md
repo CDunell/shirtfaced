@@ -167,30 +167,17 @@ becomes a kerb. The open version of a location is nearly always the better
 photograph anyway — it has room for the group, for the background, and for
 the one still arriving.
 
-When you take the enclosure out, take its controls out with it. Anything a
-person operates must have the thing it operates in the frame. A lift call
-button needs lift doors. An entry intercom needs somebody on the other side
-of the door, and belongs on the street side of it — a person already inside
-the lobby pressing the buzzer to get in is nonsense, and it got past every
-gate because each part of it looks ordinary on its own. A handle needs a
-door. A pump needs a car.
+Take the enclosure's controls out with it. Anything a person operates needs
+the thing it operates in frame: a lift call button needs lift doors, an
+intercom belongs on the street side of a door and is pressed by somebody
+trying to get in. Where the object is not in shot, change the action rather
+than keep it, so nobody is miming at a panel.
 
-If the object it serves is not in shot, cut the action rather than the
-object: the person is doing something else, not miming at a panel.
-
-Foreground objects may partially obscure the frame, but the object has
-to be something that is actually there. A shoulder, a pole, a doorway,
-the tray of the ute in the shot. Not a part of some other vehicle
-hanging in the foreground with no car attached to it — a wing mirror
-floating at the edge of frame reads as a mistake, not as reportage,
-because a real photographer standing there would have been standing
-somewhere.
-
-Obstruct with something on the observer's side of the space, never with
-the near edge of the space being observed. A prompt that asked for a car's
-own window rubber in front of the lens came back shot from the passenger
-seat, despite saying in as many words that the photographer stood on the
-footpath.
+Foreground objects may partially obscure the frame, but the object has to be
+something that is actually there — a shoulder, a pole, a doorway, the tray
+of the ute in shot. Obstruct with something on the observer's side, never
+with the near edge of the space being observed: a car's own window rubber in
+front of the lens puts the camera in the cabin whatever the camera line says.
 
 The photograph should feel discovered rather than directed.
 
@@ -239,17 +226,13 @@ People interact with each other rather than the photographer.
 
 And they interact with each other rather than merely occupying the same
 place. Most of the group is doing something with somebody: passing food
-across, laughing at what the one beside them just said, two heads over
-one phone, wearing another's jumper.
+across, laughing at what the one beside them just said, wearing another's
+jumper. A frame where every person is busy alone is a room of strangers
+standing together, and it dies quietly, because each action looks natural
+on its own.
 
-A frame where every person is busy alone is a room of strangers who
-happen to be standing together. It is the most common way one of these
-photographs dies, and it dies quietly, because each individual action
-looks perfectly natural on its own.
-
-Some of them alone is right — tying a lace, checking the time, holding
-a door. A group all interacting at once is as staged as a group where
-nobody does.
+Some of them alone is right — tying a lace, holding a door. All of them
+interacting at once is as staged as none of them.
 
 ------------------------------------------------------------------------
 
@@ -732,6 +715,136 @@ Write in the voice of the seeded prompts.
   garment's colour and cut and stop. "A washed black hoodie", not "a plain blank
   washed black hoodie with no logos".
 - Density comes from background strangers and clutter, never from a bigger cast.
+
+------------------------------------------------------------------------
+
+# Locked Reference Prompt
+
+This is the prompt that produced the benchmark photograph. It worked first time,
+as most of the seeded prompts did. Write in this shape.
+
+Study what it does, not only what it says. One central event that the group
+reacts to. A consequence line following the action that caused it. Actions that
+name somebody else. Bare-word atmosphere. Negatives about the night. Background
+that keeps moving.
+
+> Photorealistic documentary photograph.
+>
+> Australia.
+>
+> Friday night.
+>
+> 11:18pm.
+>
+> Outside a late-night kebab shop after the pubs.
+>
+> Seven ordinary Australians in their mid-twenties to mid-thirties.
+>
+> Four men.
+>
+> Three women.
+>
+> Nobody is posing.
+>
+> Nobody notices the camera.
+>
+> Everyone is still running on the energy of the night.
+>
+> One bloke is attempting to eat an overloaded kebab that is structurally failing.
+>
+> Sauce is running down the paper.
+>
+> His mates are absolutely losing it.
+>
+> One woman is trying to steal a chip from someone else's snack pack.
+>
+> Another has her shoes in one hand and is walking barefoot on the footpath.
+>
+> One bloke is digging through his wallet while trying to pay.
+>
+> Another is already carrying everyone's drinks.
+>
+> A couple stand slightly apart sharing a quiet joke while the chaos happens
+> beside them.
+>
+> Nobody is drunk for comedy.
+>
+> Nobody is acting.
+>
+> Everyone simply looks like they've had a bloody good night.
+>
+> The atmosphere is warm.
+>
+> Safe.
+>
+> Funny.
+>
+> Comfortable.
+>
+> The kind of moment nobody planned but everyone remembers.
+>
+> The kebab shop glows with harsh fluorescent lighting spilling onto the footpath.
+>
+> Across the road, warm pub lights fade into the distance.
+>
+> Neon signs reflect across slightly wet concrete.
+>
+> Traffic continues behind them.
+>
+> A taxi pulls away.
+>
+> A rideshare is stopped with hazard lights flashing.
+>
+> Someone waits for the pedestrian crossing in the background.
+>
+> Everything feels completely ordinary.
+>
+> Everything feels unmistakably Australian.
+>
+> Photographed from across the street by another friend.
+>
+> 35mm documentary photography.
+>
+> 50mm lens.
+>
+> Kodak Portra 400.
+>
+> Available light only.
+>
+> Natural film grain.
+>
+> Slight motion blur from people moving.
+>
+> Slightly underexposed.
+>
+> No HDR.
+>
+> No cinematic colour grading.
+>
+> Imperfect framing.
+>
+> One friend is partially cropped by the edge of frame.
+>
+> A passing pedestrian briefly blocks part of the foreground.
+>
+> The photograph feels accidental rather than composed.
+>
+> It feels like somebody's favourite memory from a night out.
+>
+> One person wears a plain vintage-washed black heavyweight t-shirt with a clean
+> unobstructed chest.
+>
+> Another wears a plain black heavyweight hoodie.
+>
+> Another wears a plain black cap.
+>
+> Another has a plain black hoodie tied around their waist.
+>
+> The products should look naturally worn, never displayed.
+>
+> The photograph should be good enough that someone would post it on Instagram
+> even if everyone was wearing plain black clothing.
+
 
 ------------------------------------------------------------------------
 

@@ -157,31 +157,44 @@ into a clause about what somebody is holding.
 
 THE ACTION — the part that decides whether the photograph is alive
 
-The reliable failure is writing a cast list: one sentence per person, one human
-subject each, nobody appearing in anybody else's line, six people with six private
-props. That is a room of strangers who happen to be standing together, and it is
-what separates a generated prompt from a seeded one more than anything else.
+Read the Locked Reference Prompt in the canon before writing this. It is the prompt
+that produced the benchmark photograph, it worked first time, and it is a better
+instruction than anything written about it. What follows is only what to notice.
 
-Three things are required.
+The reliable failure is a cast list: one sentence per person, one human subject
+each, nobody appearing in anybody else's line, six people with six private props.
+A room of strangers who happen to be standing together.
 
-Shared objects and shared attention. Give the group things in common rather than one
-prop each: one story told to everybody, earbuds shared between two while the rest
-talk over the top, one bag of chips several hands are in, somebody wearing another
-friend's jumper. Name the other person. "Passing the chips to the mate who paid for
-them" is a group. "Eating chips" is a cast list.
+One central event, and the group reacting to it. This is the device. The reference
+does it in three consecutive lines:
 
-Time before the shutter. Actions carry a history and a cause. "Telling the second
-half of the story nobody let him finish earlier." "Wearing another friend's hoodie
-because the air has turned cold." "Laughing so hard she is nearly spilling her
-drink" — a reaction to something that already happened. Self-contained present tense
+    One bloke is attempting to eat an overloaded kebab that is structurally failing.
+    Sauce is running down the paper.
+    His mates are absolutely losing it.
+
+An action, then its consequence, then the group's reaction to it. Everything else in
+that prompt happens around those three lines. Give every scene one such event and
+let the rest of the cast orbit it.
+
+Actions that name somebody else. "Trying to steal a chip from someone else's snack
+pack." "Already carrying everyone's drinks." "A couple sharing a quiet joke while
+the chaos happens beside them." Each of those puts two parties in one line, or a
+person in relation to the group.
+
+Time before the shutter. Actions carry a history and a cause. "The story nobody let
+him finish earlier." "Because the air has turned cold." Self-contained present tense
 reads as arranged, because nothing led to it.
 
-Some of them alone. Tying a lace, holding a door, reading the time. All of them
-alone is the failure; all of them interacting at once is equally staged.
+Some of them alone. Barefoot with her shoes in one hand, digging through a wallet.
+All of them alone is the failure; all of them interacting at once is equally staged.
 
 Phones isolate. A phone turns a person inward and gives them something nobody else
 can see, so use at most one, and prefer two heads over one screen to two people on
 two phones.
+
+A collective line, once, before the individual actions: "Everyone is still running
+on the energy of the night." It makes the group one body before it becomes six
+people.
 
 
 WHAT NOBODY IS DOING

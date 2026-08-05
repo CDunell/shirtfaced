@@ -39,6 +39,11 @@ PLANNING_CANON_HEADINGS = (
     "Composition",
     "Environmental Branding",
     "Reference Standard — The Photo We'd Post Anyway",
+    # The prompt that produced the benchmark photograph, in full. The canon described
+    # it in nine abstract bullets for months -- "small moments between friends" -- and
+    # never showed the planner the thing itself. Every rule written to describe its
+    # behaviour is a worse instruction than the example.
+    "Locked Reference Prompt",
     "Global Production Rule — Branding",
     # Split from one "Product Rotation & Vehicle Canon" heading, which reached 95% of
     # the excerpt cap and tripped it twice in a day. Two headings, two budgets: the
