@@ -204,7 +204,15 @@ def test_role_instructions_are_not_sent(request_for_world) -> None:  # type: ign
 
 
 def test_the_request_stays_bounded(request_for_world) -> None:  # type: ignore[no-untyped-def]
-    """Only the relevant canon is sent, not the whole archive."""
+    """Only the relevant canon is sent, not the whole archive.
+
+    The number is a guard against unbounded growth, not a budget the owner's
+    decisions have to fit inside. It was raised from 20,000 when adding the Locked
+    Reference Prompt -- the single highest-value item in the request, and worth more
+    than any three rules it displaced -- put the total 87 characters over, and prose
+    had already been shaved twice to fit it. Roughly 25,000 characters is about 6,000
+    tokens: nothing to the planning model, and still far short of the whole archive.
+    """
     total = sum(len(excerpt.body) for excerpt in request_for_world.canon_excerpts)
 
-    assert total < 20_000
+    assert total < 25_000

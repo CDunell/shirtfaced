@@ -8,6 +8,7 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli import-world world-01
     python -m app.cli attempts world-01
     python -m app.cli discard-attempt <id>
+    python -m app.cli prompt world-01 [--shot W01-015] [--out prompt.txt]
 """
 
 from __future__ import annotations
@@ -15,6 +16,9 @@ from __future__ import annotations
 import argparse
 import sys
 from collections.abc import Sequence
+from pathlib import Path
+
+from sqlalchemy import select
 
 from app.adapters.markdown_store import MarkdownStore
 from app.config import get_settings
@@ -110,6 +114,72 @@ def _list_attempts(slug: str) -> int:
     return EXIT_OK
 
 
+def _write_prompt(slug: str, external_id: str | None, destination: str | None) -> int:
+    """Produce one production prompt and stop.
+
+    No image is generated, no attempt is recorded and the world is not locked. This
+    is for taking a prompt somewhere else to run: the application's job here is to
+    assemble the canon correctly and write the prompt the canon implies.
+    """
+    from app.adapters.factory import build_planning_client, planning_client_is_live
+    from app.adapters.markdown_store import WORLD_DOCUMENT
+    from app.services.prompt_planner import build_request, create_plan
+    from app.services.rotation import RotationState, apply_continuity, rotation_from_shots
+    from app.services.shot_selector import NoSelection, select_next_shot
+
+    settings = get_settings()
+    store = _store()
+
+    with get_session_factory()() as session:
+        world = session.execute(select(World).where(World.slug == slug)).scalar_one_or_none()
+        if world is None:
+            print(f"error: no world named {slug!r} has been imported.", file=sys.stderr)
+            return EXIT_FAILED
+
+        shots = sorted(world.shots, key=lambda item: item.sequence)
+        rotation: RotationState
+        if external_id:
+            found = next((item for item in shots if item.external_id == external_id), None)
+            if found is None:
+                print(f"error: {slug} has no shot {external_id!r}.", file=sys.stderr)
+                return EXIT_FAILED
+            # Asked for by name, so the selector's eligibility rules do not apply. The
+            # rotation state still comes from what has been approved.
+            shot, reason, rotation = found, f"{external_id} requested.", rotation_from_shots(shots)
+        else:
+            outcome = select_next_shot(world, shots)
+            if isinstance(outcome, NoSelection):
+                print(f"Nothing to plan: {outcome.reason}")
+                return EXIT_FAILED
+            shot, reason, rotation = outcome.shot, outcome.reason, outcome.rotation
+
+        documents = store.read_world_documents(slug)
+        request = build_request(
+            world_slug=slug,
+            world_name=world.name,
+            shot=shot,
+            world_text=documents[WORLD_DOCUMENT].text,
+            rotation=apply_continuity(rotation, documents["CONTINUITY.md"].text),
+            selection_reason=reason,
+        )
+        plan = create_plan(build_planning_client(settings), request).plan
+
+    if not planning_client_is_live(settings):
+        print("(the deterministic fake wrote this: OPENAI_API_KEY and", file=sys.stderr)
+        print(" OPENAI_TEXT_MODEL are not both set, so nothing was billed)", file=sys.stderr)
+
+    print(f"# {shot.external_id} — {shot.title}", file=sys.stderr)
+    print(f"# hero: {shot.hero_product}   camera: {shot.camera_position}", file=sys.stderr)
+    print(file=sys.stderr)
+
+    if destination:
+        Path(destination).write_text(plan.production_prompt + "\n", encoding="utf-8")
+        print(f"Written to {destination}", file=sys.stderr)
+    else:
+        print(plan.production_prompt)
+    return EXIT_OK
+
+
 def _discard_attempt(attempt_id: str) -> int:
     """Release a world blocked by an attempt awaiting a decision.
 
@@ -169,6 +239,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     discard.add_argument("attempt_id")
 
+    prompt = subcommands.add_parser(
+        "prompt",
+        help="Write one production prompt and stop. No image, no attempt, no lock.",
+    )
+    prompt.add_argument("slug")
+    prompt.add_argument("--shot", help="Shot to plan, such as W01-015. Defaults to the next one.")
+    prompt.add_argument("--out", help="Write to this file instead of standard output.")
+
     arguments = parser.parse_args(argv)
 
     try:
@@ -178,6 +256,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _validate_world(arguments.slug)
         if arguments.command == "import-world":
             return _import_world(arguments.slug)
+        if arguments.command == "prompt":
+            return _write_prompt(arguments.slug, arguments.shot, arguments.out)
         if arguments.command == "attempts":
             return _list_attempts(arguments.slug)
         if arguments.command == "discard-attempt":

@@ -56,11 +56,10 @@ Not intoxication as the joke.
 The humour comes from shared experiences and the confidence of being
 with good mates.
 
-The night has a clock. By the small hours and into sunrise these people
-have been up all night, and they should look it: tired but happy. Smudged
-make-up, flat hair, jumpers pulled on over what they went out in, someone
-half asleep in a chair. Not fresh, not styled, not eight hours rested.
-Tired is not miserable — the mood stays warm; the faces just show the
+The night has a clock. By the small hours and sunrise they have been up
+all night and should look it: tired but happy. Smudged make-up, flat
+hair, jumpers pulled over what they went out in. Never eight hours
+rested. Tired is not miserable — the warmth stays, the faces show the
 hours.
 
 ------------------------------------------------------------------------
