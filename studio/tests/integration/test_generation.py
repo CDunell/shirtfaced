@@ -6,6 +6,7 @@ the advisory lock, the partial unique index, the transitions, the stored files.
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -112,6 +113,35 @@ def test_the_prompt_and_plan_are_persisted(
     assert attempt.production_prompt
     assert attempt.prompt_plan_json is not None
     assert attempt.prompt_plan_json["hero_product"] == "Tote bag"
+
+
+def test_the_attempt_records_the_model_that_was_actually_called(
+    session: Session, world: World, worlds_root: Path, assets_root: Path
+) -> None:
+    """What ran, not what was asked for. These differ, and the difference cost money.
+
+    The real client fixes its model at construction and ignores the one on the
+    request. While the attempt recorded the requested model, three runs went into the
+    database reading gpt-image-1-mini for images billed as gpt-image-2 at full size
+    and quality -- and carrying is_draft, which also barred them from ever becoming
+    references.
+
+    The existing settings test cannot catch this: the fake echoes request.model back,
+    so the requested and actual models coincide. This client reports a different one,
+    which is what the real one does.
+    """
+
+    class DifferentModelClient(FakeImageGenerationClient):
+        def generate(self, request):  # type: ignore[no-untyped-def]
+            generated = super().generate(request)
+            return replace(generated, model="the-model-actually-called")
+
+    attempt = _generate(
+        session, world, worlds_root, assets_root, image_client=DifferentModelClient()
+    )
+
+    assert attempt.image_model == "the-model-actually-called"
+    assert attempt.image_model != SETTINGS.model
 
 
 def test_model_settings_are_recorded(

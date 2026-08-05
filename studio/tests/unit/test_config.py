@@ -124,3 +124,41 @@ def test_environment_variables_populate_settings(
 def test_invalid_values_are_rejected(field: str, value: object) -> None:
     with pytest.raises(ValidationError):
         _settings(**{field: value})
+
+
+def test_every_setting_is_read_by_application_code() -> None:
+    """A setting nothing reads is a lie in the environment file.
+
+    Three of these were live at once: REFERENCE_IMAGE_LIMIT and
+    OPENAI_IMAGE_DRAFT_MODEL were declared, documented and never passed by the route
+    that needed them, so every image was generated text-only at full price; and
+    REFERENCE_ACTIVE_LIMIT was shadowed by a module constant of the same value, so
+    changing it did nothing. Each was found by hand, months apart. This finds the
+    next one.
+    """
+    import re
+    from pathlib import Path
+
+    from app.config import Settings
+
+    root = Path(__file__).resolve().parents[2]
+    sources = " ".join(
+        path.read_text(encoding="utf-8", errors="ignore")
+        for path in (root / "app").rglob("*.py")
+        if path.name != "config.py"
+    )
+    config = (root / "app" / "config.py").read_text(encoding="utf-8")
+
+    unread = []
+    for name in Settings.model_fields:
+        # Some settings are exposed through a resolved property rather than directly.
+        via_property = re.search(rf"{re.escape(name)}_resolved", config) and re.search(
+            rf"{re.escape(name)}_resolved", sources
+        )
+        if not re.search(rf"\b{re.escape(name)}\b", sources) and not via_property:
+            unread.append(name)
+
+    assert not unread, (
+        f"These settings are declared but never read by app code: {unread}. "
+        "Either wire them in or delete them; a dead setting reads as configuration."
+    )

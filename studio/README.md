@@ -38,7 +38,8 @@ pip install -e ".[dev]"
 cp .env.example .env               # then set DATABASE_URL and DB_SSLMODE=disable
 alembic upgrade head
 python -m app.cli import-world world-01    # load the world files into PostgreSQL
-uvicorn app.main:app --reload
+python -m app          # honours APP_HOST, APP_PORT and DEBUG
+uvicorn app.main:app --reload   # or drive uvicorn directly
 ```
 
 World operations:

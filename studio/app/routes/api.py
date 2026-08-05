@@ -848,6 +848,10 @@ def _decide(
             ),
             asset_store=FilesystemAssetStore(settings.assets_root_resolved),
             git_enabled=settings.git_enabled,
+            # Without this the service falls back to its own module constant and
+            # REFERENCE_ACTIVE_LIMIT does nothing, which is how the reference limit
+            # and the draft model were both dead for weeks.
+            active_limit=settings.reference_active_limit,
             **fields,
         )
     except DecisionConflict as error:

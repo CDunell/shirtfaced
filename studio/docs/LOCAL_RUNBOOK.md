@@ -103,7 +103,8 @@ Apply migrations and run:
 
 ```bash
 alembic upgrade head
-uvicorn app.main:app --reload
+python -m app          # honours APP_HOST, APP_PORT and DEBUG
+uvicorn app.main:app --reload   # or drive uvicorn directly
 ```
 
 ## Production deployment shape
