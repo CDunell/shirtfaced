@@ -327,6 +327,25 @@ function postJson<T>(path: string, signal?: AbortSignal, body?: unknown): Promis
   return request<T>(path, "POST", signal, body);
 }
 
+export interface Prompts {
+  shot: Shot;
+  selection_reason: string;
+  image_prompt: string;
+  video_prompt: string;
+  live: boolean;
+}
+
+/**
+ * Write both prompts for a shot. Generates nothing and records nothing.
+ *
+ * Omit `shot` for the next eligible one. Naming a shot skips the selector's
+ * eligibility rules, so an approved shot can be planned again for a variant.
+ */
+export function writePrompts(slug: string, shot?: string, signal?: AbortSignal): Promise<Prompts> {
+  const query = shot ? `?shot=${encodeURIComponent(shot)}` : "";
+  return postJson<Prompts>(`/api/worlds/${encodeURIComponent(slug)}/prompts${query}`, signal);
+}
+
 /** Liveness only: this tells you the process is up, not that it is ready to work. */
 export function fetchHealth(signal?: AbortSignal): Promise<HealthResponse> {
   return getJson<HealthResponse>("/health", signal);

@@ -181,20 +181,23 @@ class PromptPlan(BaseModel):
 
     @field_validator("mood_words")
     @classmethod
-    def _require_single_words(cls, value: list[str]) -> list[str]:
-        """The block only reads as the seeds do if each entry is one bare word.
+    def _require_short_beats(cls, value: list[str]) -> list[str]:
+        """The block reads as a drumbeat, so each entry stays very short.
 
-        "Quietly hopeful about the night" is a sentence, and rendering it as a mood
-        line produces prose where the seeds produce a drumbeat.
+        Originally this demanded exactly one word, which threw away a whole plan --
+        and a paid planning call -- when the model returned "Still going". That is a
+        perfectly good mood line and the seeds are full of two-word beats. What has to
+        be refused is a sentence: "Quietly hopeful about the night" rendered on its own
+        line produces prose where the reference produces rhythm.
         """
         cleaned: list[str] = []
         for entry in value:
-            word = entry.strip().rstrip(".").strip()
-            if not word:
+            beat = entry.strip().rstrip(".").strip()
+            if not beat:
                 raise ValueError("mood words must not be blank")
-            if len(word.split()) != 1:
-                raise ValueError(f"{entry!r} is not a single word")
-            cleaned.append(word.capitalize())
+            if len(beat.split()) > 2 or len(beat) > 24:
+                raise ValueError(f"{entry!r} is a phrase, not a mood beat")
+            cleaned.append(beat[0].upper() + beat[1:])
         return cleaned
 
 

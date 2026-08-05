@@ -12,6 +12,11 @@ afterEach(() => {
 
 const noop = (): void => undefined;
 
+/** The shell opens on Prompts, so a dashboard assertion has to go there first. */
+async function showDashboard(): Promise<void> {
+  await userEvent.click(screen.getByRole("button", { name: "Dashboard" }));
+}
+
 describe("App", () => {
   it("renders the shell", async () => {
     stubApi();
@@ -19,6 +24,10 @@ describe("App", () => {
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
 
     expect(screen.getByText("Shirtfaced Studio")).toBeInTheDocument();
+    // Prompts is the default view: generation happens elsewhere, so writing a prompt
+    // is what this tool is opened for.
+    expect(screen.getByRole("heading", { name: "Prompts" })).toBeInTheDocument();
+    await showDashboard();
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText("Live")).toBeInTheDocument();
@@ -29,6 +38,7 @@ describe("App", () => {
     stubApi();
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
+    await showDashboard();
 
     await waitFor(() => {
       expect(screen.getByText("SHIRTFACED — WORLD 01")).toBeInTheDocument();
@@ -40,6 +50,7 @@ describe("App", () => {
     stubApi({ health: { status: "ok", version: "9.9.9" } });
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
+    await showDashboard();
 
     await waitFor(() => {
       expect(screen.getByText("version 9.9.9")).toBeInTheDocument();
@@ -53,6 +64,7 @@ describe("App", () => {
     );
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
+    await showDashboard();
 
     await waitFor(() => {
       expect(screen.getByText("Unreachable")).toBeInTheDocument();
@@ -74,6 +86,7 @@ describe("App", () => {
     const spy = stubApi();
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
+    await showDashboard();
     await waitFor(() => {
       expect(screen.getByText("Live")).toBeInTheDocument();
     });

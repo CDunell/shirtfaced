@@ -153,11 +153,20 @@ def test_the_mood_block_still_lands_without_a_camera_block() -> None:
     assert rendered.endswith("Hopeful.\nLoose.\nPossible.")
 
 
-def test_mood_words_must_be_bare_words() -> None:
-    """A sentence rendered as a mood line produces prose where the seeds drum."""
+def test_a_two_word_mood_beat_is_accepted() -> None:
+    """ "Still going" is a mood beat. Rejecting it threw away a paid planning call."""
+    plan = PromptPlan.model_validate(
+        {**VALID_PLAN_FIELDS, "mood_words": ["Warm", "Ridiculous", "Safe", "Still going"]}
+    )
+
+    assert plan.mood_words == ["Warm", "Ridiculous", "Safe", "Still going"]
+
+
+def test_a_sentence_is_not_a_mood_beat() -> None:
+    """Rendered on its own line it produces prose where the seeds produce rhythm."""
     with pytest.raises(ValidationError):
         PromptPlan.model_validate(
-            {**VALID_PLAN_FIELDS, "mood_words": ["Hopeful", "Quietly optimistic", "Loose"]}
+            {**VALID_PLAN_FIELDS, "mood_words": ["Hopeful", "Quietly optimistic about it", "Loose"]}
         )
 
 
