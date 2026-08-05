@@ -10,12 +10,15 @@ from __future__ import annotations
 import pytest
 
 from app.adapters.markdown_store import MarkdownStore
+from app.adapters.planning import FakePromptPlanningClient
 from app.config import PROJECT_ROOT
 from app.services.markdown_sections import section_map
 from app.services.prompt_planner import (
     MAX_EXCERPT_CHARACTERS,
     PLANNING_CANON_HEADINGS,
     build_request,
+    create_plan,
+    with_critical_block,
 )
 from app.services.rotation import RotationState
 from tests.unit.test_shot_selector import make_shot
@@ -97,6 +100,27 @@ def test_the_vehicle_canon_is_sent(request_for_world) -> None:  # type: ignore[n
     assert "getting in, getting out" in flattened
     # Colour, cab and age are deliberately open. Only the wrong body shapes are named.
     assert "cab configuration and age are open" in flattened
+
+
+def test_every_plan_carries_the_branding_block(request_for_world) -> None:  # type: ignore[no-untyped-def]
+    """The blank-garment rule is guaranteed, not requested.
+
+    Three consecutive live previews dropped it. Each time a newly required element was
+    added to the Prompt Construction Protocol another fell out to make room, and the
+    third prompt reached the image model with no branding instruction of any kind.
+    """
+    plan = create_plan(FakePromptPlanningClient(), request_for_world).plan
+
+    assert "CRITICAL." in plan.production_prompt
+    assert "No logos." in plan.production_prompt
+
+
+def test_the_branding_block_is_not_duplicated() -> None:
+    """A model that writes its own CRITICAL block must not get a second one."""
+    already = "A photograph.\nCRITICAL.\nEvery garment in frame is blank."
+
+    assert with_critical_block(already) == already
+    assert with_critical_block("A photograph.").count("CRITICAL") == 1
 
 
 def test_no_canon_section_is_truncated(request_for_world) -> None:  # type: ignore[no-untyped-def]

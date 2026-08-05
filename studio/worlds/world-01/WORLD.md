@@ -674,9 +674,11 @@ only for what it contains. Write in their voice.
   sentence about somebody's hands. Mood and story score lowest in every review
   to date, and a prompt written without this block has scored 3 and 2 for them
   every single time.
-- State the blank-garment and no-branding rule **once**, at the end, under
-  CRITICAL. Never per person. Repeating it in every wardrobe line dilutes it and
-  costs the length that description needs.
+- Do not write the blank-garment rule at all. The application appends the
+  CRITICAL block to every prompt, so it is guaranteed and does not need a line
+  of yours. Describe each garment's colour and cut and stop: "a washed black
+  hoodie", not "a plain blank washed black hoodie with no logos or labels".
+  Repeating blankness per person spends the length that description needs.
 - Do not name anyone. "One bloke." "A woman." "Another mate." Invented first
   names lengthen every action line and carry nothing an image model can use.
 - The closing line is required and names what the photograph would mean to

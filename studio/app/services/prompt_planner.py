@@ -47,6 +47,32 @@ PLANNING_CANON_HEADINGS = (
 
 logger = logging.getLogger(__name__)
 
+# Appended to every production prompt by the application, never requested from the
+# model.
+#
+# It was requested from the model, and three consecutive previews dropped it: each
+# time a newly required element was added to the protocol, this one fell out to make
+# room, and the third prompt reached the point of having no branding instruction of
+# any kind. Asking a model to reliably reproduce invariant text competes with the part
+# of the prompt that actually varies, and loses.
+#
+# So the blank-garment rule is no longer part of what gets composed. It is a suffix.
+BRANDING_CRITICAL_BLOCK = """CRITICAL.
+Every garment in frame is blank.
+No logos.
+No graphics.
+No printed text.
+No embroidery.
+No visible labels."""
+
+
+def with_critical_block(prompt: str) -> str:
+    """Guarantee the branding block, without duplicating one the model wrote."""
+    if "CRITICAL" in prompt.upper():
+        return prompt.rstrip()
+    return f"{prompt.rstrip()}\n{BRANDING_CRITICAL_BLOCK}"
+
+
 RECENT_CONTINUITY_LIMIT = 3
 RECENT_DRIFT_LIMIT = 3
 # Long canon sections are truncated so the request stays bounded.
@@ -130,10 +156,14 @@ def build_request(
 
 
 def create_plan(client: PromptPlanningClient, request: PromptPlanRequest) -> PlanOutcome:
-    """Ask for a plan and validate it against the brief."""
+    """Ask for a plan, validate it against the brief, and guarantee the branding block."""
     plan = client.create_plan(request)
     validate_plan(plan, request)
-    return PlanOutcome(plan=plan, request=request)
+    # After validation, so the model is still judged on what it actually wrote.
+    guaranteed = plan.model_copy(
+        update={"production_prompt": with_critical_block(plan.production_prompt)}
+    )
+    return PlanOutcome(plan=guaranteed, request=request)
 
 
 def validate_plan(plan: PromptPlan, request: PromptPlanRequest) -> None:
