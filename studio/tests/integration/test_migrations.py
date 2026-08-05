@@ -36,7 +36,8 @@ def test_timestamps_are_timezone_aware(engine: Engine) -> None:
             connection.execute(
                 text(
                     "SELECT column_name, data_type FROM information_schema.columns "
-                    "WHERE table_name = 'worlds' AND column_name IN "
+                    "WHERE table_schema = current_schema() "
+                    "AND table_name = 'worlds' AND column_name IN "
                     "('created_at', 'updated_at')"
                 )
             ).all()
@@ -53,7 +54,8 @@ def test_id_is_a_native_uuid_column(engine: Engine) -> None:
         data_type = connection.execute(
             text(
                 "SELECT data_type FROM information_schema.columns "
-                "WHERE table_name = 'worlds' AND column_name = 'id'"
+                "WHERE table_schema = current_schema() "
+                "AND table_name = 'worlds' AND column_name = 'id'"
             )
         ).scalar_one()
 

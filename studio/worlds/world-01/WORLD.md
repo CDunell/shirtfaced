@@ -371,6 +371,18 @@ modelling or deliberate display.
 
 ## Vehicle Canon
 
+The camera never sits inside a vehicle.
+
+A cabin is a small space with a fixed number of seats, and asking for a
+group inside one produces cars with no seats, people sitting in mid-air,
+and three across a front row built for two. It is not worth the trouble,
+and nothing in this world needs it.
+
+Where a car carries the story, it is photographed from outside: doors
+open, boot up, people leaning in, sitting on the tray, standing at the
+kerb, half in and half out. The transition between one place and the
+next reads better from the footpath than from the back seat.
+
 Where a ute appears it shall always be recognisably Australian.
 
 Preferred vehicle:

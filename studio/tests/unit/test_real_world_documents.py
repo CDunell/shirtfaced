@@ -46,14 +46,32 @@ def test_the_shotlist_statuses_match_the_document(world) -> None:  # type: ignor
     assert len(world.planned_shots) == 10
 
 
-def test_the_next_planned_shot_is_the_car_interior(world) -> None:  # type: ignore[no-untyped-def]
-    """Matches the Next Prompt Brief at the foot of CONTINUITY.md."""
+def test_the_next_planned_shot_is_at_the_car(world) -> None:  # type: ignore[no-untyped-def]
+    """Matches the Next Prompt Brief at the foot of CONTINUITY.md.
+
+    Photographed from outside. Vehicle interiors are out of canon: a cabin seats a
+    fixed number of people, and asking for a group inside one produced cars with no
+    seats and three abreast in a front row built for two.
+    """
     upcoming = world.planned_shots[0]
 
     assert upcoming.external_id == "W01-011"
-    assert upcoming.title == "Car interior transition"
+    assert upcoming.title == "Piling into the car"
     assert upcoming.hero_product == "Tote bag"
-    assert upcoming.camera_position == "Rear seat"
+    assert upcoming.camera_position == "Beside open doors"
+
+
+def test_no_camera_position_is_inside_a_vehicle(world) -> None:  # type: ignore[no-untyped-def]
+    """The rule, not just the one shot that broke it."""
+    inside_a_vehicle = {"rear seat", "front seat", "driver's seat", "passenger seat", "in the car"}
+
+    offenders = [
+        shot.external_id
+        for shot in world.shots
+        if (shot.camera_position or "").strip().lower() in inside_a_vehicle
+    ]
+
+    assert not offenders, f"These shots put the camera inside a vehicle: {offenders}"
 
 
 def test_hero_products_and_cameras_are_read(world) -> None:  # type: ignore[no-untyped-def]

@@ -92,7 +92,8 @@ def test_every_database_enum_value_exists_in_python(engine: Engine) -> None:
                 columns = connection.execute(
                     text(
                         "SELECT c.table_name, c.column_name FROM information_schema.columns c "
-                        "WHERE c.udt_name = :name AND c.table_schema = 'public'"
+                        "WHERE c.udt_name = :name "
+                        "AND c.table_schema = current_schema()"
                     ),
                     {"name": type_name},
                 ).all()

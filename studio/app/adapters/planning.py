@@ -142,13 +142,9 @@ Rules you must not break:
 - Every person is supported by something real. Nobody sits in mid-air, and nobody
   shares a seat. If a space cannot hold the people described, the people are wrong,
   not the space.
-- Inside a vehicle, give every person a named seat as you write them: "the driver,
-  in the right-hand driver's seat", "the front passenger, in the left front seat",
-  "the rear-left passenger". A car's front row holds exactly two people. Australian
-  cars are right-hand drive, so the driver sits on the right.
-  Do not describe the interior as intact or complete. Stating that structure exists
-  puts the words in the photograph and constrains nothing; assigning each person a
-  seat is what makes the layout come out right.
+- The camera is never inside a vehicle, whatever the camera position says. Where a
+  car carries the scene, photograph it from outside: doors open, boot up, people
+  leaning in, sitting on the tray, standing at the kerb, half in and half out.
 - Use Australian English.
 
 WRITING THE PRODUCTION PROMPT
@@ -170,11 +166,8 @@ Cover these, in this order:
    spaces — a forecourt, a street, a beer garden, a kitchen — carry six to eight
    comfortably, and four in one of those reads as arranged.
 
-   A vehicle interior is the opposite problem. A cabin seats five: two in front,
-   three across the back. Ask for more bodies than that and the seats vanish to
-   make room for them. So inside a car, count the seats first, put no more than
-   that many people inside, and move the rest outside to the open doors, the kerb
-   or the boot, where they still read as part of the group.
+   Where a car is in the scene the group is around it rather than in it, so the
+   forecourt or the kerb sets the number, not the cabin.
 4. "Nobody is posing. Nobody acknowledges the camera."
 5. One line per person, each doing a specific ordinary thing, none of it about the
    camera and none of it about the product. Someone washing a windscreen that
