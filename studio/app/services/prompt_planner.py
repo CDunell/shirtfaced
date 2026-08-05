@@ -38,7 +38,7 @@ PLANNING_CANON_HEADINGS = (
     "Composition",
     "Environmental Branding",
     "Reference Standard — The Photo We'd Post Anyway",
-    "Global Production Rule — No Visible Branding",
+    "Global Production Rule — Branding",
     "Product Rotation & Vehicle Canon",
     "Prompt Construction Protocol",
     "Success Test",

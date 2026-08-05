@@ -62,8 +62,20 @@ def _flattened(request) -> str:  # type: ignore[no-untyped-def]
 
 
 def test_the_branding_rules_are_sent(request_for_world) -> None:  # type: ignore[no-untyped-def]
-    """The most frequently broken rule in the rejected drift."""
-    assert "no visible third-party branding" in _flattened(request_for_world)
+    """The most frequently broken rule in the rejected drift.
+
+    Both halves must travel. Sending only the apparel ban produces a sanitised
+    world; sending only the hero test lets a competitor's logo onto a garment.
+    """
+    flattened = _flattened(request_for_world)
+
+    # One: apparel, banned everywhere, no background exemption.
+    assert "No logos" in flattened
+    assert "no background exemption for apparel" in flattened.lower()
+
+    # Two: everything else may be real, so long as it stays background.
+    assert "background filler" in flattened
+    assert "Never the reason the frame exists" in flattened
 
 
 def test_the_vehicle_canon_is_sent(request_for_world) -> None:  # type: ignore[no-untyped-def]

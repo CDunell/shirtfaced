@@ -1,8 +1,8 @@
 # Seed reference set — World 01
 
 Imported from `BigNight.zip` as a one-off seed. The archive held 42 files, which
-were 21 unique images each stored twice under two names; 4 were rejected for
-third-party branding, leaving these 17.
+were 21 unique images each stored twice under two names. One was rejected,
+leaving these 20.
 
 These are **generations, not photographs** — every one is 1536x1024, exactly
 gpt-image-1's landscape output. They came from an earlier workflow outside this
@@ -31,12 +31,22 @@ six-friends Locked Reference ever turns up, it outranks all of them.
 
 ## Rejected
 
-Canon: "No readable third-party branding or commercial logos may appear anywhere
-in the image. If any third-party branding appears, the image has failed the brief."
+Canon asks two questions, in order: do we sell it, and is it the hero. Real
+branding on things Shirtfaced does not sell is welcome as background filler.
+Apparel branding is banned anywhere in frame, with no background exemption.
 
 | source | reason |
 | --- | --- |
-| `1833606e-f319-4970-bee6-ba0217325ed4.png` | McDonald's arch on the building |
-| `212a7da3-8926-42ff-861a-29a7c488663e.png` | McDonald's arches |
-| `5c26d305-2d44-49ba-97f4-d0b60f1e8531.png` | 'Rhythm' print on a white tee, and a Smith's chips packet |
-| `611fcc84-dfc3-48a4-a02b-6455fda66755.png` | Mobil and Synergy servo signage |
+| `5c26d305-2d44-49ba-97f4-d0b60f1e8531.png` | "Rhythm" printed across a worn tee. Rhythm is an apparel brand, so this fails test One wherever in the frame it sits. The Smith's packet in the same image is fine. |
+
+## Admitted on review
+
+Three images were held back under the original absolute ban and admitted when
+canon was revised. All three are servo scenes whose signage is background
+scenery for a category Shirtfaced does not sell.
+
+| file | source | scene |
+| --- | --- | --- |
+| seed-18.png | `1833606e-f319-4970-bee6-ba0217325ed4.png` | Servo forecourt, marked signage, group by the car |
+| seed-19.png | `212a7da3-8926-42ff-861a-29a7c488663e.png` | Servo carpark, group at the open car, marked signage |
+| seed-20.png | `611fcc84-dfc3-48a4-a02b-6455fda66755.png` | Servo forecourt, price board, trolley and snacks |

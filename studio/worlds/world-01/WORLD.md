@@ -282,14 +282,20 @@ It defines the tone for the entire collection:
 
 ------------------------------------------------------------------------
 
-# Global Production Rule — No Visible Branding
+# Global Production Rule — Branding
 
-Every generated lifestyle photograph shall contain no visible third-party
-branding.
+These are everyday people doing everyday things. They do not live in a
+sanitised world, and a night out where every sign is blank and every packet is
+unmarked reads as a set, not as a memory.
 
-All clothing must be completely blank.
+So the test is not whether branding is visible. It is two questions, in order.
 
-Every t-shirt, hoodie, cap, overshirt, jacket and tote bag shall contain:
+## One — Do We Sell It?
+
+If Shirtfaced makes it, no other brand's version of it appears anywhere in
+frame.
+
+Every t-shirt, hoodie, cap, overshirt, jacket and tote bag carries:
 
 - No logos
 - No graphics
@@ -298,36 +304,44 @@ Every t-shirt, hoodie, cap, overshirt, jacket and tote bag shall contain:
 - No visible labels
 - No recognisable brand marks
 
-All consumables and packaging must also be generic, including:
+This holds whether the garment is worn, carried, folded on a seat, or printed
+on a poster in the background. A competitor's tee beside a blank one is the
+single image that costs us, and it costs us wherever in the frame it sits.
 
-- Drink cans
-- Bottles
-- Chip packets
-- Pizza boxes
-- Takeaway bags
-- Coffee cups
-- Food wrappers
-- Convenience-store packaging
+There is no background exemption for apparel. Blank, always.
 
-No readable third-party branding or commercial logos may appear anywhere in the
-image.
+## Two — Is It The Hero?
 
-If any third-party branding appears, the image has failed the brief.
+Everything we do not sell may carry its real branding, as long as it is
+background filler.
 
-## Shirtfaced Is The Exception
+Servo price boards, shopfronts, trams and buses, street signage, food
+packaging, drink cans, delivery bags, till receipts — the ordinary marked
+clutter of a Friday night is welcome, because its absence is what makes a
+photograph look staged.
 
-This rule bans other people's brands. It does not ban Shirtfaced.
+It stays background. That means:
+
+- Never centred.
+- Never the reason the frame exists.
+- Never held up, presented or displayed.
+- Never so legible or so lit that the eye goes to it first.
+
+A servo sign across wet asphalt is scenery. The same sign filling a third of
+the frame is an advertisement for somebody else.
+
+## Shirtfaced Is Still The Exception
+
+Shirtfaced's own marks are not bound by the hero test, because it is our
+photograph.
 
 The environmental easter eggs described under Environmental Branding are
 permitted: a neon slogan in a pub, a faded esky sticker, a coaster, a window
 decal, a weathered poster, street art, a hand stamp.
 
-They must remain incidental scenery. They are never the subject of the
-photograph and never read as an advertisement.
+They must still remain incidental scenery rather than an advertisement.
 
-The blank-garment rule above is not relaxed by this exception. Every t-shirt,
-hoodie, cap, overshirt, jacket and tote bag worn or carried in frame stays
-completely blank, and all consumables and packaging stay generic.
+The blank-garment rule under **One** is not relaxed by anything here.
 
 
 ------------------------------------------------------------------------

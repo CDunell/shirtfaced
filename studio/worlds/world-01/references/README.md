@@ -41,11 +41,15 @@ target that this pipeline never writes to, and only a human adds to.
 
 ## Branding
 
-Canon is absolute here: "No readable third-party branding or commercial logos
-may appear anywhere in the image. If any third-party branding appears, the image
-has failed the brief."
+Canon asks two questions, in order.
 
-Four of the 21 seed candidates were rejected on that rule alone. Anything added
-to `locked/` gets the same check first — a reference teaches whatever it shows,
-so one McDonald's arch in the anchor set becomes a McDonald's arch in the
-output.
+**Do we sell it?** Apparel branding is banned anywhere in frame — worn, carried,
+folded on a seat, or on a poster behind. There is no background exemption.
+
+**Is it the hero?** Everything else may carry its real branding as background
+filler. Servo boards, shopfronts, trams, packaging: the ordinary marked clutter
+of a night out, because its absence is what makes a photograph look staged.
+
+Anything added to `locked/` gets that check first. A reference teaches whatever
+it shows, so a logo that dominates the anchor set will dominate the output —
+which is the hero test doing its work, not a separate rule.
