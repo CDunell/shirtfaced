@@ -655,6 +655,31 @@ Each prompt shall nominate:
 - One documentary imperfection.
 - One emotional reason the night is continuing.
 
+## Form
+
+The seeded reference prompts are the model for **how** a prompt is written, not
+only for what it contains. Write in their voice.
+
+- One short declarative per line. In the seeded set the median line is five
+  words and the mean under seven; lines over twenty-five words are effectively
+  absent. Long compound sentences are the single clearest difference between a
+  generated prompt and a seeded one.
+- Sentences hammer rather than describe. "Nobody is posing." stands on its own
+  line. It is not folded into a clause about what somebody is holding.
+- State mood as bare words on their own lines — Peaceful. Hopeful. Content. —
+  rather than as an adjective inside an action. Mood and story are the two
+  dimensions that score lowest, and this is the device the seeds use for them.
+- State the blank-garment and no-branding rule **once**, at the end, under
+  CRITICAL. Never per person. Repeating it in every wardrobe line dilutes it and
+  costs the length that description needs.
+- Do not name anyone. "One bloke." "A woman." "Another mate." Invented first
+  names lengthen every action line and carry nothing an image model can use.
+- Close on what the photograph would mean to somebody in it.
+
+Density comes from background strangers, clutter and the far side of the street,
+never from a bigger cast. Six people already crowd a frame; the seeded prompts
+get their life from what is happening behind and around them.
+
 ------------------------------------------------------------------------
 
 # Success Test
