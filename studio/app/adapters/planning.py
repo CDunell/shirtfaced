@@ -139,10 +139,16 @@ Rules you must not break:
 - Everything the brand does not sell may carry real branding, as background only.
   Servo boards, shopfronts, packaging, transport. Never centred, never the reason
   the frame exists, never held up or displayed.
-- Physical structure stays intact and correctly built. Seats, seatbelts, pillars,
-  doors, mirrors and controls are present, whole and in the right places, and every
-  person is supported by something real. Nobody sits in mid-air. If a space cannot
-  hold the people described, the people are wrong, not the space.
+- Every person is supported by something real. Nobody sits in mid-air, and nobody
+  shares a seat. If a space cannot hold the people described, the people are wrong,
+  not the space.
+- Inside a vehicle, give every person a named seat as you write them: "the driver,
+  in the right-hand driver's seat", "the front passenger, in the left front seat",
+  "the rear-left passenger". A car's front row holds exactly two people. Australian
+  cars are right-hand drive, so the driver sits on the right.
+  Do not describe the interior as intact or complete. Stating that structure exists
+  puts the words in the photograph and constrains nothing; assigning each person a
+  seat is what makes the layout come out right.
 - Use Australian English.
 
 WRITING THE PRODUCTION PROMPT
@@ -162,11 +168,13 @@ Cover these, in this order:
 
    The number is whatever the location can physically hold, and no more. Open
    spaces — a forecourt, a street, a beer garden, a kitchen — carry six to eight
-   comfortably, and four in one of those reads as arranged. A vehicle interior is
-   the opposite problem: a cabin has a fixed number of seats, and asking for more
-   people than it seats makes the seats disappear to make room for the bodies.
-   Inside a car, the principals fit the seats that exist, everyone else is outside
-   the open doors or the boot, and the seats stay in the photograph.
+   comfortably, and four in one of those reads as arranged.
+
+   A vehicle interior is the opposite problem. A cabin seats five: two in front,
+   three across the back. Ask for more bodies than that and the seats vanish to
+   make room for them. So inside a car, count the seats first, put no more than
+   that many people inside, and move the rest outside to the open doors, the kerb
+   or the boot, where they still read as part of the group.
 4. "Nobody is posing. Nobody acknowledges the camera."
 5. One line per person, each doing a specific ordinary thing, none of it about the
    camera and none of it about the product. Someone washing a windscreen that
