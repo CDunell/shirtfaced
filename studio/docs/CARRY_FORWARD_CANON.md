@@ -82,6 +82,25 @@ everything black by default.
 
 ---
 
+## Physical correctness is checked by the owner, not by the reviewer
+
+Carry this to every world, and do not let a green review talk you out of looking.
+
+The automated reviewer does not verify that what it is looking at could exist. This
+was tested rather than assumed: a frame containing an orphaned car door — a panel and
+a window frame with no vehicle behind them, at the wrong scale, at footpath level —
+was passed as structurally sound by both `gpt-4o-mini` and `gpt-5.5`, the stronger of
+the two volunteering that "the vehicle and parking meter read as physically coherent"
+about a frame with no vehicle in it.
+
+There is a `structural_plausibility` gate. It is advisory. `PASS` means nothing was
+noticed, not that anything was checked.
+
+So the owner looks at every frame for structure before anything else: is everything
+present, is everyone supported, do the counts add up. Zoom in. The failures of this
+kind are usually in a corner, behind a person, or below the waistline of the frame,
+because that is where the model puts what it could not resolve.
+
 ## Two traps worth carrying forward
 
 **A rule only one document agrees with is not in force.** World 01 banned vehicle

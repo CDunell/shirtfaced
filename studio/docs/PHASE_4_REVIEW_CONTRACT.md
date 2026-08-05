@@ -130,6 +130,23 @@ The other nine gates all judge taste and intent. A frame can be beautiful, docum
 
 Codes: `STRUCTURE_MISSING_ELEMENT`, `STRUCTURE_UNSUPPORTED_BODY`, `STRUCTURE_IMPOSSIBLE_SEATING`, `STRUCTURE_GEOMETRY_CONFLICT`, `STRUCTURE_ANATOMY`, `STRUCTURE_REFLECTION_CONFLICT`.
 
+#### This gate does not work yet, and physical correctness is human-checked
+
+Measured, not assumed. A draft of W01-011 contained an orphaned car door — a red door panel and a window frame with no vehicle behind them, at the wrong scale, sitting at footpath level with a woman inside it. Both configured review models were asked to judge that frame against this gate:
+
+| Model | `structurally_sound` | Evidence |
+|---|---|---|
+| `gpt-4o-mini` | `true` | "All elements in the photograph appear to exist as part of the scene" |
+| `gpt-5.5` | `true` (confidence 0.83) | "the vehicle and parking meter read as physically coherent" |
+
+The stronger model was not better. It asserted the vehicle was coherent, in a frame containing no vehicle. So the earlier hypothesis — that the rubric was the constraint and a more capable reviewer would apply it — is wrong. Neither tier performs the check.
+
+**Therefore: physical correctness is a human responsibility.** The owner checks structure; the reviewer does not. A `structural_plausibility: PASS` is not evidence that anything was verified, and must never be read as clearance.
+
+The gate is kept anyway, for three reasons: it occasionally fires on gross cases, it gives structural findings somewhere to be recorded when a human does spot one, and its presence makes the omission visible rather than silent — which is what went wrong when there was no such gate at all.
+
+Revisit if a materially better vision model becomes available. The test is cheap: re-review a stored attempt, generate nothing.
+
 ## 6. Material failure rules
 
 Recommend rejection when any clearly evidenced foundational failure occurs:
