@@ -25,6 +25,7 @@ VALID_PLAN_FIELDS = {
     "documentary_imperfection": "The door frame crops the edge.",
     "australian_authenticity_anchors": ["Suburban Australian street"],
     "negative_constraints": ["No visible branding"],
+    "mood_words": ["Hopeful", "Loose", "Possible"],
     "selection_rationale": "Next planned shot.",
     "production_prompt": "Documentary 35mm photograph of friends reorganising a car.",
 }

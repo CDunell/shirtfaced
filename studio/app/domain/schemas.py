@@ -139,6 +139,11 @@ class PromptPlan(BaseModel):
     documentary_imperfection: str = Field(min_length=1)
     australian_authenticity_anchors: list[str] = Field(min_length=1)
     negative_constraints: list[str] = Field(min_length=1)
+    # Three or four bare words that carry the mood, rendered into the prompt as their
+    # own block. A field rather than a prose instruction because asking the planner to
+    # write the block produced it in three prompts out of five, including once when it
+    # was explicitly required. The schema is the only thing the model cannot skip.
+    mood_words: list[str] = Field(min_length=3, max_length=4)
     selection_rationale: str = Field(min_length=1)
     production_prompt: str = Field(min_length=1)
 
@@ -163,6 +168,24 @@ class PromptPlan(BaseModel):
         cleaned = [entry.strip() for entry in value if entry.strip()]
         if not cleaned:
             raise ValueError("must contain at least one non-blank entry")
+        return cleaned
+
+    @field_validator("mood_words")
+    @classmethod
+    def _require_single_words(cls, value: list[str]) -> list[str]:
+        """The block only reads as the seeds do if each entry is one bare word.
+
+        "Quietly hopeful about the night" is a sentence, and rendering it as a mood
+        line produces prose where the seeds produce a drumbeat.
+        """
+        cleaned: list[str] = []
+        for entry in value:
+            word = entry.strip().rstrip(".").strip()
+            if not word:
+                raise ValueError("mood words must not be blank")
+            if len(word.split()) != 1:
+                raise ValueError(f"{entry!r} is not a single word")
+            cleaned.append(word.capitalize())
         return cleaned
 
 

@@ -80,6 +80,7 @@ class FakePromptPlanningClient:
                 "No studio lighting",
                 "No posing or acknowledgement of the camera",
             ],
+            mood_words=["Hopeful", "Loose", "Possible"],
             selection_rationale=(
                 request.selection_reason or f"{shot.external_id} is the next planned shot."
             ),
@@ -107,6 +108,7 @@ PROMPT_PLAN_JSON_SCHEMA: dict[str, Any] = {
         "documentary_imperfection",
         "australian_authenticity_anchors",
         "negative_constraints",
+        "mood_words",
         "selection_rationale",
         "production_prompt",
     ],
@@ -120,6 +122,12 @@ PROMPT_PLAN_JSON_SCHEMA: dict[str, Any] = {
         "documentary_imperfection": {"type": "string"},
         "australian_authenticity_anchors": {"type": "array", "items": {"type": "string"}},
         "negative_constraints": {"type": "array", "items": {"type": "string"}},
+        "mood_words": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 3,
+            "maxItems": 4,
+        },
         "selection_rationale": {"type": "string"},
         "production_prompt": {"type": "string"},
     },
@@ -142,9 +150,13 @@ Rules you must not break:
 - Every person is supported by something real. Nobody sits in mid-air, and nobody
   shares a seat. If a space cannot hold the people described, the people are wrong,
   not the space.
-- The camera is never inside a vehicle, whatever the camera position says. Where a
-  car carries the scene, photograph it from outside: doors open, boot up, people
-  leaning in, sitting on the tray, standing at the kerb, half in and half out.
+- The camera is never inside a vehicle, whatever the camera position says, and
+  nobody enters or leaves one. No climbing in, no half in and half out, no leaning
+  through a door opening, nobody with their head inside the cabin. Interacting with
+  a car is fine; using it as the mechanism of the scene is not.
+- A passenger already seated is allowed, and an exchange through an open window is a
+  good frame. Whoever is sitting in the car faces the windscreen, with the head and
+  at most one shoulder turned to the window, never squared to the door.
 - Use Australian English.
 
 WRITING THE PRODUCTION PROMPT
@@ -175,28 +187,43 @@ Cover these, in this order:
    so hard they have to stop walking. This is the section that decides whether the
    photograph is alive.
 6. "Nobody is rushing. Nobody looks like a model. Nobody is performing."
-7. The light, itemised one source per line, all of it practical and available.
-8. The clutter: what is on the bench, in the boot, on the ground. Then background
+7. The mood block: the words you return in mood_words, each alone on its own line
+   with a full stop. Peaceful. Hopeful. Content. Bare words, never an adjective
+   buried in a sentence about somebody's hands. This is the device the reference
+   set uses to carry mood and story, and a prompt without it reads as a list of
+   actions.
+8. The light, itemised one source per line, all of it practical and available.
+9. The clutter: what is on the bench, in the boot, on the ground. Then background
    life — strangers, passing cars, someone out of focus in a doorway. An empty
    background is the clearest sign of a set.
 
    This is where a crowded frame comes from. Density is people who are not your
    cast, and objects nobody placed. It is never manufactured by adding principals
    to a space that cannot hold them.
-9. "Everything feels completely ordinary." "Everything feels unmistakably
-   Australian."
-10. Who took it and from where, as a person: "Photographed from across the forecourt
+10. "Everything feels completely ordinary." "Everything feels unmistakably
+    Australian."
+11. Who took it and from where, as a person: "Photographed from across the forecourt
     by another friend waiting beside their own car."
-11. The camera block, one per line: 35mm documentary photography. 50mm lens. Kodak
+12. The camera block, one per line: 35mm documentary photography. 50mm lens. Kodak
     Portra 400. Available light only. Natural film grain. No HDR. No cinematic
     colour grading. Slight motion blur. Slightly underexposed. Imperfect framing.
-12. A named crop and a named obstruction: which person the edge cuts, and what sits
-    in front of the lens.
-13. "The photograph feels accidental rather than composed."
-14. The garments, one line each, all plain and blank, the hero product among them
-    and never presented.
-15. "The photograph should be good enough that someone would post it on Instagram
+13. A named crop and a named obstruction: which person the edge cuts, and what sits
+    in front of the lens. The obstruction belongs to the scene — a pole, a shoulder,
+    a doorway. Never the near vehicle's own window rubber, door frame, pillar or
+    mirror, which puts the lens inside the cabin however the camera line reads.
+14. "The photograph feels accidental rather than composed."
+15. The garments, one line each, giving colour and cut only. "A washed black
+    hoodie." "A cream crop under an open overshirt." Do not write that a garment is
+    plain, blank, unbranded or without logos: the application appends the blank-garment
+    rule to every prompt, and repeating it per person spends the length description
+    needs. The hero product is among them and is never presented.
+16. The closing line: what this photograph would mean to somebody in it. End on a
+    person, not a specification. "The photograph somebody keeps because it was the
+    night everything still felt possible."
+17. "The photograph should be good enough that someone would post it on Instagram
     even if everyone was wearing plain black clothing."
+
+Do not write a CRITICAL block. The application appends one to every prompt.
 
 No HDR and no cinematic colour grading are not stylistic preferences. Warm, even,
 flattering light is the single most common failure, and it has to be refused

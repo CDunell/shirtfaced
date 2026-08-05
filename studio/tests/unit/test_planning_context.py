@@ -8,10 +8,12 @@ real document.
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from app.adapters.markdown_store import MarkdownStore
 from app.adapters.planning import FakePromptPlanningClient
 from app.config import PROJECT_ROOT
+from app.domain.schemas import PromptPlan
 from app.services.markdown_sections import section_map
 from app.services.prompt_planner import (
     MAX_EXCERPT_CHARACTERS,
@@ -19,8 +21,10 @@ from app.services.prompt_planner import (
     build_request,
     create_plan,
     with_critical_block,
+    with_mood_block,
 )
 from app.services.rotation import RotationState
+from tests.unit.test_prompt_planner import VALID_PLAN_FIELDS
 from tests.unit.test_shot_selector import make_shot
 
 WORLDS_ROOT = PROJECT_ROOT / "worlds"
@@ -113,6 +117,48 @@ def test_every_plan_carries_the_branding_block(request_for_world) -> None:  # ty
 
     assert "CRITICAL." in plan.production_prompt
     assert "No logos." in plan.production_prompt
+
+
+def test_the_mood_block_is_rendered_before_the_camera_block() -> None:
+    """mood_words is a schema field, so the words always exist; this places them.
+
+    Requesting the block in prose produced it in three prompts out of five, once
+    failing while explicitly mandatory. The seeds put mood after the action and
+    before the technical specification, so the camera line is the anchor.
+    """
+    prompt = "One bloke laughs.\n35mm documentary photography.\n50mm lens."
+
+    rendered = with_mood_block(prompt, ["Hopeful", "Loose", "Possible"])
+
+    assert rendered.splitlines() == [
+        "One bloke laughs.",
+        "Hopeful.",
+        "Loose.",
+        "Possible.",
+        "35mm documentary photography.",
+        "50mm lens.",
+    ]
+
+
+def test_a_mood_block_the_model_already_wrote_is_left_alone() -> None:
+    prompt = "One bloke laughs.\nHopeful.\nLoose.\nPossible.\n35mm documentary photography."
+
+    assert with_mood_block(prompt, ["Quiet", "Warm", "Open"]) == prompt
+
+
+def test_the_mood_block_still_lands_without_a_camera_block() -> None:
+    """It goes in at the end rather than being silently dropped."""
+    rendered = with_mood_block("One bloke laughs.", ["Hopeful", "Loose", "Possible"])
+
+    assert rendered.endswith("Hopeful.\nLoose.\nPossible.")
+
+
+def test_mood_words_must_be_bare_words() -> None:
+    """A sentence rendered as a mood line produces prose where the seeds drum."""
+    with pytest.raises(ValidationError):
+        PromptPlan.model_validate(
+            {**VALID_PLAN_FIELDS, "mood_words": ["Hopeful", "Quietly optimistic", "Loose"]}
+        )
 
 
 def test_the_branding_block_is_not_duplicated() -> None:

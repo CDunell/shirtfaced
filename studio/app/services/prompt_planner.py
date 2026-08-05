@@ -73,6 +73,47 @@ def with_critical_block(prompt: str) -> str:
     return f"{prompt.rstrip()}\n{BRANDING_CRITICAL_BLOCK}"
 
 
+# The camera block opens with this line in every prompt the protocol produces. It is
+# the anchor for inserting the mood block, because the seeds place mood after the
+# action and before the technical specification.
+CAMERA_BLOCK_MARKER = "35mm documentary photography."
+
+
+def _has_mood_block(prompt: str) -> bool:
+    """Three or more consecutive bare single-word lines, which is what the block is."""
+    run = 0
+    for line in prompt.splitlines():
+        stripped = line.strip()
+        bare = stripped.rstrip(".")
+        if stripped.endswith(".") and bare and len(bare.split()) == 1 and bare[0].isupper():
+            run += 1
+            if run >= 3:
+                return True
+        else:
+            run = 0
+    return False
+
+
+def with_mood_block(prompt: str, mood_words: list[str]) -> str:
+    """Guarantee the mood block, placed before the camera specification.
+
+    Requesting it in prose produced it in three prompts out of five, once failing
+    while explicitly mandatory. ``mood_words`` is a schema field the model cannot
+    skip, so the words always exist; this puts them in the prompt.
+    """
+    if not mood_words or _has_mood_block(prompt):
+        return prompt
+
+    block = "\n".join(f"{word.rstrip('.')}." for word in mood_words)
+    lines = prompt.splitlines()
+    for index, line in enumerate(lines):
+        if line.strip().startswith(CAMERA_BLOCK_MARKER):
+            return "\n".join([*lines[:index], block, *lines[index:]])
+
+    # No camera block to anchor to, so the mood still gets in rather than being lost.
+    return f"{prompt.rstrip()}\n{block}"
+
+
 RECENT_CONTINUITY_LIMIT = 3
 RECENT_DRIFT_LIMIT = 3
 # Long canon sections are truncated so the request stays bounded.
@@ -160,9 +201,8 @@ def create_plan(client: PromptPlanningClient, request: PromptPlanRequest) -> Pla
     plan = client.create_plan(request)
     validate_plan(plan, request)
     # After validation, so the model is still judged on what it actually wrote.
-    guaranteed = plan.model_copy(
-        update={"production_prompt": with_critical_block(plan.production_prompt)}
-    )
+    prompt = with_mood_block(plan.production_prompt, plan.mood_words)
+    guaranteed = plan.model_copy(update={"production_prompt": with_critical_block(prompt)})
     return PlanOutcome(plan=guaranteed, request=request)
 
 
