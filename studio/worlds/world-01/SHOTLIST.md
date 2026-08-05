@@ -33,7 +33,7 @@ ensures the visual universe expands rather than circles back on itself.
   W01-011   Kerbside window chat      T-shirt        Footpath at window  ✅
   W01-012   Apartment lobby           Hoodie waist   From the entrance   ✅
   W01-013   Apartment balcony back view  T-shirt        Inside lounge       ✅
-  W01-014   Kitchen kick-ons II       Hoodie waist   Hallway             ⬜
+  W01-014   Kitchen kick-ons II       Hoodie waist   Facing from hallway ⬜
   W01-015   Sunrise balcony           Hoodie         Balcony doorway     ⬜
   W01-016   Servo breakfast run       Cap            Inside servo        ⬜
   W01-017   Bakery queue              T-shirt        Behind queue        ⬜

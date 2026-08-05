@@ -47,21 +47,22 @@ def test_the_shotlist_statuses_match_the_document(world) -> None:  # type: ignor
     # canon that came out of them.
     assert by_id["W01-011"].status is ShotStatus.APPROVED
     assert by_id["W01-012"].status is ShotStatus.APPROVED
-    assert len(world.planned_shots) == 8
+    assert by_id["W01-013"].status is ShotStatus.APPROVED
+    assert len(world.planned_shots) == 7
 
 
-def test_the_next_planned_shot_is_the_balcony(world) -> None:  # type: ignore[no-untyped-def]
-    """W01-013, after the lobby was approved.
+def test_the_next_planned_shot_is_the_kitchen(world) -> None:  # type: ignore[no-untyped-def]
+    """W01-014, turned around after three shots taken from behind or side-on.
 
-    "Inside lounge" is compliant with the observer rule: the subjects are on the
-    balcony and the camera watches from the next room through the doorway.
+    Facing the camera is not acknowledging it. The reference set has someone
+    "naturally facing towards the camera so the entire front panel is clearly
+    visible", which is how a cap or a chest reads at all.
     """
     upcoming = world.planned_shots[0]
 
-    assert upcoming.external_id == "W01-013"
-    assert upcoming.title == "Apartment balcony back view"
-    assert upcoming.hero_product == "T-shirt"
-    assert upcoming.camera_position == "Inside lounge"
+    assert upcoming.external_id == "W01-014"
+    assert upcoming.hero_product == "Hoodie waist"
+    assert upcoming.camera_position == "Facing from hallway"
 
 
 def test_the_tote_is_never_a_hero_product(world) -> None:  # type: ignore[no-untyped-def]

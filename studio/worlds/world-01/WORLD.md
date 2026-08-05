@@ -222,6 +222,11 @@ No posing.
 
 Nobody acknowledges the camera.
 
+Facing it is another matter. Someone can be turned towards the lens because
+of where they are standing and who they are talking to — the reference does
+exactly this so a cap's front panel reads. Facing the camera is fine.
+Noticing it is not.
+
 People interact with each other rather than the photographer.
 
 And they interact with each other rather than merely occupying the same
