@@ -32,6 +32,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 | 10 | City lookout | Black cap | Front panel | APPROVED |
 | W01-011 | Kerbside window chat | T-shirt | Recorded | APPROVED |
 | W01-012 | Apartment lobby | Hoodie waist | Recorded | APPROVED |
+| W01-013 | Apartment balcony back view | T-shirt | Recorded | APPROVED |
 
 ## Next Rotation Priority
 
@@ -60,6 +61,7 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 | 10B | Lookout alternate | Elevated rear three-quarter | REJECTED — incorrect ute body |
 | W01-011 | Kerbside window chat | Footpath at window | APPROVED |
 | W01-012 | Apartment lobby | From the entrance | APPROVED |
+| W01-013 | Apartment balcony back view | Inside lounge | APPROVED |
 
 ## Next Camera Priority
 
@@ -158,6 +160,19 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 **Why it works:** Keeper. The group carries it.
 
 **Reviewer said:** Authentic Australian location and atmosphere are evident, despite weaknesses in interaction and composition.
+
+## W01-013 — Apartment balcony back view
+
+**Status:** APPROVED
+
+**Hero product:** T-shirt
+
+**Camera position:** Inside lounge
+
+**Why it works:** Keeper.
+
+**Reviewer said:** The environment shows urban Australian features, credible for the setting.
+
 
 
 
