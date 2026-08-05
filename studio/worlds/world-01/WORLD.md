@@ -412,23 +412,26 @@ Interacting with a car is fine. Using it as the mechanism of the scene
 is not. Once the photograph depends on the vehicle working — getting
 in, getting out, being carried from one place to the next — the
 geometry has to be right, and it is not. A cabin produced cars with no
-seats and three across a front row built for two. Piling in produced a
-van with no back end, the road visible through the opening beneath a
-correctly raised tailgate. A body is asked to occupy space the
-structure does not have, so the structure is deleted to make room, and
-fixing that costs more attempts than the frame is worth.
+seats and three across a front row built for two; piling in produced a
+van with no back end. A body is asked to occupy space the structure
+does not have, so the structure is deleted to make room, and fixing
+that costs more attempts than the frame is worth.
 
 The scene happens beside the car, not through it: leaning on it,
 sitting on the tray, standing at the kerb, talking through an open
 window to whoever is already sitting in it. A seated passenger is fine.
 The act of getting in or out is not.
 
-The cast stands on the footpath. Nobody leans through a door opening
-and nobody puts their head and shoulders inside the cabin — that is
-half-entering by another name, and it is what forces the model to
-invent room that is not there. The window is where the two sides meet,
-and it stays a window: the opening is at the shoulder of a seated
-person, not a doorway down to the seat.
+The cast stands on the footpath. Nobody leans through a door opening or
+puts their head inside the cabin — that is half-entering by another
+name. The window stays a window: the opening is at the shoulder of a
+seated person, not a doorway down to the seat.
+
+Whoever is sitting in the car sits the way a car seat makes you sit:
+hips and torso toward the windscreen, head and at most one shoulder
+turned to the window. Not squared to the door. A frame that needs a
+chest facing the footpath has rotated the seat ninety degrees to get
+it — the same structure-bending, only harder to notice.
 
 The car is a prop, never the hero.
 
