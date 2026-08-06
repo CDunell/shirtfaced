@@ -22,6 +22,7 @@ work with no config change if it ever completes.
 | CNAME | `@` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | CNAME | `www` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | CNAME | `admin` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
+| CNAME | `studio` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | TXT | `@` | `v=spf1 -all` | — |
 | TXT | `_dmarc` | `v=DMARC1; p=quarantine;` | — |
 
@@ -32,6 +33,16 @@ routes `admin.shirtfaced.wtf` → `localhost:4200`, the shirtfaced-admin service
 It had to be added in the dashboard rather than by the box, because the tunnel's
 own credential there is scoped to a different zone (`tradeninja.au`) and cannot
 provision records in this one. That constraint still applies to any future record.
+
+**`studio` is not yet added** (2026-08-06) — the tunnel ingress is live
+(`studio.shirtfaced.wtf` → `localhost:8010`, the shirtfaced-studio service),
+so the record is the only missing piece. Same manual-add constraint as `admin`.
+
+⚠️ **Create the Access policy before the record.** Studio has no login of its
+own and its generate endpoint bills OpenAI, so the moment that CNAME resolves
+without a policy in front, anyone who finds the hostname can spend money. Zero
+Trust → Access → Applications → self-hosted, domain `studio.shirtfaced.wtf`,
+one policy: Allow, Include → Emails → the owner's address.
 
 SSL/TLS mode: **Full**.
 
