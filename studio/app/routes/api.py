@@ -25,7 +25,6 @@ from app.adapters.factory import (
     build_review_client,
     image_client_is_live,
     image_model_for,
-    planning_client_is_live,
     review_client_is_live,
 )
 from app.adapters.git_store import build_git_store
@@ -81,7 +80,7 @@ from app.services.generation_orchestrator import (
     run_attempt,
     start_attempt,
 )
-from app.services.prompt_planner import PLANNING_CANON_HEADINGS, build_request, create_plan
+from app.services.prompt_planner import PLANNING_CANON_HEADINGS
 from app.services.prompt_service import (
     NothingToPlan,
     PromptSet,
@@ -181,16 +180,6 @@ class NextShotResponse(BaseModel):
     set_aside: list[SetAsideResponse]
     last_hero_product: str | None
     last_camera_position: str | None
-
-
-class PlanPreviewResponse(BaseModel):
-    """A production plan rendered before anything is generated."""
-
-    shot: ShotResponse
-    selection_reason: str
-    plan: PromptPlan
-    # Whether a billable model produced this, or the deterministic fake did.
-    live: bool
 
 
 class DecisionSummary(BaseModel):
@@ -387,59 +376,6 @@ def get_next_shot(world_slug: str, session: SessionDependency) -> NextShotRespon
         set_aside=set_aside,
         last_hero_product=outcome.rotation.last_hero_product,
         last_camera_position=outcome.rotation.last_camera_position,
-    )
-
-
-@router.post("/worlds/{world_slug}/plan-preview", summary="Preview the production prompt")
-def preview_plan(
-    world_slug: str, session: SessionDependency, settings: SettingsDependency
-) -> PlanPreviewResponse:
-    """Build the production prompt for the next shot without generating an image.
-
-    Available in development only. It plans, it does not generate: no image is
-    created and nothing is persisted.
-    """
-    if not settings.debug:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Prompt preview is available in development mode only.",
-        )
-
-    world = _load_world(session, world_slug)
-    shots = sorted(world.shots, key=lambda shot: shot.sequence)
-    outcome = select_next_shot(world, shots)
-
-    if isinstance(outcome, NoSelection):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=outcome.reason)
-
-    store = MarkdownStore(settings.worlds_root_resolved)
-    try:
-        documents = store.read_world_documents(world.slug)
-    except StudioError as error:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
-        ) from error
-
-    rotation = apply_continuity(outcome.rotation, documents["CONTINUITY.md"].text)
-    request = build_request(
-        world_slug=world.slug,
-        world_name=world.name,
-        shot=outcome.shot,
-        world_text=documents[WORLD_DOCUMENT].text,
-        rotation=rotation,
-        selection_reason=outcome.reason,
-    )
-
-    try:
-        result = create_plan(build_planning_client(settings), request)
-    except PlanningError as error:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
-
-    return PlanPreviewResponse(
-        shot=ShotResponse.model_validate(outcome.shot),
-        selection_reason=outcome.reason,
-        plan=result.plan,
-        live=planning_client_is_live(settings),
     )
 
 

@@ -1,139 +1,30 @@
 /**
- * Next-shot selection and the production prompt preview.
+ * Next-shot selection.
  *
- * Selection is deterministic and free: it calls no model. The preview builds the
- * prompt without generating anything, and says plainly whether a billable model was
- * involved.
+ * Deterministic and free: it calls no model, and it explains the choice rather than
+ * only announcing it. Writing the prompt for the chosen shot happens on the Prompts
+ * page, which keeps what it writes.
  */
 
 import { useCallback, useEffect, useState } from "react";
 import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
 import { Card, StyledBody } from "baseui/card";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Tag, HIERARCHY, KIND as TAG_KIND } from "baseui/tag";
 import { LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
-import {
-  ApiError,
-  fetchNextShot,
-  previewPlan,
-  type NextShot,
-  type PlanPreview,
-} from "../api/client";
+import { ApiError, fetchNextShot, type NextShot } from "../api/client";
 
 type Selection =
   { kind: "loading" } | { kind: "loaded"; next: NextShot } | { kind: "failed"; message: string };
-
-type Preview =
-  | { kind: "idle" }
-  | { kind: "working" }
-  | { kind: "ready"; preview: PlanPreview }
-  | { kind: "failed"; message: string };
 
 function messageFor(error: unknown, fallback: string): string {
   return error instanceof ApiError ? error.message : fallback;
 }
 
-function PlanDetail({ preview }: { preview: PlanPreview }): React.JSX.Element {
-  const [css, theme] = useStyletron();
-  const { plan } = preview;
-
-  const rows: [string, string][] = [
-    ["Scene", plan.scene_summary],
-    ["Emotional beat", plan.emotional_beat],
-    ["Hero product", plan.hero_product],
-    ["Product visibility", plan.product_visibility_instruction],
-    ["Camera", plan.camera_position],
-    ["Lighting", plan.lighting_source],
-    ["Documentary imperfection", plan.documentary_imperfection],
-  ];
-
-  return (
-    <div className={css({ marginTop: theme.sizing.scale600 })}>
-      {!preview.live && (
-        <div className={css({ marginBottom: theme.sizing.scale600 })}>
-          <Notification
-            kind={NOTIFICATION_KIND.info}
-            overrides={{ Body: { style: { width: "auto" } } }}
-          >
-            Built by the deterministic planner. No OpenAI request was made and nothing was billed.
-            Set OPENAI_API_KEY and OPENAI_TEXT_MODEL to use the real model.
-          </Notification>
-        </div>
-      )}
-
-      <LabelSmall marginBottom={theme.sizing.scale300}>Production prompt</LabelSmall>
-      <pre
-        className={css({
-          ...theme.typography.MonoParagraphXSmall,
-          backgroundColor: theme.colors.backgroundSecondary,
-          padding: theme.sizing.scale600,
-          borderRadius: theme.borders.radius300,
-          whiteSpace: "pre-wrap",
-          overflowX: "auto",
-          marginTop: 0,
-        })}
-      >
-        {plan.production_prompt}
-      </pre>
-
-      <dl className={css({ display: "grid", gap: theme.sizing.scale300, margin: 0 })}>
-        {rows.map(([label, value]) => (
-          <div key={label} className={css({ display: "grid", gap: theme.sizing.scale100 })}>
-            <dt className={css({ ...theme.typography.LabelXSmall })}>{label}</dt>
-            <dd
-              className={css({
-                ...theme.typography.ParagraphSmall,
-                margin: 0,
-                color: theme.colors.contentSecondary,
-              })}
-            >
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
-
-      <LabelSmall marginTop={theme.sizing.scale600} marginBottom={theme.sizing.scale300}>
-        Negative constraints
-      </LabelSmall>
-      <div className={css({ display: "flex", flexWrap: "wrap", gap: theme.sizing.scale200 })}>
-        {plan.negative_constraints.map((constraint) => (
-          <Tag
-            key={constraint}
-            closeable={false}
-            kind={TAG_KIND.negative}
-            hierarchy={HIERARCHY.secondary}
-          >
-            {constraint}
-          </Tag>
-        ))}
-      </div>
-
-      <LabelSmall marginTop={theme.sizing.scale600} marginBottom={theme.sizing.scale300}>
-        Australian authenticity anchors
-      </LabelSmall>
-      <div className={css({ display: "flex", flexWrap: "wrap", gap: theme.sizing.scale200 })}>
-        {plan.australian_authenticity_anchors.map((anchor) => (
-          <Tag
-            key={anchor}
-            closeable={false}
-            kind={TAG_KIND.neutral}
-            hierarchy={HIERARCHY.secondary}
-          >
-            {anchor}
-          </Tag>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function SelectionPanel({ slug }: { slug: string }): React.JSX.Element {
   const [css, theme] = useStyletron();
   const [selection, setSelection] = useState<Selection>({ kind: "loading" });
-  const [preview, setPreview] = useState<Preview>({ kind: "idle" });
 
   const load = useCallback(
     async (signal?: AbortSignal): Promise<void> => {
@@ -159,20 +50,6 @@ export function SelectionPanel({ slug }: { slug: string }): React.JSX.Element {
       controller.abort();
     };
   }, [load]);
-
-  const requestPreview = useCallback(() => {
-    setPreview({ kind: "working" });
-    previewPlan(slug)
-      .then((result) => {
-        setPreview({ kind: "ready", preview: result });
-      })
-      .catch((error: unknown) => {
-        setPreview({
-          kind: "failed",
-          message: messageFor(error, "The prompt could not be built."),
-        });
-      });
-  }, [slug]);
 
   if (selection.kind === "loading") {
     return (
@@ -245,28 +122,11 @@ export function SelectionPanel({ slug }: { slug: string }): React.JSX.Element {
         )}
 
         {next.selected && (
-          <div className={css({ marginTop: theme.sizing.scale600 })}>
-            <Button
-              size={SIZE.compact}
-              kind={BUTTON_KIND.secondary}
-              onClick={requestPreview}
-              disabled={preview.kind === "working"}
-            >
-              {preview.kind === "working" ? "Building the prompt…" : "Preview production prompt"}
-            </Button>
-            <ParagraphXSmall marginBottom={0} color={theme.colors.contentTertiary}>
-              Builds the prompt only. No image is generated and nothing is saved.
-            </ParagraphXSmall>
-          </div>
+          <ParagraphXSmall marginTop={theme.sizing.scale600} marginBottom={0}
+            color={theme.colors.contentTertiary}>
+            The prompt for this shot is written on the Prompts page, where it is kept.
+          </ParagraphXSmall>
         )}
-
-        {preview.kind === "failed" && (
-          <div className={css({ marginTop: theme.sizing.scale600 })}>
-            <Notification kind={NOTIFICATION_KIND.negative}>{preview.message}</Notification>
-          </div>
-        )}
-
-        {preview.kind === "ready" && <PlanDetail preview={preview.preview} />}
       </StyledBody>
     </Card>
   );

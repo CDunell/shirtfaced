@@ -1,4 +1,4 @@
-"""Selection and prompt-preview endpoints, against PostgreSQL.
+"""Selection endpoints, against PostgreSQL.
 
 No test here reaches OpenAI: without a key and a model the factory returns the
 deterministic fake, and these settings supply neither.
@@ -124,69 +124,3 @@ def test_reports_when_nothing_remains(client: TestClient, imported: Session) -> 
 
 def test_an_unknown_world_returns_404(client: TestClient) -> None:
     assert client.get("/api/worlds/world-99/next-shot").status_code == 404
-
-
-# --- plan preview ------------------------------------------------------------------
-
-
-def test_previews_the_production_prompt(client: TestClient) -> None:
-    response = client.post("/api/worlds/world-01/plan-preview")
-
-    assert response.status_code == 200
-    payload = response.json()
-    assert payload["shot"]["external_id"] == "W01-011"
-    assert payload["plan"]["production_prompt"]
-    assert payload["plan"]["hero_product"] == "Tote bag"
-
-
-def test_the_preview_reports_that_no_billable_model_was_used(client: TestClient) -> None:
-    """Without a key and a model, the deterministic fake plans instead."""
-    payload = client.post("/api/worlds/world-01/plan-preview").json()
-
-    assert payload["live"] is False
-
-
-def test_the_preview_carries_the_selection_reason_into_the_plan(client: TestClient) -> None:
-    payload = client.post("/api/worlds/world-01/plan-preview").json()
-
-    assert "W01-011" in payload["selection_reason"]
-    assert "W01-011" in payload["plan"]["selection_rationale"]
-
-
-def test_the_preview_changes_no_state(client: TestClient, imported: Session) -> None:
-    before = _shots(imported)["W01-011"].status
-
-    client.post("/api/worlds/world-01/plan-preview")
-
-    assert _shots(imported)["W01-011"].status is before
-
-
-def test_the_preview_is_unavailable_outside_development(
-    imported: Session, worlds_root: Path
-) -> None:
-    with _client(imported, worlds_root, debug=False) as production_client:
-        response = production_client.post("/api/worlds/world-01/plan-preview")
-
-    assert response.status_code == 404
-    assert "development mode only" in response.json()["detail"]
-
-
-def test_the_preview_refuses_when_nothing_is_eligible(
-    client: TestClient, imported: Session
-) -> None:
-    for external_id in ("W01-011", "W01-012"):
-        _shots(imported)[external_id].disabled = True
-    imported.flush()
-
-    response = client.post("/api/worlds/world-01/plan-preview")
-
-    assert response.status_code == 409
-
-
-def test_the_preview_reports_unreadable_world_files(imported: Session, worlds_root: Path) -> None:
-    (worlds_root / "world-01" / "WORLD.md").unlink()
-
-    with _client(imported, worlds_root, debug=True) as broken_client:
-        response = broken_client.post("/api/worlds/world-01/plan-preview")
-
-    assert response.status_code == 422
