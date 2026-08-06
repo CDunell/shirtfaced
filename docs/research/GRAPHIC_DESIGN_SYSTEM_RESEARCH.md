@@ -4,27 +4,18 @@
 Active — evidence gathering
 
 ## Purpose
-Establish an evidence-based constitutional design language for SHIRTFACED. This document begins as the research brief and will be updated with findings only where supported by repeated evidence across successful premium graphic apparel brands.
+Establish an evidence-based constitutional design language for SHIRTFACED. Findings are added only when supported by repeated evidence across successful premium graphic apparel brands.
 
 ## Scope
-Research only. No concepts, slogans, collections, humour, character development, worlds, lore, campaigns, or creative direction.
+Research only. No concepts, slogans, collections, humour, character development, worlds, lore, campaigns or creative direction.
 
 ## Separation of Systems
 
 ### System A — Brand Universe
-Attitude, worlds, characters, storylines, photography, video, marketing and community. This system exists independently of the garments and is out of scope here.
+Attitude, worlds, characters, storylines, photography, video, marketing and community. Out of scope here.
 
 ### System B — Product Design System
-The visual mechanics by which a garment succeeds on its own. This document concerns only this system.
-
-## Primary Questions
-- What visual mechanics make premium graphic apparel commercially desirable?
-- Which layout archetypes recur?
-- What scale, spacing and print-coverage relationships recur?
-- Which typography systems recur?
-- How are graphics composed for immediate recognition and longer inspection?
-- How do brands create cohesion without making every garment look identical?
-- Which mechanics are permanent and which are seasonal?
+The repeatable visual and production mechanics by which a garment succeeds on its own. This document concerns only this system.
 
 ## Evidence Standard
 A conclusion must be traceable to multiple successful brands. Preference, novelty and isolated examples are not evidence.
@@ -40,16 +31,12 @@ No observation becomes a constitutional rule merely because it is visually appea
 
 ---
 
-# Research Pass 01 — Structural Mechanics
+# Research Corpus
 
-## Date
-6 August 2026
+## Pass 01 — Structural confirmation sample
+Date: 6 August 2026
 
-## Research Corpus — Initial Confirmation Sample
-
-This first pass uses current product descriptions and product imagery from official brand stores or established premium retailers. The sample is deliberately broad enough to test whether mechanics recur across different brand positions, but it is not yet a statistically neutral catalogue sample.
-
-Brands represented:
+24 unique graphic tees across:
 - Represent
 - Stüssy
 - Butter Goods
@@ -61,235 +48,423 @@ Brands represented:
 - Willy Chavarria
 - Re/Done
 
-Products reviewed in this pass: 24 unique graphic tees.
+The first pass used targeted discovery and therefore established persistence, not unbiased market frequency.
 
-Important limitation: discovery queries included terms such as “front and back print”, which creates selection bias. Therefore this pass can establish that a mechanic is persistent across brands, but it cannot yet establish true market frequency. Frequency claims require a later neutral collection audit.
+## Pass 02 — Placement, hierarchy and typography extension
+Date: 6 August 2026
+
+Additional official-product evidence reviewed from:
+- Represent
+- Rhude
+- Aries
+- Stüssy
+- Butter Goods
+
+Products included Owners’ Club variants, Raceway, Atlas, 247 Stockholm, Oasis and music collaboration tees; Rhude Pit Stop, Set Piece and Parakeet tees; Aries Ancient Temple, Studmeggedon, Punk and Sprayed Column tees; Stüssy Sport, Double Venus, Skulls and Laguna 80; Butter Goods logo, Terrain, Thanks, Chrome, Bomb Shelter, Glint, Tide, Nocturnal and India tees.
+
+Important limitation: product descriptions reliably confirm print surfaces, methods, garment weights and named placements. Exact centimetre dimensions and image-to-text ratios still require direct image measurement.
 
 ---
 
-## Finding 01 — The Garment Is Commonly Designed as a Two-Surface Object
+# Constitutional Findings
+
+## Finding 01 — Design the Garment as a Complete Object
 
 ### Observation
-Successful graphic tees repeatedly use both front and back rather than treating the shirt as a single rectangular poster.
+Successful graphic tees repeatedly use the front, back, neck, hem and sleeves as coordinated surfaces rather than treating the garment as one rectangular poster.
 
 ### Evidence
-The initial 24-product confirmation sample contained 22 products explicitly described as carrying graphics on both front and back. This pattern appeared across Represent, Stüssy, Butter Goods, Carhartt WIP, Awake NY, Fear of God Essentials, Maharishi, by Parra and Willy Chavarria.
+Front-and-back systems recur across Represent, Stüssy, Butter Goods, Aries, Carhartt WIP, Awake NY, Fear of God Essentials, Maharishi, by Parra and Willy Chavarria. Represent also uses fixed hem hardware and back-neck marks. Aries uses sleeve-only graphics on long sleeves. Stüssy uses front, back and sleeve detailing on jersey-derived garments.
 
-Examples include:
-- Represent Raceway T-Shirt — front and back puff/screen print, with additional fixed branding at front and back hems.
-- Stüssy Summer Classics Tee and Double Venus Tee — screenprinted graphics at front and back.
-- Butter Goods Terrain, India, Crystal Notes, Thanks, Africa, Nocturnal, Don’t Be Scared, Fossil, Bomb Shelter and Satan tees — all specified as screen print on front and back.
-- Carhartt WIP Spoiled and Garble tees — graphic prints on front and back.
-- Awake NY Good Everywhere, Maharishi Paper Cut Kirin, by Parra Special Books, Fear of God Essentials 90’s and Willy Chavarria Chorizo tees — front and back graphic systems.
+### Likely mechanism
+Multiple surfaces create changing visual moments as the wearer moves. They also allow identity, hero artwork, secondary information and provenance to be separated rather than forced into one overloaded composition.
 
-Exceptions in the sample:
-- Re/Done Classic “I’m Back” Tee — front graphic only.
-- Represent Owners’ Club Script Tee — back-led script graphic with permanent physical branding at the front hem.
+### Constitutional rule
+Every graphic garment must be designed as a complete object. Front, back, neck, hem and sleeves must each be deliberately assigned one of three states:
+- active graphic zone;
+- permanent identity zone;
+- intentional negative space.
 
-### Likely Mechanism
-Using both surfaces creates hierarchy and discovery:
-- one surface can provide immediate brand recognition;
-- the other can carry the primary artwork, secondary information or a contrasting scale;
-- the garment changes as the wearer turns, creating more than one visual moment;
-- a smaller supporting mark can preserve wearability while a larger graphic delivers impact.
-
-The evidence does **not** support a rule that every garment must have equal visual weight on both sides. It supports a rule that front and back should be considered together as one composition.
-
-### Constitutional Implication — Candidate
-Every graphic garment must be designed as a complete object with an intentional front/back relationship. A blank reverse side is permitted only when it is a deliberate hierarchy decision, not the default result of designing a single isolated graphic.
+A blank surface is valid only when it is a conscious hierarchy decision.
 
 ### Confidence
-High that the two-surface architecture is a durable premium-apparel mechanic.
-
-Market-frequency confidence remains medium-low until a neutral catalogue sample is completed.
+High.
 
 ---
 
 ## Finding 02 — Hierarchy Matters More Than Symmetry
 
 ### Observation
-Front and back graphics frequently differ in scale, function or information density. Repetition does not usually mean placing the same large artwork on both sides.
+Front and back commonly differ in scale, density and function. Equal duplication is uncommon in the reviewed evidence.
 
 ### Evidence
-Across the sample:
-- Stüssy Summer Classics presents a small front chest mark and a larger back graphic.
-- Fear of God Essentials uses a front lockup and a separate large numbered back graphic.
-- Willy Chavarria Tarantula uses a front image and text on the back.
-- Represent Owners’ Club uses a dominant back script while retaining a small permanent metal mark at the front hem.
-- Kith Kids Just Us Apple, reviewed as supporting evidence but excluded from the adult 24-product count, uses front novelty artwork and a small back-neck logo.
+- Represent Owners’ Club: chest identifier plus back branding, with permanent hem hardware.
+- Represent 247 Stockholm: chest branding, large rear image, lower-back statement and back-neck icon.
+- Represent Oasis: small dual front identity and dominant poster-derived back artwork.
+- Aries Studmeggedon: smaller front temple graphic and large back wordmark.
+- Stüssy Double Venus: oversized front graphic and smaller shoulder/back mark.
+- Fear of God Essentials: front lockup and distinct numbered back system.
 
-### Likely Mechanism
-A scale contrast creates a clear reading order. The wearer receives brand identification from one view and graphic impact from another. This avoids visual redundancy and makes each surface perform a separate job.
+### Likely mechanism
+Unequal weight creates reading order. One surface provides immediate impact while another provides recognition, context, continuation or discovery.
 
-### Constitutional Implication — Candidate
-When both sides are printed, each side must have a defined role. Standard roles include:
+### Constitutional rule
+When more than one surface is printed, every surface must have a distinct role. Approved role pairs include:
 - identifier / hero;
 - teaser / reveal;
-- image / text;
-- primary graphic / provenance mark;
-- large composition / small signature.
+- image / language;
+- large composition / signature;
+- primary artwork / provenance;
+- clean front / dominant back;
+- dominant front / clean back.
 
-Equal-scale duplication should be treated as an exception requiring a reason.
-
-### Confidence
-High.
-
----
-
-## Finding 03 — Permanent Micro-Branding Can Sit Outside the Main Artwork
-
-### Observation
-Several brands separate permanent brand recognition from seasonal artwork by using small, repeatable hardware, labels, hem marks or back-neck marks.
-
-### Evidence
-- Represent repeatedly uses its metal bar logo at the front hem and branding at the back hem while the seasonal artwork changes.
-- Fear of God Essentials uses a rubberised label at the back collar in addition to printed graphics.
-- by Parra uses a woven flag at the hem alongside front/back graphics.
-- Kith Kids uses a printed novelty logo at the back neck while the main illustration appears on the front.
-
-### Likely Mechanism
-This gives the brand a stable signature without forcing the principal graphic to repeat a permanent logo treatment. The artwork can change substantially while the garment remains recognisable as part of the same product system.
-
-### Constitutional Implication — Candidate
-The permanent identity layer and the seasonal graphic layer should be specified separately. Permanent identity may occupy a controlled micro-placement such as hem, back neck, sleeve edge, woven flag or small chest mark. It should not be expected to carry the artistic concept.
-
-### Confidence
-Medium-high. The mechanism recurs, but the exact permanent placement varies by brand and production model.
-
----
-
-## Finding 04 — Premium Graphic Tees Pair Print Architecture With a Deliberate Blank
-
-### Observation
-Graphic construction is repeatedly paired with a specified garment weight, fit and wash. The artwork is not independent of the physical blank.
-
-### Evidence
-- Represent uses oversized or slightly oversized silhouettes and approximately 220 gsm cotton on reviewed tees.
-- Butter Goods repeatedly uses 220–230 gsm cotton with boxier or looser fits; some products use mineral or acid wash.
-- Stüssy reviewed tees use relaxed fits and roughly 220 gsm / 6.5 oz cotton.
-- Carhartt WIP reviewed tees use regular or loose fits at 165–190 gsm.
-- Fear of God Essentials uses an oversized fit with dropped shoulders.
-
-### Likely Mechanism
-Print scale and placement are perceived relative to chest width, shoulder drop, garment length, fabric drape and surface finish. The same artwork dimensions can look timid, balanced or oversized depending on the blank.
-
-### Constitutional Implication — Candidate
-Scale rules cannot be expressed only as fixed centimetres. They must be defined against a canonical garment block and include proportional checks against chest width, body length and shoulder line. A design approved on a generic mockup is not production-approved.
+Equal-scale duplication requires a specific compositional reason.
 
 ### Confidence
 High.
 
 ---
 
-## Finding 05 — Screen Printing Remains a Core Premium Graphic Method
+## Finding 03 — There Is No Universal Premium Layout
 
 ### Observation
-Screen printing is repeatedly named explicitly across brands, including standard, water-based and puff applications.
+Front-only, back-led and front/back garments all occur within successful premium catalogues.
 
 ### Evidence
-- Represent specifies water-based screen printing and puff print across reviewed styles.
-- Stüssy specifies screenprinted front/back graphics.
-- Butter Goods consistently specifies screen print across the sampled range.
-- Several other products use the broader term “graphic print”, which does not justify assuming screen print without further evidence.
+- Rhude Pit Stop and Set Piece use a front-chest graphic with a clean back.
+- Rhude Parakeet uses a front graphic only.
+- Aries Punk and Ancient Temple use front graphics.
+- Stüssy Sport uses a large front graphic and clean back.
+- Butter Goods Logo, Glint and Tide use front-only graphics.
+- Represent Owners’ Club Script is back-led.
+- Represent, Stüssy, Aries and Butter Goods also repeatedly use front/back systems.
 
-### Likely Mechanism
-Screen print provides strong colour fields, controlled texture, repeatable placement and a physical relationship with heavier cotton blanks. Specialty applications such as puff or brushed screens create variation without abandoning the underlying production language.
+### Likely mechanism
+Commercial cohesion comes from controlled archetypes, not forcing every product into one arrangement. A range needs enough repeated structure to feel related and enough layout variation to avoid becoming a uniform.
 
-### Constitutional Implication — Candidate
-The core system should be designed to work within screen-print constraints first. Specialty techniques may extend the system, but should not be required to rescue weak composition.
+### Constitutional rule
+The design system must define a limited library of approved layout archetypes rather than one mandatory formula. Each design must select one archetype before artwork development begins.
 
 ### Confidence
-High for screen printing as a recurring core method. No constitutional ink-count rule is justified yet.
+High.
 
 ---
 
-# Provisional Structural Archetypes
+## Finding 04 — Permanent Identity and Seasonal Artwork Are Separate Layers
 
-These are observed archetypes, not final constitutional rules.
+### Observation
+Several brands preserve recognition through repeated small marks while allowing the dominant artwork and typography to change.
 
-## A1 — Small Identifier Front / Large Hero Back
-A compact chest or front mark establishes identity; the back carries the dominant graphic.
+### Evidence
+- Represent repeatedly uses a metal bar at the front hem and sometimes additional back-hem or back-neck branding.
+- Fear of God Essentials uses a back-collar label alongside seasonal print systems.
+- by Parra uses a woven hem flag.
+- Kith uses compact back-neck identifiers on some graphic products.
+- Stüssy repeatedly reuses established scripts, wordmarks and graphic signatures across changing compositions.
 
-## A2 — Image Front / Text or Mark Back
-The front provides the immediate visual subject; the back supplies language, title, number or brand mark.
+### Likely mechanism
+A permanent micro-identity layer prevents seasonal artwork from carrying the entire burden of brand recognition. It permits broader visual experimentation without making the product feel anonymous.
 
-## A3 — Graphic Front and Back With Unequal Weight
-Both surfaces contain substantive graphics, but one remains clearly dominant.
+### Constitutional rule
+The permanent identity system and seasonal graphic system must be specified separately.
 
-## A4 — Front-Only Hero
-A single front graphic carries the garment. The blank back is intentional and the front composition must fully justify the choice.
+Permanent identity may use controlled placements such as:
+- front hem;
+- back hem;
+- back neck;
+- sleeve edge;
+- woven side flag;
+- small chest identifier.
 
-## A5 — Back-Led Hero With Permanent Front Signature
-The dominant seasonal artwork sits on the back while a small permanent physical or printed identifier occupies the front.
+The permanent mark must not be enlarged merely to compensate for weak seasonal artwork.
 
-## A6 — Multi-Zone System
-Front, back and sleeves operate as a coordinated system. Current evidence is strongest for long sleeves and jersey-derived garments; this should not yet become a default short-sleeve rule.
+### Confidence
+High for separation of layers; medium for any specific placement.
+
+---
+
+## Finding 05 — Scale Is a Role, Not a Fixed Number
+
+### Observation
+Reviewed products repeatedly use recognisable scale classes: micro identity, small chest, medium centred graphic, large hero and jumbo coverage.
+
+### Evidence
+- Represent describes large-scale and jumbo rear applications alongside compact chest and neck marks.
+- Represent Metallica uses full front-and-back jumbo applications.
+- Represent 247 Stockholm uses a large rear image with small chest, neck and lower-hem elements.
+- Aries explicitly distinguishes a chest graphic from branding placed “big on the back.”
+- Stüssy describes oversized front graphics and smaller rear shoulder graphics.
+- Rhude repeatedly uses front-chest graphics with clean backs.
+
+### Likely mechanism
+The useful distinction is not simply centimetres. Scale communicates function. A micro mark signs the garment; a small chest graphic identifies; a medium graphic reads as a self-contained emblem; a large or jumbo graphic becomes the garment’s primary visual field.
+
+### Constitutional rule — provisional scale taxonomy
+Every print zone must be assigned one scale role before final dimensions are set:
+
+- **S0 — Micro signature:** neck, hem, sleeve edge or hardware-scale identity.
+- **S1 — Chest identifier:** compact mark readable at conversational distance.
+- **S2 — Emblem:** self-contained centred or offset composition with substantial surrounding blank.
+- **S3 — Hero:** dominant composition occupying a major share of the torso surface.
+- **S4 — Jumbo:** intentionally approaches seams or uses the garment body as the graphic field.
+
+Final dimensions must be calculated against the canonical blank’s chest width, body length, shoulder drop and printability—not copied as universal centimetres.
+
+### Confidence
+High for the scale-role taxonomy. Exact percentage bands remain unproven pending image measurement.
+
+---
+
+## Finding 06 — Negative Space Is an Active Design Element
+
+### Observation
+Even heavily graphic garments preserve blank zones around key elements or deliberately concentrate secondary information into separate areas.
+
+### Evidence
+Front-only products from Rhude, Aries, Stüssy and Butter Goods retain a clean reverse. Multi-surface products commonly contrast a compact chest or neck mark with a larger rear field. Represent 247 Stockholm separates chest, rear image, lower-back line and neck icon rather than merging them into one uninterrupted block.
+
+### Likely mechanism
+Negative space establishes hierarchy, preserves garment readability and prevents every surface from competing simultaneously. It also allows oversized and boxy blanks to remain visible as premium physical objects rather than disappearing beneath print coverage.
+
+### Constitutional rule
+Negative space must be specified, not left over. Each layout must define:
+- protected collar clearance;
+- protected side margins unless using an intentional jumbo treatment;
+- separation between identity and hero zones;
+- at least one visually quiet area on the garment.
+
+### Confidence
+Medium-high. Exact spacing values require measurement.
+
+---
+
+## Finding 07 — Typography Operates in Distinct Voices
+
+### Observation
+Premium graphic systems use typography in roles rather than relying on one typeface for every function.
+
+### Evidence
+- Represent combines stable Owners’ Club branding with seasonal scripts, motorsport lettering, numeric systems and collaboration typography.
+- Stüssy World Tour intentionally contrasts formal Helvetica-derived city typography on the front with hand-drawn graffiti-like manuscript on the back.
+- Aries combines its permanent Temple/Column identity with seasonal display treatments including studded, sprayed, faded and punk-derived executions.
+- Rhude maintains stable brand lettering while changing the thematic graphic language of individual products.
+
+### Likely mechanism
+Cohesion is maintained by a permanent identity voice, while seasonal display voices create variation. Contrast can be deliberate, but each voice has a defined purpose.
+
+### Constitutional rule — provisional typography architecture
+Typography must be classified into no more than three functional voices on one garment:
+
+1. **Identity voice** — stable brand wordmark, monogram or permanent proprietary lettering.
+2. **Display voice** — concept-specific headline, title, number or dominant lettering.
+3. **Information voice** — small supporting text, provenance, location, date or secondary language.
+
+A fourth type voice requires evidence that it performs a separate necessary function. Decorative variation alone is not justification.
+
+### Confidence
+High for role separation. A universal maximum of three visual typefaces is still provisional and must be tested against a larger measured sample.
+
+---
+
+## Finding 08 — Controlled Contrast Can Create Cohesion
+
+### Observation
+Successful designs do not always make front and back typography visually identical. They often create cohesion through purposeful contrast.
+
+### Evidence
+Stüssy’s World Tour system explicitly contrasts formal front typography with hand-drawn back lettering while preserving one conceptual structure. Represent combines compact technical or club branding with expressive rear scripts and poster-derived graphics. Aries combines permanent classical identity motifs with seasonal punk, spray, fade and stud treatments.
+
+### Likely mechanism
+Recognition can come from repeated structure and permanent identity even when display typography changes. Cohesion therefore does not require sameness; it requires controlled relationships.
+
+### Constitutional rule
+Typography may contrast across surfaces when at least one stabilising mechanism remains constant:
+- permanent identity mark;
+- shared alignment axis;
+- repeated scale relationship;
+- repeated placement archetype;
+- shared colour system;
+- shared graphic frame or silhouette.
+
+Uncontrolled stylistic mixture is not variety; it is absence of hierarchy.
+
+### Confidence
+Medium-high.
+
+---
+
+## Finding 09 — The Blank and Print Architecture Form One System
+
+### Observation
+Premium graphic products repeatedly specify garment weight, fit, wash and print method together.
+
+### Evidence
+- Represent commonly uses oversized or slightly oversized blocks around 220 gsm, with water-based, screen, puff, flock, crack and high-density applications.
+- Stüssy reviewed tees commonly use relaxed midweight cotton around 220 gsm / 6.5 oz.
+- Butter Goods commonly uses 220–230 gsm cotton and screen printing, sometimes with mineral wash.
+- Rhude uses custom boxy or classic fits with vintage washes.
+- Aries repeatedly pairs screen printing with sunbleach, stone wash, fade or aged treatments.
+
+### Likely mechanism
+Graphic scale and contrast are perceived relative to fabric weight, drape, silhouette and surface finish. Wash and print texture can support the graphic language but cannot repair poor composition.
+
+### Constitutional rule
+Every approved design specification must include:
+- canonical blank;
+- garment colour;
+- fit block;
+- fabric weight;
+- wash or surface treatment;
+- print method;
+- print scale role;
+- placement archetype.
+
+Artwork approval on a generic mock-up is not production approval.
+
+### Confidence
+High.
+
+---
+
+## Finding 10 — Screen Print Is a Core Language; Specialty Techniques Are Modifiers
+
+### Observation
+Screen printing remains the most consistently named core graphic method in the reviewed premium products.
+
+### Evidence
+Represent, Stüssy, Butter Goods and Aries explicitly specify screen print across multiple product families. Represent adds water-based, puff, flock, crack, brushed-screen, high-density and rhinestone treatments to particular products.
+
+### Likely mechanism
+Screen printing provides repeatable placement, strong colour fields, controlled texture and compatibility with heavier blanks. Specialty techniques create tactility and variation without replacing the need for a strong base composition.
+
+### Constitutional rule
+Core artwork must work as a conventional screen print first unless a different method is structurally essential to the design. Puff, flock, rhinestone, crack, high-density and similar treatments are modifiers, not concepts.
+
+No constitutional ink-count limit is yet supported.
+
+### Confidence
+High.
+
+---
+
+# Approved Provisional Layout Archetypes
+
+## A1 — Small Front Identifier / Large Back Hero
+Compact front identity; dominant rear artwork.
+
+## A2 — Front Hero / Small Rear Signature
+Dominant front artwork; compact back-neck, shoulder or upper-back mark.
+
+## A3 — Front Hero / Clean Back
+One front composition carries the garment. The clean back is intentional.
+
+## A4 — Clean or Micro Front / Back Hero
+Rear artwork dominates; front remains blank or contains only permanent micro-branding.
+
+## A5 — Unequal Front-and-Back Graphics
+Both sides contain substantive graphics but one remains clearly dominant.
+
+## A6 — Image / Language Split
+One surface carries imagery; the other carries title, number, slogan, provenance or supporting text.
+
+## A7 — Multi-Zone System
+Front, back and sleeves or neck operate together. Strongest evidence currently comes from long sleeves, jerseys and performance-derived garments.
+
+## A8 — Jumbo Field
+Artwork intentionally approaches seams or treats the garment body as the graphic field. Must be chosen deliberately and tested against production constraints.
+
+---
+
+# Permanent Versus Seasonal Mechanics
+
+## Permanent candidates
+- limited layout-archetype library;
+- scale-role taxonomy;
+- separation of identity and seasonal artwork;
+- canonical micro-branding zones;
+- defined typography voices;
+- proportional approval against a canonical blank;
+- negative-space protection;
+- screen-print-first production logic.
+
+## Seasonal variables
+- illustration style;
+- display typography;
+- headline language;
+- colour palette within production limits;
+- distress intensity;
+- wash;
+- specialty print modifier;
+- dominant front/back choice;
+- image subject.
+
+Seasonal variables may change. They must still operate inside the permanent mechanics.
 
 ---
 
 # Rules Not Yet Supported
 
-The following must not be constitutionalised from this pass:
+The following must not yet be constitutionalised:
 - exact front-print width;
 - exact back-print width;
-- a mandatory small-front/large-back formula;
-- a universal number of inks;
-- a fixed number of typefaces;
+- exact collar offset;
+- exact negative-space percentage;
+- mandatory small-front/large-back use;
+- universal ink count;
+- universal number of fonts;
 - mandatory distress;
 - mandatory oversized fit;
-- a claim that front/back printing represents a specific percentage of the total premium market.
-
-These require neutral catalogue measurement rather than targeted confirmation searches.
+- a claim that any layout represents a specific percentage of the premium market.
 
 ---
 
-# Next Research Pass
+# Next Required Research
 
-## Neutral Catalogue Audit
-Build a non-query-biased sample from current tee collection pages across at least eight brands. Record every visible graphic tee in sequence rather than selecting examples that confirm a theory.
+## Neutral catalogue audit
+Audit current tee collection pages without searching for particular print arrangements. Record products sequentially across at least eight brands.
 
 Required fields:
-- brand;
-- product;
+- brand and product;
 - front only / back only / front and back;
 - dominant side;
-- small / medium / large print class;
+- scale class by zone;
 - image-led / type-led / hybrid;
 - permanent identity placement;
-- garment fit;
-- garment weight;
+- garment fit and weight;
 - wash;
-- print method where explicitly stated;
+- print method where stated;
 - source date.
 
-## Measurement Pass
-Use straight-on product imagery to estimate:
+## Direct measurement pass
+Using straight-on product imagery, estimate:
 - print width as percentage of garment chest width;
-- print height as percentage of garment body length;
-- top offset from collar;
+- print height as percentage of body length;
+- collar offset;
 - side margins;
-- relationship between front and back scale;
-- negative-space ratio.
+- front/back scale relationship;
+- protected negative-space zones.
 
-Measurements must be stored as ranges and must state image-perspective limitations.
+Measurements must be expressed as ranges and must state perspective limitations.
 
-## Typography Pass
-Classify:
-- permanent brand type vs seasonal display type;
-- serif / sans / script / blackletter / custom lettering;
-- condensed / standard / extended width;
-- clean / distressed / outlined / dimensional;
-- alignment;
-- relationship to image;
-- number of simultaneous type voices.
+## Typography count pass
+Record the number of functional and visual type voices per garment and test whether the provisional three-voice ceiling is supported.
 
 ---
 
-# Source Register — Pass 01
+# Source Register
 
-Official brand product pages and established premium retail product pages reviewed on 6 August 2026:
-- Represent: Raceway T-Shirt; Owners’ Club Script T-Shirt.
-- Stüssy: Summer Classics Tee; Double Venus Tee; Laguna 80 Jersey.
-- Butter Goods: Terrain Tee; India Tee; Crystal Notes Tee; Thanks Tee; Africa Tee; Nocturnal Tee; Don’t Be Scared Tee; Fossil Tee; Bomb Shelter Tee; Satan Tee.
-- Carhartt WIP: Spoiled T-Shirt; Garble T-Shirt.
-- Kith product pages: Willy Chavarria Tarantula Buffalo Tee; Fear of God Essentials 90’s Tee; Re/Done Classic “I’m Back” Tee; by Parra Special Books Tee; Awake NY Good Everywhere Tee; Willy Chavarria Chorizo Easy Tee; Maharishi Paper Cut Kirin Tee.
+Official brand pages reviewed on 6 August 2026.
+
+## Pass 01
+- Represent: Raceway; Owners’ Club Script.
+- Stüssy: Summer Classics; Double Venus; Laguna 80.
+- Butter Goods: Terrain; India; Crystal Notes; Thanks; Africa; Nocturnal; Don’t Be Scared; Fossil; Bomb Shelter; Satan.
+- Carhartt WIP: Spoiled; Garble.
+- Retailer-hosted official product records: Willy Chavarria Tarantula and Chorizo; Fear of God Essentials 90’s; Re/Done I’m Back; by Parra Special Books; Awake NY Good Everywhere; Maharishi Paper Cut Kirin.
+
+## Pass 02
+- Represent: Owners’ Club; Owners’ Club Script; Owners’ Club Flocked; Raceway; Raceway Long Sleeve; Atlas; 247 Stockholm; Oasis collaboration; Metallica Ride the Lightning; Iron Maiden Infinite Dreams.
+- Rhude: Pit Stop; Set Piece; Parakeet.
+- Aries: Ancient Temple; Studmeggedon; Punk; Sprayed Column.
+- Stüssy: Sport; Double Venus; Skulls Pigment Dyed; Laguna 80; World Tour design history.
+- Butter Goods: Logo; Terrain; Thanks; Chrome Logo; Bomb Shelter; Glint; Tide; Nocturnal; India.
