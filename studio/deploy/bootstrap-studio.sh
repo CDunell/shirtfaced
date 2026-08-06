@@ -17,6 +17,11 @@ ENV_FILE="$ROOT/.env"
 DB_NAME=shirtfaced_studio
 DB_USER=shirtfaced_studio
 
+# Port 8000 on this box is already taken by something else, so Studio does not
+# get the port it uses locally. Change it here and the service unit, .env and
+# admin's STUDIO_API_URL all follow.
+STUDIO_PORT=8010
+
 say() { printf '\n== %s\n' "$1"; }
 
 say "Checking Python"
@@ -87,7 +92,7 @@ WEB_DIST_ROOT=$ROOT/web/dist
 GIT_ENABLED=true
 
 APP_HOST=127.0.0.1
-APP_PORT=8000
+APP_PORT=$STUDIO_PORT
 DEBUG=false
 ENVEOF
   chmod 600 "$ENV_FILE"
@@ -105,6 +110,19 @@ if grep -q '^DATABASE_URL=postgresql://' "$ENV_FILE"; then
 else
   echo "Already correct."
 fi
+
+say "Checking the listening port"
+# Repaired in place for the same reason as the URL above: .env is never replaced,
+# so a change that only applied to fresh installs would never reach this box.
+if grep -q '^APP_PORT=' "$ENV_FILE"; then
+  sed -i "s|^APP_PORT=.*|APP_PORT=$STUDIO_PORT|" "$ENV_FILE"
+else
+  echo "APP_PORT=$STUDIO_PORT" >> "$ENV_FILE"
+fi
+grep -q '^APP_HOST=' "$ENV_FILE" || echo 'APP_HOST=127.0.0.1' >> "$ENV_FILE"
+echo "Studio will listen on 127.0.0.1:$STUDIO_PORT"
+echo "Currently holding that port, if anything:"
+ss -ltnp "sport = :$STUDIO_PORT" 2>/dev/null || true
 
 say "Ensuring the assets directory exists"
 mkdir -p "$ROOT/assets"
@@ -131,12 +149,18 @@ say "Pointing admin at Studio"
 # Admin calls Studio server-side over loopback. Without this the Prompts page
 # falls back to STUDIO_URL, which is a public hostname that does not resolve.
 ADMIN_ENV=/home/ubuntu/shirtfaced-admin/.env
-if [ -f "$ADMIN_ENV" ] && ! grep -q '^STUDIO_API_URL=' "$ADMIN_ENV"; then
-  echo 'STUDIO_API_URL=http://127.0.0.1:8000' >> "$ADMIN_ENV"
-  echo "Added STUDIO_API_URL to $ADMIN_ENV"
-  sudo systemctl restart shirtfaced-admin || true
+WANTED="STUDIO_API_URL=http://127.0.0.1:$STUDIO_PORT"
+if [ ! -f "$ADMIN_ENV" ]; then
+  echo "Admin is not installed here; nothing to point."
+elif grep -qx "$WANTED" "$ADMIN_ENV"; then
+  echo "Already pointing at $WANTED"
 else
-  echo "STUDIO_API_URL already present, or admin is not installed here."
+  # Set, not appended: an old line naming the wrong port would win otherwise,
+  # and the symptom is the Prompts page saying Studio cannot be reached.
+  sed -i '/^STUDIO_API_URL=/d' "$ADMIN_ENV"
+  echo "$WANTED" >> "$ADMIN_ENV"
+  echo "Pointed admin at $WANTED"
+  sudo systemctl restart shirtfaced-admin || true
 fi
 
 say "Bootstrap complete"

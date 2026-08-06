@@ -44,14 +44,17 @@ say "Waiting for readiness"
 # /ready fails when the database is unreachable, migrations are missing, world
 # files are unreadable or assets are not writable -- so a green here means the
 # deploy actually works, not merely that a process started.
+PORT=${APP_PORT:-8010}
 for attempt in $(seq 1 30); do
-  if curl -fsS -m 5 http://127.0.0.1:8000/ready >/dev/null 2>&1; then
-    echo "Studio is ready."
+  if curl -fsS -m 5 "http://127.0.0.1:$PORT/ready" >/dev/null 2>&1; then
+    echo "Studio is ready on 127.0.0.1:$PORT."
     exit 0
   fi
   sleep 2
 done
 
-echo "Studio did not become ready. Recent logs:" >&2
+echo "Studio did not become ready on port $PORT. Holding that port:" >&2
+ss -ltnp "sport = :$PORT" 2>/dev/null >&2 || true
+echo "Recent logs:" >&2
 sudo journalctl -u shirtfaced-studio -n 40 --no-pager >&2
 exit 1

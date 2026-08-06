@@ -13,8 +13,11 @@ EnvironmentFile=/home/ubuntu/shirtfaced-studio/.env
 # API spends money: the generate endpoint bills OpenAI and has no authentication
 # of its own. Nothing but the box can reach it until a Cloudflare Access policy
 # exists to stand in front.
+#
+# Host and port come from .env so there is one place to change them, and no way
+# for the unit and the application to disagree about where Studio is listening.
 ExecStart=/home/ubuntu/shirtfaced-studio/.venv/bin/uvicorn app.main:app \
-    --host 127.0.0.1 --port 8000
+    --host ${APP_HOST} --port ${APP_PORT}
 
 Restart=on-failure
 RestartSec=5
