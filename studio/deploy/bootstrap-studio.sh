@@ -56,7 +56,9 @@ else
   if ! sudo -u postgres psql -tAc "select 1 from pg_database where datname='$DB_NAME'" | grep -q 1; then
     sudo -u postgres createdb -O "$DB_USER" "$DB_NAME"
   fi
-  NEW_DATABASE_URL="postgresql://$DB_USER:$DB_PASSWORD@127.0.0.1:5432/$DB_NAME"
+  # The driver has to be named. Studio rejects a bare postgresql:// URL rather
+  # than let SQLAlchemy silently pick psycopg2.
+  NEW_DATABASE_URL="postgresql+psycopg://$DB_USER:$DB_PASSWORD@127.0.0.1:5432/$DB_NAME"
 fi
 
 say "Ensuring .env exists"
@@ -92,6 +94,16 @@ ENVEOF
   echo "Wrote $ENV_FILE"
 else
   echo "$ENV_FILE already exists; leaving it untouched."
+fi
+
+say "Checking the database URL names its driver"
+# An earlier bootstrap wrote a bare postgresql:// URL, which Studio refuses at
+# startup. .env is never replaced wholesale, so the repair is done in place.
+if grep -q '^DATABASE_URL=postgresql://' "$ENV_FILE"; then
+  sed -i 's|^DATABASE_URL=postgresql://|DATABASE_URL=postgresql+psycopg://|' "$ENV_FILE"
+  echo "Rewrote DATABASE_URL to name the psycopg 3 driver."
+else
+  echo "Already correct."
 fi
 
 say "Ensuring the assets directory exists"
