@@ -25,11 +25,13 @@ work with no config change if it ever completes.
 | TXT | `@` | `v=spf1 -all` | — |
 | TXT | `_dmarc` | `v=DMARC1; p=quarantine;` | — |
 
-**`admin` is not yet added** (2026-08-04) — same tunnel, ingress rule already
-live (`/etc/cloudflared/config.yml` routes `admin.shirtfaced.wtf` →
-`localhost:4200`, the shirtfaced-admin service). The tunnel's own credential
-on the Oracle box is scoped to a different zone (`tradeninja.au`) and can't
-provision records here — this CNAME needs adding by hand in the dashboard.
+`admin` was added by hand and is live (confirmed 2026-08-06 — `/login` serves,
+every other path redirects to it). Same tunnel; `/etc/cloudflared/config.yml`
+routes `admin.shirtfaced.wtf` → `localhost:4200`, the shirtfaced-admin service.
+
+It had to be added in the dashboard rather than by the box, because the tunnel's
+own credential there is scoped to a different zone (`tradeninja.au`) and cannot
+provision records in this one. That constraint still applies to any future record.
 
 SSL/TLS mode: **Full**.
 
