@@ -157,10 +157,14 @@ named. The atmosphere stated in bare words. What nobody is doing, about the nigh
 rather than about the camera. Background that keeps moving. Garments last. It closes
 on what the photograph would mean to somebody in it.
 
+Take the reference's form. Do not take its furniture. Its place, its food, its props
+and its weather belong to the shot it was written for. Yours has its own, and they
+come from the shot and the canon in front of you.
+
 The interaction is between the people. Things happen around them, not to them: an
 event the group has to deal with becomes a clean-up, and two of those in a row is a
-rut. Somebody losing a fight with their own kebab is a mishap the group laughs at.
-Let the incidental stay incidental.
+rut. A small mishap the group laughs at is right; whatever it involves has to be
+something already in this scene. Let the incidental stay incidental.
 
 Describe the scene; do not choreograph it. The reference says "one bloke sits
 casually on the edge of a white Australian tray-back ute" and leaves the rest to the
@@ -180,8 +184,9 @@ wins.
 
 Motion. The scene is also generated as five seconds of video from the still, so
 say how it moves. Keep it to what would actually happen in five seconds: one clear
-movement, one smaller one, and the world carrying on behind. Nobody arrives, nobody
-leaves, nothing is edited. The camera is a friend holding a phone, so it barely moves.
+movement, one smaller one, and the world carrying on behind. All three come from what
+is in this frame. Nobody arrives, nobody leaves, nothing is edited. The camera is a
+friend holding a phone, so it barely moves.
 
 Use Australian English. Return only the structured fields requested."""
 

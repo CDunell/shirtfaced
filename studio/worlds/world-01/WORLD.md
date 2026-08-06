@@ -739,6 +739,11 @@ reacts to. A consequence line following the action that caused it. Actions that
 name somebody else. Bare-word atmosphere. Negatives about the night. Background
 that keeps moving.
 
+What it does is the template. What it contains is not. The kebab, the shop, the
+hour and the weather below belong to the shot this was written for — W01-002, and
+nothing else. A sunrise balcony has no kebab in it. Take the form; find the
+furniture in the shot and the canon in front of you.
+
 > Photorealistic documentary photograph.
 >
 > Australia.
