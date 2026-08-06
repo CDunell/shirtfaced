@@ -1,0 +1,52 @@
+name: Box check
+
+# Read-only look at the Oracle box. Manual only -- it exists because there is no
+# other way to see what is actually running there before changing it.
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Look
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -u
+          echo "===== listening ====="
+          ss -ltnp 2>/dev/null | sed 's/users:.*pid=/pid=/'
+          echo
+          echo "===== services ====="
+          systemctl list-units --type=service --state=running --no-pager --no-legend |
+            grep -Ei 'shirtfaced|studio|uvicorn|cloudflared|nginx|postgres' || echo "(none matched)"
+          echo
+          echo "===== /home/ubuntu ====="
+          ls -1 /home/ubuntu
+          echo
+          echo "===== studio-shaped directories ====="
+          for d in /home/ubuntu/*/ /srv/*/; do
+            [ -d "$d/app" ] && [ -f "$d/alembic.ini" ] && echo "$d"
+          done
+          echo
+          echo "===== .env files, keys masked ====="
+          for f in /home/ubuntu/*/.env /srv/*/.env; do
+            [ -f "$f" ] || continue
+            echo "--- $f"
+            sed -E 's/^(OPENAI_API_KEY|SESSION_SECRET|ADMIN_PASSWORD_HASH)=.+/\1=<set>/;
+                    s/^(OPENAI_API_KEY|SESSION_SECRET|ADMIN_PASSWORD_HASH)=$/\1=<EMPTY>/;
+                    s#(://[^:]+:)[^@]+@#\1<redacted>@#' "$f"
+          done
+          echo
+          echo "===== databases ====="
+          sudo -u postgres psql -tAc "select datname from pg_database where datname not like 'template%'" 2>/dev/null
+          echo
+          echo "===== cloudflared ingress ====="
+          sudo cat /etc/cloudflared/config.yml 2>/dev/null || echo "(no config)"
+          REMOTE
