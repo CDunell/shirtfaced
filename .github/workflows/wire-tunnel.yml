@@ -1,10 +1,17 @@
 name: Wire Studio into the tunnel
 
 # Manual, and separate from the deploy, because it edits a config file shared
-# with tradeninja.au, orveris.com and cliniix. It should run once, not on every
-# push to main.
+# with tradeninja.au, orveris.com and cliniix. It should run when the answer
+# changes, not on every push to main.
 on:
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "add or remove the studio.shirtfaced.wtf ingress rule"
+        required: true
+        default: add
+        type: choice
+        options: [add, remove]
 
 jobs:
   wire:
@@ -18,6 +25,54 @@ jobs:
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Add the ingress rule
+        if: ${{ inputs.mode == 'add' }}
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/shirtfaced-studio/deploy/wire-tunnel.sh'
+
+      # Sent inline rather than run from the box, so closing an open endpoint
+      # never waits on a deploy to sync a script first.
+      - name: Remove the ingress rule
+        if: ${{ inputs.mode == 'remove' }}
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          CONFIG=/etc/cloudflared/config.yml
+          HOST=studio.shirtfaced.wtf
+
+          if ! sudo grep -q "hostname: $HOST" "$CONFIG"; then
+            echo "$HOST is not in the ingress. Nothing to do."
+            exit 0
+          fi
+
+          BACKUP="$CONFIG.bak.$(date +%Y%m%d-%H%M%S)"
+          sudo cp "$CONFIG" "$BACKUP"
+          echo "Backed up to $BACKUP"
+
+          tmp=$(mktemp)
+          trap 'rm -f "$tmp"' EXIT
+          # Drops the hostname line and the service line that belongs to it, and
+          # nothing else: every other host on this tunnel is someone's live site.
+          sudo awk -v host="$HOST" '
+            $0 ~ ("hostname: " host "$") { skip = 1; next }
+            skip && /^[[:space:]]*service:/ { skip = 0; next }
+            { skip = 0; print }
+          ' "$CONFIG" > "$tmp"
+
+          sudo cp "$tmp" "$CONFIG"
+          if ! sudo cloudflared tunnel ingress validate --config "$CONFIG"; then
+            echo "Validation failed. Restoring." >&2
+            sudo cp "$BACKUP" "$CONFIG"
+            exit 1
+          fi
+
+          sudo systemctl restart cloudflared
+          sleep 3
+          systemctl is-active --quiet cloudflared || {
+            echo "cloudflared did not come back. Restoring." >&2
+            sudo cp "$BACKUP" "$CONFIG"
+            sudo systemctl restart cloudflared
+            exit 1
+          }
+          echo "Removed $HOST from the ingress."
+          REMOTE
