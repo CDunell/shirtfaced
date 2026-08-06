@@ -12,6 +12,7 @@ file is its name.
 
 from __future__ import annotations
 
+import io
 from dataclasses import dataclass
 from pathlib import Path
 from uuid import UUID
@@ -139,11 +140,16 @@ def print_on_photo(
     session: Session,
     *,
     assets_root: Path,
-    photo_path: Path,
+    photo_bytes: bytes,
     asset_id: UUID,
     design_name: str,
 ) -> Image.Image:
-    """The photograph with the saved placement's design printed on it."""
+    """The photograph with the saved placement's design printed on it.
+
+    The photograph arrives as bytes because the asset store owns where images live;
+    designs are read from disk directly, being files somebody drops in rather than
+    anything the application wrote.
+    """
     placement_row = read_placement(session, asset_id)
     if placement_row is None:
         raise NotPlaced("Say where the design goes on this photograph first.")
@@ -152,6 +158,6 @@ def print_on_photo(
     stored = placement_row.settings
     settings = PrintSettings(**stored) if stored else PrintSettings()
 
-    with Image.open(photo_path) as photo:
+    with Image.open(io.BytesIO(photo_bytes)) as photo:
         placement = _to_placement(placement_row.corners, photo.size)
         return print_design(photo, design, placement, settings)
