@@ -8,14 +8,52 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse, RedirectResponse
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from app import __version__
-from app.config import get_settings
+from app.config import Settings, get_settings
 from app.routes import api, assets, health
+from app.security import SESSION_COOKIE, verify_session_token
 from app.web import mount_interface
 
 logger = logging.getLogger(__name__)
+
+# Checked before anything else. Both are used by the deploy to decide whether the
+# release worked, they expose no data, and locking them out would mean a deploy
+# could not tell a broken Studio from a protected one.
+UNAUTHENTICATED_PATHS = frozenset({"/health", "/ready"})
+
+
+class RequireAdminSession(BaseHTTPMiddleware):
+    """Let through only requests carrying a session admin signed.
+
+    Studio has no login of its own, deliberately. Admin has one, Studio shares its
+    secret, and being logged into admin is being logged into Studio.
+    """
+
+    def __init__(self, application: FastAPI, settings: Settings) -> None:
+        super().__init__(application)
+        self._settings = settings
+
+    async def dispatch(self, request: Request, call_next):  # type: ignore[no-untyped-def]
+        if request.url.path in UNAUTHENTICATED_PATHS:
+            return await call_next(request)
+
+        email = verify_session_token(
+            request.cookies.get(SESSION_COOKIE), self._settings.session_secret
+        )
+        if email:
+            return await call_next(request)
+
+        # An API caller gets a status it can act on; a browser gets sent to the
+        # login it actually has, with the way back.
+        if request.url.path.startswith("/api/"):
+            return JSONResponse({"detail": "Not signed in."}, status_code=401)
+        return RedirectResponse(
+            f"{self._settings.login_url}?next={request.url}", status_code=307
+        )
 
 
 def create_app() -> FastAPI:
@@ -28,6 +66,17 @@ def create_app() -> FastAPI:
         version=__version__,
         debug=settings.debug,
     )
+
+    if settings.auth_enabled:
+        application.add_middleware(RequireAdminSession, settings=settings)
+        logger.info("Requiring an admin session on every request.")
+    else:
+        # Loud, because the only thing standing between this API and someone
+        # else's bill is the fact that nothing can route to it.
+        logger.warning(
+            "SESSION_SECRET is not set, so requests are NOT authenticated. This is "
+            "only safe while Studio is reachable from this machine alone."
+        )
 
     # API routes are registered before the interface so the root mount never shadows
     # them.

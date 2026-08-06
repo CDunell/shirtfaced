@@ -98,6 +98,22 @@ class Settings(BaseSettings):
     app_port: int = Field(default=8000, ge=1, le=65535)
     debug: bool = False
 
+    # --- Authentication ---------------------------------------------------------
+    # Studio has no login of its own. Admin already has one, and its session
+    # cookie is signed with this secret; sharing the value lets Studio verify a
+    # session admin issued. Being logged into admin is being logged into Studio.
+    #
+    # Empty locally, where Studio is only reachable from the machine it runs on.
+    # Set on any deployment, because this API spends money.
+    session_secret: str = ""
+    # Where an unauthenticated browser is sent. Admin's login returns it here.
+    login_url: str = "https://admin.shirtfaced.wtf/login"
+
+    @property
+    def auth_enabled(self) -> bool:
+        """Whether requests are checked."""
+        return bool(self.session_secret)
+
     @field_validator("database_url")
     @classmethod
     def _require_psycopg_driver(cls, value: str) -> str:

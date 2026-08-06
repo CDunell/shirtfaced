@@ -7,6 +7,9 @@
  * exposed to the browser and no key ever leaves that service.
  */
 
+import { cookies } from "next/headers";
+import { SESSION_COOKIE } from "@/lib/session";
+
 export interface StudioShot {
   external_id: string;
   sequence: number;
@@ -44,11 +47,22 @@ function baseUrl(): string {
 }
 
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
+  // Studio requires the session admin issued. This call is made by the server,
+  // not the browser, so the cookie has to be carried across by hand -- it is the
+  // caller's own session, not a service account, so Studio is never reachable by
+  // anyone who is not signed in here.
+  const store = await cookies();
+  const session = store.get(SESSION_COOKIE)?.value;
+
   let response: Response;
   try {
     response = await fetch(`${baseUrl()}${path}`, {
       ...init,
-      headers: { Accept: "application/json", ...(init?.headers ?? {}) },
+      headers: {
+        Accept: "application/json",
+        ...(session ? { Cookie: `${SESSION_COOKIE}=${session}` } : {}),
+        ...(init?.headers ?? {}),
+      },
       // Prompts are written fresh every time; a cached one would be a lie about
       // what the current canon says.
       cache: "no-store",

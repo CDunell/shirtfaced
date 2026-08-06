@@ -43,3 +43,27 @@ export function verifySessionToken(token: string | undefined): string | null {
 }
 
 export const SESSION_MAX_AGE = MAX_AGE_SECONDS;
+
+/**
+ * Where the session cookie is valid.
+ *
+ * Set to `.shirtfaced.wtf` in production so the cookie also reaches Studio on its
+ * own subdomain: Studio has no login, it verifies this same token with the same
+ * secret, and being signed into admin is being signed into Studio. Left unset for
+ * localhost, where a domain attribute would stop the cookie being stored at all.
+ */
+export function sessionCookieDomain(): string | undefined {
+  return process.env.SESSION_COOKIE_DOMAIN || undefined;
+}
+
+/** The options every place that writes or clears the cookie must agree on. A
+ *  cookie cleared with different attributes than it was set with is not cleared. */
+export function sessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    domain: sessionCookieDomain(),
+  };
+}

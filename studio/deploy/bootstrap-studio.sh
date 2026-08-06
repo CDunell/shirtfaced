@@ -145,10 +145,40 @@ sudo cp "$ROOT/deploy/shirtfaced-studio.service" /etc/systemd/system/shirtfaced-
 sudo systemctl daemon-reload
 sudo systemctl enable shirtfaced-studio
 
+say "Sharing admin's session secret"
+# Studio has no login. It verifies the cookie admin signs, so it needs the same
+# secret -- and admin's cookie needs a domain wide enough to reach Studio's
+# subdomain, or the browser never sends it there.
+ADMIN_ENV=/home/ubuntu/shirtfaced-admin/.env
+if [ ! -f "$ADMIN_ENV" ]; then
+  echo "Admin is not installed here; Studio will start unauthenticated." >&2
+else
+  SECRET=$(sed -n 's/^SESSION_SECRET=//p' "$ADMIN_ENV" | head -1)
+  if [ -z "$SECRET" ]; then
+    echo "Admin has no SESSION_SECRET. Studio cannot verify a session without it." >&2
+    exit 1
+  fi
+  if grep -q '^SESSION_SECRET=' "$ENV_FILE"; then
+    sed -i "s|^SESSION_SECRET=.*|SESSION_SECRET=$SECRET|" "$ENV_FILE"
+  else
+    echo "SESSION_SECRET=$SECRET" >> "$ENV_FILE"
+  fi
+  grep -q '^LOGIN_URL=' "$ENV_FILE" ||
+    echo 'LOGIN_URL=https://admin.shirtfaced.wtf/login' >> "$ENV_FILE"
+  chmod 600 "$ENV_FILE"
+  echo "Studio will accept sessions admin issued."
+
+  if ! grep -q '^SESSION_COOKIE_DOMAIN=' "$ADMIN_ENV"; then
+    echo 'SESSION_COOKIE_DOMAIN=.shirtfaced.wtf' >> "$ADMIN_ENV"
+    echo "Widened admin's cookie to .shirtfaced.wtf"
+    # Anyone signed in before this change holds a cookie scoped to admin only,
+    # which Studio will not see. They log in once more; nothing else breaks.
+  fi
+fi
+
 say "Pointing admin at Studio"
 # Admin calls Studio server-side over loopback. Without this the Prompts page
 # falls back to STUDIO_URL, which is a public hostname that does not resolve.
-ADMIN_ENV=/home/ubuntu/shirtfaced-admin/.env
 WANTED="STUDIO_API_URL=http://127.0.0.1:$STUDIO_PORT"
 if [ ! -f "$ADMIN_ENV" ]; then
   echo "Admin is not installed here; nothing to point."
