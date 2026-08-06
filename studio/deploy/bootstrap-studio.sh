@@ -128,6 +128,18 @@ ss -ltnp "sport = :$STUDIO_PORT" 2>/dev/null || true
 say "Ensuring the assets directory exists"
 mkdir -p "$ROOT/assets"
 
+say "Seeding a design to test the print bench against"
+# There is no real artwork yet, and an empty picker makes the page impossible to
+# try. Copied only into an empty directory, so the first real design that arrives
+# is never joined by this one again.
+mkdir -p "$ROOT/assets/designs"
+if [ -z "$(ls -A "$ROOT/assets/designs" 2>/dev/null)" ]; then
+  cp "$ROOT/deploy/sample/stand-in-no-regrets.png" "$ROOT/assets/designs/"
+  echo "Seeded the stand-in design."
+else
+  echo "Designs already present; left alone."
+fi
+
 say "Ensuring worlds/ is a git checkout Studio can commit into"
 # Studio's git store commits canon documents after an approval. Without a repo
 # here those commits fail and the change is flagged uncommitted -- the documents
