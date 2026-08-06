@@ -15,13 +15,14 @@ from __future__ import annotations
 import io
 from dataclasses import dataclass
 from pathlib import Path
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from PIL import Image
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import ImageAsset, PrintPlacement
+from app.adapters.asset_store import AssetStore
+from app.db.models import ImageAsset, Photo, PrintPlacement
 from app.domain.errors import StudioError
 from app.services.compositing import Placement, PrintSettings, print_design
 
@@ -31,6 +32,10 @@ DESIGN_SUFFIXES = frozenset({".png", ".webp"})
 
 class NoSuchPhoto(StudioError):
     """The photograph is not in the library."""
+
+
+class NotAPhoto(StudioError):
+    """The uploaded file is not an image this can print on."""
 
 
 class NoSuchDesign(StudioError):
@@ -99,16 +104,81 @@ def _to_placement(corners: list[list[float]], size: tuple[int, int]) -> Placemen
     return Placement(points[0], points[1], points[2], points[3])
 
 
-def read_placement(session: Session, asset_id: UUID) -> PrintPlacement | None:
+# What a browser will actually hand over, and what Pillow will open without help.
+UPLOAD_FORMATS = frozenset({"PNG", "JPEG", "WEBP"})
+UPLOADS_PREFIX = "photos/uploads"
+
+
+def register_generated(session: Session, asset: ImageAsset, label: str) -> Photo:
+    """The photograph row for an approved frame, made on first sight.
+
+    Registering lazily rather than at approval keeps this feature out of the
+    generation path entirely: nothing about approving an image had to change for a
+    design to be printable on it.
+    """
+    existing = session.execute(
+        select(Photo).where(Photo.attempt_id == asset.attempt_id)
+    ).scalar_one_or_none()
+    if existing is not None:
+        return existing
+
+    photo = Photo(
+        relative_path=asset.relative_path,
+        label=label,
+        mime_type=asset.mime_type,
+        width=asset.width or 0,
+        height=asset.height or 0,
+        attempt_id=asset.attempt_id,
+    )
+    session.add(photo)
+    session.flush()
+    return photo
+
+
+def upload_photo(session: Session, store: AssetStore, *, data: bytes, filename: str) -> Photo:
+    """Take a photograph that this application did not make.
+
+    The bytes are opened before anything is written: a file that Pillow cannot read
+    is not a photograph, whatever it is called, and finding that out after storing it
+    leaves rubbish in the asset store.
+    """
+    try:
+        with Image.open(io.BytesIO(data)) as image:
+            image_format = image.format
+            width, height = image.size
+    except (OSError, ValueError) as error:
+        raise NotAPhoto("That file is not an image.") from error
+
+    if image_format not in UPLOAD_FORMATS:
+        raise NotAPhoto(f"{image_format or 'That file'} is not a format this can print on.")
+
+    label = Path(filename).name or "photograph"
+    suffix = {"PNG": "png", "JPEG": "jpg", "WEBP": "webp"}[image_format]
+    key = f"{UPLOADS_PREFIX}/{uuid4()}.{suffix}"
+    store.save(key, data, f"image/{'jpeg' if suffix == 'jpg' else suffix}")
+
+    photo = Photo(
+        relative_path=key,
+        label=label,
+        mime_type=f"image/{'jpeg' if suffix == 'jpg' else suffix}",
+        width=width,
+        height=height,
+    )
+    session.add(photo)
+    session.commit()
+    return photo
+
+
+def read_placement(session: Session, photo_id: UUID) -> PrintPlacement | None:
     return session.execute(
-        select(PrintPlacement).where(PrintPlacement.asset_id == asset_id)
+        select(PrintPlacement).where(PrintPlacement.photo_id == photo_id)
     ).scalar_one_or_none()
 
 
 def save_placement(
     session: Session,
     *,
-    asset_id: UUID,
+    photo_id: UUID,
     corners: list[list[float]],
     settings: dict[str, float] | None = None,
     design: str | None = None,
@@ -118,13 +188,12 @@ def save_placement(
     Moving a design is an edit rather than a new opinion, so there is one row per
     photograph and it is overwritten.
     """
-    asset = session.get(ImageAsset, asset_id)
-    if asset is None:
-        raise NoSuchPhoto(f"No photograph with id {asset_id}.")
+    if session.get(Photo, photo_id) is None:
+        raise NoSuchPhoto(f"No photograph with id {photo_id}.")
 
-    existing = read_placement(session, asset_id)
+    existing = read_placement(session, photo_id)
     if existing is None:
-        existing = PrintPlacement(asset_id=asset_id)
+        existing = PrintPlacement(photo_id=photo_id)
         session.add(existing)
 
     existing.corners = corners
@@ -141,7 +210,7 @@ def print_on_photo(
     *,
     assets_root: Path,
     photo_bytes: bytes,
-    asset_id: UUID,
+    photo_id: UUID,
     design_name: str,
 ) -> Image.Image:
     """The photograph with the saved placement's design printed on it.
@@ -150,7 +219,7 @@ def print_on_photo(
     designs are read from disk directly, being files somebody drops in rather than
     anything the application wrote.
     """
-    placement_row = read_placement(session, asset_id)
+    placement_row = read_placement(session, photo_id)
     if placement_row is None:
         raise NotPlaced("Say where the design goes on this photograph first.")
 

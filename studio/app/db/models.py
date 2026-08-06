@@ -664,6 +664,47 @@ class PromptVariation(Base):
     )
 
 
+class Photo(Base):
+    """A photograph a design can be printed on.
+
+    Two kinds arrive here. Studio generates one when a shot is approved, and one is
+    uploaded -- a real photograph, or a frame this application had nothing to do
+    with. Both print the same way, so both are the same row.
+
+    A generated photograph keeps a link back to the attempt that made it. An
+    uploaded one has none, which is the only difference between them.
+    """
+
+    __tablename__ = "photos"
+    __table_args__ = (
+        # One row per generated frame. Listing the library must not keep making
+        # new ones for the same attempt.
+        UniqueConstraint("attempt_id", name="uq_photos_attempt_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    # Relative to ASSETS_ROOT, like every other stored image.
+    relative_path: Mapped[str] = mapped_column(String(512), nullable=False)
+    # What to call it in a list: the shot for a generated frame, the file name for
+    # an uploaded one.
+    label: Mapped[str] = mapped_column(String(200), nullable=False)
+    mime_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    width: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    attempt_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("generation_attempts.id", ondelete="CASCADE")
+    )
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+    @property
+    def uploaded(self) -> bool:
+        return self.attempt_id is None
+
+
 class PrintPlacement(Base):
     """Where a design sits on the garment in one photograph.
 
@@ -679,14 +720,14 @@ class PrintPlacement(Base):
     __tablename__ = "print_placements"
     __table_args__ = (
         # One placement per photograph. Moving it is an edit, not a second opinion.
-        UniqueConstraint("asset_id", name="uq_print_placements_asset_id"),
+        UniqueConstraint("photo_id", name="uq_print_placements_photo_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
     )
-    asset_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("image_assets.id", ondelete="CASCADE"), nullable=False
+    photo_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("photos.id", ondelete="CASCADE"), nullable=False
     )
     # [[x, y], ...] clockwise from the top left, each 0..1.
     corners: Mapped[list[list[float]]] = mapped_column(JSONB, nullable=False)
