@@ -1,0 +1,62 @@
+name: Push canon to the box
+
+# The deploy syncs worlds/ with --ignore-existing, so the box owns its canon and
+# a routine deploy can never overwrite an approval made there. That is right for
+# every push but this one: when canon is edited in the repo, something has to
+# carry it over deliberately.
+#
+# Manual, and it asks for the word, because it is the one operation that can
+# destroy work done on the box.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "overwrite" to replace the box canon with the repository copy'
+        required: true
+        type: string
+
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the confirmation
+        run: |
+          if [ "${{ inputs.confirm }}" != "overwrite" ]; then
+            echo "Not confirmed. Nothing was changed." >&2
+            exit 1
+          fi
+
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Show what would change
+        run: |
+          rsync -azn --itemize-changes --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
+
+      - name: Commit the box's canon first
+        run: |
+          # The box keeps its own git history of canon. Committing before the
+          # overwrite means anything written there is recoverable afterwards.
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'cd /home/ubuntu/shirtfaced-studio &&
+             git add -A worlds &&
+             git commit -qm "Canon before a repository push" || echo "Nothing to commit."'
+
+      - name: Push
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
+
+      - name: Re-import and restart
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/shirtfaced-studio/deploy/deploy-studio.sh'
