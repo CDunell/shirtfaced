@@ -327,6 +327,25 @@ function postJson<T>(path: string, signal?: AbortSignal, body?: unknown): Promis
   return request<T>(path, "POST", signal, body);
 }
 
+function putJson<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+  return request<T>(path, "PUT", signal, body);
+}
+
+/** The service's own explanation of a refusal, for the calls that are not JSON. */
+async function failure(response: Response): Promise<ApiError> {
+  const detail = await response
+    .clone()
+    .json()
+    .then((body: unknown) =>
+      typeof body === "object" && body !== null && "detail" in body ? String(body.detail) : null,
+    )
+    .catch(() => null);
+  return new ApiError(
+    response.status,
+    detail ?? `The Studio service returned ${String(response.status)}.`,
+  );
+}
+
 export interface Prompts {
   shot: Shot;
   selection_reason: string;
@@ -498,4 +517,75 @@ export function retryReview(attemptId: string, signal?: AbortSignal): Promise<Re
 /** Build the production prompt without generating anything. Development only. */
 export function previewPlan(slug: string, signal?: AbortSignal): Promise<PlanPreview> {
   return postJson<PlanPreview>(`/api/worlds/${encodeURIComponent(slug)}/plan-preview`, signal);
+}
+
+// --- printing ----------------------------------------------------------------
+
+export interface Design {
+  name: string;
+}
+
+export interface Photo {
+  id: string;
+  url: string;
+  label: string;
+  /** False for anything Studio generated, true for anything brought in. */
+  uploaded: boolean;
+  width: number;
+  height: number;
+  placed: boolean;
+}
+
+/** Clockwise from the top left, each 0..1 of the photograph. */
+export type Corners = [number, number][];
+
+export interface Placement {
+  corners: Corners;
+  settings: Record<string, number>;
+  design: string | null;
+}
+
+export function fetchDesigns(signal?: AbortSignal): Promise<Design[]> {
+  return getJson<Design[]>("/api/designs", signal);
+}
+
+export function fetchPhotos(signal?: AbortSignal): Promise<Photo[]> {
+  return getJson<Photo[]>("/api/photos", signal);
+}
+
+/** Bring in a photograph Studio did not make. */
+export async function uploadPhoto(file: File): Promise<Photo> {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await fetch("/api/photos", { method: "POST", body });
+  if (!response.ok) {
+    throw await failure(response);
+  }
+  return (await response.json()) as Photo;
+}
+
+export function fetchPlacement(photoId: string, signal?: AbortSignal): Promise<Placement | null> {
+  return getJson<Placement | null>(`/api/photos/${encodeURIComponent(photoId)}/placement`, signal);
+}
+
+export function savePlacement(
+  photoId: string,
+  placement: { corners: Corners; design?: string | null },
+): Promise<Placement> {
+  return putJson<Placement>(`/api/photos/${encodeURIComponent(photoId)}/placement`, placement);
+}
+
+/**
+ * Render the design onto the photograph.
+ *
+ * Returns the image itself rather than a URL: nothing is stored until somebody
+ * decides a render is the right one, so there is nothing to link to.
+ */
+export async function printPhoto(photoId: string, design: string): Promise<Blob> {
+  const path = `/api/photos/${encodeURIComponent(photoId)}/print?design=${encodeURIComponent(design)}`;
+  const response = await fetch(path, { method: "POST" });
+  if (!response.ok) {
+    throw await failure(response);
+  }
+  return await response.blob();
 }

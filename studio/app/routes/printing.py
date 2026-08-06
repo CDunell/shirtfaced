@@ -40,9 +40,11 @@ router = APIRouter(prefix="/api", tags=["printing"])
 SessionDependency = Annotated[Session, Depends(get_db_session)]
 SettingsDependency = Annotated[Settings, Depends(get_settings)]
 
-# A frame out of the image model is a few megabytes. Ten leaves room for something
-# off a phone camera without letting the process be filled up by one request.
-MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+# Photographs arrive here generated elsewhere and uploaded, so the ceiling has to
+# clear a full-size frame with room over it -- an upscaled or print-resolution PNG
+# runs well past ten megabytes. This is a guard against one request filling the
+# disk, not a judgement about what a photograph should weigh.
+MAX_UPLOAD_BYTES = 64 * 1024 * 1024
 
 # A stored photograph is immutable and addressed by a UUID that never points at
 # different bytes.
