@@ -21,6 +21,10 @@ dependencies = [
   "openai>=1.50",
   # Local image metadata and thumbnails only.
   "pillow>=10.4",
+  # Printing designs onto photographs: displacement, shading and masking are all
+  # per-pixel, and a pure-Pillow version of that is minutes per image rather than
+  # under a second.
+  "numpy>=2.0",
 ]
 
 [project.optional-dependencies]
