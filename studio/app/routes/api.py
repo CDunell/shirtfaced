@@ -393,6 +393,8 @@ class GenerationResponse(BaseModel):
 class PromptsResponse(BaseModel):
     """Both prompts for one shot. Nothing was generated; the prompt itself is kept."""
 
+    # Named so a photograph generated from this prompt can be attributed back to it.
+    id: uuid.UUID
     shot: ShotResponse
     selection_reason: str
     image_prompt: str
@@ -413,6 +415,7 @@ class PromptHistoryResponse(BaseModel):
 
 def _prompts_response(prompts: PromptSet) -> PromptsResponse:
     return PromptsResponse(
+        id=prompts.id,
         shot=ShotResponse.model_validate(prompts.shot),
         selection_reason=prompts.selection_reason,
         image_prompt=prompts.image_prompt,

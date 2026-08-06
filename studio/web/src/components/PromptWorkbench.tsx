@@ -27,6 +27,7 @@ import {
   fetchPromptHistory,
   fetchWorld,
   fetchWorlds,
+  uploadPhoto,
   writePrompts,
   type Prompts,
   type Shot,
@@ -45,6 +46,70 @@ function shotLabel(shot: Shot): string {
   const parts = [shot.external_id, shot.title];
   const detail = [shot.hero_product, shot.camera_position].filter(Boolean).join(" · ");
   return detail ? `${parts.join(" — ")}  (${detail})` : parts.join(" — ");
+}
+
+/**
+ * The photograph this prompt produced.
+ *
+ * The frames are generated elsewhere and brought back, so the upload is the only
+ * moment anybody knows which prompt made which picture. Asking later is a memory
+ * test, and the answer stops being available the moment there are two variations.
+ */
+function UploadTheResult({ promptId }: { promptId: string }): React.JSX.Element {
+  const [css, theme] = useStyletron();
+  const [state, setState] = useState<"idle" | "working" | "done" | "failed">("idle");
+  const [message, setMessage] = useState<string | null>(null);
+  const inputId = `upload-for-${promptId}`;
+
+  const onFile = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      setState("working");
+      setMessage(null);
+      uploadPhoto(file, promptId)
+        .then(() => {
+          setState("done");
+        })
+        .catch((cause: unknown) => {
+          setState("failed");
+          setMessage(cause instanceof ApiError ? cause.message : "The upload failed.");
+        })
+        .finally(() => {
+          event.target.value = "";
+        });
+    },
+    [promptId],
+  );
+
+  return (
+    <div className={css({ marginTop: theme.sizing.scale600 })}>
+      <Button
+        size={SIZE.compact}
+        kind={BUTTON_KIND.secondary}
+        disabled={state === "working"}
+        onClick={() => document.getElementById(inputId)?.click()}
+      >
+        {state === "working"
+          ? "Uploading…"
+          : state === "done"
+            ? "Uploaded — add another"
+            : "Upload the photo this made"}
+      </Button>
+      <input
+        id={inputId}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        onChange={onFile}
+        className={css({ display: "none" })}
+      />
+      <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
+        {state === "done"
+          ? "It is in the print bench, tagged with this prompt."
+          : (message ?? "Goes to the print bench, remembering it came from this prompt.")}
+      </ParagraphXSmall>
+    </div>
+  );
 }
 
 /** A prompt with a copy button. Selecting by hand on a phone is miserable. */
@@ -119,13 +184,22 @@ export function PromptWorkbench(): React.JSX.Element {
   const [world, setWorld] = useState<Value>([]);
   const [shots, setShots] = useState<Shot[]>([]);
   const [shot, setShot] = useState<Value>([]);
-  const [variations, setVariations] = useState<Prompts[]>([]);
+  // Tagged with the scene it belongs to, so choosing another scene shows nothing
+  // rather than the previous one's prompts, without an effect reaching in to clear
+  // anything.
+  const [history, setHistory] = useState<{ shot: string; items: Prompts[] }>({
+    shot: "",
+    items: [],
+  });
   const [busy, setBusy] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const slug = world[0]?.id ? String(world[0].id) : null;
   const named = shot[0]?.id ? String(shot[0].id) : undefined;
+  // A named scene shows only its own prompts. With none named, whatever was last
+  // written is what there is to show.
+  const variations = !named || history.shot === named ? history.items : [];
 
   useEffect(() => {
     const controller = new AbortController();
@@ -161,15 +235,14 @@ export function PromptWorkbench(): React.JSX.Element {
   // What already exists for the chosen scene. Without a scene there is nothing to
   // show: which shot is next is not settled until the prompt is written.
   useEffect(() => {
-    if (!slug || !named) {
-      setVariations([]);
-      return undefined;
-    }
+    if (!slug || !named) return undefined;
     const controller = new AbortController();
+    // After an await, not during the effect: the request has already left.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoadingHistory(true);
     fetchPromptHistory(slug, named, controller.signal)
-      .then((history) => {
-        setVariations(history.variations);
+      .then((found) => {
+        setHistory({ shot: named, items: found.variations });
       })
       .catch((cause: unknown) => {
         if (!controller.signal.aborted) setError(describe(cause));
@@ -191,12 +264,11 @@ export function PromptWorkbench(): React.JSX.Element {
         // Prepended rather than refetched, so what was just asked for is on screen
         // immediately. A write with no scene chosen can land on a different shot
         // than the list is showing, in which case the list starts again.
-        setVariations((existing) => {
-          const showing = existing[0];
-          return showing && showing.shot.external_id !== written.shot.external_id
-            ? [written]
-            : [written, ...existing];
-        });
+        setHistory((existing) => ({
+          shot: written.shot.external_id,
+          items:
+            existing.shot === written.shot.external_id ? [written, ...existing.items] : [written],
+        }));
       })
       .catch((cause: unknown) => {
         setError(describe(cause));
@@ -237,7 +309,7 @@ export function PromptWorkbench(): React.JSX.Element {
               setWorld(value);
               setShots([]);
               setShot([]);
-              setVariations([]);
+              setHistory({ shot: "", items: [] });
             }}
           />
 
@@ -323,6 +395,8 @@ export function PromptWorkbench(): React.JSX.Element {
               title="Video prompt — upload the frame, paste this"
               text={item.video_prompt}
             />
+
+            {item.id && <UploadTheResult promptId={item.id} />}
           </StyledBody>
         </Card>
       ))}

@@ -22,7 +22,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStore
-from app.db.models import ImageAsset, Photo, PrintPlacement
+from app.db.models import ImageAsset, Photo, PrintPlacement, PromptVariation
 from app.domain.errors import StudioError
 from app.services.compositing import Placement, PrintSettings, print_design
 
@@ -36,6 +36,10 @@ class NoSuchPhoto(StudioError):
 
 class NotAPhoto(StudioError):
     """The uploaded file is not an image this can print on."""
+
+
+class NoSuchPrompt(StudioError):
+    """The prompt a photograph is being attributed to does not exist."""
 
 
 class NoSuchDesign(StudioError):
@@ -135,13 +139,29 @@ def register_generated(session: Session, asset: ImageAsset, label: str) -> Photo
     return photo
 
 
-def upload_photo(session: Session, store: AssetStore, *, data: bytes, filename: str) -> Photo:
+def upload_photo(
+    session: Session,
+    store: AssetStore,
+    *,
+    data: bytes,
+    filename: str,
+    prompt_variation_id: UUID | None = None,
+) -> Photo:
     """Take a photograph that this application did not make.
 
     The bytes are opened before anything is written: a file that Pillow cannot read
     is not a photograph, whatever it is called, and finding that out after storing it
     leaves rubbish in the asset store.
+
+    ``prompt_variation_id`` records which prompt produced it. The frames are made
+    elsewhere and brought back, so the moment of upload is the only moment anybody
+    knows -- ask later and it is a memory test.
     """
+    if prompt_variation_id is not None:
+        attributed = session.get(PromptVariation, prompt_variation_id)
+        if attributed is None:
+            raise NoSuchPrompt(f"No prompt with id {prompt_variation_id}.")
+
     try:
         with Image.open(io.BytesIO(data)) as image:
             image_format = image.format
@@ -163,6 +183,7 @@ def upload_photo(session: Session, store: AssetStore, *, data: bytes, filename: 
         mime_type=f"image/{'jpeg' if suffix == 'jpg' else suffix}",
         width=width,
         height=height,
+        prompt_variation_id=prompt_variation_id,
     )
     session.add(photo)
     session.commit()

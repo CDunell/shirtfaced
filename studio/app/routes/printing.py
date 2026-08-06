@@ -12,7 +12,7 @@ import io
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select, true
 from sqlalchemy.orm import Session, selectinload
@@ -25,6 +25,7 @@ from app.domain.enums import AssetKind, AttemptState
 from app.services.print_service import (
     NoSuchDesign,
     NoSuchPhoto,
+    NoSuchPrompt,
     NotAPhoto,
     NotPlaced,
     available_designs,
@@ -57,6 +58,13 @@ class DesignResponse(BaseModel):
     name: str
 
 
+class PromptLineage(BaseModel):
+    """The prompt a photograph came from."""
+
+    shot_external_id: str
+    variation: int
+
+
 class PhotoResponse(BaseModel):
     """A photograph a design can go on, and whether one has been placed."""
 
@@ -68,6 +76,8 @@ class PhotoResponse(BaseModel):
     width: int
     height: int
     placed: bool
+    # Null for a photograph nobody attributed to a prompt.
+    from_prompt: PromptLineage | None
 
 
 class PlacementBody(BaseModel):
@@ -102,6 +112,7 @@ class PlacementResponse(BaseModel):
 
 
 def _photo_response(session: Session, photo: Photo) -> PhotoResponse:
+    variation = photo.prompt_variation
     return PhotoResponse(
         id=photo.id,
         url=f"/api/photos/{photo.id}/image",
@@ -110,6 +121,11 @@ def _photo_response(session: Session, photo: Photo) -> PhotoResponse:
         width=photo.width,
         height=photo.height,
         placed=read_placement(session, photo.id) is not None,
+        from_prompt=PromptLineage(
+            shot_external_id=variation.shot.external_id, variation=variation.variation
+        )
+        if variation
+        else None,
     )
 
 
@@ -172,6 +188,9 @@ async def upload(
     session: SessionDependency,
     settings: SettingsDependency,
     file: Annotated[UploadFile, File()],
+    # Which prompt produced it. Sent when the upload comes from a prompt, which is
+    # the only moment anybody knows.
+    prompt_variation_id: Annotated[uuid.UUID | None, Form()] = None,
 ) -> PhotoResponse:
     """Bring in a photograph this application did not make.
 
@@ -188,11 +207,19 @@ async def upload(
 
     store = FilesystemAssetStore(settings.assets_root_resolved)
     try:
-        photo = upload_photo(session, store, data=data, filename=file.filename or "photograph")
+        photo = upload_photo(
+            session,
+            store,
+            data=data,
+            filename=file.filename or "photograph",
+            prompt_variation_id=prompt_variation_id,
+        )
     except NotAPhoto as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
         ) from error
+    except NoSuchPrompt as error:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
     return _photo_response(session, photo)
 

@@ -24,6 +24,7 @@ const PHOTO: client.Photo = {
   width: 1536,
   height: 1024,
   placed: false,
+  from_prompt: null,
 };
 
 const UPLOADED: client.Photo = { ...PHOTO, id: "photo-2", label: "kitchen.png", uploaded: true };

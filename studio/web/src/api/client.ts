@@ -347,6 +347,7 @@ async function failure(response: Response): Promise<ApiError> {
 }
 
 export interface Prompts {
+  id?: string;
   shot: Shot;
   selection_reason: string;
   image_prompt: string;
@@ -525,6 +526,11 @@ export interface Design {
   name: string;
 }
 
+export interface PromptLineage {
+  shot_external_id: string;
+  variation: number;
+}
+
 export interface Photo {
   id: string;
   url: string;
@@ -534,6 +540,8 @@ export interface Photo {
   width: number;
   height: number;
   placed: boolean;
+  /** Null for a photograph nobody attributed to a prompt. */
+  from_prompt: PromptLineage | null;
 }
 
 /** Clockwise from the top left, each 0..1 of the photograph. */
@@ -553,10 +561,16 @@ export function fetchPhotos(signal?: AbortSignal): Promise<Photo[]> {
   return getJson<Photo[]>("/api/photos", signal);
 }
 
-/** Bring in a photograph Studio did not make. */
-export async function uploadPhoto(file: File): Promise<Photo> {
+/**
+ * Bring in a photograph Studio did not make.
+ *
+ * `promptVariationId` records which prompt produced it. The frames are generated
+ * elsewhere and brought back, so the upload is the only moment anybody knows.
+ */
+export async function uploadPhoto(file: File, promptVariationId?: string): Promise<Photo> {
   const body = new FormData();
   body.append("file", file);
+  if (promptVariationId) body.append("prompt_variation_id", promptVariationId);
   const response = await fetch("/api/photos", { method: "POST", body });
   if (!response.ok) {
     throw await failure(response);

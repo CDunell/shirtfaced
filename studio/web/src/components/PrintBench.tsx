@@ -334,6 +334,15 @@ export function PrintBench(): React.JSX.Element {
               <Tag closeable={false} kind={photo.uploaded ? TAG_KIND.accent : TAG_KIND.neutral}>
                 {photo.uploaded ? "uploaded" : "generated"}
               </Tag>
+              {photo.from_prompt && (
+                // Where it came from, so a frame is never an anonymous file.
+                <Tag closeable={false} kind={TAG_KIND.positive}>
+                  {photo.from_prompt.shot_external_id}
+                  {photo.from_prompt.variation === 1
+                    ? ""
+                    : ` variation ${String(photo.from_prompt.variation)}`}
+                </Tag>
+              )}
               {busy && <ParagraphXSmall margin={0}>Printing…</ParagraphXSmall>}
               {!designName && (
                 <ParagraphXSmall margin={0} color={theme.colors.contentTertiary}>

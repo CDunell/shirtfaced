@@ -651,6 +651,7 @@ class PromptVariation(Base):
     )
     # 1 for the first prompt written for a shot, and up from there.
     variation: Mapped[int] = mapped_column(Integer, nullable=False)
+    shot: Mapped[Shot] = relationship(lazy="selectin")
     image_prompt: Mapped[str] = mapped_column(Text, nullable=False)
     # Image-to-video. The frame is uploaded separately, so this never names one.
     video_prompt: Mapped[str] = mapped_column(Text, nullable=False)
@@ -696,9 +697,18 @@ class Photo(Base):
     attempt_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True), ForeignKey("generation_attempts.id", ondelete="CASCADE")
     )
+    # Which prompt produced it. The frames are generated elsewhere from a prompt
+    # written here and uploaded back, so without this the join exists only in
+    # somebody's memory. Cleared rather than cascading: a photograph outlives the
+    # prompt that made it, and losing the lineage is not a reason to lose the frame.
+    prompt_variation_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("prompt_variations.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+    prompt_variation: Mapped[PromptVariation | None] = relationship(lazy="selectin")
 
     @property
     def uploaded(self) -> bool:

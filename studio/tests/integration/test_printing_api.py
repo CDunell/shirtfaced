@@ -239,6 +239,44 @@ def test_a_design_that_is_not_there_is_a_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+def test_a_photograph_remembers_the_prompt_that_made_it(client: TestClient) -> None:
+    """The join the whole feature exists for.
+
+    The frames are generated elsewhere from a prompt written here and brought back,
+    so the upload is the only moment anybody knows which prompt made which picture.
+    """
+    prompt = client.post("/api/worlds/world-01/prompts", params={"shot": "W01-001"}).json()
+
+    created = client.post(
+        "/api/photos",
+        files={"file": ("frame.png", grey_png(), "image/png")},
+        data={"prompt_variation_id": prompt["id"]},
+    )
+
+    assert created.status_code == 201
+    assert created.json()["from_prompt"] == {"shot_external_id": "W01-001", "variation": 1}
+    # And it survives into the library, which is where it gets read.
+    assert client.get("/api/photos").json()[0]["from_prompt"]["variation"] == 1
+
+
+def test_a_photograph_with_no_prompt_behind_it_is_fine(client: TestClient) -> None:
+    """Not every photograph came from a prompt written here."""
+    assert upload(client).json()["from_prompt"] is None
+
+
+def test_a_photograph_cannot_be_attributed_to_a_prompt_that_does_not_exist(
+    client: TestClient,
+) -> None:
+    response = client.post(
+        "/api/photos",
+        files={"file": ("frame.png", grey_png(), "image/png")},
+        data={"prompt_variation_id": "0f7f3f9c-0000-4000-8000-000000000000"},
+    )
+
+    assert response.status_code == 404
+    assert client.get("/api/photos").json() == [], "the photograph was stored anyway"
+
+
 def test_a_render_is_never_cached(client: TestClient) -> None:
     """The next render is meant to be different; a cached one hides the change."""
     photo_id = upload(client).json()["id"]

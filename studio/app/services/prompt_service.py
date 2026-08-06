@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass
+from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
@@ -39,6 +40,8 @@ class NothingToPlan(StudioError):
 class PromptSet:
     """Both prompts for one shot, and how they were made."""
 
+    # The stored row. A photograph generated from this prompt is attributed to it.
+    id: UUID
     shot: Shot
     selection_reason: str
     image_prompt: str
@@ -53,6 +56,7 @@ class PromptSet:
 
 def _as_prompt_set(shot: Shot, row: PromptVariation) -> PromptSet:
     return PromptSet(
+        id=row.id,
         shot=shot,
         selection_reason=row.selection_reason,
         image_prompt=row.image_prompt,
