@@ -1,6 +1,9 @@
 name: Deploy
 
 on:
+  # Deploying without a code change is a real need: placing a secret for the
+  # first time, or re-running after fixing something on the box.
+  workflow_dispatch:
   push:
     branches: [main]
     paths-ignore:
