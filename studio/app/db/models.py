@@ -621,3 +621,44 @@ class ReferenceFrame(Base):
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<ReferenceFrame {self.label!r} {self.state.value!r}>"
+
+
+class PromptVariation(Base):
+    """A prompt written for a shot, kept.
+
+    Writing a prompt used to record nothing: the text appeared, and asking again
+    replaced it. That made a variation impossible to compare against the one before
+    it, which is the whole reason a variation gets written.
+
+    Not a generation attempt. Nothing here has been sent to an image model, no world
+    lock was taken and no decision follows. A shot accumulates as many of these as it
+    is asked for, numbered in the order they were written.
+    """
+
+    __tablename__ = "prompt_variations"
+    __table_args__ = (
+        # Numbering is per shot and gapless. A race that produced two number 3s
+        # should fail here rather than quietly renumber the history.
+        UniqueConstraint("shot_id", "variation", name="uq_prompt_variations_shot_variation"),
+        Index("ix_prompt_variations_shot_id_variation", "shot_id", "variation"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    shot_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("shots.id", ondelete="CASCADE"), nullable=False
+    )
+    # 1 for the first prompt written for a shot, and up from there.
+    variation: Mapped[int] = mapped_column(Integer, nullable=False)
+    image_prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    # Image-to-video. The frame is uploaded separately, so this never names one.
+    video_prompt: Mapped[str] = mapped_column(Text, nullable=False)
+    # Why this shot was the one planned, in the selector's words.
+    selection_reason: Mapped[str] = mapped_column(Text, nullable=False)
+    # False when the deterministic fake wrote it, so nothing was billed. Kept
+    # because a fake prompt looks real and would otherwise be indistinguishable.
+    live: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )

@@ -3,8 +3,12 @@
  *
  * This is the screen the tool is actually used through. Generation happens
  * elsewhere — in a browser, on a phone — so the job here is to produce the prompt
- * the canon implies and make it trivial to copy. Nothing is generated, no attempt is
+ * the canon implies and make it trivial to copy. No image is generated, no attempt is
  * recorded and no world is locked.
+ *
+ * Choosing a scene shows what has already been written for it. Writing again adds a
+ * variation and leaves the earlier ones alone: a variation you cannot put beside the
+ * one it varies from is not much of a variation.
  *
  * Built for a phone first. The copy button is the product.
  */
@@ -20,6 +24,7 @@ import { HeadingSmall, LabelSmall, ParagraphXSmall } from "baseui/typography";
 
 import {
   ApiError,
+  fetchPromptHistory,
   fetchWorld,
   fetchWorlds,
   writePrompts,
@@ -114,11 +119,13 @@ export function PromptWorkbench(): React.JSX.Element {
   const [world, setWorld] = useState<Value>([]);
   const [shots, setShots] = useState<Shot[]>([]);
   const [shot, setShot] = useState<Value>([]);
-  const [prompts, setPrompts] = useState<Prompts | null>(null);
+  const [variations, setVariations] = useState<Prompts[]>([]);
   const [busy, setBusy] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const slug = world[0]?.id ? String(world[0].id) : null;
+  const named = shot[0]?.id ? String(shot[0].id) : undefined;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -151,26 +158,60 @@ export function PromptWorkbench(): React.JSX.Element {
     };
   }, [slug]);
 
+  // What already exists for the chosen scene. Without a scene there is nothing to
+  // show: which shot is next is not settled until the prompt is written.
+  useEffect(() => {
+    if (!slug || !named) {
+      setVariations([]);
+      return undefined;
+    }
+    const controller = new AbortController();
+    setLoadingHistory(true);
+    fetchPromptHistory(slug, named, controller.signal)
+      .then((history) => {
+        setVariations(history.variations);
+      })
+      .catch((cause: unknown) => {
+        if (!controller.signal.aborted) setError(describe(cause));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoadingHistory(false);
+      });
+    return () => {
+      controller.abort();
+    };
+  }, [slug, named]);
+
   const generate = useCallback(() => {
     if (!slug) return;
     setBusy(true);
     setError(null);
-    const named = shot[0]?.id ? String(shot[0].id) : undefined;
     writePrompts(slug, named)
-      .then(setPrompts)
+      .then((written) => {
+        // Prepended rather than refetched, so what was just asked for is on screen
+        // immediately. A write with no scene chosen can land on a different shot
+        // than the list is showing, in which case the list starts again.
+        setVariations((existing) => {
+          const showing = existing[0];
+          return showing && showing.shot.external_id !== written.shot.external_id
+            ? [written]
+            : [written, ...existing];
+        });
+      })
       .catch((cause: unknown) => {
         setError(describe(cause));
       })
       .finally(() => {
         setBusy(false);
       });
-  }, [slug, shot]);
+  }, [slug, named]);
 
   return (
     <div className={css({ maxWidth: "760px", margin: "0 auto" })}>
       <HeadingSmall marginTop={0}>Prompts</HeadingSmall>
       <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
-        Writes the prompt the canon implies. Generates nothing, records nothing, locks nothing.
+        Writes the prompt the canon implies. Generates no image and locks nothing. Every prompt
+        written is kept, so a variation sits beside the one it varies from.
       </ParagraphXSmall>
 
       {error && (
@@ -196,7 +237,7 @@ export function PromptWorkbench(): React.JSX.Element {
               setWorld(value);
               setShots([]);
               setShot([]);
-              setPrompts(null);
+              setVariations([]);
             }}
           />
 
@@ -216,8 +257,8 @@ export function PromptWorkbench(): React.JSX.Element {
               }}
             />
             <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
-              Leave empty for the next planned shot. Naming an approved one plans it again, which is
-              how a variant is made.
+              Leave empty for the next planned shot. Choosing one shows what has already been
+              written for it; writing again adds a variation.
             </ParagraphXSmall>
           </div>
 
@@ -232,8 +273,23 @@ export function PromptWorkbench(): React.JSX.Element {
         </StyledBody>
       </Card>
 
-      {prompts && (
-        <Card overrides={{ Root: { style: { marginTop: theme.sizing.scale600 } } }}>
+      {loadingHistory && (
+        <ParagraphXSmall color={theme.colors.contentTertiary}>
+          Looking up what exists…
+        </ParagraphXSmall>
+      )}
+
+      {!loadingHistory && named && variations.length === 0 && (
+        <ParagraphXSmall color={theme.colors.contentTertiary}>
+          Nothing has been written for this scene yet.
+        </ParagraphXSmall>
+      )}
+
+      {variations.map((item) => (
+        <Card
+          key={`${item.shot.external_id}-${String(item.variation)}`}
+          overrides={{ Root: { style: { marginTop: theme.sizing.scale600 } } }}
+        >
           <StyledBody>
             <div
               className={css({
@@ -244,31 +300,42 @@ export function PromptWorkbench(): React.JSX.Element {
               })}
             >
               <LabelSmall>
-                {prompts.shot.external_id} — {prompts.shot.title}
+                {item.shot.external_id} — {item.shot.title}
               </LabelSmall>
-              <Tag closeable={false} kind={TAG_KIND.neutral}>
-                {STATUS_LABEL[prompts.shot.status] ?? prompts.shot.status}
+              <Tag closeable={false} kind={TAG_KIND.accent}>
+                {item.variation === 1 ? "original" : `variation ${String(item.variation)}`}
               </Tag>
-              {!prompts.live && (
+              <Tag closeable={false} kind={TAG_KIND.neutral}>
+                {STATUS_LABEL[item.shot.status] ?? item.shot.status}
+              </Tag>
+              {!item.live && (
                 <Tag closeable={false} kind={TAG_KIND.warning}>
                   fake — nothing billed
                 </Tag>
               )}
             </div>
             <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
-              {prompts.shot.hero_product} · {prompts.shot.camera_position}
+              {item.shot.hero_product} · {item.shot.camera_position} · written {writtenAt(item)}
             </ParagraphXSmall>
 
-            <PromptBlock title="Image prompt" text={prompts.image_prompt} />
+            <PromptBlock title="Image prompt" text={item.image_prompt} />
             <PromptBlock
               title="Video prompt — upload the frame, paste this"
-              text={prompts.video_prompt}
+              text={item.video_prompt}
             />
           </StyledBody>
         </Card>
-      )}
+      ))}
     </div>
   );
+}
+
+/** Local date and time: these are read on the day they are written. */
+function writtenAt(item: Prompts): string {
+  const at = new Date(item.written_at);
+  return Number.isNaN(at.getTime())
+    ? "just now"
+    : at.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 }
 
 function describe(cause: unknown): string {

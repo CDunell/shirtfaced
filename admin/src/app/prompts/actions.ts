@@ -1,7 +1,32 @@
 "use server";
 
-import { StudioUnavailable, writePrompts } from "@/lib/studio";
-import { EMPTY_PROMPTS, type PromptsState } from "@/lib/prompt-state";
+import { fetchPromptHistory, StudioUnavailable, writePrompts } from "@/lib/studio";
+import { EMPTY_PROMPTS, type HistoryResult, type PromptsState } from "@/lib/prompt-state";
+
+/**
+ * What has already been written for a scene.
+ *
+ * Called directly from the client when the scene changes, rather than through the
+ * form, because choosing a scene is a question and not a submission. Costs nothing
+ * and writes nothing.
+ */
+export async function readHistoryAction(
+  world: string,
+  shot: string,
+): Promise<HistoryResult> {
+  try {
+    const history = await fetchPromptHistory(world, shot);
+    return { variations: history.variations, error: null };
+  } catch (cause) {
+    return {
+      variations: [],
+      error:
+        cause instanceof StudioUnavailable
+          ? cause.message
+          : "Something went wrong asking Studio what exists.",
+    };
+  }
+}
 
 /**
  * Ask Studio for the prompts for one shot.

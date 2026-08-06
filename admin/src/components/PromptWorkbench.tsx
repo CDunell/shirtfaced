@@ -1,10 +1,10 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { Button, Card, Field, Select } from "@/components/ui";
-import { writePromptsAction } from "@/app/prompts/actions";
+import { readHistoryAction, writePromptsAction } from "@/app/prompts/actions";
 import { EMPTY_PROMPTS } from "@/lib/prompt-state";
-import type { StudioShot, StudioWorld } from "@/lib/studio";
+import type { StudioPrompts, StudioShot, StudioWorld } from "@/lib/studio";
 
 /** A prompt with a copy button. Selecting several hundred words by hand on a phone
  *  is miserable, and copying is the only thing anyone does with this text. */
@@ -41,6 +41,14 @@ function PromptBlock({ title, text }: { title: string; text: string }) {
   );
 }
 
+/** Local date and time: these are read on the day they are written. */
+function writtenAt(value: string): string {
+  const at = new Date(value);
+  return Number.isNaN(at.getTime())
+    ? "just now"
+    : at.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
 export function PromptWorkbench({
   worlds,
   shotsByWorld,
@@ -53,7 +61,41 @@ export function PromptWorkbench({
     world: worlds[0]?.slug ?? "",
   });
   const [world, setWorld] = useState(state.world || (worlds[0]?.slug ?? ""));
+  const [shot, setShot] = useState("");
+  const [variations, setVariations] = useState<StudioPrompts[]>([]);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [loadingHistory, startLoading] = useTransition();
   const shots = shotsByWorld[world] ?? [];
+
+  // What already exists for the chosen scene. Without a scene there is nothing to
+  // show: which shot is next is not settled until the prompt is written.
+  useEffect(() => {
+    if (!world || !shot) {
+      setVariations([]);
+      setHistoryError(null);
+      return;
+    }
+    startLoading(async () => {
+      const result = await readHistoryAction(world, shot);
+      setVariations(result.variations);
+      setHistoryError(result.error);
+    });
+  }, [world, shot]);
+
+  // A freshly written prompt belongs at the top of the list it was added to. A
+  // write with no scene chosen can land on a different shot than the list is
+  // showing, in which case the list starts again.
+  useEffect(() => {
+    const written = state.prompts;
+    if (!written) return;
+    setVariations((existing) => {
+      const showing = existing[0];
+      if (showing?.shot.external_id !== written.shot.external_id) return [written];
+      return showing.variation === written.variation
+        ? existing
+        : [written, ...existing];
+    });
+  }, [state.prompts]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -83,9 +125,14 @@ export function PromptWorkbench({
           <Field
             label="Scene"
             htmlFor="shot"
-            hint="Leave on the next planned shot, or pick one. Choosing an approved shot plans it again, which is how a product-page variant is made."
+            hint="Leave on the next planned shot, or pick one. Choosing one shows what has already been written for it; writing again adds a variation."
           >
-            <Select id="shot" name="shot" defaultValue="">
+            <Select
+              id="shot"
+              name="shot"
+              value={shot}
+              onChange={(event) => setShot(event.target.value)}
+            >
               <option value="">Next planned shot</option>
               {shots.map((shot) => (
                 <option key={shot.external_id} value={shot.external_id}>
@@ -102,25 +149,46 @@ export function PromptWorkbench({
         </form>
       </Card>
 
-      {state.prompts && (
-        <Card className="flex flex-col gap-6">
+      {historyError && (
+        <Card className="border-coral bg-coral/10">
+          <p className="text-[14px]">{historyError}</p>
+        </Card>
+      )}
+
+      {loadingHistory && <p className="text-[13px] text-ink/50">Looking up what exists…</p>}
+
+      {!loadingHistory && shot && variations.length === 0 && (
+        <p className="text-[13px] text-ink/50">Nothing has been written for this scene yet.</p>
+      )}
+
+      {variations.map((item) => (
+        <Card
+          key={`${item.shot.external_id}-${String(item.variation)}`}
+          className="flex flex-col gap-6"
+        >
           <div>
-            <p className="font-semibold">
-              {state.prompts.shot.external_id} — {state.prompts.shot.title}
-            </p>
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="font-semibold">
+                {item.shot.external_id} — {item.shot.title}
+              </p>
+              <span className="rounded-[10px] bg-ink px-2 py-0.5 text-[11px] font-semibold tracking-wide text-paper uppercase">
+                {item.variation === 1 ? "original" : `variation ${String(item.variation)}`}
+              </span>
+            </div>
             <p className="mt-1 text-[13px] text-ink/50">
-              {state.prompts.shot.hero_product} · {state.prompts.shot.camera_position}
-              {!state.prompts.live && " · fake, nothing billed"}
+              {item.shot.hero_product} · {item.shot.camera_position} · written{" "}
+              {writtenAt(item.written_at)}
+              {!item.live && " · fake, nothing billed"}
             </p>
           </div>
 
-          <PromptBlock title="Image prompt" text={state.prompts.image_prompt} />
+          <PromptBlock title="Image prompt" text={item.image_prompt} />
           <PromptBlock
             title="Video prompt — upload the frame, paste this"
-            text={state.prompts.video_prompt}
+            text={item.video_prompt}
           />
         </Card>
-      )}
+      ))}
     </div>
   );
 }

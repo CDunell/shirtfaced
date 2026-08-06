@@ -82,7 +82,12 @@ from app.services.generation_orchestrator import (
     start_attempt,
 )
 from app.services.prompt_planner import PLANNING_CANON_HEADINGS, build_request, create_plan
-from app.services.prompt_service import NothingToPlan, prompts_for_shot
+from app.services.prompt_service import (
+    NothingToPlan,
+    PromptSet,
+    prompts_for_shot,
+    variations_for_shot,
+)
 from app.services.review_service import NothingToReview, review_attempt
 from app.services.rotation import apply_continuity, rotation_from_shots
 from app.services.shot_selector import NoSelection, Selection, select_next_shot
@@ -450,7 +455,7 @@ class GenerationResponse(BaseModel):
 
 
 class PromptsResponse(BaseModel):
-    """Both prompts for one shot. Nothing was generated and nothing was recorded."""
+    """Both prompts for one shot. Nothing was generated; the prompt itself is kept."""
 
     shot: ShotResponse
     selection_reason: str
@@ -458,6 +463,56 @@ class PromptsResponse(BaseModel):
     video_prompt: str
     # Whether a billable model wrote these, or the deterministic fake did.
     live: bool
+    # 1 for the first prompt written for this shot, and up from there.
+    variation: int
+    written_at: dt.datetime
+
+
+class PromptHistoryResponse(BaseModel):
+    """Every prompt already written for one shot, newest first."""
+
+    shot: ShotResponse
+    variations: list[PromptsResponse]
+
+
+def _prompts_response(prompts: PromptSet) -> PromptsResponse:
+    return PromptsResponse(
+        shot=ShotResponse.model_validate(prompts.shot),
+        selection_reason=prompts.selection_reason,
+        image_prompt=prompts.image_prompt,
+        video_prompt=prompts.video_prompt,
+        live=prompts.live,
+        variation=prompts.variation,
+        written_at=prompts.written_at,
+    )
+
+
+@router.get("/worlds/{world_slug}/prompts", summary="Prompts already written for a shot")
+def read_prompts(
+    world_slug: str,
+    shot: str,
+    session: SessionDependency,
+) -> PromptHistoryResponse:
+    """What has been written for this shot already.
+
+    Writes nothing and costs nothing: this is the read that makes a new variation
+    worth comparing against the ones before it. A shot nobody has planned yet
+    returns an empty list rather than an error.
+    """
+    try:
+        variations = variations_for_shot(session, world_slug=world_slug, external_id=shot)
+    except NothingToPlan as error:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
+        ) from error
+
+    found = session.execute(
+        select(Shot).join(World).where(World.slug == world_slug, Shot.external_id == shot)
+    ).scalar_one()
+    return PromptHistoryResponse(
+        shot=ShotResponse.model_validate(found),
+        variations=[_prompts_response(item) for item in variations],
+    )
 
 
 @router.post("/worlds/{world_slug}/prompts", summary="Write the prompts for a shot")
@@ -472,6 +527,8 @@ def write_prompts(
     No image, no attempt row, no world lock, no decision. ``shot`` names a shot such
     as W01-015; without it the next eligible shot is planned. Generation happens
     elsewhere, so this is the endpoint that actually gets used.
+
+    Each call adds a variation. It never replaces the prompt written last time.
     """
     try:
         prompts = prompts_for_shot(
@@ -488,13 +545,7 @@ def write_prompts(
     except PlanningError as error:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(error)) from error
 
-    return PromptsResponse(
-        shot=ShotResponse.model_validate(prompts.shot),
-        selection_reason=prompts.selection_reason,
-        image_prompt=prompts.image_prompt,
-        video_prompt=prompts.video_prompt,
-        live=prompts.live,
-    )
+    return _prompts_response(prompts)
 
 
 @router.post(

@@ -16,6 +16,12 @@ export interface PromptsState {
   shot: string;
 }
 
+/** The answer to "what has already been written for this scene?" */
+export interface HistoryResult {
+  variations: StudioPrompts[];
+  error: string | null;
+}
+
 export const EMPTY_PROMPTS: PromptsState = {
   prompts: null,
   error: null,

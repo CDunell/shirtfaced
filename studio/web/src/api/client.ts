@@ -333,17 +333,40 @@ export interface Prompts {
   image_prompt: string;
   video_prompt: string;
   live: boolean;
+  /** 1 for the first prompt written for this shot, and up from there. */
+  variation: number;
+  written_at: string;
+}
+
+export interface PromptHistory {
+  shot: Shot;
+  /** Newest first. Empty for a shot nobody has planned yet. */
+  variations: Prompts[];
 }
 
 /**
- * Write both prompts for a shot. Generates nothing and records nothing.
+ * Write both prompts for a shot. Generates no image.
  *
  * Omit `shot` for the next eligible one. Naming a shot skips the selector's
  * eligibility rules, so an approved shot can be planned again for a variant.
+ *
+ * Each call adds a variation rather than replacing the one written last time.
  */
 export function writePrompts(slug: string, shot?: string, signal?: AbortSignal): Promise<Prompts> {
   const query = shot ? `?shot=${encodeURIComponent(shot)}` : "";
   return postJson<Prompts>(`/api/worlds/${encodeURIComponent(slug)}/prompts${query}`, signal);
+}
+
+/** What has already been written for a shot. Writes nothing and costs nothing. */
+export function fetchPromptHistory(
+  slug: string,
+  shot: string,
+  signal?: AbortSignal,
+): Promise<PromptHistory> {
+  return getJson<PromptHistory>(
+    `/api/worlds/${encodeURIComponent(slug)}/prompts?shot=${encodeURIComponent(shot)}`,
+    signal,
+  );
 }
 
 /** Liveness only: this tells you the process is up, not that it is ready to work. */

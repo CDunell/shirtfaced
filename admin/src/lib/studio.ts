@@ -32,6 +32,15 @@ export interface StudioPrompts {
   video_prompt: string;
   /** False when Studio's deterministic fake wrote these, so nothing was billed. */
   live: boolean;
+  /** 1 for the first prompt written for this shot, and up from there. */
+  variation: number;
+  written_at: string;
+}
+
+export interface StudioPromptHistory {
+  shot: StudioShot;
+  /** Newest first. Empty for a shot nobody has planned yet. */
+  variations: StudioPrompts[];
 }
 
 export class StudioUnavailable extends Error {}
@@ -96,15 +105,27 @@ export function fetchShots(slug: string): Promise<{ shots: StudioShot[] }> {
 }
 
 /**
- * Write both prompts for a shot. Generates no image and records nothing.
+ * Write both prompts for a shot. Generates no image.
  *
  * Omit the shot for the next planned one. Naming a shot skips Studio's eligibility
  * rules, so an approved shot can be planned again for a product-page variant.
+ *
+ * Each call adds a variation rather than replacing the one written last time.
  */
 export function writePrompts(slug: string, shot?: string): Promise<StudioPrompts> {
   const query = shot ? `?shot=${encodeURIComponent(shot)}` : "";
   return call<StudioPrompts>(
     `/api/worlds/${encodeURIComponent(slug)}/prompts${query}`,
     { method: "POST" },
+  );
+}
+
+/** What has already been written for a shot. Writes nothing and costs nothing. */
+export function fetchPromptHistory(
+  slug: string,
+  shot: string,
+): Promise<StudioPromptHistory> {
+  return call<StudioPromptHistory>(
+    `/api/worlds/${encodeURIComponent(slug)}/prompts?shot=${encodeURIComponent(shot)}`,
   );
 }

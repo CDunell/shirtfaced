@@ -40,7 +40,8 @@ export default async function PromptsPage() {
       <div>
         <h1 className="display text-[40px]">Prompts</h1>
         <p className="mt-1 text-[13px] text-ink/50">
-          Writes the prompt the canon implies. Generates nothing, records nothing.
+          Writes the prompt the canon implies. Generates no image. Every prompt written
+          is kept, so a variation sits beside the one it varies from.
         </p>
       </div>
       <PromptWorkbench worlds={worlds} shotsByWorld={shotsByWorld} />
