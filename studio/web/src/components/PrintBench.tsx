@@ -71,7 +71,15 @@ export function PrintBench(): React.JSX.Element {
 
   const frame = useRef<HTMLDivElement>(null);
   const dragging = useRef<Dragging>(null);
+  // Read by the handlers that need the placement as it stands right now. React may
+  // call a state updater more than once, so doing the saving and rendering inside
+  // one would do it twice.
+  const latest = useRef<Corners>(DEFAULT_CORNERS);
   const designName = design[0]?.id ? String(design[0].id) : null;
+
+  useEffect(() => {
+    latest.current = corners;
+  }, [corners]);
 
   const reload = useCallback(() => {
     fetchPhotos()
@@ -151,7 +159,19 @@ export function PrintBench(): React.JSX.Element {
   const onPointerDown = useCallback(
     (event: React.PointerEvent, target: Dragging) => {
       event.preventDefault();
-      event.currentTarget.setPointerCapture(event.pointerId);
+      // Captured on the frame rather than the handle. A finger is wider than the
+      // thing it is holding and leaves it immediately; capturing here means the
+      // drag follows anyway.
+      //
+      // Capture is an improvement, not a requirement -- moves are tracked on the
+      // frame either way -- so a browser that refuses it must not take the drag
+      // down with it.
+      try {
+        frame.current?.setPointerCapture(event.pointerId);
+      } catch {
+        // Nothing to do: the drag works without it.
+      }
+      frame.current?.focus();
       dragging.current = target;
       last.current = pointerFraction(event);
     },
@@ -181,10 +201,7 @@ export function PrintBench(): React.JSX.Element {
   const onPointerUp = useCallback(() => {
     if (!dragging.current) return;
     dragging.current = null;
-    setCorners((current) => {
-      settle(current);
-      return current;
-    });
+    settle(latest.current);
   }, [settle]);
 
   // Arrow keys move the whole placement. A drag is quick; a pixel is not.
@@ -199,11 +216,9 @@ export function PrintBench(): React.JSX.Element {
       const move = moves[event.key];
       if (!move) return;
       event.preventDefault();
-      setCorners((current) => {
-        const next = moveAll(current, move[0], move[1]);
-        settle(next);
-        return next;
-      });
+      const next = moveAll(latest.current, move[0], move[1]);
+      setCorners(next);
+      settle(next);
     },
     [settle],
   );
@@ -328,15 +343,23 @@ export function PrintBench(): React.JSX.Element {
             </div>
 
             {/* The photograph and the handles share one box, so a corner in
-                fractions is a corner on screen at any size. */}
+                fractions is a corner on screen at any size.
+
+                Pointer moves are tracked on this box rather than on the handle:
+                a finger leaves a small target immediately, and tracking the box
+                means the drag survives that. */}
             <div
               ref={frame}
               tabIndex={0}
               onKeyDown={onKeyDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={onPointerUp}
               className={css({
                 position: "relative",
                 width: "100%",
                 lineHeight: 0,
+                // Without this a drag on a phone scrolls the page instead.
                 touchAction: "none",
                 outline: "none",
                 borderRadius: theme.borders.radius300,
@@ -350,6 +373,9 @@ export function PrintBench(): React.JSX.Element {
                 className={css({ width: "100%", height: "auto", display: "block" })}
               />
 
+              {/* Outline only. The viewBox is stretched to the photograph, which
+                  is fine for a shape and wrong for anything that has to stay
+                  round or stay big enough to hit. */}
               <svg
                 viewBox="0 0 100 100"
                 preserveAspectRatio="none"
@@ -358,11 +384,7 @@ export function PrintBench(): React.JSX.Element {
                   inset: 0,
                   width: "100%",
                   height: "100%",
-                  cursor: "move",
                 })}
-                onPointerMove={onPointerMove}
-                onPointerUp={onPointerUp}
-                onPointerCancel={onPointerUp}
               >
                 <polygon
                   points={polygon}
@@ -370,29 +392,52 @@ export function PrintBench(): React.JSX.Element {
                   stroke="#c6ff33"
                   strokeWidth={0.35}
                   vectorEffect="non-scaling-stroke"
+                  className={css({ cursor: "move", touchAction: "none" })}
                   onPointerDown={(event) => {
                     onPointerDown(event, { whole: true });
                   }}
                 />
-                {corners.map(([x, y], index) => (
-                  <circle
-                    key={index}
-                    cx={x * 100}
-                    cy={y * 100}
-                    // Drawn in the box's own units, which are not square, so the
-                    // handle is sized in screen pixels instead of stretching.
-                    r={1.4}
-                    fill="#c6ff33"
-                    stroke="#0d0d0d"
-                    strokeWidth={0.3}
-                    vectorEffect="non-scaling-stroke"
-                    className={css({ cursor: "grab" })}
-                    onPointerDown={(event) => {
-                      onPointerDown(event, { corner: index });
-                    }}
-                  />
-                ))}
               </svg>
+
+              {/* Handles are HTML, not SVG: in a stretched viewBox a circle comes
+                  out an ellipse a few pixels across, which is unhittable with a
+                  finger. Each is a 44px target with a small dot drawn inside. */}
+              {corners.map(([x, y], index) => (
+                <div
+                  key={index}
+                  role="slider"
+                  tabIndex={-1}
+                  aria-label={`Corner ${String(index + 1)}`}
+                  aria-valuetext={`${String(Math.round(x * 100))}%, ${String(Math.round(y * 100))}%`}
+                  onPointerDown={(event) => {
+                    onPointerDown(event, { corner: index });
+                  }}
+                  className={css({
+                    position: "absolute",
+                    left: `${String(x * 100)}%`,
+                    top: `${String(y * 100)}%`,
+                    width: "44px",
+                    height: "44px",
+                    marginLeft: "-22px",
+                    marginTop: "-22px",
+                    display: "grid",
+                    placeItems: "center",
+                    cursor: "grab",
+                    touchAction: "none",
+                  })}
+                >
+                  <span
+                    className={css({
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "50%",
+                      backgroundColor: "#c6ff33",
+                      border: "2px solid #0d0d0d",
+                      boxShadow: "0 1px 3px rgba(0, 0, 0, 0.5)",
+                    })}
+                  />
+                </div>
+              ))}
             </div>
 
             <div

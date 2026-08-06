@@ -85,7 +85,9 @@ describe("PrintBench", () => {
     await waitFor(() => {
       expect(container.querySelector("polygon")).toBeInTheDocument();
     });
-    expect(container.querySelectorAll("circle")).toHaveLength(4);
+    // Handles are HTML rather than SVG: a circle in a viewBox stretched to the
+    // photograph comes out an ellipse a few pixels across, which no finger can hit.
+    expect(await screen.findAllByRole("slider")).toHaveLength(4);
   });
 
   it("marks where a photograph came from", async () => {
@@ -140,6 +142,38 @@ describe("PrintBench", () => {
     await waitFor(() => {
       expect(screen.getByAltText(PHOTO.label)).toHaveAttribute("src", "blob:printed");
     });
+  });
+
+  it("drags a corner to where the pointer went", async () => {
+    /* The interaction the whole page exists for. jsdom has no layout, so the frame
+       is given a known box and the maths is then real: a pointer at the middle of a
+       200x100 frame is the corner at (0.5, 0.5). */
+    const { container } = renderWithBase(<PrintBench />);
+    await screen.findByText(/Drag the corners/);
+    await choosePhoto();
+
+    const handle = (await screen.findAllByRole("slider"))[0];
+    if (!handle) throw new Error("No handles were rendered.");
+    const frame = handle.parentElement;
+    if (!frame) throw new Error("The handle is not inside the frame.");
+    frame.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, width: 200, height: 100 }) as DOMRect;
+
+    const at = (type: string, x: number, y: number) =>
+      new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, clientX: x, clientY: y });
+
+    handle.dispatchEvent(at("pointerdown", 76, 34));
+    frame.dispatchEvent(at("pointermove", 100, 50));
+    frame.dispatchEvent(at("pointerup", 100, 50));
+
+    await waitFor(() => {
+      // Only the corner that was grabbed moved, and it went where the pointer did.
+      expect(container.querySelector("polygon")?.getAttribute("points")).toBe(
+        "50,50 62,34 62,62 38,62",
+      );
+    });
+    // Letting go is what saves and renders; dragging on its own does neither.
+    expect(client.savePlacement).toHaveBeenCalled();
   });
 
   it("reports what the service said when a render fails", async () => {
