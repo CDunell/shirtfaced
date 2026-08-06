@@ -1,0 +1,29 @@
+[Unit]
+Description=Shirtfaced Studio
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=ubuntu
+WorkingDirectory=/home/ubuntu/shirtfaced-studio
+EnvironmentFile=/home/ubuntu/shirtfaced-studio/.env
+
+# Bound to loopback on purpose. Admin reaches Studio from the same box, and this
+# API spends money: the generate endpoint bills OpenAI and has no authentication
+# of its own. Nothing but the box can reach it until a Cloudflare Access policy
+# exists to stand in front.
+ExecStart=/home/ubuntu/shirtfaced-studio/.venv/bin/uvicorn app.main:app \
+    --host 127.0.0.1 --port 8000
+
+Restart=on-failure
+RestartSec=5
+
+# The service writes canon Markdown and image assets under its own directory and
+# needs nothing else on the box.
+ProtectSystem=full
+PrivateTmp=true
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

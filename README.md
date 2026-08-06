@@ -58,6 +58,22 @@ the next deploy, not the next request.
 `/var/www/shirtfaced` (storefront, served directly by nginx, no restart
 needed).
 
+Studio deploys in the same run, to `/home/ubuntu/shirtfaced-studio`, using the
+scripts in [studio/deploy/](studio/deploy/). Two differences from the other two:
+
+- **`worlds/` is synced with `--ignore-existing`, not `--delete`.** Studio writes
+  canon there when a shot is approved, so the box owns that directory. New world
+  files reach it; nothing on it is ever overwritten from here. The corollary is
+  that editing canon locally does *not* update the box.
+- **`.env` is written once by `bootstrap-studio.sh` and never replaced.** The
+  OpenAI key is placed only into an empty slot, from the `OPENAI_API_KEY` repo
+  secret, so a deploy without that secret cannot blank a working key. With no key
+  at all Studio runs its deterministic fakes and bills nothing.
+
+Studio listens on `127.0.0.1:8000` only. Admin reaches it over loopback; it is
+not exposed publicly, because its generate endpoint spends money and it has no
+authentication of its own.
+
 Auth is a dedicated deploy key (`ORACLE_DEPLOY_KEY` / `ORACLE_HOST` repo
 secrets), kept separate from any personal key so it can be revoked on its
 own. Note it isn't lower-*privilege* than a personal key would be — the
@@ -101,9 +117,9 @@ the two don't share a runtime, database, or toolchain.
 
 `studio/` holds the build pack for **Shirtfaced Studio** — a separate
 local-first Python/FastAPI + PostgreSQL app for producing the brand's
-photographic worlds. It is specification only at this point (no code yet);
-start at [studio/START_CODEX.md](studio/START_CODEX.md). It does not share a
-runtime or a toolchain with the storefront above.
+photographic worlds. Start at [studio/README.md](studio/README.md). It does not
+share a runtime, a database or a toolchain with the storefront above, and it
+deploys to the same box (see "Deploying").
 
 ## Next steps
 

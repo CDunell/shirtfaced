@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - "studio/**"
       - "*.md"
 
 jobs:
@@ -34,6 +33,50 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/deploy-admin.sh'
+
+      # Studio holds the world documents and the OpenAI key, and it writes canon
+      # when a shot is approved. That makes the box the source of truth for
+      # worlds/, so it is synced with --ignore-existing: new files arrive, and
+      # nothing written on the box is ever overwritten from here.
+      - name: Sync Studio
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=worlds --exclude=assets --exclude=.env --exclude=.venv \
+            --exclude=web/node_modules --exclude=web/dist \
+            --exclude=__pycache__ --exclude=.pytest_cache \
+            studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
+          rsync -az --ignore-existing \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
+
+      - name: Bootstrap Studio
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'chmod +x /home/ubuntu/shirtfaced-studio/deploy/*.sh &&
+             bash /home/ubuntu/shirtfaced-studio/deploy/bootstrap-studio.sh'
+
+      # Placed only into an empty slot, so rotating the key is done on the box and
+      # a missing secret can never blank a working one. Without a key Studio runs
+      # its deterministic fakes: the page works and nothing is billed.
+      - name: Place the OpenAI key
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "No OPENAI_API_KEY secret. Studio will run its fakes and bill nothing."
+            exit 0
+          fi
+          # Sent over stdin rather than on the command line, so the key never
+          # appears in the box's process list.
+          printf '%s\n' "$OPENAI_API_KEY" | ssh -i ~/.ssh/deploy_key \
+            ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/shirtfaced-studio/deploy/set-openai-key.sh'
+
+      - name: Build and restart Studio
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/shirtfaced-studio/deploy/deploy-studio.sh'
 
       - name: Sync storefront
         run: |
