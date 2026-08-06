@@ -9,6 +9,9 @@ import { Client as Styletron } from "styletron-engine-monolithic";
 import { Provider as StyletronProvider } from "styletron-react";
 
 import { App } from "./App";
+// Brand sheet: page background, the two display faces, the focus ring. Base Web
+// takes the palette from theme.ts; this covers what a component theme cannot.
+import "./index.css";
 import { initialThemeName, storeThemeName, THEMES, type ThemeName } from "./theme";
 
 const engine = new Styletron();

@@ -23,7 +23,9 @@ describe("App", () => {
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
 
-    expect(screen.getByText("Shirtfaced Studio")).toBeInTheDocument();
+    // The wordmark is admin's, with the product name swapped. It is lowercase and
+    // split across two elements, so the whole banner is what gets read.
+    expect(screen.getByRole("banner")).toHaveTextContent("shirtfaced / studio");
     // Prompts is the default view: generation happens elsewhere, so writing a prompt
     // is what this tool is opened for.
     expect(screen.getByRole("heading", { name: "Prompts" })).toBeInTheDocument();

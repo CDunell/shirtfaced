@@ -1,0 +1,70 @@
+/* ---------------------------------------------------------------------------
+   Page-level brand styling, ported from admin/src/app/globals.css.
+
+   Base Web draws the components and takes its palette from theme.ts; this file
+   covers what a component theme cannot: the page itself, the two display type
+   classes, the press interaction and the focus ring.
+
+   Fonts are self-hosted rather than fetched. Admin gets the same two families
+   through next/font, which also self-hosts them at build.
+--------------------------------------------------------------------------- */
+
+@import "@fontsource/anton/400.css";
+@import "@fontsource-variable/space-grotesk/index.css";
+
+:root {
+  --color-ink: #0d0d0d;
+  --color-paper: #f2f0ed;
+  --color-paper-2: #e8e5e0;
+  --color-lime: #c6ff33;
+
+  --font-display: Anton, "Arial Narrow", sans-serif;
+  --font-sans: "Space Grotesk Variable", "Space Grotesk", system-ui, sans-serif;
+
+  --ease-out-natural: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+/* The wordmark is lowercase — the only display text that is. */
+.wordmark {
+  font-family: var(--font-display);
+  text-transform: lowercase;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.press {
+  transition:
+    transform 180ms var(--ease-out-natural),
+    opacity 180ms var(--ease-out-natural),
+    background-color 180ms var(--ease-out-natural);
+}
+.press:active {
+  transform: scale(0.975);
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-lime);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
