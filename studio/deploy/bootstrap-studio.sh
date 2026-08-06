@@ -18,8 +18,9 @@ DB_NAME=shirtfaced_studio
 DB_USER=shirtfaced_studio
 
 # Port 8000 on this box is already taken by something else, so Studio does not
-# get the port it uses locally. Change it here and the service unit, .env and
-# admin's STUDIO_API_URL all follow.
+# get the port it uses locally. Change it here and both the service unit and .env
+# follow. Nothing else reaches Studio over the loopback: the tunnel routes
+# studio.shirtfaced.wtf here, and that is the only way in.
 STUDIO_PORT=8010
 
 say() { printf '\n== %s\n' "$1"; }
@@ -174,23 +175,6 @@ else
     # Anyone signed in before this change holds a cookie scoped to admin only,
     # which Studio will not see. They log in once more; nothing else breaks.
   fi
-fi
-
-say "Pointing admin at Studio"
-# Admin calls Studio server-side over loopback. Without this the Prompts page
-# falls back to STUDIO_URL, which is a public hostname that does not resolve.
-WANTED="STUDIO_API_URL=http://127.0.0.1:$STUDIO_PORT"
-if [ ! -f "$ADMIN_ENV" ]; then
-  echo "Admin is not installed here; nothing to point."
-elif grep -qx "$WANTED" "$ADMIN_ENV"; then
-  echo "Already pointing at $WANTED"
-else
-  # Set, not appended: an old line naming the wrong port would win otherwise,
-  # and the symptom is the Prompts page saying Studio cannot be reached.
-  sed -i '/^STUDIO_API_URL=/d' "$ADMIN_ENV"
-  echo "$WANTED" >> "$ADMIN_ENV"
-  echo "Pointed admin at $WANTED"
-  sudo systemctl restart shirtfaced-admin || true
 fi
 
 say "Bootstrap complete"

@@ -18,9 +18,12 @@ Live at **admin.shirtfaced.wtf**.
   page's link list) because they're either tied to specific photo assets
   admin doesn't manage or are fixed navigation, not copy.
 - Single admin login (one account, env-configured).
-- A "Studio ↗" nav link out to Shirtfaced Studio, which has no deployed
-  instance yet — the link is a placeholder (`STUDIO_URL` env var) until it
-  does.
+- A "Studio ↗" nav link out to Shirtfaced Studio at `STUDIO_URL`. Studio is a
+  separate application on the same box, with its own database, the world
+  documents and the OpenAI key. Prompts are written there, not here; admin has
+  no Studio code beyond this link. Studio has no login of its own and verifies
+  the session cookie admin signs, which is why `SESSION_COOKIE_DOMAIN` covers
+  both subdomains.
 
 Order/customer records are **not** built — the storefront still has no
 checkout/payment integration to generate real orders from.
@@ -48,7 +51,6 @@ npm run dev
 | `ADMIN_PASSWORD_HASH`   | scrypt hash — generate with a one-off `tsx` script using `hashPassword` from `src/lib/password.ts`. |
 | `SESSION_SECRET`        | 32+ random bytes (hex), signs the session cookie.                   |
 | `STUDIO_URL`            | Where the "Studio" nav link points.                                  |
-| `STUDIO_API_URL`        | Where the Prompts page calls Studio server-side. Falls back to `STUDIO_URL`. |
 
 **Why `SHOP_DATABASE_URL` and not `DATABASE_URL`:** on a shared dev machine
 with other projects, a generic env var name is a real collision risk — an
@@ -90,4 +92,3 @@ password and session secret from local dev).
 - Rotate the production admin password and `SESSION_SECRET` before/at
   go-live — the current ones were generated during initial setup and are
   known outside the account owner's password manager.
-- When Studio gets a real deployment, point `STUDIO_URL` at it.

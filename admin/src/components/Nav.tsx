@@ -9,7 +9,6 @@ import { IconClose, IconMenu } from "./Icons";
 const LINKS = [
   { href: "/products", label: "Products" },
   { href: "/content", label: "Content" },
-  { href: "/prompts", label: "Prompts" },
 ];
 
 export function Nav({

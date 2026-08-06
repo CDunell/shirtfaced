@@ -70,9 +70,13 @@ scripts in [studio/deploy/](studio/deploy/). Two differences from the other two:
   secret, so a deploy without that secret cannot blank a working key. With no key
   at all Studio runs its deterministic fakes and bills nothing.
 
-Studio listens on `127.0.0.1:8000` only. Admin reaches it over loopback; it is
-not exposed publicly, because its generate endpoint spends money and it has no
-authentication of its own.
+Studio listens on loopback only and is reached at `studio.shirtfaced.wtf`
+through the Cloudflare Tunnel. It has no login of its own: it verifies the
+session cookie admin signs, using the same `SESSION_SECRET`, so being signed
+into admin is being signed into Studio. That matters because its generate
+endpoint spends money.
+
+Prompts are written in Studio, not in admin. Admin links to it and nothing more.
 
 Auth is a dedicated deploy key (`ORACLE_DEPLOY_KEY` / `ORACLE_HOST` repo
 secrets), kept separate from any personal key so it can be revoked on its
