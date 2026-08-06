@@ -1,0 +1,23 @@
+name: Wire Studio into the tunnel
+
+# Manual, and separate from the deploy, because it edits a config file shared
+# with tradeninja.au, orveris.com and cliniix. It should run once, not on every
+# push to main.
+on:
+  workflow_dispatch:
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Add the ingress rule
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/shirtfaced-studio/deploy/wire-tunnel.sh'
