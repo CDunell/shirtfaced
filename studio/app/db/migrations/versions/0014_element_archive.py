@@ -60,12 +60,25 @@ def upgrade() -> None:
     # missing prerequisite instead of surfacing as a permission error, or as
     # "could not open extension control file" inside an alembic traceback --
     # which is how this first went wrong.
-    present = (
+    #
+    # The query returns where the extension lives, not just whether it does.
+    # The integration tests pin search_path to their own
+    # schema and only that, so an unqualified `vector` does not resolve even
+    # when the extension is installed. Qualifying is better than widening their
+    # search_path, which would let alembic find the application's own version
+    # table instead of the test schema's empty one.
+    extension_schema = (
         op.get_bind()
-        .execute(sa.text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
+        .execute(
+            sa.text(
+                "SELECT n.nspname FROM pg_extension e "
+                "JOIN pg_namespace n ON n.oid = e.extnamespace "
+                "WHERE e.extname = 'vector'"
+            )
+        )
         .scalar()
     )
-    if not present:
+    if not extension_schema:
         raise RuntimeError(
             "The pgvector extension is not enabled on this database. "
             "deploy-studio.sh installs the package and enables it; run that, "
@@ -171,7 +184,7 @@ def upgrade() -> None:
     # migration environment; the extension is a better place for that knowledge.
     op.execute(
         f"ALTER TABLE archive_elements ALTER COLUMN feature "
-        f"TYPE vector({ELEMENT_FEATURE_DIMENSIONS}) USING NULL"
+        f"TYPE {extension_schema}.vector({ELEMENT_FEATURE_DIMENSIONS}) USING NULL"
     )
 
     op.create_index("ix_archive_elements_family", "archive_elements", ["family"])
@@ -187,7 +200,7 @@ def upgrade() -> None:
     # how many components happened to be populated.
     op.execute(
         "CREATE INDEX ix_archive_elements_feature ON archive_elements "
-        "USING hnsw (feature vector_cosine_ops)"
+        f"USING hnsw (feature {extension_schema}.vector_cosine_ops)"
     )
 
     op.create_table(
