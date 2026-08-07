@@ -98,6 +98,51 @@ def test_the_print_stops_at_the_edge_of_the_garment(design, middle) -> None:  # 
     assert pixel(printed, 70, 60) == (215, 180, 150), "the arm was printed on"
 
 
+def test_shading_alone_does_not_trigger_the_garment_mask(design, middle) -> None:  # type: ignore[no-untyped-def]
+    """A fold is not a different material.
+
+    A black tee lit at 0.20 against a fold at 0.03 sits 0.29 apart in raw RGB
+    distance -- past the old 0.22 tolerance, so the print vanished in every crease.
+    Both patches are the same neutral fabric, just differently lit; chroma distance
+    between them is ~0.
+    """
+    folded = Image.new("RGB", (120, 120), (90, 90, 90))
+    for x in range(60, 80):
+        for y in range(40, 80):
+            folded.putpixel((x, y), (8, 8, 8))
+
+    printed = print_design(folded, design, middle, PrintSettings(displacement=0.0, shading=0.0, opacity=1.0))
+
+    lit = pixel(printed, 50, 60)
+    in_fold = pixel(printed, 70, 60)
+    assert lit == (255, 0, 0), "the print was lost in the lit half"
+    assert in_fold == (255, 0, 0), "the print was lost in the fold -- shading read as a different material"
+
+
+def test_displacement_ignores_a_strong_edge_outside_the_placement(design, middle) -> None:  # type: ignore[no-untyped-def]
+    """A collar or armhole nearby must not pull the print toward it.
+
+    The gradient used to come from the whole photograph, so the strongest edge in
+    frame -- the garment's own silhouette against skin or background -- won over
+    whatever fold was actually under the design. A bright patch just outside the
+    placement must not change a single pixel inside it.
+    """
+    settings = PrintSettings(shading=0.0, opacity=1.0, garment_tolerance=0.0)
+
+    uniform = Image.new("RGB", (120, 120), (90, 90, 90))
+    with_nearby_edge = Image.new("RGB", (120, 120), (90, 90, 90))
+    for x in range(82, 120):
+        for y in range(120):
+            with_nearby_edge.putpixel((x, y), (250, 250, 250))
+
+    baseline = np.asarray(print_design(uniform, design, middle, settings).convert("RGB"))[40:80, 40:80]
+    with_edge = np.asarray(print_design(with_nearby_edge, design, middle, settings).convert("RGB"))[40:80, 40:80]
+
+    assert np.array_equal(baseline, with_edge), (
+        "a bright edge just outside the placement changed the print inside it"
+    )
+
+
 def test_displacement_moves_the_print_without_losing_it(design, middle) -> None:  # type: ignore[no-untyped-def]
     """Folds push the print around; they do not delete or duplicate it."""
     folded = Image.new("RGB", (120, 120), (90, 90, 90))

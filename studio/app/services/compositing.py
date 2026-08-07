@@ -67,9 +67,11 @@ class PrintSettings:
     shading: float = 0.85
     # Screen print is not glass. A little transparency lets the weave through.
     opacity: float = 0.92
-    # How far a pixel's colour may sit from the fabric before it is treated as
-    # something in front of the garment. 0 disables the cut-out entirely.
-    garment_tolerance: float = 0.22
+    # How far a pixel's chroma may sit from the fabric's before it is treated as
+    # something in front of the garment. 0 disables the cut-out entirely. Chroma
+    # distance, not raw RGB distance -- see _garment_mask -- so this lives on a
+    # smaller scale than the tolerance would need to be for RGB.
+    garment_tolerance: float = 0.10
 
 
 def _luminance(image: Image.Image) -> np.ndarray:
@@ -134,13 +136,27 @@ def _displaced(warped: np.ndarray, luminance: np.ndarray, strength: float) -> np
     The gradient of a blurred luminance points across a fold, which is the direction
     fabric actually carries a print. Blurring first matters: run on the raw image and
     the print chases film grain rather than folds.
+
+    The gradient is taken from luminance under the placement only. Left over the
+    whole photograph, the garment's own silhouette -- against skin, against the
+    background -- is the strongest edge in frame, and any placement near a collar or
+    armhole got pulled toward that edge instead of toward the fold actually under it.
+    Luminance outside the covered region is replaced with the covered region's own
+    median before blurring, so the silhouette never reaches the gradient.
     """
     if strength <= 0:
         return warped
 
     height, width = luminance.shape
+    covered = warped[..., 3] > 0.5
+    if not covered.any():
+        return warped
+
+    fill = float(np.median(luminance[covered]))
+    masked_luminance = np.where(covered, luminance, fill)
+
     smooth = np.asarray(
-        Image.fromarray((luminance * 255).astype(np.uint8)).filter(
+        Image.fromarray((masked_luminance * 255).astype(np.uint8)).filter(
             # Wide enough to be a fold rather than a thread, at any photo size.
             ImageFilter.GaussianBlur(radius=max(2.0, min(width, height) * 0.006))
         ),
@@ -163,6 +179,15 @@ def _garment_mask(photo: np.ndarray, alpha: np.ndarray, tolerance: float) -> np.
     works on a black tee at night and a white one at sunrise without being told
     which. Anything far enough from that colour -- an arm, a bag, hair, a strap --
     loses the print.
+
+    Distance is taken on chroma -- each pixel divided by its own luminance -- not raw
+    RGB. Raw RGB distance conflates colour with brightness, so a fold that is simply
+    darker than the rest of the garment read as a different material: a black tee lit
+    at 0.20 against a fold at 0.03 sits 0.29 apart in RGB, past a 0.22 tolerance,
+    losing the print in every crease. Dividing by luminance first cancels shading
+    before the comparison -- two patches of the same fabric land on the same chroma
+    however differently lit -- and luminance is handled on its own, by the shading
+    multiply in print_design.
     """
     if tolerance <= 0:
         return np.ones_like(alpha)
@@ -171,8 +196,11 @@ def _garment_mask(photo: np.ndarray, alpha: np.ndarray, tolerance: float) -> np.
     if not covered.any():
         return np.ones_like(alpha)
 
-    fabric = np.median(photo[covered], axis=0)
-    distance = np.sqrt(((photo - fabric) ** 2).sum(axis=2))
+    luminance = photo @ np.array([0.2126, 0.7152, 0.0722], dtype=np.float32)
+    chroma = photo / np.maximum(luminance, 1e-3)[..., None]
+
+    fabric = np.median(chroma[covered], axis=0)
+    distance = np.sqrt(((chroma - fabric) ** 2).sum(axis=2))
     # Soft edge: a hard cut leaves a cartoon outline around an arm.
     return np.clip(1.0 - (distance - tolerance) / max(tolerance, 1e-3), 0.0, 1.0)
 
