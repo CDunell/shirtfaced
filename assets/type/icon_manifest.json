@@ -1,0 +1,134 @@
+[
+  {
+    "index": 0,
+    "name": "icon.smiley",
+    "png": "glyphs/icons/icon_00.png",
+    "bmp": "glyphs/icons/icon_00.bmp",
+    "svg": "glyphs/icons/icon_00.svg",
+    "orig_top": 80,
+    "orig_bottom": 383,
+    "orig_left": 119,
+    "orig_right": 338
+  },
+  {
+    "index": 1,
+    "name": "icon.palm",
+    "png": "glyphs/icons/icon_01.png",
+    "bmp": "glyphs/icons/icon_01.bmp",
+    "svg": "glyphs/icons/icon_01.svg",
+    "orig_top": 90,
+    "orig_bottom": 343,
+    "orig_left": 451,
+    "orig_right": 655
+  },
+  {
+    "index": 2,
+    "name": "icon.cart",
+    "png": "glyphs/icons/icon_02.png",
+    "bmp": "glyphs/icons/icon_02.bmp",
+    "svg": "glyphs/icons/icon_02.svg",
+    "orig_top": 78,
+    "orig_bottom": 357,
+    "orig_left": 748,
+    "orig_right": 969
+  },
+  {
+    "index": 3,
+    "name": "icon.sf",
+    "png": "glyphs/icons/icon_03.png",
+    "bmp": "glyphs/icons/icon_03.bmp",
+    "svg": "glyphs/icons/icon_03.svg",
+    "orig_top": 97,
+    "orig_bottom": 363,
+    "orig_left": 1076,
+    "orig_right": 1290
+  },
+  {
+    "index": 4,
+    "name": "icon.8ball",
+    "png": "glyphs/icons/icon_04.png",
+    "bmp": "glyphs/icons/icon_04.bmp",
+    "svg": "glyphs/icons/icon_04.svg",
+    "orig_top": 451,
+    "orig_bottom": 684,
+    "orig_left": 110,
+    "orig_right": 343
+  },
+  {
+    "index": 5,
+    "name": "icon.beer",
+    "png": "glyphs/icons/icon_05.png",
+    "bmp": "glyphs/icons/icon_05.bmp",
+    "svg": "glyphs/icons/icon_05.svg",
+    "orig_top": 417,
+    "orig_bottom": 703,
+    "orig_left": 488,
+    "orig_right": 589
+  },
+  {
+    "index": 6,
+    "name": "icon.chair",
+    "png": "glyphs/icons/icon_06.png",
+    "bmp": "glyphs/icons/icon_06.bmp",
+    "svg": "glyphs/icons/icon_06.svg",
+    "orig_top": 442,
+    "orig_bottom": 697,
+    "orig_left": 758,
+    "orig_right": 958
+  },
+  {
+    "index": 7,
+    "name": "icon.lightning",
+    "png": "glyphs/icons/icon_07.png",
+    "bmp": "glyphs/icons/icon_07.bmp",
+    "svg": "glyphs/icons/icon_07.svg",
+    "orig_top": 436,
+    "orig_bottom": 691,
+    "orig_left": 1098,
+    "orig_right": 1256
+  },
+  {
+    "index": 8,
+    "name": "icon.ibis",
+    "png": "glyphs/icons/icon_08.png",
+    "bmp": "glyphs/icons/icon_08.bmp",
+    "svg": "glyphs/icons/icon_08.svg",
+    "orig_top": 763,
+    "orig_bottom": 1008,
+    "orig_left": 91,
+    "orig_right": 349
+  },
+  {
+    "index": 9,
+    "name": "icon.tent",
+    "png": "glyphs/icons/icon_09.png",
+    "bmp": "glyphs/icons/icon_09.bmp",
+    "svg": "glyphs/icons/icon_09.svg",
+    "orig_top": 795,
+    "orig_bottom": 1010,
+    "orig_left": 379,
+    "orig_right": 691
+  },
+  {
+    "index": 10,
+    "name": "icon.flame",
+    "png": "glyphs/icons/icon_10.png",
+    "bmp": "glyphs/icons/icon_10.bmp",
+    "svg": "glyphs/icons/icon_10.svg",
+    "orig_top": 763,
+    "orig_bottom": 1010,
+    "orig_left": 768,
+    "orig_right": 948
+  },
+  {
+    "index": 11,
+    "name": "icon.wave",
+    "png": "glyphs/icons/icon_11.png",
+    "bmp": "glyphs/icons/icon_11.bmp",
+    "svg": "glyphs/icons/icon_11.svg",
+    "orig_top": 769,
+    "orig_bottom": 1010,
+    "orig_left": 1062,
+    "orig_right": 1306
+  }
+]
