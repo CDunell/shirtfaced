@@ -18,6 +18,8 @@ It explains why these prompts consistently produced authentic documentary photog
 
 This document is permanent creative canon and should be read before any prompt generation.
 
+It explains mechanics that apply everywhere. It does not override what a specific world has learned the hard way. Where any example here conflicts with a world's own canon — `worlds/world-01/WORLD.md`, `CARRY_FORWARD_CANON.md` — the world's canon wins. Level 4 was rewritten on 7 August 2026 after two of its own examples turned out to be exactly that conflict.
+
 ---
 
 ## Core Principle
@@ -124,9 +126,16 @@ Only after the scene exists should the camera appear.
 
 The photographer is another member of the group.
 
-Never an invisible observer.
+Never an impossible drone. Never a floating rig. Never a position no real
+person could stand in.
 
-Never an impossible drone.
+That still means an observer, in the sense `CARRY_FORWARD_CANON.md` uses the
+word: outside the space being watched, never wedged into it. "The camera
+observes, so it stands outside" is the general rule this level must never
+contradict — it governs vehicles, lifts and every other small enclosed space,
+and it wins over anything below if the two ever read differently. A friend
+with a camera does not stop being an observer; being an observer is what
+makes the photograph theirs to take.
 
 Examples:
 
@@ -136,10 +145,13 @@ Examples:
 - Beside another parked car.
 - Across the servo forecourt.
 - From the dining room.
-- Through the passenger window.
-- Inside the back seat.
+- On the footpath, level with an open car window.
 
-The camera always has a believable physical location.
+The camera always has a believable physical location — and that location is
+never inside the same small enclosed space as the subjects. Not the back
+seat. Not shooting out through the passenger window from inside the cabin.
+See `CARRY_FORWARD_CANON.md` → Vehicles for why, and for what a car scene
+looks like instead.
 
 ---
 
