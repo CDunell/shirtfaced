@@ -96,6 +96,9 @@ BRANDS: dict[str, tuple[str, str]] = {
     "represent": ("Represent", "https://au.representclo.com"),
     "brain-dead": ("Brain Dead", "https://wearebraindead.com"),
     "pleasures": ("Pleasures", "https://pleasuresnow.com"),
+    # Hyphenated. onlineceramics.com is an unrelated UK pottery business.
+    "online-ceramics": ("Online Ceramics", "https://online-ceramics.com"),
+    "cactus-plant-flea-market": ("Cactus Plant Flea Market", "https://cactusplantfleamarket.com"),
     "online-ceramics": ("Online Ceramics", "https://onlineceramics.com"),
     "market-studios": ("Market Studios", "https://market-studios.com"),
     "sporty-and-rich": ("Sporty & Rich", "https://sportyandrich.com"),
