@@ -157,11 +157,16 @@ describe("PrintBench", () => {
     if (!handle) throw new Error("No handles were rendered.");
     const frame = handle.parentElement;
     if (!frame) throw new Error("The handle is not inside the frame.");
-    frame.getBoundingClientRect = () =>
-      ({ left: 0, top: 0, width: 200, height: 100 }) as DOMRect;
+    frame.getBoundingClientRect = () => ({ left: 0, top: 0, width: 200, height: 100 }) as DOMRect;
 
     const at = (type: string, x: number, y: number) =>
-      new PointerEvent(type, { bubbles: true, cancelable: true, pointerId: 1, clientX: x, clientY: y });
+      new PointerEvent(type, {
+        bubbles: true,
+        cancelable: true,
+        pointerId: 1,
+        clientX: x,
+        clientY: y,
+      });
 
     handle.dispatchEvent(at("pointerdown", 76, 34));
     frame.dispatchEvent(at("pointermove", 100, 50));

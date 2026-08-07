@@ -30,7 +30,11 @@ jobs:
 
     services:
       postgres:
-        image: postgres:16
+        # pgvector's image is stock PostgreSQL with the extension available, so
+        # integration tests can apply the element archive migration. The
+        # migration checks for the extension rather than creating it, because
+        # CREATE EXTENSION needs superuser and the application role is not one.
+        image: pgvector/pgvector:pg16
         env:
           POSTGRES_USER: shirtfaced
           POSTGRES_PASSWORD: shirtfaced
@@ -70,6 +74,13 @@ jobs:
 
       - name: Type check
         run: mypy app
+
+      # Mirrors what deploy-studio.sh does on the box. The migration checks for
+      # the extension rather than creating it, because CREATE EXTENSION needs
+      # superuser and the application role deliberately is not one.
+      - name: Enable pgvector
+        run: |
+          PGPASSWORD=shirtfaced psql -h 127.0.0.1 -U shirtfaced -d shirtfaced_studio             -c 'CREATE EXTENSION IF NOT EXISTS vector'
 
       - name: Test
         run: pytest

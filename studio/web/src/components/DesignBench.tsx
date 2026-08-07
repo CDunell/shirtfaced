@@ -66,11 +66,16 @@ export function DesignBench(): React.JSX.Element {
   }, []);
 
   const measurements = (result?.measurements ?? {}) as Record<string, number | boolean | number[]>;
-  const coverage = typeof measurements.print_coverage === "number" ? measurements.print_coverage : null;
+  const coverage =
+    typeof measurements.print_coverage === "number" ? measurements.print_coverage : null;
   const assessed = result?.categories.filter((category) => category.rating > 0).length ?? 0;
 
   const statusTag = (status: string) =>
-    status === "pass" ? TAG_KIND.positive : status === "fail" ? TAG_KIND.negative : TAG_KIND.warning;
+    status === "pass"
+      ? TAG_KIND.positive
+      : status === "fail"
+        ? TAG_KIND.negative
+        : TAG_KIND.warning;
 
   return (
     <div className={css({ display: "flex", flexDirection: "column", gap: "16px" })}>
@@ -87,7 +92,14 @@ export function DesignBench(): React.JSX.Element {
 
       <Card>
         <StyledBody>
-          <div className={css({ display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" })}>
+          <div
+            className={css({
+              display: "flex",
+              gap: "12px",
+              alignItems: "center",
+              flexWrap: "wrap",
+            })}
+          >
             <input
               ref={fileInput}
               type="file"
@@ -110,7 +122,10 @@ export function DesignBench(): React.JSX.Element {
       </Card>
 
       {error && (
-        <Notification kind={NOTIFICATION_KIND.negative} overrides={{ Body: { style: { width: "auto" } } }}>
+        <Notification
+          kind={NOTIFICATION_KIND.negative}
+          overrides={{ Body: { style: { width: "auto" } } }}
+        >
           {error}
         </Notification>
       )}
@@ -126,7 +141,14 @@ export function DesignBench(): React.JSX.Element {
               : "No blocking gates from measurement alone."}
           </Notification>
 
-          <div className={css({ display: "flex", gap: "16px", flexWrap: "wrap", alignItems: "flex-start" })}>
+          <div
+            className={css({
+              display: "flex",
+              gap: "16px",
+              flexWrap: "wrap",
+              alignItems: "flex-start",
+            })}
+          >
             {preview && (
               <img
                 src={preview}
@@ -149,12 +171,15 @@ export function DesignBench(): React.JSX.Element {
                 {assessed < result.categories.length ? (
                   <>
                     <LabelSmall marginBottom="4px">
-                      Not yet scorable — {assessed} of {result.categories.length} categories assessed
+                      Not yet scorable — {assessed} of {result.categories.length} categories
+                      assessed
                     </LabelSmall>
                     <ProgressBar
                       value={assessed}
                       maxValue={result.categories.length}
-                      overrides={{ BarProgress: { style: { backgroundColor: theme.colors.contentPrimary } } }}
+                      overrides={{
+                        BarProgress: { style: { backgroundColor: theme.colors.contentPrimary } },
+                      }}
                     />
                     <ParagraphXSmall color={theme.colors.contentSecondary} marginBottom="12px">
                       Measurement rates what it can see. The remaining categories need a person, the
@@ -171,15 +196,20 @@ export function DesignBench(): React.JSX.Element {
                     <ProgressBar
                       value={result.total_score}
                       maxValue={result.max_total_score}
-                      overrides={{ BarProgress: { style: { backgroundColor: theme.colors.contentPrimary } } }}
+                      overrides={{
+                        BarProgress: { style: { backgroundColor: theme.colors.contentPrimary } },
+                      }}
                     />
                   </>
                 )}
 
                 <LabelSmall marginBottom="4px">Measured</LabelSmall>
                 <ParagraphXSmall margin={0} color={theme.colors.contentSecondary}>
-                  {coverage !== null ? `Print coverage ${(coverage * 100).toFixed(1)}%` : "No print detected"}
-                  {typeof measurements.ink_colours === "number" && ` · ${String(measurements.ink_colours)} ink colours`}
+                  {coverage !== null
+                    ? `Print coverage ${(coverage * 100).toFixed(1)}%`
+                    : "No print detected"}
+                  {typeof measurements.ink_colours === "number" &&
+                    ` · ${String(measurements.ink_colours)} ink colours`}
                   {measurements.light_on_dark !== undefined &&
                     ` · ${measurements.light_on_dark ? "light on dark" : "dark on light"}`}
                 </ParagraphXSmall>
@@ -199,9 +229,18 @@ export function DesignBench(): React.JSX.Element {
                 {result.gates.map((gate) => (
                   <div
                     key={gate.gate}
-                    className={css({ display: "flex", gap: "8px", alignItems: "baseline", flexWrap: "wrap" })}
+                    className={css({
+                      display: "flex",
+                      gap: "8px",
+                      alignItems: "baseline",
+                      flexWrap: "wrap",
+                    })}
                   >
-                    <Tag closeable={false} kind={statusTag(gate.status)} overrides={{ Root: { style: { marginTop: 0, marginBottom: 0 } } }}>
+                    <Tag
+                      closeable={false}
+                      kind={statusTag(gate.status)}
+                      overrides={{ Root: { style: { marginTop: 0, marginBottom: 0 } } }}
+                    >
                       {gate.status === "not_tested" ? "needs a human" : gate.status}
                     </Tag>
                     <LabelSmall margin={0}>{humanise(gate.gate)}</LabelSmall>
@@ -220,14 +259,23 @@ export function DesignBench(): React.JSX.Element {
               {result.categories.map((category) => (
                 <div
                   key={category.category}
-                  className={css({ display: "flex", gap: "8px", alignItems: "baseline", marginBottom: "4px" })}
+                  className={css({
+                    display: "flex",
+                    gap: "8px",
+                    alignItems: "baseline",
+                    marginBottom: "4px",
+                  })}
                 >
                   <ParagraphXSmall margin={0} className={css({ minWidth: "190px" })}>
                     {humanise(category.category)}
                   </ParagraphXSmall>
                   <ParagraphXSmall
                     margin={0}
-                    color={category.rating === 0 ? theme.colors.contentSecondary : theme.colors.contentPrimary}
+                    color={
+                      category.rating === 0
+                        ? theme.colors.contentSecondary
+                        : theme.colors.contentPrimary
+                    }
                   >
                     {category.rating}/5 → {category.points.toFixed(1)}/{category.max_points}
                     {category.rating === 0 && " (not assessed)"}

@@ -72,7 +72,9 @@ describe("PromptWorkbench", () => {
     await screen.findByText(/SHIRTFACED/);
     await chooseTheScene();
 
-    expect(await screen.findByText(/Nothing has been written for this scene yet/)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Nothing has been written for this scene yet/),
+    ).toBeInTheDocument();
   });
 
   it("puts a newly written prompt above the ones it varies from", async () => {

@@ -122,8 +122,11 @@ export function SelectionPanel({ slug }: { slug: string }): React.JSX.Element {
         )}
 
         {next.selected && (
-          <ParagraphXSmall marginTop={theme.sizing.scale600} marginBottom={0}
-            color={theme.colors.contentTertiary}>
+          <ParagraphXSmall
+            marginTop={theme.sizing.scale600}
+            marginBottom={0}
+            color={theme.colors.contentTertiary}
+          >
             The prompt for this shot is written on the Prompts page, where it is kept.
           </ParagraphXSmall>
         )}

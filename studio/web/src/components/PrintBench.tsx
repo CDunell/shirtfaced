@@ -223,27 +223,24 @@ export function PrintBench(): React.JSX.Element {
     [settle],
   );
 
-  const onFile = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      setBusy(true);
-      setError(null);
-      uploadPhoto(file)
-        .then((uploaded) => {
-          setPhotos((existing) => [uploaded, ...existing]);
-          setPhoto(uploaded);
-        })
-        .catch((cause: unknown) => {
-          setError(describe(cause));
-        })
-        .finally(() => {
-          setBusy(false);
-          event.target.value = "";
-        });
-    },
-    [],
-  );
+  const onFile = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    setError(null);
+    uploadPhoto(file)
+      .then((uploaded) => {
+        setPhotos((existing) => [uploaded, ...existing]);
+        setPhoto(uploaded);
+      })
+      .catch((cause: unknown) => {
+        setError(describe(cause));
+      })
+      .finally(() => {
+        setBusy(false);
+        event.target.value = "";
+      });
+  }, []);
 
   const polygon = corners.map(([x, y]) => `${String(x * 100)},${String(y * 100)}`).join(" ");
 
@@ -275,7 +272,9 @@ export function PrintBench(): React.JSX.Element {
                   label: `${item.label}${item.placed ? "  (placed)" : ""}`,
                 }))}
                 value={photo ? [{ id: photo.id, label: photo.label }] : []}
-                placeholder={photos.length ? "Choose a photograph" : "Nothing here yet — upload one"}
+                placeholder={
+                  photos.length ? "Choose a photograph" : "Nothing here yet — upload one"
+                }
                 clearable={false}
                 onChange={({ value }) => {
                   const id = value[0]?.id ? String(value[0].id) : null;
