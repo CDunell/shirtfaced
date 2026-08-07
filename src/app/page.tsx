@@ -62,7 +62,7 @@ export default function Home() {
 
                   <span
                     id="tagline-fixed"
-                    className="block text-lime"
+                    className="block text-lime lowercase"
                     style={{ fontSize: `${LINE_THREE_SIZE}cqw` }}
                   >
                     {LINE_THREE}.
@@ -218,7 +218,7 @@ export default function Home() {
                   key={t.beatOne}
                   className="display px-5 text-[26px] whitespace-nowrap text-paper"
                 >
-                  {t.beatOne}, {t.beatTwo}, <span className="text-lime">{LINE_THREE}.</span>
+                  {t.beatOne}, {t.beatTwo}, <span className="text-lime lowercase">{LINE_THREE}.</span>
                 </span>
               ))}
             </span>
