@@ -138,7 +138,7 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     # Hyphenated. onlineceramics.com is an unrelated UK pottery business.
     "online-ceramics": ("Online Ceramics", "https://online-ceramics.com", "art-merch"),
     "cactus-plant-flea-market": ("Cactus Plant Flea Market", "https://cactusplantfleamarket.com", "streetwear"),
-    "market-studios": ("Market Studios", "https://market-studios.com", "streetwear"),
+    "market-studios": ("Market Studios", "https://marketstudios.com", "streetwear"),
     "sporty-and-rich": ("Sporty & Rich", "https://sportyandrich.com", "streetwear"),
     "golf-wang": ("Golf Wang", "https://golfwang.com", "streetwear"),
     "born-x-raised": ("Born X Raised", "https://bornxraised.com", "streetwear"),
@@ -298,7 +298,45 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     # --- Skate remaining. ---
     "ripndip": ("RIPNDIP", "https://www.ripndip.com", "skate"),
     "awake-ny": ("Awake NY", "https://www.awakenyclothing.com", "streetwear"),
+    # --- Streetwear, deep. The construction Shirtfaced actually uses -- heavyweight
+    # blanks, boxy cuts, back prints -- is this tradition's grammar; the joke is
+    # the content sitting on top of it. Both halves need evidence. ---
+    "kith": ("Kith", "https://kith.com", "streetwear"),
+    "bape": ("BAPE", "https://us.bape.com", "streetwear"),
+    "neighborhood": ("Neighborhood", "https://neighborhood.jp", "streetwear"),
+    "wtaps": ("WTAPS", "https://www.wtaps.com", "streetwear"),
+    "undefeated": ("Undefeated", "https://undefeated.com", "streetwear"),
+    "extra-butter": ("Extra Butter", "https://shop.extrabutterny.com", "streetwear"),
+    "packer-shoes": ("Packer Shoes", "https://packershoes.com", "streetwear"),
+    "kicks-lab": ("Kicks Lab", "https://www.kickslab.com", "streetwear"),
+    "cherry-la": ("Cherry LA", "https://cherryla.com", "streetwear"),
+    "gallery-dept": ("Gallery Dept", "https://gallerydept.com", "streetwear"),
+    "corteiz": ("Corteiz", "https://corteiz.com", "streetwear"),
+    "places-plus-faces": ("Places+Faces", "https://placesplusfaces.com", "streetwear"),
+    "eric-emanuel": ("Eric Emanuel", "https://ericemanuel.com", "streetwear"),
+    "chinatown-market": ("Chinatown Market", "https://www.chinatownmarket.com", "streetwear"),
+    "noah-ny": ("Noah", "https://noahny.com", "streetwear"),
+    "aime-leon-dore": ("Aimé Leon Dore", "https://aimeleondore.com", "streetwear"),
+    "kidsuper": ("KidSuper", "https://kidsuper.com", "streetwear"),
+    # --- Skate, deeper. ---
+    "frog-skateboards": ("Frog Skateboards", "https://frogskateboards.com", "skate"),
+    "limosine": ("Limosine", "https://limosineskateboards.com", "skate"),
+    # --- Humour and slogan, deeper: the graphic is the joke. ---
+    "snorg-tees": ("Snorg Tees", "https://snorgtees.com", "novelty"),
+    "busted-tees": ("BustedTees", "https://bustedtees.com", "novelty"),
+    "six-dollar-shirts": ("6 Dollar Shirts", "https://www.6dollarshirts.com", "novelty"),
+    "the-chivery": ("The Chivery", "https://www.thechivery.com", "novelty"),
+    "topatoco": ("TopatoCo", "https://topatoco.com", "novelty"),
+    "bad-idea-tshirts": ("Bad Idea T-Shirts", "https://www.badideatshirts.com", "novelty"),
+    "donkey-tees": ("Donkey Tees", "https://www.donkeytees.com", "novelty"),
+    # --- Australian multi-label retailers with own-label graphic ranges. ---
+    "stussy-au": ("Stüssy Australia", "https://www.stussy.com.au", "au-streetwear"),
+    "universal-store": ("Universal Store", "https://www.universalstore.com.au", "au-streetwear"),
+    "up-there": ("Up There Store", "https://uptherestore.com", "au-streetwear"),
+    "incu": ("Incu", "https://incu.com", "au-streetwear"),
 }
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
