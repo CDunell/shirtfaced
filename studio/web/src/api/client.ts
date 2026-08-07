@@ -603,3 +603,48 @@ export async function printPhoto(photoId: string, design: string): Promise<Blob>
   }
   return await response.blob();
 }
+
+/** One hard gate's outcome, with the evidence the extractor decided it on. */
+export interface DesignGate {
+  gate: string;
+  status: "pass" | "fail" | "not_tested";
+  evidence: string;
+}
+
+/** One weighted category's computed points. */
+export interface DesignCategory {
+  category: string;
+  rating: number;
+  points: number;
+  max_points: number;
+  floor: number;
+  below_floor: boolean;
+}
+
+export interface DesignScore {
+  design_id: string;
+  design_name: string;
+  measurements: Record<string, unknown>;
+  blocked: boolean;
+  total_score: number;
+  max_total_score: number;
+  band: string;
+  failed_gates: string[];
+  untested_gates: string[];
+  floor_failures: string[];
+  gates: DesignGate[];
+  categories: DesignCategory[];
+  thresholds: Record<string, number>;
+}
+
+/** Measure a design image and score it against DESIGN_REVIEW_SCORECARD.md. */
+export async function scoreDesign(file: File, designName?: string): Promise<DesignScore> {
+  const body = new FormData();
+  body.append("image", file);
+  if (designName) body.append("design_name", designName);
+  const response = await fetch("/api/design/score", { method: "POST", body });
+  if (!response.ok) {
+    throw await failure(response);
+  }
+  return (await response.json()) as DesignScore;
+}

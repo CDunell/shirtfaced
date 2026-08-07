@@ -14,7 +14,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 
 from app import __version__
 from app.config import Settings, get_settings
-from app.routes import api, assets, health, printing
+from app.routes import api, assets, design, health, printing
 from app.security import SESSION_COOKIE, verify_session_token
 from app.web import mount_interface
 
@@ -84,6 +84,7 @@ def create_app() -> FastAPI:
     application.include_router(api.router)
     application.include_router(printing.router)
     application.include_router(assets.router)
+    application.include_router(design.router)
 
     dist_root = settings.web_dist_root_resolved
     if mount_interface(application, dist_root):
