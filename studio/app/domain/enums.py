@@ -296,3 +296,45 @@ def parse_shot_status(value: str) -> ShotStatus | None:
     if cleaned in SHOT_STATUS_MARKERS:
         return SHOT_STATUS_MARKERS[cleaned]
     return SHOT_STATUS_MARKERS.get(cleaned.casefold())
+
+
+class LicenceStatus(StrEnum):
+    """How well the right to use an archive element is established.
+
+    Elements go on garments that are sold, so this is not advisory. The
+    composer may only reach a verified element; everything else is stored so
+    the find is not lost, and refused so it cannot be printed by accident.
+    """
+
+    # Checked against the source, terms recorded, commercial use permitted.
+    VERIFIED = "verified"
+    # Held but not yet checked. Never usable -- absence of a check is not a pass.
+    UNVERIFIED = "unverified"
+    # Checked and found to forbid the use we need. Kept so it is not re-found.
+    REFUSED = "refused"
+
+
+class ElementFamily(StrEnum):
+    """The archive's families.
+
+    Split by how an element comes into being rather than by what it looks
+    like, because that is what determines whether it is authored as parametric
+    geometry or ingested with a licence trail.
+    """
+
+    # Authored: parametric geometry and render recipes.
+    FRAME = "frame"
+    TYPE_LAYOUT = "type_layout"
+    WORDMARK = "wordmark"
+    BADGE = "badge"
+    TEXTURE = "texture"
+    PRINT_EFFECT = "print_effect"
+    PATCH_LABEL = "patch_label"
+    PLACEMENT = "placement"
+    COMPOSITION_TEMPLATE = "composition_template"
+    COLOUR_SYSTEM = "colour_system"
+    # Ingested: artwork with a taxonomy and a licence.
+    ILLUSTRATION_PART = "illustration_part"
+    SYMBOL = "symbol"
+    ORNAMENT = "ornament"
+    PATTERN = "pattern"

@@ -1,0 +1,221 @@
+"""ORM models for the element archive.
+
+Kept apart from ``models.py`` because they belong to a different thing. Those
+tables describe worlds, shots and the photographs made from them; these describe
+the parts a design is assembled from and the rules for using them.
+
+The archive's premise is that geometry is stored apart from aesthetics and that
+finished artwork is a disposable output. So nothing here stores a design. An
+authored element stores a recipe name and its parameters; an ingested one stores
+path data and a licence trail; a render stores the tuple that produced it, so
+the artwork can be thrown away and rebuilt.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import uuid
+from typing import Any
+
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    func,
+    text,
+)
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
+from pgvector.sqlalchemy import Vector
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.base import Base, TimestampMixin
+from app.db.models import SHA256_HEX_LENGTH, _enum
+from app.domain.enums import ElementFamily, LicenceStatus
+
+__all__ = [
+    "ELEMENT_FEATURE_DIMENSIONS",
+    "ArchiveElement",
+    "ElementRender",
+]
+
+# Width of an element's feature vector. Deliberately small and deliberately
+# hand-derived: every component is computed from a declared parameter, so a
+# similarity result can be explained by pointing at the field that caused it.
+# A learned embedding would be neither reproducible across runs nor auditable,
+# and this archive's premise is that its outputs can always be regenerated.
+ELEMENT_FEATURE_DIMENSIONS = 32
+
+EMPTY_ARRAY = text("'{}'::varchar[]")
+
+
+class ArchiveElement(Base, TimestampMixin):
+    """One part in the archive: geometry plus the rules for using it."""
+
+    __tablename__ = "archive_elements"
+    __table_args__ = (
+        UniqueConstraint("element_key", name="uq_archive_elements_element_key"),
+        # The licence gate lives in the database, not only in Python. An element
+        # marked verified must carry what verification means: terms, a source, a
+        # date, and permission for commercial use. This is not a duplicated
+        # validation -- it is the one that survives a bulk import written in a
+        # hurry, and these elements go on garments that are sold.
+        CheckConstraint(
+            "licence_status <> 'verified' OR ("
+            " licence_commercial_use"
+            " AND licence_terms <> ''"
+            " AND licence_source <> ''"
+            " AND licence_checked_at IS NOT NULL)",
+            name="verified_licence_complete",
+        ),
+        CheckConstraint(
+            "ink_min >= 1 AND ink_max >= ink_min",
+            name="inks",
+        ),
+        CheckConstraint(
+            "complexity >= 0 AND complexity <= 1",
+            name="complexity",
+        ),
+        # An element is either authored from a recipe or ingested as geometry.
+        # Neither means an empty record; both means an ambiguous one.
+        CheckConstraint(
+            "(recipe <> '') <> (geometry <> '')",
+            name="recipe_xor_geometry",
+        ),
+        Index("ix_archive_elements_family", "family"),
+        # Partial index over what the composer actually queries. It never looks
+        # at anything but verified elements, so the index need not either.
+        Index(
+            "ix_archive_elements_usable",
+            "family",
+            "subtype",
+            postgresql_where=text("licence_status = 'verified'"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    # Stable human-readable identity, e.g. "badge_shield_0142". Renders refer to
+    # it, so it must not change once anything has been produced from it.
+    element_key: Mapped[str] = mapped_column(String(120), nullable=False)
+    family: Mapped[ElementFamily] = mapped_column(
+        _enum(ElementFamily, "element_family"), nullable=False
+    )
+    subtype: Mapped[str] = mapped_column(String(80), nullable=False, default="")
+
+    # Authored elements name a recipe and supply parameters; ingested elements
+    # carry path data. Never a rendered picture, in either case.
+    recipe: Mapped[str] = mapped_column(String(120), nullable=False, default="")
+    geometry: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    parameters: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+    # Where supplied content goes. An element with no slots can be placed but
+    # never filled, which is the difference between a recipe and a picture.
+    slots: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+
+    symmetry: Mapped[str] = mapped_column(String(24), nullable=False, default="none")
+    ink_min: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    ink_max: Mapped[int] = mapped_column(Integer, nullable=False, default=3)
+    complexity: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
+
+    style_tags: Mapped[list[str]] = mapped_column(
+        ARRAY(String(40)), nullable=False, server_default=EMPTY_ARRAY
+    )
+    compatible_treatments: Mapped[list[str]] = mapped_column(
+        ARRAY(String(40)), nullable=False, server_default=EMPTY_ARRAY
+    )
+    # What the element refuses. Cheaper and more honest than enumerating what it
+    # permits, and it is what makes the grammar tractable.
+    exclusions: Mapped[list[str]] = mapped_column(
+        ARRAY(String(40)), nullable=False, server_default=EMPTY_ARRAY
+    )
+
+    # --- Licence, as a recorded fact with a source rather than a flag. ---
+    licence_status: Mapped[LicenceStatus] = mapped_column(
+        _enum(LicenceStatus, "licence_status"),
+        nullable=False,
+        server_default=text("'unverified'"),
+    )
+    licence_terms: Mapped[str] = mapped_column(String(80), nullable=False, default="")
+    licence_source: Mapped[str] = mapped_column(String(80), nullable=False, default="")
+    licence_source_id: Mapped[str] = mapped_column(String(200), nullable=False, default="")
+    licence_source_url: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    licence_checked_at: Mapped[dt.date | None] = mapped_column(Date)
+    licence_commercial_use: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    # For the awkward majority of the hard cases: an out-of-copyright work whose
+    # scan carries its own claim, or terms that differ between the jurisdictions
+    # the brand sells into.
+    licence_note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+
+    # Similarity is computed in the database rather than by pulling the archive
+    # into Python, so "find me elements like this one" stays one query as the
+    # archive grows past a few thousand parts. Null until the vector is built,
+    # which keeps ingestion and feature derivation independently runnable.
+    feature: Mapped[list[float] | None] = mapped_column(Vector(ELEMENT_FEATURE_DIMENSIONS))
+
+    @property
+    def licence_usable(self) -> bool:
+        """Whether the composer may reach this element at all.
+
+        Mirrors the database constraint deliberately. The constraint is what
+        holds under bulk import; this is what lets a caller ask without a round
+        trip. They must agree, and the test suite asserts that they do.
+        """
+        return (
+            self.licence_status is LicenceStatus.VERIFIED
+            and self.licence_commercial_use
+            and bool(self.licence_terms)
+            and bool(self.licence_source)
+            and self.licence_checked_at is not None
+        )
+
+
+class ElementRender(Base):
+    """A rendered output, stored as the tuple that produced it.
+
+    The artwork is disposable; this row is not. Given the same element, content,
+    palette and seed the renderer must emit the same bytes, so the hash here is
+    both a cache key and a standing assertion that determinism holds. A mismatch
+    on re-render is a regression, and it should be found by a test rather than
+    by a reprint that does not match the original.
+    """
+
+    __tablename__ = "element_renders"
+    __table_args__ = (
+        UniqueConstraint(
+            "element_id", "content_hash", name="uq_element_renders_element_content"
+        ),
+        Index("ix_element_renders_element_id", "element_id"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    element_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("archive_elements.id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    # The inputs, kept whole, so the output can be reproduced from this row alone.
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    palette: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    # sha256 of the emitted SVG. Determinism is asserted against this.
+    content_hash: Mapped[str] = mapped_column(String(SHA256_HEX_LENGTH), nullable=False)
+    svg: Mapped[str] = mapped_column(Text, nullable=False)
+    # Which renderer produced it. A renderer change that alters output is
+    # legitimate; silently attributing new output to an old row is not.
+    renderer_version: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
