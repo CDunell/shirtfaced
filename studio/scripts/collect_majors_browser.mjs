@@ -46,6 +46,9 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
  * Not Found". These sites reorganise their taxonomy constantly, so the listing
  * pages are discovered from each site's own navigation at run time instead.
  */
+const USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
+
 const MAJORS = {
   vans: ["Vans", "major-skate", "https://www.vans.com"],
   carhartt: ["Carhartt", "major-workwear", "https://www.carhartt.com"],
@@ -63,7 +66,10 @@ const MAJORS = {
 
 /** Category links worth following, in preference order. */
 const CATEGORY_PATTERNS = [
-  /graphic[- ]?tee/i, /t-?shirt/i, /tees?/i, /hoodie/i, /sweatshirt/i, /sweats/i,
+  /graphic[- ]?tee/i, /t-?shirt/i, /\btees?\b/i, /hoodie/i, /sweatshirt/i, /sweats\b/i,
+  // Some catalogues name the section rather than the garment, so nothing
+  // above matches a page that is nonetheless full of tees -- Supreme is one.
+  /\/shop\/(tops|shirts|sweatshirts|jackets)/i,
 ];
 
 let nextId = 0;
@@ -203,7 +209,22 @@ async function fetchImage(url) {
     })()`,
   });
   const encoded = result.result?.value;
-  return encoded ? Buffer.from(encoded, "base64") : null;
+  if (encoded) return Buffer.from(encoded, "base64");
+
+  // In-page fetch fails on image CDNs that serve no CORS header -- the request
+  // succeeds but the page is not allowed to read the bytes. Uniqlo's whole
+  // catalogue was lost this way. Image CDNs are static hosts and answer a
+  // direct request happily; it is the HTML origin that guards itself.
+  try {
+    const response = await fetch(url, {
+      headers: { "User-Agent": USER_AGENT, Referer: new URL(url).origin + "/" },
+    });
+    if (!response.ok) return null;
+    const buffer = Buffer.from(await response.arrayBuffer());
+    return buffer.byteLength >= 4000 ? buffer : null;
+  } catch {
+    return null;
+  }
 }
 
 const slugify = (text) =>
@@ -249,10 +270,11 @@ async function collectBrand(slug, [name, tradition, homepage]) {
 
   let products = 0;
   let images = 0;
+  let alreadyHeld = 0;
   for (const item of unique.slice(0, PRODUCTS_PER_BRAND)) {
     const handle = slugify(item.name);
     const productDir = join(brandDir, "products", handle);
-    if (existsSync(join(productDir, "product.json"))) continue;
+    if (existsSync(join(productDir, "product.json"))) { alreadyHeld++; continue; }
     mkdirSync(productDir, { recursive: true });
 
     const saved = [];
@@ -295,7 +317,15 @@ async function collectBrand(slug, [name, tradition, homepage]) {
   }
 
   return products === 0
-    ? { slug, status: "skipped", reason: "no images could be fetched" }
+    ? {
+        slug,
+        status: "skipped",
+        // Nothing new is the ordinary outcome of a re-run, not a failure.
+        // Reporting it as one sent me chasing a fetch bug that did not exist.
+        reason: alreadyHeld > 0
+          ? `nothing new (${alreadyHeld} already held)`
+          : "no images could be fetched",
+      }
     : { slug, status: "collected", products, images };
 }
 
