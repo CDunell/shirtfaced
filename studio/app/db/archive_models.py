@@ -98,6 +98,15 @@ class ArchiveElement(Base, TimestampMixin):
             "subtype",
             postgresql_where=text("licence_status = 'verified'"),
         ),
+        # HNSW over cosine distance. Cosine because the feature vector mixes
+        # counts and shares, so direction carries the meaning while magnitude
+        # mostly carries how many components happened to be populated.
+        Index(
+            "ix_archive_elements_feature",
+            "feature",
+            postgresql_using="hnsw",
+            postgresql_ops={"feature": "vector_cosine_ops"},
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

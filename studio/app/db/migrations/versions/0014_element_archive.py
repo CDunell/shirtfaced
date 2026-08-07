@@ -198,9 +198,15 @@ def upgrade() -> None:
     # HNSW over cosine distance. Cosine because the feature vector mixes counts
     # and shares, so direction carries the meaning and magnitude mostly carries
     # how many components happened to be populated.
-    op.execute(
-        "CREATE INDEX ix_archive_elements_feature ON archive_elements "
-        f"USING hnsw (feature {extension_schema}.vector_cosine_ops)"
+    # Declared on the model too, so the schema-drift check sees it on both
+    # sides. The operator class is schema-qualified for the same reason the
+    # column type is: the integration tests run without public on the path.
+    op.create_index(
+        "ix_archive_elements_feature",
+        "archive_elements",
+        ["feature"],
+        postgresql_using="hnsw",
+        postgresql_ops={"feature": f"{extension_schema}.vector_cosine_ops"},
     )
 
     op.create_table(
