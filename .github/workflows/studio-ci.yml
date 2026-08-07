@@ -7,10 +7,15 @@ on:
     branches: [main]
     paths:
       - "studio/**"
+      # The brand face lives at the repository root because the storefront uses
+      # it too, and the archive sets every word as outlines from that exact
+      # file. A change to it changes every composition, so it has to run this.
+      - "assets/type/**"
       - ".github/workflows/studio-ci.yml"
   pull_request:
     paths:
       - "studio/**"
+      - "assets/type/**"
       - ".github/workflows/studio-ci.yml"
 
 defaults:
