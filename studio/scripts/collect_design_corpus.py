@@ -362,8 +362,25 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     "universal-store": ("Universal Store", "https://www.universalstore.com.au", "au-streetwear"),
     "up-there": ("Up There Store", "https://uptherestore.com", "au-streetwear"),
     "incu": ("Incu", "https://incu.com", "au-streetwear"),
+    # --- Global majors. The brief is "how the biggest brands present content",
+    # so these carry the most weight in any presentation recommendation. Several
+    # of the very largest (Nike, Adidas, Supreme, Levi's, Vans, Carhartt,
+    # Patagonia, Uniqlo, Zara, H&M) run custom platforms that refuse automated
+    # access outright, and are absent for that reason rather than by choice --
+    # a known gap in the reference set, not a silent one. ---
+    "palace": ("Palace Skateboards", "https://www.palaceskateboards.com", "major-skate"),
+    "champion": ("Champion", "https://www.champion.com", "major-heritage"),
+    "reebok": ("Reebok", "https://www.reebok.com", "major-sport"),
+    "dickies-global": ("Dickies", "https://www.dickies.com", "major-workwear"),
+    "billabong-global": ("Billabong", "https://www.billabong.com", "major-surf"),
+    "quiksilver-global": ("Quiksilver", "https://www.quiksilver.com", "major-surf"),
+    "rip-curl-global": ("Rip Curl", "https://www.ripcurl.com", "major-surf"),
+    "oneill": ("O'Neill", "https://www.oneill.com", "major-surf"),
+    "dc-shoes": ("DC Shoes", "https://www.dcshoes.com", "major-skate"),
+    "etnies": ("Etnies", "https://www.etnies.com", "major-skate"),
+    "emerica": ("Emerica", "https://www.emerica.com", "major-skate"),
+    "jack-wolfskin": ("Jack Wolfskin", "https://www.jackwolfskin.com", "major-outdoor"),
 }
-
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
