@@ -27,6 +27,13 @@ dependencies = [
   # per-pixel, and a pure-Pillow version of that is minutes per image rather than
   # under a second.
   "numpy>=2.0",
+  # The element archive stores a feature vector per element and asks the
+  # database for nearest neighbours, rather than pulling the archive into
+  # Python to sort it.
+  "pgvector>=0.3",
+  # Supplied words are set as glyph outlines rather than a font reference, so
+  # the output is print-ready and identical wherever it is opened.
+  "fonttools>=4.50",
 ]
 
 [project.optional-dependencies]
