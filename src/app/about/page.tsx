@@ -2,7 +2,7 @@ import { PageShell, Prose, Section } from "@/components/PageShell";
 import { about } from "@/lib/content-data.generated";
 
 export const metadata = {
-  title: "About — Shirtfaced",
+  title: "About — shirtfaced",
   description:
     "Graphic tees for people with questionable judgement and excellent taste. Designed in Australia.",
 };

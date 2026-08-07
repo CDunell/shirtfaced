@@ -2,7 +2,7 @@ import { PageShell, Prose, Section } from "@/components/PageShell";
 import { returns } from "@/lib/content-data.generated";
 
 export const metadata = {
-  title: "Returns — Shirtfaced",
+  title: "Returns — shirtfaced",
   description: "30 days, unworn, no interrogation.",
 };
 

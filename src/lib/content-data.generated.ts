@@ -5,7 +5,7 @@
  */
 
 export const about = {
-  "intro": "Shirtfaced makes graphic tees for people with questionable judgement and excellent taste. That's the entire brief.",
+  "intro": "shirtfaced makes graphic tees for people with questionable judgement and excellent taste. That's the entire brief.",
   "ideaP1": "Most graphic tees are either forgettable or trying far too hard. We wanted the ones you actually reach for — heavy cotton, cut wide, printed with something worth reading from across a room.",
   "ideaP2": "Every design starts as a joke someone refused to let go of. If it still lands a month later, it gets printed.",
   "howMadeP1": "240gsm combed cotton, garment-dyed, boxy fit with a dropped shoulder. Designed in Australia and screen-printed by specialists wherever that gets it to you fastest — the design is ours, the press is whoever does it properly.",

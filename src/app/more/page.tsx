@@ -2,7 +2,7 @@ import Link from "next/link";
 import { IconArrowRight } from "@/components/Icons";
 import { more } from "@/lib/content-data.generated";
 
-export const metadata = { title: "More — Shirtfaced" };
+export const metadata = { title: "More — shirtfaced" };
 
 const LINKS = [
   { href: "/about", label: "About", note: "Who's behind this" },
@@ -44,7 +44,7 @@ export default function MorePage() {
       </div>
 
       <p className="mt-8 text-[13px] text-grey-dark">
-        © {new Date().getFullYear()} Shirtfaced. All rights reserved, most
+        © {new Date().getFullYear()} shirtfaced. All rights reserved, most
         regrets retained.
       </p>
     </div>

@@ -12,9 +12,9 @@ export function generateStaticParams() {
 export async function generateMetadata(props: PageProps<"/products/[slug]">) {
   const { slug } = await props.params;
   const product = getProduct(slug);
-  if (!product) return { title: "Not found — Shirtfaced" };
+  if (!product) return { title: "Not found — shirtfaced" };
   return {
-    title: `${product.name} — Shirtfaced`,
+    title: `${product.name} — shirtfaced`,
     description: product.description,
   };
 }

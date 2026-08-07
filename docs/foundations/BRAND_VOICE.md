@@ -26,7 +26,7 @@ Australian English throughout, in this document and everything it governs.
 
 ## 1. The word
 
-**Shirtfaced is a verb and a state, not an identity.**
+**shirtfaced is a verb and a state, not an identity.**
 
 - "I got shirtfaced." "I want to get shirtfaced." "We all get shirtfaced together."
 - It sits in the Australian lexicon alongside shitfaced, munted, written off, off
@@ -39,9 +39,20 @@ Australian English throughout, in this document and everything it governs.
   the night — the trip, the wedding, the buck's, the grand final — not a suburb
   or an age bracket.
 
+### Always lowercase
+
+**shirtfaced is never capitalised — not mid-sentence, not sentence-initial, not
+as a title, not in a logo lockup.** A capital S makes it a proper noun, and §1's
+whole argument is that it isn't one: it's a verb, lowercase the way "tired" or
+"keen" is lowercase. This applies everywhere the word speaks to a customer:
+page titles, meta/OG tags, alt text, footers, copyright lines, email. It does
+not apply to internal engineering artefacts with their own naming conventions
+(this repo's own document headers, the admin tool's title bar) — those aren't
+brand voice.
+
 ### The critical widening
 
-**Shirtfaced means *that level of good time*, not *that many drinks*.**
+**shirtfaced means *that level of good time*, not *that many drinks*.**
 
 Consequences:
 
@@ -66,7 +77,7 @@ document's job to hold in words.
 
 ## 2. Two voices, one brand
 
-Shirtfaced does not have one tone of voice. It has two, doing two different
+shirtfaced does not have one tone of voice. It has two, doing two different
 jobs, and the failure mode this document exists to prevent is letting them blur
 into each other.
 
@@ -104,7 +115,7 @@ consistent — it just hadn't been named as canon. It stays exactly as it is:
 
 ### The line between them
 
-Identity voice states what Shirtfaced believes about a good night. Storefront
+Identity voice states what shirtfaced believes about a good night. Storefront
 voice is the brand's own retail employee, in on the joke, selling you a shirt
 while gently taking the piss. One is not a lesser version of the other — they
 have different jobs and different audiences-in-the-moment. A shipping page

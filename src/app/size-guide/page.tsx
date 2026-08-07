@@ -2,8 +2,8 @@ import { PageShell, Prose, Section } from "@/components/PageShell";
 import { sizeGuide } from "@/lib/content-data.generated";
 
 export const metadata = {
-  title: "Size guide — Shirtfaced",
-  description: "Measurements for every Shirtfaced tee. Boxy fit, sized honestly.",
+  title: "Size guide — shirtfaced",
+  description: "Measurements for every shirtfaced tee. Boxy fit, sized honestly.",
 };
 
 const SIZES = Object.entries(sizeGuide.chart);

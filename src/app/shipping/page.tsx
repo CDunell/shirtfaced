@@ -4,7 +4,7 @@ import { money } from "@/lib/money";
 import { shipping } from "@/lib/content-data.generated";
 
 export const metadata = {
-  title: "Shipping — Shirtfaced",
+  title: "Shipping — shirtfaced",
   description: "Where we ship, what it costs, and how long it takes.",
 };
 

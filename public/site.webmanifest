@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Shirtfaced",
-  "short_name": "Shirtfaced",
-  "description": "Good times. Bad decisions. Zero regrets.",
+  "name": "shirtfaced",
+  "short_name": "shirtfaced",
+  "description": "Good mates, great times, shirtfaced.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

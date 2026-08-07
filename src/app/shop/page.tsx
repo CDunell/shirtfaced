@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { ShopGrid } from "./ShopGrid";
 
 export const metadata = {
-  title: "Shop — Shirtfaced",
+  title: "Shop — shirtfaced",
   description: "Every tee. Good times. Bad decisions. Zero regrets.",
 };
 

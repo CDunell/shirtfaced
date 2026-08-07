@@ -25,12 +25,12 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: `Shirtfaced — ${REFERENCE_LINE}`,
+  title: `shirtfaced — ${REFERENCE_LINE}`,
   description:
     "Graphic tees for people with questionable judgement and excellent taste. Designed in Australia. Printed properly.",
   manifest: "/site.webmanifest",
   openGraph: {
-    title: "Shirtfaced",
+    title: "shirtfaced",
     description: REFERENCE_LINE,
     type: "website",
   },

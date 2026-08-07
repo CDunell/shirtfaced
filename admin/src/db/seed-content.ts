@@ -20,7 +20,7 @@ import {
 const about = {
   id: 1,
   intro:
-    "Shirtfaced makes graphic tees for people with questionable judgement and excellent taste. That's the entire brief.",
+    "shirtfaced makes graphic tees for people with questionable judgement and excellent taste. That's the entire brief.",
   ideaP1:
     "Most graphic tees are either forgettable or trying far too hard. We wanted the ones you actually reach for — heavy cotton, cut wide, printed with something worth reading from across a room.",
   ideaP2:

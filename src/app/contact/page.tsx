@@ -2,7 +2,7 @@ import { PageShell, Prose, Section } from "@/components/PageShell";
 import { contact } from "@/lib/content-data.generated";
 
 export const metadata = {
-  title: "Contact — Shirtfaced",
+  title: "Contact — shirtfaced",
   description: "Talk to a human. Usually within one business day.",
 };
 

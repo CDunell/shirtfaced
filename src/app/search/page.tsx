@@ -1,7 +1,7 @@
 import { SearchClient } from "./SearchClient";
 
 export const metadata = {
-  title: "Search — Shirtfaced",
+  title: "Search — shirtfaced",
   description: "Find the tee you're after.",
 };
 

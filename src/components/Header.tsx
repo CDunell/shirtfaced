@@ -98,12 +98,12 @@ export function Header() {
           <Link
             href="/"
             className="press flex items-center"
-            aria-label="Shirtfaced — home"
+            aria-label="shirtfaced — home"
           >
             {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
             <img
               src="/logo-lockup.png"
-              alt="Shirtfaced"
+              alt="shirtfaced"
               width={531}
               height={140}
               className="h-[38px] w-auto translate-y-[5px] sm:h-[46px] sm:translate-y-[6px]"
@@ -153,7 +153,7 @@ export function Header() {
               {/* eslint-disable-next-line @next/next/no-img-element -- static export */}
               <img
                 src="/logo-lockup.png"
-                alt="Shirtfaced"
+                alt="shirtfaced"
                 width={531}
                 height={140}
                 className="h-[36px] w-auto translate-y-[5px]"
