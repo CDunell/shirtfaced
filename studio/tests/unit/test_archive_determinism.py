@@ -1,0 +1,185 @@
+"""The archive's load-bearing property: same inputs, same bytes.
+
+Not "looks the same" and not "visually identical". If a reprint two years from
+now does not produce the file that was approved, the archive has not done the
+one job it exists to do, and the failure is silent until someone compares two
+garments.
+
+These also assert the licence gate, because an element whose rights are
+unverified must be unreachable rather than merely discouraged.
+"""
+
+from __future__ import annotations
+
+from dataclasses import replace
+from datetime import date
+
+import pytest
+
+from app.archive import authored
+from app.archive.render import Palette, RefusedToRender, render
+from app.archive.svg import num, rng_for
+from app.archive.typeset import MissingGlyph, set_arc, set_line
+from app.domain.element import Licence
+from app.domain.enums import LicenceStatus
+
+PALETTE = Palette(garment="#101010", inks=("#C6FF00", "#F2F0EA"))
+CONTENT = {"primary_text": "SHIRTFACED", "secondary_text": "EST 2026"}
+
+
+def test_the_same_inputs_render_the_same_bytes() -> None:
+    element = authored.element("badge_shield_0001")
+    first = render(element, CONTENT, PALETTE, seed=8374)
+    second = render(element, CONTENT, PALETTE, seed=8374)
+    assert first.svg == second.svg
+    assert first.content_hash == second.content_hash
+
+
+def test_every_authored_element_renders_reproducibly() -> None:
+    """Determinism has to hold for all of them, not for the one that was tried."""
+    for element in authored.ALL:
+        first = render(element, CONTENT, PALETTE, seed=11)
+        second = render(element, CONTENT, PALETTE, seed=11)
+        assert first.content_hash == second.content_hash, element.id
+
+
+def test_a_different_seed_changes_a_distressed_render() -> None:
+    """The seed must actually reach the geometry, or determinism is vacuous."""
+    element = authored.element("badge_shield_0001")
+    one = render(element, CONTENT, PALETTE, seed=1, treatment="distressed")
+    two = render(element, CONTENT, PALETTE, seed=2, treatment="distressed")
+    assert one.content_hash != two.content_hash
+
+
+def test_a_distressed_render_repeats_for_its_own_seed() -> None:
+    element = authored.element("badge_shield_0001")
+    one = render(element, CONTENT, PALETTE, seed=99, treatment="distressed")
+    two = render(element, CONTENT, PALETTE, seed=99, treatment="distressed")
+    assert one.svg == two.svg
+
+
+def test_different_content_changes_the_output() -> None:
+    element = authored.element("type_collegiate_arch_0001")
+    one = render(element, CONTENT, PALETTE, seed=5)
+    two = render(element, {**CONTENT, "primary_text": "GET SHIRTFACED"}, PALETTE, seed=5)
+    assert one.content_hash != two.content_hash
+
+
+def test_the_output_carries_no_timestamp_or_generator_note() -> None:
+    """A stamped date would defeat byte-identity without changing the design."""
+    svg = render(authored.element("frame_shield_0001"), CONTENT, PALETTE, seed=3).svg
+    assert "<!--" not in svg
+    assert "2026" not in svg.split("</svg>")[0].replace(CONTENT["secondary_text"], "")
+
+
+def test_text_is_outlines_not_a_font_reference() -> None:
+    """A <text> element defers layout to whatever opens the file."""
+    svg = render(authored.element("type_stack_0001"), CONTENT, PALETTE, seed=3).svg
+    assert "<text" not in svg
+    assert "font-family" not in svg
+    assert "<path" in svg
+
+
+def test_a_seeded_generator_is_scoped_to_its_purpose() -> None:
+    """Two purposes under one seed must not share a stream.
+
+    Otherwise adding a call to one silently changes the other, which is the
+    quiet way determinism dies once more than one thing wants variation.
+    """
+    first = [rng_for(7, "distress").random() for _ in range(4)]
+    second = [rng_for(7, "halftone").random() for _ in range(4)]
+    assert first != second
+    assert first == [rng_for(7, "distress").random() for _ in range(4)]
+
+
+def test_numbers_are_formatted_one_way() -> None:
+    """Negative zero compares equal to zero and does not render identically."""
+    assert num(-0.0) == "0"
+    assert num(0.0) == "0"
+    assert num(1.50000001) == num(1.5)
+
+
+# --- The licence gate -------------------------------------------------------
+
+
+def test_an_unverified_element_is_refused() -> None:
+    element = replace(authored.element("badge_shield_0001"), licence=Licence())
+    with pytest.raises(RefusedToRender) as raised:
+        render(element, CONTENT, PALETTE, seed=1)
+    assert raised.value.reason == "LICENCE_UNVERIFIED"
+
+
+def test_a_verified_licence_missing_its_source_is_refused() -> None:
+    """Verified is a claim about what was checked, not a flag to be set."""
+    element = replace(
+        authored.element("badge_shield_0001"),
+        licence=Licence(
+            status=LicenceStatus.VERIFIED,
+            terms="CC0",
+            source="",
+            checked_at=date(2026, 8, 8),
+            commercial_use=True,
+        ),
+    )
+    with pytest.raises(RefusedToRender) as raised:
+        render(element, CONTENT, PALETTE, seed=1)
+    assert raised.value.reason == "LICENCE_INCOMPLETE"
+
+
+def test_a_non_commercial_licence_is_refused() -> None:
+    element = replace(
+        authored.element("badge_shield_0001"),
+        licence=Licence(
+            status=LicenceStatus.VERIFIED,
+            terms="CC BY-NC",
+            source="somewhere",
+            checked_at=date(2026, 8, 8),
+            commercial_use=False,
+        ),
+    )
+    with pytest.raises(RefusedToRender) as raised:
+        render(element, CONTENT, PALETTE, seed=1)
+    assert raised.value.reason == "LICENCE_NON_COMMERCIAL"
+
+
+def test_every_authored_element_declares_a_usable_licence() -> None:
+    for element in authored.ALL:
+        assert element.licence.usable, element.id
+
+
+def test_an_excluded_treatment_is_refused() -> None:
+    element = authored.element("badge_shield_0001")
+    with pytest.raises(RefusedToRender) as raised:
+        render(element, CONTENT, PALETTE, seed=1, treatment="photographic")
+    assert raised.value.reason == "TREATMENT_EXCLUDED"
+
+
+def test_too_many_inks_is_refused() -> None:
+    element = authored.element("type_stack_0001")
+    palette = Palette(inks=("#111111", "#222222", "#333333", "#444444"))
+    with pytest.raises(RefusedToRender) as raised:
+        render(element, CONTENT, palette, seed=1)
+    assert raised.value.reason == "INKS_ABOVE_MAXIMUM"
+
+
+# --- Content handling -------------------------------------------------------
+
+
+def test_an_empty_slot_is_reported_rather_than_invented() -> None:
+    element = authored.element("badge_shield_0001")
+    result = render(element, {"primary_text": "SHIRTFACED"}, PALETTE, seed=1)
+    assert any("secondary_text" in warning for warning in result.warnings)
+
+
+def test_a_character_the_face_cannot_set_is_refused() -> None:
+    """Silently dropping a glyph prints the wrong word on a garment."""
+    with pytest.raises(MissingGlyph):
+        set_line("你好")
+
+
+def test_setting_text_is_reproducible() -> None:
+    assert set_line("SHIRTFACED", cap_height=12).path == set_line("SHIRTFACED", cap_height=12).path
+    assert (
+        set_arc("SHIRTFACED", radius=40, cap_height=12).path
+        == set_arc("SHIRTFACED", radius=40, cap_height=12).path
+    )
