@@ -1,12 +1,12 @@
 # SHIRTFACED — CHARACTERS
 
-**Status:** A name list. Nothing else about these characters has been decided —
-no roles, no relationships, no core group, nothing. Character formation hasn't
-happened yet.
+**Status:** The recurring cast, by name. Nothing about who they are has been
+decided — no roles, no relationships, no core group, no personalities.
+Character formation hasn't happened yet.
 
 ## The list
 
-Fifteen names, supplied by the user on 7 August 2026:
+Fifteen names, supplied by the user on 7 August 2026, for the recurring cast:
 
 Brock, Lucas, Tommy, Mitch, Charlotte, Casey, Emma, Sophie, Grace, Ethan, Oliver,
 Damo, SK, Kevin, Gary.
