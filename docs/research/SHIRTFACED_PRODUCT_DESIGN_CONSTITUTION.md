@@ -470,6 +470,8 @@ This constitution consolidates and is supported by:
 
 Where the supporting documents conflict, the latest evidence-backed constitutional rule takes precedence. Derived frameworks must remain identified as operational tools rather than market facts.
 
+**A known instance, found 7 August 2026:** `GRAPHIC_ARCHETYPE_TAXONOMY.md` and `GRAPHIC_COMPOSITION_MECHANICS.md` each independently define their own G1–G9 graphic-archetype system and their own F-numbered framing system, using identical labels for different things — neither corresponds to the other, and neither is this constitution's §6/§8. §6 and §8 are the only classification a review uses. See the reconciliation note near the top of each research document for a best-effort mapping.
+
 ---
 
 # 19. Final Rule

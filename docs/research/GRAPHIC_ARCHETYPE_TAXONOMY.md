@@ -21,6 +21,38 @@ Important limitation: this pass establishes recurring construction families. It 
 
 ---
 
+## Reconciliation note — added 7 August 2026
+
+**This document's G1–G9 and F0–F4 labels are not the live classification system.**
+`SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` §8 ("Graphic Archetypes") is — it uses
+unnumbered prose names precisely so it never collides with a research pass's own
+numbering. A design review should select from the Constitution's list, not from
+this one.
+
+**A second research pass, `GRAPHIC_COMPOSITION_MECHANICS.md`, independently defines
+its own G1–G9 ("Composition Archetypes") and F0–F5 ("Framing Systems").** The
+labels do not correspond between the two documents despite being identical —
+that document's G4 ("Wordmark Monument") and this one's G4 ("Image With Attached
+Wordmark") are close to opposite emphases. Treat any bare "G4" or "F3" reference
+as ambiguous unless the source document is named.
+
+Best-effort mapping from this document's archetypes to the Constitution's adopted
+names, for traceability only — several are approximate, not exact equivalences:
+
+| This document | Constitution §8 |
+|---|---|
+| G1 — Isolated Emblem | emblem or badge |
+| G2 — Framed Image | image-led hero |
+| G3 — Poster Stack | poster or editorial panel |
+| G4 — Image With Attached Wordmark | image-and-title lockup |
+| G5 — Type-Led Display | typographic hero |
+| G6 — Information System | symbolic icon system *(uncertain fit)* |
+| G7 — Freeform Illustration | character or object portrait *(uncertain fit)* |
+| G8 — Collage Field | collage with controlled frame |
+| G9 — All-Over or Seam-Challenging Field | all-over or jumbo field |
+
+---
+
 # Core Finding
 
 Premium graphic apparel does not rely on one visual style. It repeatedly uses a small set of construction archetypes. Cohesion comes from controlling hierarchy, framing, identity placement and information density while allowing subject matter and illustration style to change.

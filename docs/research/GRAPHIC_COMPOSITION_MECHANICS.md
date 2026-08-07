@@ -15,6 +15,47 @@ No new frequency claims are made here. Exact dimensional rules remain provisiona
 
 ---
 
+## Reconciliation note — added 7 August 2026
+
+**Findings 01–12 below (dominant proposition, three-distance reading, H1/H2/H3
+hierarchy, silhouette, negative space, cropping, balance, contrast, collage
+unification, seasonal recognition) are faithfully consolidated into
+`SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` §9 and are not in conflict with
+anything.** This note is about two narrower sections further down only: "Framing
+Systems" (F0–F5) and "Composition Archetypes" (G1–G9).
+
+**Those two numbered systems are not the live classification system.** The
+Constitution's §6 (layout archetypes, A1–A8) and §8 (graphic archetypes, unnumbered
+prose) are. A design review should select from the Constitution's lists.
+
+**A second research pass, `GRAPHIC_ARCHETYPE_TAXONOMY.md`, independently defines its
+own G1–G9 and F0–F4 systems.** The labels do not correspond between the two
+documents despite being identical — its G4 ("Image With Attached Wordmark") and
+this document's G4 ("Wordmark Monument") are close to opposite emphases. Treat any
+bare "G4" or "F3" reference as ambiguous unless the source document is named.
+
+Best-effort mapping from this document's archetypes to the Constitution's adopted
+names, for traceability only — several are approximate, not exact equivalences:
+
+| This document | Constitution §8 |
+|---|---|
+| G1 — Isolated Icon | emblem or badge *(overlaps G5 below)* |
+| G2 — Hero Scene | character or object portrait *(uncertain fit)* |
+| G3 — Poster Field | poster or editorial panel |
+| G4 — Wordmark Monument | typographic hero |
+| G5 — Badge or Seal | emblem or badge *(overlaps G1 above)* |
+| G6 — Image/Title Lockup | image-and-title lockup |
+| G7 — Archival or Photographic Field | image-led hero |
+| G8 — Controlled Collage | collage with controlled frame |
+| G9 — All-Over or Jumbo Field | all-over or jumbo field |
+
+Framing (F0–F5 here) only loosely tracks the other document's F0–F4: F0/F1 roughly
+agree ("open/unframed" and "hard frame/rectangle"); F2 onward diverge in meaning,
+and this document has an extra F5 with no counterpart. Do not assume the numbers
+align past F1.
+
+---
+
 # Constitutional Findings
 
 ## Finding 01 — One Dominant Visual Proposition
