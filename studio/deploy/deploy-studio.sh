@@ -17,10 +17,55 @@ PYTHON=$(command -v python3.12 || command -v python3)
 ./.venv/bin/pip install --quiet --upgrade pip
 ./.venv/bin/pip install --quiet -e .
 
+say "Ensuring database extensions"
+# A migration that needs an extension cannot install it: CREATE EXTENSION only
+# loads a package that is already on disk, so an absent one fails the migration
+# and stops the deploy. That is what happened when the element archive first
+# went out, and provisioning belongs here rather than inside a migration.
+#
+# Idempotent, and keyed off the server's own PostgreSQL major version rather
+# than a pinned one, so an upgrade of the box does not silently skip this.
+PG_MAJOR=$(psql --version | grep -oE '[0-9]+' | head -1)
+if [ ! -f "/usr/share/postgresql/$PG_MAJOR/extension/vector.control" ]; then
+  echo "pgvector missing for PostgreSQL $PG_MAJOR; installing"
+  sudo apt-get update -qq
+  if ! sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+      "postgresql-$PG_MAJOR-pgvector"; then
+    # Older Ubuntu releases do not carry pgvector in the default archive. The
+    # PostgreSQL project's own repository does, for every supported major.
+    echo "Not in the default archive; adding the PostgreSQL APT repository"
+    sudo apt-get install -y -qq curl ca-certificates gnupg lsb-release
+    sudo install -d /usr/share/postgresql-common/pgdg
+    sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+      https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc]" \
+      "https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+      | sudo tee /etc/apt/sources.list.d/pgdg.list >/dev/null
+    sudo apt-get update -qq
+    sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
+      "postgresql-$PG_MAJOR-pgvector"
+  fi
+fi
+# Fail here with a readable message rather than inside alembic's traceback.
+if [ ! -f "/usr/share/postgresql/$PG_MAJOR/extension/vector.control" ]; then
+  echo "pgvector is still not installed for PostgreSQL $PG_MAJOR." >&2
+  echo "The element archive migration cannot run without it." >&2
+  exit 1
+fi
+
+set -a && . "$ROOT/.env" && set +a
+
+# CREATE EXTENSION requires superuser, and the application role deliberately is
+# not one. So the extension is enabled here, as postgres, and the migration only
+# uses it -- which is the right split anyway: provisioning is a deploy concern
+# and schema is a migration concern.
+DB_NAME=${DATABASE_URL##*/}
+DB_NAME=${DB_NAME%%\?*}
+sudo -u postgres psql -d "$DB_NAME" -qc 'CREATE EXTENSION IF NOT EXISTS vector'
+
 say "Applying migrations"
 # A controlled release step, not something the application does at startup: a
 # failed migration must stop the deploy rather than crash-loop the service.
-set -a && . "$ROOT/.env" && set +a
 ./.venv/bin/alembic upgrade head
 
 say "Importing worlds"

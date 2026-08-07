@@ -10,8 +10,11 @@ parameters, an ingested one carries path data and a licence trail, and neither
 carries a finished design. Renders store the tuple that produced them so the
 artwork stays disposable.
 
-Requires the pgvector extension, which is created here. Similarity between
-elements is a query rather than a pass over the archive in Python.
+Requires the pgvector extension, which the deploy script installs and enables
+because CREATE EXTENSION needs superuser and the application role is not one.
+This migration checks for it and stops with a readable message if it is absent.
+Similarity between elements is a query rather than a pass over the archive in
+Python.
 
 """
 
@@ -51,7 +54,23 @@ LICENCE_STATUSES = ("verified", "unverified", "refused")
 
 
 def upgrade() -> None:
-    op.execute("CREATE EXTENSION IF NOT EXISTS vector")
+    # The extension is enabled by the deploy script, as postgres, because
+    # CREATE EXTENSION requires superuser and the application role deliberately
+    # is not one. Checked rather than created here so the failure names the
+    # missing prerequisite instead of surfacing as a permission error, or as
+    # "could not open extension control file" inside an alembic traceback --
+    # which is how this first went wrong.
+    present = op.get_bind().execute(
+        sa.text("SELECT 1 FROM pg_extension WHERE extname = 'vector'")
+    ).scalar()
+    if not present:
+        raise RuntimeError(
+            "The pgvector extension is not enabled on this database. "
+            "deploy-studio.sh installs the package and enables it; run that, "
+            "or enable it by hand with: "
+            "sudo -u postgres psql -d <database> -c "
+            "'CREATE EXTENSION IF NOT EXISTS vector'"
+        )
 
     element_family = postgresql.ENUM(*ELEMENT_FAMILIES, name="element_family")
     element_family.create(op.get_bind(), checkfirst=True)
