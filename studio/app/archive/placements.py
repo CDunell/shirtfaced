@@ -288,7 +288,15 @@ BY_FIT: dict[str, tuple[Placement, ...]] = {
 
 
 def placement(key: str, fit: str = "adult") -> Placement:
-    for candidate in BY_FIT.get(fit, ADULT_PLACEMENTS):
+    """One placement, or a refusal.
+
+    An unknown fit raises rather than falling back to adult. Silently sizing a
+    youth garment as an adult one because someone mistyped the fit is a printed
+    mistake, not a default.
+    """
+    if fit not in BY_FIT:
+        raise KeyError(f"no fit {fit!r}; known fits are {', '.join(sorted(BY_FIT))}")
+    for candidate in BY_FIT[fit]:
         if candidate.key == key:
             return candidate
     raise KeyError(f"no placement {key!r} for fit {fit!r}")
