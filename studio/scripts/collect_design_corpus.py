@@ -37,7 +37,10 @@ USER_AGENT = (
 )
 
 # Products per brand. The corpus is comparison evidence, not a catalogue mirror.
-PRODUCTS_PER_BRAND = 12
+# Higher than it was now that every surface is in scope rather than tees alone --
+# a dozen slots filled entirely with chest prints would leave headwear, drinkware
+# and accessories unrepresented.
+PRODUCTS_PER_BRAND = 18
 
 # Images per product. The primary shot carries the graphic; a second is usually the
 # back print or an alternate colourway, both useful. More than that is bulk without
@@ -52,83 +55,185 @@ IMAGE_WIDTH = 1200
 # Politeness delay between requests to one store, in seconds.
 REQUEST_DELAY = 0.4
 
-# Graphic-led product types only. A blank basic tells us nothing about graphic
-# construction, which is the entire point of the corpus.
+# The surfaces Shirtfaced sells on: tees, hoodies, caps, hats, stubby holders.
+#
+# Set by the owner. Wider than tees and hoodies -- a cap's front panel and a
+# stubby holder's wrap are different design problems from a chest print, and the
+# constitution's scale roles (S0 micro signature through S4 jumbo) span that
+# spread -- and narrower than every printable surface, which would pull in totes,
+# socks and outerwear the brand does not make.
+#
+# Jumpers, sweatshirts and crews come in with hoodies: WORLD.md's range names
+# jumpers, and they carry the same chest-and-back print geometry.
 WANTED_TYPE_PATTERN = re.compile(
-    r"t[- ]?shirt|tee|hoodie|sweat|crew|long ?sleeve|jumper|jersey", re.IGNORECASE
-)
-
-# Products whose graphic is incidental or absent.
-UNWANTED_PATTERN = re.compile(
-    r"blank|plain|gift card|sticker|tote|sock|beanie|cap|hat|short|pant|jean|"
-    r"jacket|bag|keyring|patch|pin|candle|mug|bottle",
+    # Tees, in all the cuts these stores name them by.
+    r"t[- ]?shirt|(^|\W)tee|crop|boxy|baby ?tee|"
+    # Hoodies and the jumper family.
+    r"hood|sweat ?shirt|sweater|crew ?neck|jumper|pullover|"
+    # Headwear.
+    r"(^|\W)cap(\W|$)|(^|\W)hat(\W|$)|snapback|strapback|trucker|beanie|"
+    r"bucket|a[- ]?frame|dad ?hat|five ?panel|"
+    # Stubby holders, by every name they are sold under.
+    r"stubby|stubbie|can cooler|drink cooler|koozie|coozie|coolie",
     re.IGNORECASE,
 )
 
-# brand slug -> (display name, storefront base URL)
-BRANDS: dict[str, tuple[str, str]] = {
+UNWANTED_PATTERN = re.compile(
+    # Non-products and undecorated stock. Threadheads lists "Blank Baby Tee" and
+    # "Blank Boxy Tee" as their own product types -- no design to hold evidence of.
+    r"gift ?card|e-?gift|voucher|subscription|donation|shipping|protection|"
+    r"insurance|sample|test ?product|^blank |blank (tee|t-?shirt|hoodie|crop)|"
+    # Skate hardware that happens to match "deck"/"trucker" style words.
+    r"deck$|skateboard deck|griptape|bearings?$",
+    re.IGNORECASE,
+)
+
+
+def _is_graphic_led(product: dict[str, Any]) -> bool:
+    """Whether a product is one of the surfaces Shirtfaced sells on."""
+    haystack = f"{product.get('product_type', '')} {product.get('title', '')}"
+    if UNWANTED_PATTERN.search(haystack):
+        return False
+    return bool(WANTED_TYPE_PATTERN.search(haystack))
+
+# brand slug -> (display name, storefront base URL, design tradition)
+#
+# The tradition tag is the point of the breadth. Design parameters -- arch type,
+# badge construction, hierarchy, scale role, print mechanics -- are shared craft,
+# but each tradition applies them differently: band merch is poster-derived and
+# dense, varsity is arch-and-block, national-park is illustrated badge, workwear
+# is chest-hit and patch. A corpus of one tradition teaches one dialect and reads
+# its conventions as universal laws. Tagging lets a pattern be tested within a
+# tradition and across them.
+BRANDS: dict[str, tuple[str, str, str]] = {
     # Australian — the closest comparables, and the ones the brand actually competes with.
-    "threadheads": ("Threadheads", "https://threadheads.com.au"),
-    "thrills": ("Thrills", "https://thrills.co"),
-    "barney-cools": ("Barney Cools", "https://barneycools.com"),
-    "afends": ("Afends", "https://afends.com"),
-    "misfit": ("Misfit", "https://misfitshapes.com"),
-    "riot-society": ("Riot Society", "https://riotsociety.com"),
-    "culture-kings": ("Culture Kings", "https://culturekings.com.au"),
-    "santa-cruz-au": ("Santa Cruz Australia", "https://santacruzskateboards.com.au"),
+    "threadheads": ("Threadheads", "https://threadheads.com.au", "au-humour"),
+    "thrills": ("Thrills", "https://thrills.co", "au-surf"),
+    "barney-cools": ("Barney Cools", "https://barneycools.com", "au-streetwear"),
+    "afends": ("Afends", "https://afends.com", "au-surf"),
+    "misfit": ("Misfit", "https://misfitshapes.com", "au-surf"),
+    "riot-society": ("Riot Society", "https://riotsociety.com", "streetwear"),
+    "culture-kings": ("Culture Kings", "https://culturekings.com.au", "au-streetwear"),
+    "santa-cruz-au": ("Santa Cruz Australia", "https://santacruzskateboards.com.au", "skate"),
     # Australian humour / novelty / slogan-led — the nearest thing to Shirtfaced's
     # own category, where the graphic is the joke rather than a brand mark.
-    "dangerfield": ("Dangerfield", "https://dangerfield.com.au"),
-    "beserk": ("Beserk", "https://beserk.com.au"),
-    "the-tshirt-co": ("The T-Shirt Co", "https://www.thetshirtco.com.au"),
-    "nena-and-pasadena": ("Nena & Pasadena", "https://nenaandpasadena.com.au"),
-    "kiss-chacey": ("Kiss Chacey", "https://kisschacey.com.au"),
-    "mr-simple": ("Mr Simple", "https://mrsimple.com.au"),
-    "stm-goods": ("STM Goods", "https://stmgoods.com.au"),
+    "dangerfield": ("Dangerfield", "https://dangerfield.com.au", "au-humour"),
+    "beserk": ("Beserk", "https://beserk.com.au", "au-alt"),
+    "the-tshirt-co": ("The T-Shirt Co", "https://www.thetshirtco.com.au", "au-humour"),
+    "nena-and-pasadena": ("Nena & Pasadena", "https://nenaandpasadena.com.au", "au-streetwear"),
+    "kiss-chacey": ("Kiss Chacey", "https://kisschacey.com.au", "au-streetwear"),
+    "mr-simple": ("Mr Simple", "https://mrsimple.com.au", "au-basics"),
+    "stm-goods": ("STM Goods", "https://stmgoods.com.au", "au-basics"),
     # Australian surf — graphic-led heritage, and the closest large-scale local
     # comparables for print-on-garment conventions.
-    "rip-curl": ("Rip Curl", "https://ripcurl.com.au"),
-    "billabong": ("Billabong", "https://www.billabong.com.au"),
-    "quiksilver": ("Quiksilver", "https://www.quiksilver.com.au"),
+    "rip-curl": ("Rip Curl", "https://ripcurl.com.au", "au-surf"),
+    "billabong": ("Billabong", "https://www.billabong.com.au", "au-surf"),
+    "quiksilver": ("Quiksilver", "https://www.quiksilver.com.au", "au-surf"),
     # Global streetwear / graphic-led — the documented research corpus.
-    "stussy": ("Stüssy", "https://www.stussy.com"),
-    "obey": ("Obey", "https://obeyclothing.com"),
-    "represent": ("Represent", "https://au.representclo.com"),
-    "brain-dead": ("Brain Dead", "https://wearebraindead.com"),
-    "pleasures": ("Pleasures", "https://pleasuresnow.com"),
+    "stussy": ("Stüssy", "https://www.stussy.com", "streetwear"),
+    "obey": ("Obey", "https://obeyclothing.com", "streetwear"),
+    "represent": ("Represent", "https://au.representclo.com", "streetwear"),
+    "brain-dead": ("Brain Dead", "https://wearebraindead.com", "streetwear"),
+    "pleasures": ("Pleasures", "https://pleasuresnow.com", "streetwear"),
     # Hyphenated. onlineceramics.com is an unrelated UK pottery business.
-    "online-ceramics": ("Online Ceramics", "https://online-ceramics.com"),
-    "cactus-plant-flea-market": ("Cactus Plant Flea Market", "https://cactusplantfleamarket.com"),
-    "online-ceramics": ("Online Ceramics", "https://onlineceramics.com"),
-    "market-studios": ("Market Studios", "https://market-studios.com"),
-    "sporty-and-rich": ("Sporty & Rich", "https://sportyandrich.com"),
-    "golf-wang": ("Golf Wang", "https://golfwang.com"),
-    "born-x-raised": ("Born X Raised", "https://bornxraised.com"),
-    "anti-social-social-club": ("Anti Social Social Club", "https://antisocialsocialclub.com"),
-    "rvca": ("RVCA", "https://www.rvca.com"),
-    "brixton": ("Brixton", "https://brixton.com"),
-    "huf": ("HUF", "https://hufworldwide.com"),
-    "primitive": ("Primitive Skateboarding", "https://primitiveskate.com"),
-    "the-hundreds": ("The Hundreds", "https://thehundreds.com"),
-    "diamond-supply": ("Diamond Supply Co", "https://diamondsupplyco.com"),
-    "thrasher": ("Thrasher", "https://shop.thrashermagazine.com"),
-    "volcom": ("Volcom", "https://www.volcom.com"),
-    "polar-skate": ("Polar Skate Co", "https://polarskateco.com"),
-    "quasi": ("Quasi Skateboards", "https://quasiskateboards.com"),
-    "dime": ("Dime MTL", "https://dimemtl.com"),
-    "last-resort-ab": ("Last Resort AB", "https://lastresortab.com"),
-    "welcome-skateboards": ("Welcome Skateboards", "https://welcomeskateboards.com"),
-    "chocolate": ("Chocolate Skateboards", "https://chocolateskateboards.com"),
-    "baker": ("Baker Skateboards", "https://bakerskateboards.com"),
-    "deathwish": ("Deathwish Skateboards", "https://deathwishskateboards.com"),
-    "toy-machine": ("Toy Machine", "https://toymachine.com"),
-    "zero": ("Zero Skateboards", "https://zeroskateboards.com"),
-    "roark": ("Roark", "https://www.roark.com"),
-    "katin": ("Katin USA", "https://katinusa.com"),
-    "salty-crew": ("Salty Crew", "https://saltycrew.com"),
-    "rhythm": ("Rhythm", "https://rhythmlivin.com"),
+    "online-ceramics": ("Online Ceramics", "https://online-ceramics.com", "art-merch"),
+    "cactus-plant-flea-market": ("Cactus Plant Flea Market", "https://cactusplantfleamarket.com", "streetwear"),
+    "market-studios": ("Market Studios", "https://market-studios.com", "streetwear"),
+    "sporty-and-rich": ("Sporty & Rich", "https://sportyandrich.com", "streetwear"),
+    "golf-wang": ("Golf Wang", "https://golfwang.com", "streetwear"),
+    "born-x-raised": ("Born X Raised", "https://bornxraised.com", "streetwear"),
+    "anti-social-social-club": ("Anti Social Social Club", "https://antisocialsocialclub.com", "streetwear"),
+    "rvca": ("RVCA", "https://www.rvca.com", "skate"),
+    "brixton": ("Brixton", "https://brixton.com", "americana"),
+    "huf": ("HUF", "https://hufworldwide.com", "skate"),
+    "primitive": ("Primitive Skateboarding", "https://primitiveskate.com", "skate"),
+    "the-hundreds": ("The Hundreds", "https://thehundreds.com", "streetwear"),
+    "diamond-supply": ("Diamond Supply Co", "https://diamondsupplyco.com", "skate"),
+    "thrasher": ("Thrasher", "https://shop.thrashermagazine.com", "skate"),
+    "volcom": ("Volcom", "https://www.volcom.com", "skate"),
+    "polar-skate": ("Polar Skate Co", "https://polarskateco.com", "skate"),
+    "quasi": ("Quasi Skateboards", "https://quasiskateboards.com", "skate"),
+    "dime": ("Dime MTL", "https://dimemtl.com", "skate"),
+    "last-resort-ab": ("Last Resort AB", "https://lastresortab.com", "skate"),
+    "welcome-skateboards": ("Welcome Skateboards", "https://welcomeskateboards.com", "skate"),
+    "chocolate": ("Chocolate Skateboards", "https://chocolateskateboards.com", "skate"),
+    "baker": ("Baker Skateboards", "https://bakerskateboards.com", "skate"),
+    "deathwish": ("Deathwish Skateboards", "https://deathwishskateboards.com", "skate"),
+    "toy-machine": ("Toy Machine", "https://toymachine.com", "skate"),
+    "zero": ("Zero Skateboards", "https://zeroskateboards.com", "skate"),
+    "roark": ("Roark", "https://www.roark.com", "outdoor"),
+    "katin": ("Katin USA", "https://katinusa.com", "surf"),
+    "salty-crew": ("Salty Crew", "https://saltycrew.com", "surf"),
+    "rhythm": ("Rhythm", "https://rhythmlivin.com", "surf"),
+    # --- Band, label and music merch: poster-derived, dense, type-led. ---
+    "impericon": ("Impericon", "https://www.impericon.com", "band-merch"),
+    "acdc": ("AC/DC Store", "https://shop.acdc.com", "band-merch"),
+    "rockabilia": ("Rockabilia", "https://www.rockabilia.com", "band-merch"),
+    "hello-merch": ("Hello Merch", "https://www.hellomerch.com", "band-merch"),
+    "sub-pop": ("Sub Pop", "https://shop.subpop.com", "band-merch"),
+    "matador-records": ("Matador Records", "https://store.matadorrecords.com", "band-merch"),
+    "stones-throw": ("Stones Throw", "https://store.stonesthrow.com", "band-merch"),
+    # --- Outdoor and national park: illustrated badge, landscape, arch. ---
+    "parks-project": ("Parks Project", "https://parksproject.us", "outdoor"),
+    "landmark-project": ("The Landmark Project", "https://www.thelandmarkproject.com", "outdoor"),
+    "wild-tribute": ("Wild Tribute", "https://wildtribute.com", "outdoor"),
+    "coal-headwear": ("Coal Headwear", "https://www.coalheadwear.com", "outdoor"),
+    "topo-designs": ("Topo Designs", "https://www.topodesigns.com", "outdoor"),
+    "poler": ("Poler", "https://poler.com", "outdoor"),
+    "coalatree": ("Coalatree", "https://www.coalatree.com", "outdoor"),
+    "roark-revival": ("Roark Revival", "https://roarkrevival.com", "outdoor"),
+    "filson": ("Filson", "https://www.filson.com", "workwear"),
+    "darn-tough": ("Darn Tough", "https://darntough.com", "outdoor"),
+    # --- Fishing, hunting, western, rural. ---
+    "aftco": ("AFTCO", "https://www.aftco.com", "fishing"),
+    "huk": ("HUK", "https://huk.com", "fishing"),
+    "ringers-western": ("Ringers Western", "https://ringerswestern.com", "au-western"),
+    "outback-traders": ("Outback Traders", "https://outbacktraders.com.au", "au-western"),
+    # --- Motorsport, moto, garage. ---
+    "fasthouse": ("Fasthouse", "https://www.fasthouse.com", "moto"),
+    "biltwell": ("Biltwell", "https://www.biltwellinc.com", "moto"),
+    "lowbrow-customs": ("Lowbrow Customs", "https://lowbrowcustoms.com", "moto"),
+    "gas-monkey": ("Gas Monkey Garage", "https://gasmonkeygarage.com", "moto"),
+    "deus-au": ("Deus Ex Machina", "https://au.deuscustoms.com", "moto"),
+    "dickies": ("Dickies", "https://www.dickies.com", "workwear"),
+    # --- Varsity, team, sport. ---
+    "homage": ("Homage", "https://www.homage.com", "varsity"),
+    "sportiqe": ("Sportiqe", "https://sportiqe.com", "varsity"),
+    "rowing-blazers": ("Rowing Blazers", "https://www.rowingblazers.com", "varsity"),
+    "cricket-au": ("Cricket Australia", "https://shop.cricket.com.au", "au-sport"),
+    # --- Craft beer and hospitality: AU, humour-adjacent, drinkware-heavy. ---
+    "stone-and-wood": ("Stone & Wood", "https://shop.stoneandwood.com.au", "au-beer"),
+    "pirate-life": ("Pirate Life", "https://piratelife.com.au", "au-beer"),
+    "mountain-culture": ("Mountain Culture", "https://mountainculture.com.au", "au-beer"),
+    "4-pines": ("4 Pines", "https://shop.4pinesbeer.com.au", "au-beer"),
+    "onyx-coffee": ("Onyx Coffee Lab", "https://onyxcoffeelab.com", "hospitality"),
+    "stumptown": ("Stumptown Coffee", "https://www.stumptowncoffee.com", "hospitality"),
+    "sightglass": ("Sightglass Coffee", "https://sightglasscoffee.com", "hospitality"),
+    # --- Novelty and slogan: the closest tradition to Shirtfaced's own. ---
+    "sarcastic-me": ("Sarcastic Me", "https://sarcasticme.com", "novelty"),
+    "crazy-dog": ("Crazy Dog T-Shirts", "https://www.crazydogtshirts.com", "novelty"),
+    "pupsocks": ("PupSocks", "https://pupsocks.com", "novelty"),
+    # --- Horror, alt, tattoo: dense illustration, heavy blacks. ---
+    "blackcraft": ("Blackcraft Cult", "https://www.blackcraftcult.com", "alt-horror"),
+    "cavity-colors": ("Cavity Colors", "https://cavitycolors.com", "alt-horror"),
+    "fright-rags": ("Fright Rags", "https://www.fright-rags.com", "alt-horror"),
+    "terror-threads": ("Terror Threads", "https://terrorthreads.com", "alt-horror"),
+    "sourpuss": ("Sourpuss", "https://sourpussclothing.com", "alt-horror"),
+    "kreepsville": ("Kreepsville 666", "https://kreepsville666.com", "alt-horror"),
+    # --- Fitness. ---
+    "wod-life": ("The WOD Life", "https://thewodlife.com.au", "fitness"),
+    "barbell-apparel": ("Barbell Apparel", "https://barbellapparel.com", "fitness"),
+    "born-primitive": ("Born Primitive", "https://www.bornprimitive.com", "fitness"),
+    # --- Vintage reproduction and licensed. ---
+    "junk-food": ("Junk Food Clothing", "https://www.junkfoodclothing.com", "vintage-licensed"),
+    "chaser": ("Chaser Brand", "https://www.chaserbrand.com", "vintage-licensed"),
+    # --- Surf and skate not already held. ---
+    "stance": ("Stance", "https://www.stance.com", "skate"),
+    "vissla": ("Vissla", "https://www.vissla.com", "surf"),
+    "captain-fin": ("Captain Fin", "https://www.captainfin.com", "surf"),
+    "workwear-hub": ("Workwear Hub", "https://www.workwearhub.com.au", "workwear"),
+    "pnw-components": ("PNW Components", "https://www.pnwcomponents.com", "outdoor"),
 }
-
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -138,13 +243,6 @@ def _fetch(url: str, timeout: int = 25) -> bytes:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     with urllib.request.urlopen(request, timeout=timeout) as response:
         return response.read()
-
-
-def _is_graphic_led(product: dict[str, Any]) -> bool:
-    haystack = f"{product.get('product_type', '')} {product.get('title', '')}"
-    if UNWANTED_PATTERN.search(haystack):
-        return False
-    return bool(WANTED_TYPE_PATTERN.search(haystack))
 
 
 def _strip_html(text: str) -> str:
@@ -172,7 +270,7 @@ def _design_key(handle: str) -> str:
     return stripped or handle
 
 
-def collect_brand(slug: str, name: str, site_url: str) -> dict[str, Any]:
+def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[str, Any]:
     """Collect one brand. Returns a result row; never raises on network failure."""
     try:
         raw = _fetch(f"{site_url}/products.json?limit=250")
@@ -188,15 +286,30 @@ def collect_brand(slug: str, name: str, site_url: str) -> dict[str, Any]:
         return {"brand_slug": slug, "status": "skipped", "reason": "no graphic-led products matched"}
 
     # One product per artwork. Keeps the first garment carrying each design, so a
-    # brand contributes twelve designs rather than three designs four times over.
-    wanted: list[dict[str, Any]] = []
+    # brand contributes eighteen designs rather than three designs six times over.
+    deduped: list[dict[str, Any]] = []
     seen_designs: set[str] = set()
     for product in candidates:
         key = _design_key(product.get("handle") or "")
         if key in seen_designs:
             continue
         seen_designs.add(key)
-        wanted.append(product)
+        deduped.append(product)
+
+    # Spread the sample across product types rather than taking whatever the store
+    # happens to list first. Threadheads' first eighteen deduped products were
+    # eighteen sweatshirts; Culture Kings lists 144 caps before most of its tees.
+    # Round-robin by type gives headwear, drinkware and accessories a place in the
+    # sample without hard-coding what share each should get.
+    by_type: dict[str, list[dict[str, Any]]] = {}
+    for product in deduped:
+        by_type.setdefault((product.get("product_type") or "unknown").lower(), []).append(product)
+
+    wanted = []
+    while len(wanted) < PRODUCTS_PER_BRAND and any(by_type.values()):
+        for bucket in by_type.values():
+            if bucket and len(wanted) < PRODUCTS_PER_BRAND:
+                wanted.append(bucket.pop(0))
 
     brand_dir = CORPUS_ROOT / slug
     (brand_dir / "products").mkdir(parents=True, exist_ok=True)
@@ -206,6 +319,7 @@ def collect_brand(slug: str, name: str, site_url: str) -> dict[str, Any]:
                 "brand_slug": slug,
                 "brand_name": name,
                 "site_url": site_url,
+                "design_tradition": tradition,
                 "acquired_at": _now(),
                 "notes": "",
             },
@@ -330,8 +444,8 @@ def main(argv: list[str]) -> int:
 
     results = []
     for slug in selected:
-        name, site_url = BRANDS[slug]
-        result = collect_brand(slug, name, site_url)
+        name, site_url, tradition = BRANDS[slug]
+        result = collect_brand(slug, name, site_url, tradition)
         results.append(result)
         if result["status"] == "collected":
             print(f"  {slug:<28} {result['product_count']:>3} products  {result['image_count']:>3} images")
