@@ -2,13 +2,7 @@ import Link from "next/link";
 import { ProductCard } from "@/components/ProductCard";
 import { products } from "@/lib/products";
 import { home } from "@/lib/content-data.generated";
-import {
-  LINE_ONE,
-  LINE_ONE_SIZE,
-  LINE_THREE,
-  LINE_THREE_SIZE,
-  TAGLINES,
-} from "@/lib/taglines";
+import { LINE_THREE, LINE_THREE_SIZE, TAGLINES } from "@/lib/taglines";
 import { IconArrowRight } from "@/components/Icons";
 
 /* One line, no icons — the old four-column version wrapped to uneven heights
@@ -52,25 +46,26 @@ export default function Home() {
             <div className="mx-auto max-w-6xl px-4 pb-7 sm:px-6 sm:pb-12">
               <div className="tagline-box w-[80%] sm:w-[46%] sm:max-w-none">
                 <h1 className="display leading-[0.86] whitespace-nowrap">
-                  <span className="block" style={{ fontSize: `${LINE_ONE_SIZE}cqw` }}>
-                    {LINE_ONE}
-                  </span>
-
-                  {/* One of these six is revealed by CSS. */}
-                  <span className="block text-lime">
-                    {TAGLINES.map((t, i) => (
-                      <span
-                        key={t.line}
-                        className={`tl tl-${i}`}
-                        style={{ fontSize: `${t.size}cqw` }}
-                      >
-                        {t.line}
+                  {/* One of these six pairs is revealed by CSS. Beats stay
+                      bone white — the payoff below is where the colour goes,
+                      because the third beat is always the brand's own name. */}
+                  {TAGLINES.map((t, i) => (
+                    <span key={t.beatOne} className={`tl tl-${i}`}>
+                      <span className="block" style={{ fontSize: `${t.sizeOne}cqw` }}>
+                        {t.beatOne},
                       </span>
-                    ))}
-                  </span>
+                      <span className="block" style={{ fontSize: `${t.sizeTwo}cqw` }}>
+                        {t.beatTwo},
+                      </span>
+                    </span>
+                  ))}
 
-                  <span className="block" style={{ fontSize: `${LINE_THREE_SIZE}cqw` }}>
-                    {LINE_THREE}
+                  <span
+                    id="tagline-fixed"
+                    className="block text-lime"
+                    style={{ fontSize: `${LINE_THREE_SIZE}cqw` }}
+                  >
+                    {LINE_THREE}.
                   </span>
                 </h1>
               </div>
@@ -220,13 +215,10 @@ export default function Home() {
             <span key={dup} className="flex shrink-0" aria-hidden={dup === 1}>
               {TAGLINES.map((t) => (
                 <span
-                  key={t.line}
+                  key={t.beatOne}
                   className="display px-5 text-[26px] whitespace-nowrap text-paper"
                 >
-                  {/* The marquee reads as a running sentence, so the middle
-                     line keeps its full stop here — unlike the hero. */}
-                  {LINE_ONE} <span className="text-lime">{t.line}.</span>{" "}
-                  {LINE_THREE}
+                  {t.beatOne}, {t.beatTwo}, <span className="text-lime">{LINE_THREE}.</span>
                 </span>
               ))}
             </span>

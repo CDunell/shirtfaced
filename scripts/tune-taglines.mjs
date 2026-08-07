@@ -1,9 +1,11 @@
 /**
- * Measure each hero tagline against the .tagline-box — the element the type
- * actually resolves cqw against. Lines 1 and 3 share a size and stay ragged;
- * only the rotating line is fitted, so it holds one width as it changes. Anton is single-weight, so line length alone decides how wide a
- * string renders — the sizes in lib/taglines.ts have to be measured, not
- * guessed, or short lines strand whitespace and long ones overflow.
+ * Measure each hero tagline pair against the .tagline-box — the element the
+ * type actually resolves cqw against. The third beat ("shirtfaced", #tagline-
+ * fixed) is the only fixed line; the two rotating beats in each .tl pair are
+ * fitted against its width. Anton is single-weight, so beat length alone
+ * decides how wide a string renders — the sizeOne/sizeTwo values in
+ * lib/taglines.ts have to be measured, not guessed, or short beats strand
+ * whitespace and long ones overflow.
  *
  *   node scripts/tune-taglines.mjs [url]
  */
@@ -24,25 +26,24 @@ await send("Emulation.setDeviceMetricsOverride",{width:1440,height:900,deviceSca
 await send("Page.navigate",{url:process.argv[2]||"https://shirtfaced.wtf/"});
 await once("Page.loadEventFired"); await sleep(2500);
 
-// Target: the widest of the two fixed lines, so all three read as one block.
+// Target: the fixed "shirtfaced" line's width — every rotating beat is fitted to it.
 const {result} = await send("Runtime.evaluate",{returnByValue:true,expression:`(async()=>{
  await document.fonts.ready;
  const box=document.querySelector('.tagline-box').clientWidth;
- const spans=[...document.querySelector('h1').children];
- const fixed=[spans[0],spans[2]].map(e=>({t:e.textContent.trim(),
-   w:e.firstChild?e.getBoundingClientRect().width:0,
-   size:parseFloat(getComputedStyle(e).fontSize)}));
- // measure fixed lines by their text width
  const measure=(el)=>{const r=document.createRange();r.selectNodeContents(el);return r.getBoundingClientRect().width};
- const f=[spans[0],spans[2]].map(e=>({t:e.textContent.trim(),w:measure(e),cqw:parseFloat(e.style.fontSize)}));
- const target=Math.max(...f.map(x=>x.w));
+ const fixedEl=document.getElementById('tagline-fixed');
+ const fixed={t:fixedEl.textContent.trim(),w:measure(fixedEl),cqw:parseFloat(fixedEl.style.fontSize)};
+ const target=fixed.w;
  const out=[];
- for(const el of document.querySelectorAll('.tl')){
-   const prev=el.style.display; el.style.display='block';
-   const wdt=measure(el); const cqw=parseFloat(el.style.fontSize);
-   el.style.display=prev;
-   out.push({line:el.textContent.trim(),cqw,width:Math.round(wdt),suggested:+(cqw*target/wdt).toFixed(1)});
+ for(const wrap of document.querySelectorAll('.tl')){
+   const prevDisplay=wrap.style.display; wrap.style.display='contents';
+   const beats=[...wrap.children].map(el=>{
+     const wdt=measure(el); const cqw=parseFloat(el.style.fontSize);
+     return {t:el.textContent.trim(),width:Math.round(wdt),cqw,suggested:+(cqw*target/wdt).toFixed(1)};
+   });
+   wrap.style.display=prevDisplay;
+   out.push({pair:beats});
  }
- return JSON.stringify({box,target:Math.round(target),fixed:f.map(x=>({t:x.t,w:Math.round(x.w),cqw:x.cqw})),lines:out},null,1)})()`,awaitPromise:true});
+ return JSON.stringify({box,target:Math.round(target),fixed:{t:fixed.t,w:Math.round(fixed.w),cqw:fixed.cqw},pairs:out},null,1)})()`,awaitPromise:true});
 console.log(result.value);
 ws.close(); c.kill();

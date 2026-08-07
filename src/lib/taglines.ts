@@ -1,75 +1,94 @@
 /**
  * Hero tagline rotation.
  *
- * Structure is fixed: GOOD TIMES. / <rotating> / ZERO REGRETS. Only the middle
- * line moves. "Bad decisions" is the most-used phrase in the Australian
- * humour-apparel category, so the brand deliberately refuses to settle on one
- * answer — the rotation is the attitude.
+ * Grammar is fixed: <beat one>, <beat two>, shirtfaced. The third beat is
+ * always the brand's own name, so every line signs itself — see
+ * docs/foundations/BRAND_VOICE.md §3. Only the two beats rotate; "shirtfaced"
+ * never changes.
  *
- * Fixed pairs rather than random line-over-random-image, so each line can be
+ * Six pairs rather than random line-over-random-image, so each pair can be
  * tuned against a shot that suits its register.
  */
 export type Tagline = {
-  /** Middle line. Renders in acid lime; lines 1 and 3 are bone white. */
-  line: string;
+  /** First beat. Renders in bone white. */
+  beatOne: string;
+  /** Second beat. Renders in bone white. */
+  beatTwo: string;
   image: string;
   /**
-   * Font size in cqw (percent of the hero's width).
+   * Font sizes in cqw (percent of the hero's width), one per beat.
    *
-   * Anton ships a single weight, so the middle line CANNOT use a fixed
-   * font-size: "FUCK YES." is 9 characters and "DUBIOUS CHOICES." is 16, and at
-   * one size the short line strands whitespace while the long one overflows.
-   * Each value below is measured so every line fills the same width — see
-   * scripts/tune-taglines.mjs.
+   * Anton ships a single weight, so beat length alone decides how wide a
+   * string renders: "Six mates" is 9 characters and "Two carloads" is 12, and
+   * at one size the short beat strands whitespace while the long one
+   * overflows. Each value below is measured against the fixed third line so
+   * every beat fills the same width — see scripts/tune-taglines.mjs.
    */
-  size: number;
+  sizeOne: number;
+  sizeTwo: number;
   /** Focal point for the paired photo. */
   position: string;
 };
 
 export const TAGLINES: Tagline[] = [
   {
-    line: "BAD INFLUENCES",
+    beatOne: "Good mates",
+    beatTwo: "great times",
     image: "/products/good-times-1.webp",
-    size: 15.6,
+    sizeOne: 16.6,
+    sizeTwo: 16.4,
     position: "50% 30%",
   },
   {
-    line: "COMPLETE CHAOS",
+    beatOne: "Long lunch",
+    beatTwo: "no dinner",
     image: "/products/permanent.webp",
-    size: 14.5,
+    sizeOne: 17.4,
+    sizeTwo: 20.0,
     position: "50% 40%",
   },
   {
-    line: "FUCK YES",
+    beatOne: "Two carloads",
+    beatTwo: "one esky",
     image: "/products/hero-street.webp",
-    size: 27.5,
+    sizeOne: 13.9,
+    sizeTwo: 22.2,
     position: "50% 38%",
   },
   {
-    line: "NO PLAN",
+    beatOne: "Grand final",
+    beatTwo: "either way",
     image: "/products/cold-beer-1.webp",
-    size: 30.2,
+    sizeOne: 16.6,
+    sizeTwo: 18.1,
     position: "50% 32%",
   },
   {
-    line: "WENT SIDEWAYS",
+    beatOne: "Wrong pub",
+    beatTwo: "right crowd",
     image: "/products/midnight-service.webp",
-    size: 15.7,
+    sizeOne: 17.8,
+    sizeTwo: 15.6,
     position: "50% 42%",
   },
   {
-    line: "DUBIOUS CHOICES",
+    beatOne: "Six mates",
+    beatTwo: "one tent",
     image: "/products/roll-the-dice-1.webp",
-    size: 14.7,
+    sizeOne: 19.7,
+    sizeTwo: 22.8,
     position: "50% 30%",
   },
 ];
 
-export const LINE_ONE = "GOOD TIMES.";
-export const LINE_THREE = "ZERO REGRETS.";
+/** Fixed third beat. Renders in acid lime — the payoff, not the setup. */
+export const LINE_THREE = "shirtfaced";
 
-/** One shared size for the two fixed lines, so they keep their natural
- *  ragged widths. The rotating line is measured against the wider of them. */
-export const LINE_ONE_SIZE = 17.9;
+/**
+ * Anchor size for the fixed line, in cqw. Every rotating beat above is
+ * measured against the width this produces. "shirtfaced" is 10 characters,
+ * the same length class as the old fixed lines this replaces, so this
+ * reuses their calibrated size rather than guessing from zero — still worth
+ * confirming with scripts/tune-taglines.mjs against a real render.
+ */
 export const LINE_THREE_SIZE = 17.9;

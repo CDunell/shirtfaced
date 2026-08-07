@@ -212,23 +212,26 @@ body {
 /* ---------------------------------------------------------------------------
    Hero tagline rotation.
 
-   All six middle lines ship in the DOM; CSS reveals one. display:none also
-   hides the other five from assistive tech, so the page announces one headline.
+   All six pairs ship in the DOM; CSS reveals one. display:none also hides the
+   other five from assistive tech, so the page announces one headline. Each
+   pair is two stacked beats, so the reveal rule targets a wrapper
+   (display:contents, not block) — the wrapper drops out of layout but its two
+   beat spans still stack normally.
 
    The paired photo is a CSS background rather than an <img>: a background on a
    rule that doesn't match is never fetched, so exactly one image downloads.
    An <img> per line would pull all six.
 
-   cqw on the middle line is the point — Anton has one weight, so a fixed
-   font-size makes "FUCK YES." (9 chars) strand whitespace while "DUBIOUS
-   CHOICES." (16) overflows. Sizes are measured per line.
+   cqw on each beat is the point — Anton has one weight, so a fixed font-size
+   makes "One esky" (9 chars) strand whitespace while "Two carloads" (12)
+   overflows. Sizes are measured per beat, against the fixed "shirtfaced" line.
 --------------------------------------------------------------------------- */
 .hero-img {
   background-position: 50% 35%;
 }
 /* cqw on the tagline resolves against this box. Sizing it narrower on desktop
    scales the whole block down without breaking the flush-width relationship
-   between the six lines. */
+   between the six pairs. */
 .tagline-box {
   container-type: inline-size;
 }
@@ -237,42 +240,42 @@ body {
 }
 
 [data-tag="0"] .tl-0 {
-  display: block;
+  display: contents;
 }
 [data-tag="0"] .hero-img {
   background-image: url("/products/good-times-1.webp");
   background-position: 50% 30%;
 }
 [data-tag="1"] .tl-1 {
-  display: block;
+  display: contents;
 }
 [data-tag="1"] .hero-img {
   background-image: url("/products/permanent.webp");
   background-position: 50% 40%;
 }
 [data-tag="2"] .tl-2 {
-  display: block;
+  display: contents;
 }
 [data-tag="2"] .hero-img {
   background-image: url("/products/hero-street.webp");
   background-position: 50% 38%;
 }
 [data-tag="3"] .tl-3 {
-  display: block;
+  display: contents;
 }
 [data-tag="3"] .hero-img {
   background-image: url("/products/cold-beer-1.webp");
   background-position: 50% 32%;
 }
 [data-tag="4"] .tl-4 {
-  display: block;
+  display: contents;
 }
 [data-tag="4"] .hero-img {
   background-image: url("/products/midnight-service.webp");
   background-position: 50% 42%;
 }
 [data-tag="5"] .tl-5 {
-  display: block;
+  display: contents;
 }
 [data-tag="5"] .hero-img {
   background-image: url("/products/roll-the-dice-1.webp");
@@ -280,7 +283,7 @@ body {
 }
 /* No JS: the first pair still renders rather than an empty hero. */
 html:not([data-tag]) .tl-0 {
-  display: block;
+  display: contents;
 }
 html:not([data-tag]) .hero-img {
   background-image: url("/products/good-times-1.webp");

@@ -4,6 +4,12 @@ import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import { Header } from "@/components/Header";
 import { PaperGrain } from "@/components/Texture";
+import { LINE_THREE, TAGLINES } from "@/lib/taglines";
+
+/* Reference form from docs/foundations/BRAND_VOICE.md §3 — the first pair in
+   the rotation, not a hand-typed line. Pulling it from the same source the
+   hero reads from is the fix for the two disagreeing with each other. */
+const REFERENCE_LINE = `${TAGLINES[0].beatOne}, ${TAGLINES[0].beatTwo}, ${LINE_THREE}.`;
 
 const anton = Anton({
   variable: "--font-anton",
@@ -19,13 +25,13 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Shirtfaced — Good times. Bad decisions. Zero regrets.",
+  title: `Shirtfaced — ${REFERENCE_LINE}`,
   description:
     "Graphic tees for people with questionable judgement and excellent taste. Designed in Australia. Printed properly.",
   manifest: "/site.webmanifest",
   openGraph: {
     title: "Shirtfaced",
-    description: "Good times. Bad decisions. Zero regrets.",
+    description: REFERENCE_LINE,
     type: "website",
   },
 };
