@@ -29,7 +29,6 @@ decorative and the design is wrong.
 from __future__ import annotations
 
 import json
-import math
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -336,7 +335,7 @@ class CompositionEngine:
         """Answer the brief, or refuse it with a reason. Never raises."""
         try:
             return self._compose(brief)
-        except Exception as error:  # noqa: BLE001 -- the doubt layer fails closed
+        except Exception as error:
             return Composition(
                 composable=False,
                 refusal_reason="ASSESSMENT_FAILED",

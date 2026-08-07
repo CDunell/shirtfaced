@@ -272,8 +272,7 @@ YOUTH_PLACEMENTS: tuple[Placement, ...] = tuple(
 )
 
 YOUTH_SMALL_PLACEMENTS: tuple[Placement, ...] = tuple(
-    _scaled(placement, YOUTH_SCALE * 0.85, YOUTH_SMALL_OVERRIDES)
-    for placement in ADULT_PLACEMENTS
+    _scaled(placement, YOUTH_SCALE * 0.85, YOUTH_SMALL_OVERRIDES) for placement in ADULT_PLACEMENTS
 )
 
 TODDLER_PLACEMENTS: tuple[Placement, ...] = tuple(

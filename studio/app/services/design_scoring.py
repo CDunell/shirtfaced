@@ -47,9 +47,7 @@ def _band_for(total_score: float) -> ApprovalBand:
 def score_design(review: DesignReviewInput) -> DesignReviewOutcome:
     """Score one design review. Deterministic: same input, same output, always."""
     gates_by_name = {result.gate: result.status for result in review.gate_results}
-    failed_gates = [
-        gate for gate in HardGate if gates_by_name.get(gate) is GateStatus.FAIL
-    ]
+    failed_gates = [gate for gate in HardGate if gates_by_name.get(gate) is GateStatus.FAIL]
     untested_gates = [
         gate
         for gate in HardGate

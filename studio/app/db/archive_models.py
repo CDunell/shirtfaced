@@ -17,6 +17,7 @@ import datetime as dt
 import uuid
 from typing import Any
 
+from pgvector.sqlalchemy import Vector
 from sqlalchemy import (
     Boolean,
     CheckConstraint,
@@ -33,7 +34,6 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
-from pgvector.sqlalchemy import Vector
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin
@@ -192,9 +192,7 @@ class ElementRender(Base):
 
     __tablename__ = "element_renders"
     __table_args__ = (
-        UniqueConstraint(
-            "element_id", "content_hash", name="uq_element_renders_element_content"
-        ),
+        UniqueConstraint("element_id", "content_hash", name="uq_element_renders_element_content"),
         Index("ix_element_renders_element_id", "element_id"),
     )
 

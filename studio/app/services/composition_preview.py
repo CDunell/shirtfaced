@@ -51,7 +51,7 @@ UI_FONT_CANDIDATES = (
 )
 
 
-def _print_font(size: int) -> ImageFont.FreeTypeFont:
+def _print_font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """The brand face, for words that are actually printed on the garment."""
     if BRAND_FONT.is_file():
         try:
@@ -61,7 +61,7 @@ def _print_font(size: int) -> ImageFont.FreeTypeFont:
     return _font(size)
 
 
-def _font(size: int) -> ImageFont.FreeTypeFont:
+def _font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """A plain face for labels, captions and any other interface chrome."""
     for candidate in UI_FONT_CANDIDATES:
         if candidate.is_file():
@@ -112,7 +112,9 @@ def _garment(draw: ImageDraw.ImageDraw, box: tuple[int, int, int, int]) -> None:
     )
 
 
-def _fit_text(text: str, target_width: int, target_height: int) -> ImageFont.FreeTypeFont:
+def _fit_text(
+    text: str, target_width: int, target_height: int
+) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     """Largest brand-face size that fits the slot the engine specified."""
     size = max(8, target_height)
     while size > 7:

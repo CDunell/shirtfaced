@@ -60,9 +60,11 @@ def upgrade() -> None:
     # missing prerequisite instead of surfacing as a permission error, or as
     # "could not open extension control file" inside an alembic traceback --
     # which is how this first went wrong.
-    present = op.get_bind().execute(
-        sa.text("SELECT 1 FROM pg_extension WHERE extname = 'vector'")
-    ).scalar()
+    present = (
+        op.get_bind()
+        .execute(sa.text("SELECT 1 FROM pg_extension WHERE extname = 'vector'"))
+        .scalar()
+    )
     if not present:
         raise RuntimeError(
             "The pgvector extension is not enabled on this database. "

@@ -27,9 +27,11 @@ ADMIN_ISSUED = "YWRtaW5Ac2hpcnRmYWNlZC53dGY.4102444800.l627RRrZXP5CY7-DSIqskr0IB
 def mint(email: str, expires: int, secret: str = SECRET) -> str:
     """A token in admin's format, for the cases a fixed fixture cannot cover."""
     payload = f"{base64.urlsafe_b64encode(email.encode()).decode().rstrip('=')}.{expires}"
-    signature = base64.urlsafe_b64encode(
-        hmac.new(secret.encode(), payload.encode(), sha256).digest()
-    ).decode().rstrip("=")
+    signature = (
+        base64.urlsafe_b64encode(hmac.new(secret.encode(), payload.encode(), sha256).digest())
+        .decode()
+        .rstrip("=")
+    )
     return f"{payload}.{signature}"
 
 

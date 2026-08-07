@@ -60,9 +60,9 @@ def length_bucket(word_count: int) -> str:
 
 
 BUCKET_LABEL = {
-    "short": "1–2 words",
-    "mid": "3–4 words",
-    "long": "5–6 words",
+    "short": "1-2 words",
+    "mid": "3-4 words",
+    "long": "5-6 words",
     "very_long": "7+ words",
 }
 
@@ -124,7 +124,10 @@ def _load_joined() -> list[dict[str, Any]]:
     if not path.is_file():
         return []
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        # json.loads is Any; the file is written by our own miner and its
+        # shape is asserted by the caller rather than trusted here.
+        loaded: list[dict[str, Any]] = json.loads(path.read_text(encoding="utf-8"))
+        return loaded
     except ValueError:
         return []
 
@@ -181,7 +184,9 @@ def advise(
         )
     elif intent == "graphic":
         archetype = "image-led hero"
-        why = "A graphic with no phrase leads on the image; any type identifies rather than competes."
+        why = (
+            "A graphic with no phrase leads on the image; any type identifies rather than competes."
+        )
     else:
         archetype = "image-and-title lockup"
         why = (
@@ -218,13 +223,13 @@ def advise(
         "Scale role",
         f"{role} — {role_note}",
         f"{coverage:.1%} median print coverage for {BUCKET_LABEL[bucket]} in {pool_note}. "
-        "The constitution names S0–S4 without dimensioning them; this is that band measured.",
+        "The constitution names S0-S4 without dimensioning them; this is that band measured.",
         confidence,
     )
     add(
         "Print coverage",
         f"~{coverage:.0%} of the torso",
-        f"Coverage rises with phrase length across the corpus — 9.5% at 1–2 words to "
+        f"Coverage rises with phrase length across the corpus — 9.5% at 1-2 words to "
         f"14.2% at 7+. This phrase sits at {BUCKET_LABEL[bucket]}.",
         confidence,
     )
@@ -252,7 +257,11 @@ def advise(
     )
 
     # --- layout: a body-side decision, so it follows scale -------------------
-    layout = "A3 — front hero / clean back" if role in {"S1", "S2"} else "A4 — clean or micro front / back hero"
+    layout = (
+        "A3 — front hero / clean back"
+        if role in {"S1", "S2"}
+        else "A4 — clean or micro front / back hero"
+    )
     add(
         "Layout archetype",
         layout,
@@ -261,7 +270,12 @@ def advise(
         "weak-corpus",
     )
 
-    density = {"short": "D1 — sparse", "mid": "D2 — layered", "long": "D2 — layered", "very_long": "D3 — dense"}[bucket]
+    density = {
+        "short": "D1 — sparse",
+        "mid": "D2 — layered",
+        "long": "D2 — layered",
+        "very_long": "D3 — dense",
+    }[bucket]
     add(
         "Density class",
         density,
@@ -276,13 +290,17 @@ def advise(
         if length_bucket(row.get("w", 0)) == bucket:
             by_tradition[row["t"]].append(row["cov"])
     neighbours = sorted(
-        ((t, statistics.median(c)) for t, c in by_tradition.items() if len(c) >= 25 and t != tradition),
+        (
+            (t, statistics.median(c))
+            for t, c in by_tradition.items()
+            if len(c) >= 25 and t != tradition
+        ),
         key=lambda kv: abs(kv[1] - coverage),
     )
     for name, value in neighbours[:2]:
         direction.alternatives.append(
-            f"{name} treats the same length at {value:.0%} coverage — worth a variant if this reads too "
-            f"{'quiet' if value > coverage else 'loud'}."
+            f"{name} treats the same length at {value:.0%} coverage — worth a "
+            f"variant if this reads too {'quiet' if value > coverage else 'loud'}."
         )
 
     direction.not_decided = [

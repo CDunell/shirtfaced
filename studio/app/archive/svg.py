@@ -61,9 +61,7 @@ class Canvas:
     def circle(self, cx: float, cy: float, r: float, **attributes: object) -> None:
         self.add(_tag("circle", cx=num(cx), cy=num(cy), r=num(r), **attributes))
 
-    def rect(
-        self, x: float, y: float, width: float, height: float, **attributes: object
-    ) -> None:
+    def rect(self, x: float, y: float, width: float, height: float, **attributes: object) -> None:
         self.add(
             _tag(
                 "rect",

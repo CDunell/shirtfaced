@@ -8,8 +8,6 @@ that quietly passed the gates it can't see would be worse than no extractor.
 
 from __future__ import annotations
 
-import numpy as np
-import pytest
 from PIL import Image, ImageDraw
 
 from app.domain.design_review import GateStatus, HardGate, ScoreCategory

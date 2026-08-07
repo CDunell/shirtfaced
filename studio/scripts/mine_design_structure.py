@@ -35,7 +35,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from app.services.garment_frame import locate_garment  # noqa: E402
+from app.services.garment_frame import locate_garment
 
 CORPUS_ROOT = Path(__file__).resolve().parent.parent / "var" / "design_corpus"
 REPORT_PATH = CORPUS_ROOT / "design_structure.json"
@@ -126,7 +126,9 @@ def _analyse(path: Path) -> list[dict[str, float]] | None:
     if not frame.measurable:
         return None
     try:
-        image = Image.open(path).convert("RGB").resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.LANCZOS)
+        image = (
+            Image.open(path).convert("RGB").resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.LANCZOS)
+        )
     except Exception:
         return None
     pixels = np.asarray(image, dtype=np.float32)
@@ -200,7 +202,9 @@ def main(argv: list[str]) -> int:
                 continue
             words = [
                 w
-                for w in re.findall(r"[A-Za-z0-9']+", GARMENT_WORDS.sub("", product.get("name", "")))
+                for w in re.findall(
+                    r"[A-Za-z0-9']+", GARMENT_WORDS.sub("", product.get("name", ""))
+                )
                 if len(w) > 1
             ]
             records.append(
@@ -236,9 +240,13 @@ def main(argv: list[str]) -> int:
                 {
                     "slot": index + 1,
                     "top": round(statistics.median(r["bands"][index]["top"] for r in rows), 3),
-                    "height": round(statistics.median(r["bands"][index]["height"] for r in rows), 3),
+                    "height": round(
+                        statistics.median(r["bands"][index]["height"] for r in rows), 3
+                    ),
                     "width": round(statistics.median(r["bands"][index]["width"] for r in rows), 3),
-                    "centre_x": round(statistics.median(r["bands"][index]["centre_x"] for r in rows), 3),
+                    "centre_x": round(
+                        statistics.median(r["bands"][index]["centre_x"] for r in rows), 3
+                    ),
                 }
             )
         layouts[str(count)] = {
@@ -251,9 +259,7 @@ def main(argv: list[str]) -> int:
 
     report = {
         "designs_analysed": len(records),
-        "element_count_distribution": dict(
-            sorted(Counter(r["elements"] for r in records).items())
-        ),
+        "element_count_distribution": dict(sorted(Counter(r["elements"] for r in records).items())),
         "layouts": layouts,
         "shapes_overall": dict(Counter(r["shape"] for r in records).most_common(10)),
     }

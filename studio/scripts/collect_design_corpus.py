@@ -25,7 +25,7 @@ import sys
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -74,6 +74,7 @@ def _shot_hint(url: str) -> str:
         if fragment in name:
             return label
     return ""
+
 
 # Requested image width in pixels. Comfortably above what any of the scorecard's
 # visual tests need — the thumbnail, blur and silhouette tests all reduce detail
@@ -124,6 +125,7 @@ def _is_graphic_led(product: dict[str, Any]) -> bool:
         return False
     return bool(WANTED_TYPE_PATTERN.search(haystack))
 
+
 # brand slug -> (display name, storefront base URL, design tradition)
 #
 # The tradition tag is the point of the breadth. Design parameters -- arch type,
@@ -165,12 +167,20 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     "pleasures": ("Pleasures", "https://pleasuresnow.com", "streetwear"),
     # Hyphenated. onlineceramics.com is an unrelated UK pottery business.
     "online-ceramics": ("Online Ceramics", "https://online-ceramics.com", "art-merch"),
-    "cactus-plant-flea-market": ("Cactus Plant Flea Market", "https://cactusplantfleamarket.com", "streetwear"),
+    "cactus-plant-flea-market": (
+        "Cactus Plant Flea Market",
+        "https://cactusplantfleamarket.com",
+        "streetwear",
+    ),
     "market-studios": ("Market Studios", "https://marketstudios.com", "streetwear"),
     "sporty-and-rich": ("Sporty & Rich", "https://sportyandrich.com", "streetwear"),
     "golf-wang": ("Golf Wang", "https://golfwang.com", "streetwear"),
     "born-x-raised": ("Born X Raised", "https://bornxraised.com", "streetwear"),
-    "anti-social-social-club": ("Anti Social Social Club", "https://antisocialsocialclub.com", "streetwear"),
+    "anti-social-social-club": (
+        "Anti Social Social Club",
+        "https://antisocialsocialclub.com",
+        "streetwear",
+    ),
     "rvca": ("RVCA", "https://www.rvca.com", "skate"),
     "brixton": ("Brixton", "https://brixton.com", "americana"),
     "huf": ("HUF", "https://hufworldwide.com", "skate"),
@@ -312,7 +322,11 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     "zanerobe": ("Zanerobe", "https://zanerobe.com", "au-streetwear"),
     "venroy": ("Venroy", "https://venroy.com.au", "au-basics"),
     "commas": ("Commas", "https://commas.cc", "au-basics"),
-    "art-club-and-friends": ("Art Club & Friends", "https://www.artclubandfriends.com", "art-merch"),
+    "art-club-and-friends": (
+        "Art Club & Friends",
+        "https://www.artclubandfriends.com",
+        "art-merch",
+    ),
     # --- More Australian breweries: local humour, drinkware-heavy. ---
     "bracket-brewing": ("Bracket Brewing", "https://www.bracketbrewing.com", "au-beer"),
     "wildflower": ("Wildflower Brewing", "https://www.wildflowerbeer.com", "au-beer"),
@@ -382,8 +396,9 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     "jack-wolfskin": ("Jack Wolfskin", "https://www.jackwolfskin.com", "major-outdoor"),
 }
 
+
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
 
 def _fetch(url: str, timeout: int = 25) -> bytes:
@@ -423,14 +438,22 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
         raw = _fetch(f"{site_url}/products.json?limit=250")
         products = json.loads(raw).get("products", [])
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, OSError) as error:
-        return {"brand_slug": slug, "status": "skipped", "reason": f"{type(error).__name__}: {error}"}
+        return {
+            "brand_slug": slug,
+            "status": "skipped",
+            "reason": f"{type(error).__name__}: {error}",
+        }
 
     if not products:
         return {"brand_slug": slug, "status": "skipped", "reason": "no products returned"}
 
     candidates = [p for p in products if _is_graphic_led(p) and p.get("images")]
     if not candidates:
-        return {"brand_slug": slug, "status": "skipped", "reason": "no graphic-led products matched"}
+        return {
+            "brand_slug": slug,
+            "status": "skipped",
+            "reason": "no graphic-led products matched",
+        }
 
     # One product per artwork. Keeps the first garment carrying each design, so a
     # brand contributes eighteen designs rather than three designs six times over.
@@ -539,7 +562,9 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
             ),
             encoding="utf-8",
         )
-        (product_dir / "provenance.json").write_text(json.dumps(provenance, indent=2), encoding="utf-8")
+        (product_dir / "provenance.json").write_text(
+            json.dumps(provenance, indent=2), encoding="utf-8"
+        )
 
         product_count += 1
         image_count += len(saved_images)
@@ -596,7 +621,10 @@ def main(argv: list[str]) -> int:
         result = collect_brand(slug, name, site_url, tradition)
         results.append(result)
         if result["status"] == "collected":
-            print(f"  {slug:<28} {result['product_count']:>3} products  {result['image_count']:>3} images")
+            print(
+                f"  {slug:<28} {result['product_count']:>3} products  "
+                f"{result['image_count']:>3} images"
+            )
         else:
             print(f"  {slug:<28} skipped — {result['reason'][:70]}")
 

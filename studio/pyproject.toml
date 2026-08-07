@@ -75,6 +75,14 @@ plugins = ["pydantic.mypy"]
 module = "alembic.*"
 ignore_missing_imports = true
 
+# Neither ships stubs or a py.typed marker. fontTools is what turns supplied
+# words into outlines and scipy is an optional accelerator for connected
+# components, so both are load-bearing enough to depend on and neither is
+# something we can add types to.
+[[tool.mypy.overrides]]
+module = ["fontTools.*", "scipy.*", "pgvector.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"

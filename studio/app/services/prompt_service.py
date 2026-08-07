@@ -67,9 +67,7 @@ def _as_prompt_set(shot: Shot, row: PromptVariation) -> PromptSet:
     )
 
 
-def variations_for_shot(
-    session: Session, *, world_slug: str, external_id: str
-) -> list[PromptSet]:
+def variations_for_shot(session: Session, *, world_slug: str, external_id: str) -> list[PromptSet]:
     """Every prompt already written for one shot, newest first.
 
     Empty for a shot nobody has planned yet, which is a fact about that shot and

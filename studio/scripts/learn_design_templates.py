@@ -70,9 +70,7 @@ def _kmeans(points: np.ndarray, k: int, iterations: int = 60) -> tuple[np.ndarra
 
     centres = [points[rng.integers(n)]]
     for _ in range(k - 1):
-        distance = np.min(
-            np.stack([((points - c) ** 2).sum(axis=1) for c in centres]), axis=0
-        )
+        distance = np.min(np.stack([((points - c) ** 2).sum(axis=1) for c in centres]), axis=0)
         total = distance.sum()
         if total <= 0:
             centres.append(points[rng.integers(n)])

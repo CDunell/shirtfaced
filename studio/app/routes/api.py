@@ -441,9 +441,7 @@ def read_prompts(
     try:
         variations = variations_for_shot(session, world_slug=world_slug, external_id=shot)
     except NothingToPlan as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=str(error)
-        ) from error
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
     found = session.execute(
         select(Shot).join(World).where(World.slug == world_slug, Shot.external_id == shot)

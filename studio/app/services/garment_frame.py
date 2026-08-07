@@ -145,7 +145,7 @@ def _skin_share(rgb: np.ndarray) -> float:
 def _background_ring(rgb: np.ndarray) -> np.ndarray:
     """Pixels around the frame edge, which is where the backdrop lives."""
     height, width = rgb.shape[:2]
-    band = max(2, int(round(min(height, width) * BORDER_RATIO)))
+    band = max(2, round(min(height, width) * BORDER_RATIO))
     return np.concatenate(
         [
             rgb[:band, :, :].reshape(-1, 3),
@@ -175,7 +175,8 @@ def _largest_component(mask: np.ndarray) -> np.ndarray:
     if count == 0:
         return mask
     sizes = ndimage.sum(mask, labels, range(1, count + 1))
-    return labels == (int(np.argmax(sizes)) + 1)
+    chosen: np.ndarray = labels == (int(np.argmax(sizes)) + 1)
+    return chosen
 
 
 def _largest_component_fallback(mask: np.ndarray) -> np.ndarray:
@@ -199,10 +200,9 @@ def _largest_component_fallback(mask: np.ndarray) -> np.ndarray:
                 size += 1
                 for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
                     ny, nx = y + dy, x + dx
-                    if 0 <= ny < height and 0 <= nx < width:
-                        if mask[ny, nx] and not seen[ny, nx]:
-                            seen[ny, nx] = True
-                            stack.append((ny, nx))
+                    if 0 <= ny < height and 0 <= nx < width and mask[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True
+                        stack.append((ny, nx))
             if size > best_size:
                 best_size, best = size, component
 
@@ -227,13 +227,15 @@ def locate_garment(source: Image.Image | Path | str) -> GarmentFrame:
     """
     try:
         return _locate(source)
-    except Exception as error:  # noqa: BLE001 -- refusal must fail closed
-        return GarmentFrame(measurable=False, reasons=(f"ASSESSMENT_FAILED:{type(error).__name__}",))
+    except Exception as error:
+        return GarmentFrame(
+            measurable=False, reasons=(f"ASSESSMENT_FAILED:{type(error).__name__}",)
+        )
 
 
 def _locate(source: Image.Image | Path | str) -> GarmentFrame:
     image = source if isinstance(source, Image.Image) else Image.open(source)
-    image = image.convert("RGB").resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.BILINEAR)
+    image = image.convert("RGB").resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.Resampling.BILINEAR)
     rgb = np.asarray(image, dtype=np.uint8)
 
     reasons: list[str] = []
@@ -290,10 +292,10 @@ def _locate(source: Image.Image | Path | str) -> GarmentFrame:
     diagnostics["aspect"] = aspect
 
     torso = (
-        top + int(round(height * TORSO_TOP)),
-        top + int(round(height * TORSO_BOTTOM)),
-        left + int(round(width * TORSO_LEFT)),
-        left + int(round(width * TORSO_RIGHT)),
+        top + round(height * TORSO_TOP),
+        top + round(height * TORSO_BOTTOM),
+        left + round(width * TORSO_LEFT),
+        left + round(width * TORSO_RIGHT),
     )
 
     # Across the whole subject, not just the torso. A worn shot is given away

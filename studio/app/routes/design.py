@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import tempfile
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
@@ -50,7 +51,7 @@ class ScoreResponse(BaseModel):
 
     design_id: str
     design_name: str
-    measurements: dict
+    measurements: dict[str, Any]
     blocked: bool
     total_score: float
     max_total_score: int
@@ -60,11 +61,11 @@ class ScoreResponse(BaseModel):
     floor_failures: list[str]
     gates: list[GateView]
     categories: list[CategoryView]
-    thresholds: dict
+    thresholds: dict[str, Any]
 
 
 @router.get("/thresholds", summary="Corpus-derived scoring thresholds")
-def get_thresholds() -> dict:
+def get_thresholds() -> dict[str, Any]:
     """What the corpus says normal is, so a score can be read in context."""
     return {
         "thresholds": load_thresholds(),
@@ -77,7 +78,7 @@ def get_thresholds() -> dict:
 
 @router.post("/score", response_model=ScoreResponse, summary="Score a design image")
 async def score_design_image(
-    image: UploadFile = File(..., description="The design, worn or flat"),
+    image: UploadFile = File(..., description="The design, worn or flat"),  # noqa: B008 -- FastAPI declares dependencies this way
     design_name: str = Form(default=""),
 ) -> ScoreResponse:
     """Measure an uploaded design and score it against the scorecard.
@@ -116,7 +117,7 @@ async def score_design_image(
     try:
         measurements = measure(temp_path)
         review = extract(name, name, temp_path)
-    except Exception as error:  # noqa: BLE001 -- surfaced to the caller as a 422
+    except Exception as error:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
             f"The image could not be measured: {error}",

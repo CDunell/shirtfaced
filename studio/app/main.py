@@ -51,9 +51,7 @@ class RequireAdminSession(BaseHTTPMiddleware):
         # login it actually has, with the way back.
         if request.url.path.startswith("/api/"):
             return JSONResponse({"detail": "Not signed in."}, status_code=401)
-        return RedirectResponse(
-            f"{self._settings.login_url}?next={request.url}", status_code=307
-        )
+        return RedirectResponse(f"{self._settings.login_url}?next={request.url}", status_code=307)
 
 
 def create_app() -> FastAPI:
@@ -68,7 +66,10 @@ def create_app() -> FastAPI:
     )
 
     if settings.auth_enabled:
-        application.add_middleware(RequireAdminSession, settings=settings)
+        # Starlette types this against a factory protocol a
+        # BaseHTTPMiddleware subclass does not structurally satisfy, though
+        # this is the documented way to register one.
+        application.add_middleware(RequireAdminSession, settings=settings)  # type: ignore[arg-type]
         logger.info("Requiring an admin session on every request.")
     else:
         # Loud, because the only thing standing between this API and someone

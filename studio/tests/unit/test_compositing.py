@@ -111,12 +111,16 @@ def test_shading_alone_does_not_trigger_the_garment_mask(design, middle) -> None
         for y in range(40, 80):
             folded.putpixel((x, y), (8, 8, 8))
 
-    printed = print_design(folded, design, middle, PrintSettings(displacement=0.0, shading=0.0, opacity=1.0))
+    printed = print_design(
+        folded, design, middle, PrintSettings(displacement=0.0, shading=0.0, opacity=1.0)
+    )
 
     lit = pixel(printed, 50, 60)
     in_fold = pixel(printed, 70, 60)
     assert lit == (255, 0, 0), "the print was lost in the lit half"
-    assert in_fold == (255, 0, 0), "the print was lost in the fold -- shading read as a different material"
+    assert in_fold == (255, 0, 0), (
+        "the print was lost in the fold -- shading read as a different material"
+    )
 
 
 def test_displacement_ignores_a_strong_edge_outside_the_placement(design, middle) -> None:  # type: ignore[no-untyped-def]
@@ -135,8 +139,12 @@ def test_displacement_ignores_a_strong_edge_outside_the_placement(design, middle
         for y in range(120):
             with_nearby_edge.putpixel((x, y), (250, 250, 250))
 
-    baseline = np.asarray(print_design(uniform, design, middle, settings).convert("RGB"))[40:80, 40:80]
-    with_edge = np.asarray(print_design(with_nearby_edge, design, middle, settings).convert("RGB"))[40:80, 40:80]
+    baseline = np.asarray(print_design(uniform, design, middle, settings).convert("RGB"))[
+        40:80, 40:80
+    ]
+    with_edge = np.asarray(print_design(with_nearby_edge, design, middle, settings).convert("RGB"))[
+        40:80, 40:80
+    ]
 
     assert np.array_equal(baseline, with_edge), (
         "a bright edge just outside the placement changed the print inside it"

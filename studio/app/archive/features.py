@@ -15,6 +15,8 @@ hard yes or no rather than a distance.
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.db.archive_models import ELEMENT_FEATURE_DIMENSIONS
 
 # Order is fixed and additions go on the end. Changing the meaning of an index
@@ -72,34 +74,35 @@ def element_feature(
 ) -> list[float]:
     """The vector for one element. Deterministic, and explainable per index."""
     parameters = parameters or {}
-    accepts = {
-        str(kind)
-        for slot in slots
-        for kind in (slot.get("accepts") or ("text",))
-    }
+    accepts: set[str] = set()
+    for slot in slots:
+        declared: Any = slot.get("accepts") or ("text",)
+        if isinstance(declared, str):
+            accepts.add(declared)
+        else:
+            accepts.update(str(kind) for kind in declared)
 
     vector: list[float] = []
-    vector += _one_hot(family, FAMILY_ORDER)            # 0..13
-    vector += _one_hot(symmetry, SYMMETRY_ORDER)        # 14..17
-    vector.append(_clamp(complexity))                   # 18
-    vector.append(_clamp(ink_min / INK_SATURATION))     # 19
-    vector.append(_clamp(ink_max / INK_SATURATION))     # 20
+    vector += _one_hot(family, FAMILY_ORDER)  # 0..13
+    vector += _one_hot(symmetry, SYMMETRY_ORDER)  # 14..17
+    vector.append(_clamp(complexity))  # 18
+    vector.append(_clamp(ink_min / INK_SATURATION))  # 19
+    vector.append(_clamp(ink_max / INK_SATURATION))  # 20
     vector.append(_clamp(len(slots) / SLOT_SATURATION))  # 21
-    vector.append(1.0 if "text" in accepts else 0.0)    # 22
-    vector.append(1.0 if "image" in accepts else 0.0)   # 23
+    vector.append(1.0 if "text" in accepts else 0.0)  # 22
+    vector.append(1.0 if "image" in accepts else 0.0)  # 23
     vector.append(1.0 if "symbol" in accepts else 0.0)  # 24
-    vector += [                                         # 25..28
-        1.0 if treatment in compatible_treatments else 0.0
-        for treatment in TREATMENT_ORDER
+    vector += [  # 25..28
+        1.0 if treatment in compatible_treatments else 0.0 for treatment in TREATMENT_ORDER
     ]
     # Aspect is squashed rather than clamped: a 3:1 ticket and a 6:1 rule are
     # genuinely different, and clamping would make them identical.
     aspect = float(parameters.get("aspect", 1.0))
-    vector.append(_clamp(aspect / (1.0 + aspect)))      # 29
+    vector.append(_clamp(aspect / (1.0 + aspect)))  # 29
     vector.append(_clamp(float(parameters.get("stroke", 0.0))))  # 30
     # Held open. Filling this later is additive; renumbering anything above it
     # is not, and would invalidate every stored vector without failing.
-    vector.append(0.0)                                  # 31
+    vector.append(0.0)  # 31
 
     if len(vector) != ELEMENT_FEATURE_DIMENSIONS:
         raise ValueError(

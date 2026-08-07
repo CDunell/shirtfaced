@@ -91,9 +91,7 @@ class PlacementBody(BaseModel):
 
     @field_validator("corners")
     @classmethod
-    def _inside_the_photograph(
-        cls, value: list[tuple[float, float]]
-    ) -> list[tuple[float, float]]:
+    def _inside_the_photograph(cls, value: list[tuple[float, float]]) -> list[tuple[float, float]]:
         """A corner outside the frame is a dragging accident, not an intention.
 
         A little slack is allowed: pulling a corner just past the edge to cover a
@@ -241,9 +239,7 @@ def get_photo_image(
             status_code=status.HTTP_404_NOT_FOUND, detail="The image file is missing."
         ) from error
 
-    return Response(
-        content=data, media_type=photo.mime_type, headers={"Cache-Control": IMMUTABLE}
-    )
+    return Response(content=data, media_type=photo.mime_type, headers={"Cache-Control": IMMUTABLE})
 
 
 @router.get("/photos/{photo_id}/placement", summary="Where the design sits")

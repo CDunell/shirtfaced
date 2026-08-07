@@ -207,13 +207,15 @@ def _normalise(slots: list[dict[str, float]], margin: float = 0.08) -> list[dict
     return grown
 
 
-def _font(size: int) -> ImageFont.FreeTypeFont:
+def _font(size: int) -> ImageFont.FreeTypeFont | ImageFont.ImageFont:
     if BRAND_FONT.is_file():
         return ImageFont.truetype(str(BRAND_FONT), size)
     return ImageFont.load_default()
 
 
-def _fit_text(draw: ImageDraw.ImageDraw, text: str, box_w: int, box_h: int) -> tuple[ImageFont.FreeTypeFont, list[str]]:
+def _fit_text(
+    draw: ImageDraw.ImageDraw, text: str, box_w: int, box_h: int
+) -> tuple[ImageFont.FreeTypeFont, list[str]]:
     """Largest size that fits, wrapping onto as many lines as the slot allows."""
     words = text.split()
     best: tuple[ImageFont.FreeTypeFont, list[str]] | None = None
@@ -236,7 +238,7 @@ def _fit_text(draw: ImageDraw.ImageDraw, text: str, box_w: int, box_h: int) -> t
         if best is None or area > best[2]:  # type: ignore[misc]
             best = (font, lines, area)  # type: ignore[assignment]
     assert best is not None
-    return best[0], best[1]  # type: ignore[return-value]
+    return best[0], best[1]
 
 
 def _draw_element(
@@ -253,7 +255,7 @@ def _draw_element(
 
     if element.kind in {"image", "logo"} and element.image_bytes:
         art = Image.open(BytesIO(element.image_bytes)).convert("RGBA")
-        art.thumbnail((box_w, box_h), Image.LANCZOS)
+        art.thumbnail((box_w, box_h), Image.Resampling.LANCZOS)
         canvas.paste(art, (cx - art.width // 2, top + (box_h - art.height) // 2), art)
         return
 

@@ -11,13 +11,13 @@ from pydantic import ValidationError
 
 from app.domain.design_review import (
     CATEGORY_LIMITS,
+    MAX_TOTAL_SCORE,
     ApprovalBand,
     CategoryRating,
     DesignReviewInput,
     GateResult,
     GateStatus,
     HardGate,
-    MAX_TOTAL_SCORE,
     ScoreCategory,
 )
 from app.services.design_scoring import score_design
@@ -58,7 +58,11 @@ def test_a_fully_rated_design_with_no_failures_is_not_blocked() -> None:
 def test_a_single_failed_gate_blocks_regardless_of_score() -> None:
     """§1: 'A high score cannot override a hard failure.'"""
     gates = [
-        GateResult(gate=HardGate.UNRESOLVED_RIGHTS_RISK, status=GateStatus.FAIL, evidence="artwork source unverified"),
+        GateResult(
+            gate=HardGate.UNRESOLVED_RIGHTS_RISK,
+            status=GateStatus.FAIL,
+            evidence="artwork source unverified",
+        ),
         *[g for g in ALL_GATES_PASS if g.gate is not HardGate.UNRESOLVED_RIGHTS_RISK],
     ]
     review = DesignReviewInput(
@@ -91,7 +95,9 @@ def test_an_untested_gate_blocks_the_same_as_a_failed_one() -> None:
 
 
 def test_a_missing_required_category_blocks() -> None:
-    ratings = [r for r in _all_categories_at(5) if r.category is not ScoreCategory.PRODUCTION_INTEGRITY]
+    ratings = [
+        r for r in _all_categories_at(5) if r.category is not ScoreCategory.PRODUCTION_INTEGRITY
+    ]
     review = DesignReviewInput(
         design_id="D-004",
         design_name="Production Never Rated",
@@ -186,41 +192,113 @@ def test_the_not_yours_tee_review_reconstructed() -> None:
     lifestyle photo couldn't provide evidence for.
     """
     gate_results = [
-        GateResult(gate=HardGate.NO_CLEAR_PRODUCT_DEFINITION, status=GateStatus.FAIL,
-                   evidence="fit block and production method not confirmed for this SKU"),
-        GateResult(gate=HardGate.NO_COLLECTION_ROLE, status=GateStatus.PASS,
-                   evidence="assigned Core for the first time in this review"),
-        GateResult(gate=HardGate.NO_DOMINANT_PROPOSITION, status=GateStatus.PASS,
-                   evidence="heart + barbed wire + 'not yours never was' reads in under 3 seconds"),
-        GateResult(gate=HardGate.HIERARCHY_COLLAPSE, status=GateStatus.PASS,
-                   evidence="icon dominant, type clearly secondary, no competing elements"),
-        GateResult(gate=HardGate.DISTANCE_FAILURE, status=GateStatus.PASS,
-                   evidence="heart mass survives thumbnail test, though proposition leans on text"),
-        GateResult(gate=HardGate.GARMENT_CONFLICT, status=GateStatus.PASS,
-                   evidence="centred upper back, clear of seams in the one available photo"),
-        GateResult(gate=HardGate.PRODUCTION_FAILURE, status=GateStatus.NOT_TESTED,
-                   evidence="sub-heart text illegible even at 6x digital zoom; source resolution insufficient to confirm"),
-        GateResult(gate=HardGate.IDENTITY_SUBSTITUTION, status=GateStatus.NOT_TESTED,
-                   evidence="no confirmed legible permanent mark to test substitution against"),
-        GateResult(gate=HardGate.WEAK_WITHOUT_THE_LOGO, status=GateStatus.PASS,
-                   evidence="design has independent value, does not rely on an enlarged logo"),
-        GateResult(gate=HardGate.COLLECTION_REDUNDANCY, status=GateStatus.PASS,
-                   evidence="no other heart-motif design in the current demo range"),
-        GateResult(gate=HardGate.MOCK_UP_ONLY_SUCCESS, status=GateStatus.PASS,
-                   evidence="concept works independent of the alley lighting or model pose"),
-        GateResult(gate=HardGate.UNRESOLVED_RIGHTS_RISK, status=GateStatus.NOT_TESTED,
-                   evidence="artwork and photography provenance unconfirmed; all placeholder content flagged disposable elsewhere in the repo"),
+        GateResult(
+            gate=HardGate.NO_CLEAR_PRODUCT_DEFINITION,
+            status=GateStatus.FAIL,
+            evidence="fit block and production method not confirmed for this SKU",
+        ),
+        GateResult(
+            gate=HardGate.NO_COLLECTION_ROLE,
+            status=GateStatus.PASS,
+            evidence="assigned Core for the first time in this review",
+        ),
+        GateResult(
+            gate=HardGate.NO_DOMINANT_PROPOSITION,
+            status=GateStatus.PASS,
+            evidence="heart + barbed wire + 'not yours never was' reads in under 3 seconds",
+        ),
+        GateResult(
+            gate=HardGate.HIERARCHY_COLLAPSE,
+            status=GateStatus.PASS,
+            evidence="icon dominant, type clearly secondary, no competing elements",
+        ),
+        GateResult(
+            gate=HardGate.DISTANCE_FAILURE,
+            status=GateStatus.PASS,
+            evidence="heart mass survives thumbnail test, though proposition leans on text",
+        ),
+        GateResult(
+            gate=HardGate.GARMENT_CONFLICT,
+            status=GateStatus.PASS,
+            evidence="centred upper back, clear of seams in the one available photo",
+        ),
+        GateResult(
+            gate=HardGate.PRODUCTION_FAILURE,
+            status=GateStatus.NOT_TESTED,
+            evidence=(
+                "sub-heart text illegible even at 6x digital zoom; "
+                "source resolution insufficient to confirm"
+            ),
+        ),
+        GateResult(
+            gate=HardGate.IDENTITY_SUBSTITUTION,
+            status=GateStatus.NOT_TESTED,
+            evidence="no confirmed legible permanent mark to test substitution against",
+        ),
+        GateResult(
+            gate=HardGate.WEAK_WITHOUT_THE_LOGO,
+            status=GateStatus.PASS,
+            evidence="design has independent value, does not rely on an enlarged logo",
+        ),
+        GateResult(
+            gate=HardGate.COLLECTION_REDUNDANCY,
+            status=GateStatus.PASS,
+            evidence="no other heart-motif design in the current demo range",
+        ),
+        GateResult(
+            gate=HardGate.MOCK_UP_ONLY_SUCCESS,
+            status=GateStatus.PASS,
+            evidence="concept works independent of the alley lighting or model pose",
+        ),
+        GateResult(
+            gate=HardGate.UNRESOLVED_RIGHTS_RISK,
+            status=GateStatus.NOT_TESTED,
+            evidence=(
+                "artwork and photography provenance unconfirmed; all placeholder "
+                "content flagged disposable elsewhere in the repo"
+            ),
+        ),
     ]
     category_ratings = [
-        _rating(ScoreCategory.PRODUCT_FIT, 4, "sits naturally on the back, oversized cut suits a bold graphic"),
-        _rating(ScoreCategory.DOMINANT_PROPOSITION, 5, "single clear concept, confidently executed"),
-        _rating(ScoreCategory.COMPOSITION_AND_HIERARCHY, 4, "clean three-level read, well balanced"),
-        _rating(ScoreCategory.DISTANCE_AND_SILHOUETTE, 3, "mass survives at distance, payoff depends on legible text"),
-        _rating(ScoreCategory.TYPOGRAPHY, 3, "main type clean at normal distance, micro sub-line unverifiable"),
-        _rating(ScoreCategory.BRAND_RECOGNITION, 2, "no confirmed legible permanent identity asset"),
-        _rating(ScoreCategory.COLLECTION_CONTRIBUTION, 4, "distinct concept versus the current demo range"),
-        _rating(ScoreCategory.PRODUCTION_INTEGRITY, 2, "illegible micro-text, no flat production file available"),
-        _rating(ScoreCategory.COMMERCIAL_WEARABILITY, 4, "understandable and wearable without campaign context"),
+        _rating(
+            ScoreCategory.PRODUCT_FIT,
+            4,
+            "sits naturally on the back, oversized cut suits a bold graphic",
+        ),
+        _rating(
+            ScoreCategory.DOMINANT_PROPOSITION, 5, "single clear concept, confidently executed"
+        ),
+        _rating(
+            ScoreCategory.COMPOSITION_AND_HIERARCHY, 4, "clean three-level read, well balanced"
+        ),
+        _rating(
+            ScoreCategory.DISTANCE_AND_SILHOUETTE,
+            3,
+            "mass survives at distance, payoff depends on legible text",
+        ),
+        _rating(
+            ScoreCategory.TYPOGRAPHY,
+            3,
+            "main type clean at normal distance, micro sub-line unverifiable",
+        ),
+        _rating(
+            ScoreCategory.BRAND_RECOGNITION, 2, "no confirmed legible permanent identity asset"
+        ),
+        _rating(
+            ScoreCategory.COLLECTION_CONTRIBUTION,
+            4,
+            "distinct concept versus the current demo range",
+        ),
+        _rating(
+            ScoreCategory.PRODUCTION_INTEGRITY,
+            2,
+            "illegible micro-text, no flat production file available",
+        ),
+        _rating(
+            ScoreCategory.COMMERCIAL_WEARABILITY,
+            4,
+            "understandable and wearable without campaign context",
+        ),
     ]
     review = DesignReviewInput(
         design_id="not-yours-tee",
@@ -234,7 +312,10 @@ def test_the_not_yours_tee_review_reconstructed() -> None:
     assert outcome.total_score == 66.0
     assert outcome.band is ApprovalBand.REJECT_OR_REBUILD
     assert outcome.blocked is True
-    assert set(outcome.floor_failures) == {ScoreCategory.BRAND_RECOGNITION, ScoreCategory.PRODUCTION_INTEGRITY}
+    assert set(outcome.floor_failures) == {
+        ScoreCategory.BRAND_RECOGNITION,
+        ScoreCategory.PRODUCTION_INTEGRITY,
+    }
     assert HardGate.NO_CLEAR_PRODUCT_DEFINITION in outcome.failed_gates
     assert HardGate.PRODUCTION_FAILURE in outcome.untested_gates
     assert HardGate.IDENTITY_SUBSTITUTION in outcome.untested_gates

@@ -19,18 +19,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from enum import Enum
 
-
-class LicenceStatus(str, Enum):
-    """How well the right to use this element is established."""
-
-    # Checked against the source, terms recorded, commercial use permitted.
-    VERIFIED = "verified"
-    # Held in the archive but not yet checked. Never usable.
-    UNVERIFIED = "unverified"
-    # Checked and found to forbid the use we need. Kept so it is not re-found.
-    REFUSED = "refused"
+from app.domain.enums import LicenceStatus
 
 
 @dataclass(frozen=True)

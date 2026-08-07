@@ -22,6 +22,7 @@ import math
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
 from fontTools.pens.svgPathPen import SVGPathPen
 from fontTools.pens.transformPen import TransformPen
@@ -68,7 +69,7 @@ def _font(face: str) -> TTFont:
 
 
 @lru_cache(maxsize=8)
-def _metrics(face: str) -> tuple[float, dict[str, float], object]:
+def _metrics(face: str) -> tuple[float, dict[str, float], Any]:
     font = _font(face)
     units = float(font["head"].unitsPerEm)
     glyph_set = font.getGlyphSet()
@@ -156,8 +157,7 @@ def set_arc(
 
     names = _glyph_names(face, text)
     advances = [
-        (units * scale * 0.28 if name == " " else widths[name] * scale) + track
-        for name in names
+        (units * scale * 0.28 if name == " " else widths[name] * scale) + track for name in names
     ]
     total = max(sum(advances) - track, 1e-6)
 
@@ -166,7 +166,7 @@ def set_arc(
     angle = -sweep / 2.0
 
     segments: list[str] = []
-    for name, advance in zip(names, advances):
+    for name, advance in zip(names, advances, strict=True):
         centre_angle = angle + (advance - track) / (2.0 * radius)
         if name != " ":
             if upper:

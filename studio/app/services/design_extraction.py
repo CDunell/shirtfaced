@@ -125,7 +125,8 @@ def _garment_colour(centre: np.ndarray) -> np.ndarray:
     flanks = np.concatenate(
         [centre[:, :margin, :].reshape(-1, 3), centre[:, -margin:, :].reshape(-1, 3)]
     )
-    return np.median(flanks, axis=0)
+    median: np.ndarray = np.median(flanks, axis=0)
+    return median
 
 
 def _print_mask(centre: np.ndarray, garment: np.ndarray) -> tuple[np.ndarray, float]:
@@ -143,7 +144,7 @@ def _survives_reduction(image: Image.Image, reducer) -> bool:  # type: ignore[no
     still reads. Measured as: does a print region still stand out from the
     garment once the image is shrunk, blurred or desaturated?
     """
-    reduced = reducer(image).convert("RGB").resize((256, 256), Image.LANCZOS)
+    reduced = reducer(image).convert("RGB").resize((256, 256), Image.Resampling.LANCZOS)
     pixels = np.asarray(reduced, dtype=np.float32)
     centre = _torso(pixels)
     garment = _garment_colour(centre)
@@ -154,7 +155,7 @@ def _survives_reduction(image: Image.Image, reducer) -> bool:  # type: ignore[no
 def measure(image_path: Path) -> Measurements:
     """Measure one design image. No judgement, only parameters."""
     original = Image.open(image_path).convert("RGB")
-    image = original.resize((256, 256), Image.LANCZOS)
+    image = original.resize((256, 256), Image.Resampling.LANCZOS)
     pixels = np.asarray(image, dtype=np.float32)
 
     centre = _torso(pixels)
@@ -179,7 +180,7 @@ def measure(image_path: Path) -> Measurements:
     step = 256 / 6
     quantised = (ink // step).astype(np.int16)
     keyed = quantised[:, 0] * 36 + quantised[:, 1] * 6 + quantised[:, 2]
-    unique, counts = np.unique(keyed, return_counts=True)
+    _unique, counts = np.unique(keyed, return_counts=True)
     ink_colours = int((counts / counts.sum() >= 0.05).sum())
 
     rows, cols = np.nonzero(mask)
@@ -195,10 +196,15 @@ def measure(image_path: Path) -> Measurements:
         light_on_dark=float(ink.mean(axis=0) @ weights) > float(garment @ weights),
         # T1 thumbnail: small enough that fine detail is gone.
         thumbnail_survives=_survives_reduction(
-            original, lambda im: im.resize((max(im.width // 10, 8), max(im.height // 10, 8)), Image.LANCZOS)
+            original,
+            lambda im: im.resize(
+                (max(im.width // 10, 8), max(im.height // 10, 8)), Image.Resampling.LANCZOS
+            ),
         ),
         # T2 blur: enough to remove small text and detail.
-        blur_survives=_survives_reduction(original, lambda im: im.filter(ImageFilter.GaussianBlur(radius=8))),
+        blur_survives=_survives_reduction(
+            original, lambda im: im.filter(ImageFilter.GaussianBlur(radius=8))
+        ),
         # T3 greyscale: colour removed, hierarchy must survive on value alone.
         greyscale_survives=_survives_reduction(original, lambda im: im.convert("L")),
     )
@@ -274,23 +280,45 @@ def to_review(
 
     # Everything else needs a human, a brief, or the range. Saying so is the point.
     for name, why in (
-        (HardGate.NO_CLEAR_PRODUCT_DEFINITION, "blank, fit and production method are not in the image"),
-        (HardGate.NO_COLLECTION_ROLE, "collection role is a brief decision, not a property of the artwork"),
-        (HardGate.NO_DOMINANT_PROPOSITION, "requires reading the design's idea, not its parameters"),
+        (
+            HardGate.NO_CLEAR_PRODUCT_DEFINITION,
+            "blank, fit and production method are not in the image",
+        ),
+        (
+            HardGate.NO_COLLECTION_ROLE,
+            "collection role is a brief decision, not a property of the artwork",
+        ),
+        (
+            HardGate.NO_DOMINANT_PROPOSITION,
+            "requires reading the design's idea, not its parameters",
+        ),
         (HardGate.HIERARCHY_COLLAPSE, "requires judging which element is meant to lead"),
-        (HardGate.GARMENT_CONFLICT, "seam and construction interaction needs the flat artwork and the blank"),
+        (
+            HardGate.GARMENT_CONFLICT,
+            "seam and construction interaction needs the flat artwork and the blank",
+        ),
         (HardGate.IDENTITY_SUBSTITUTION, "requires knowing the permanent identity assets"),
         (HardGate.WEAK_WITHOUT_THE_LOGO, "requires isolating the logo from the artwork"),
         (HardGate.COLLECTION_REDUNDANCY, "requires the rest of the proposed range"),
-        (HardGate.MOCK_UP_ONLY_SUCCESS, "requires comparing the flat artwork against the styled shot"),
-        (HardGate.UNRESOLVED_RIGHTS_RISK, "provenance of artwork and references is not visible in the image"),
+        (
+            HardGate.MOCK_UP_ONLY_SUCCESS,
+            "requires comparing the flat artwork against the styled shot",
+        ),
+        (
+            HardGate.UNRESOLVED_RIGHTS_RISK,
+            "provenance of artwork and references is not visible in the image",
+        ),
     ):
         gate(name, GateStatus.NOT_TESTED, why)
 
     # Distance and Silhouette is the one category the visual tests genuinely
     # measure: three tests, three of five points, plus one for surviving all.
     survived = sum(
-        (measurements.thumbnail_survives, measurements.blur_survives, measurements.greyscale_survives)
+        (
+            measurements.thumbnail_survives,
+            measurements.blur_survives,
+            measurements.greyscale_survives,
+        )
     )
     rating = min(5, survived + (1 if survived == 3 else 0)) if measurements.has_print else 0
     ratings.append(

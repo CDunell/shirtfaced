@@ -35,7 +35,6 @@ from __future__ import annotations
 import argparse
 import collections
 import json
-import math
 import statistics
 import sys
 from pathlib import Path
@@ -242,10 +241,14 @@ def main(argv: list[str]) -> int:
                 "p90": inks[int(len(inks) * 0.90)],
             },
             "placement": dict(
-                collections.Counter(_placement_band(r["centroid_y"]) for r in with_print).most_common()
+                collections.Counter(
+                    _placement_band(r["centroid_y"]) for r in with_print
+                ).most_common()
             ),
             "garment_colour": dict(
-                collections.Counter(_garment_family(r["garment_rgb"]) for r in with_print).most_common()
+                collections.Counter(
+                    _garment_family(r["garment_rgb"]) for r in with_print
+                ).most_common()
             ),
             "light_on_dark_pct": round(
                 100 * sum(1 for r in with_print if r["light_on_dark"]) / len(with_print), 1
@@ -263,11 +266,15 @@ def main(argv: list[str]) -> int:
 
     overall = report["overall"]
     print(f"\n{len(records)} designs analysed, {len(printed)} with a detectable print\n")
-    print(f"print coverage   median {overall['print_coverage']['median']:.1%}"
-          f"   p10 {overall['print_coverage']['p10']:.1%}"
-          f"   p90 {overall['print_coverage']['p90']:.1%}")
-    print(f"ink colours      median {overall['ink_colours']['median']}"
-          f"   p90 {overall['ink_colours']['p90']}")
+    print(
+        f"print coverage   median {overall['print_coverage']['median']:.1%}"
+        f"   p10 {overall['print_coverage']['p10']:.1%}"
+        f"   p90 {overall['print_coverage']['p90']:.1%}"
+    )
+    print(
+        f"ink colours      median {overall['ink_colours']['median']}"
+        f"   p90 {overall['ink_colours']['p90']}"
+    )
     print(f"placement        {overall['placement']}")
     print(f"garment colour   {overall['garment_colour']}")
     print(f"light on dark    {overall['light_on_dark_pct']}%")

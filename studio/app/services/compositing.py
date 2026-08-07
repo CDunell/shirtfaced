@@ -127,7 +127,8 @@ def _sample(source: np.ndarray, x: np.ndarray, y: np.ndarray) -> np.ndarray:
 
     top = source[y0, x0] * (1 - fx) + source[y0, x1] * fx
     bottom = source[y1, x0] * (1 - fx) + source[y1, x1] * fx
-    return top * (1 - fy) + bottom * fy
+    blended: np.ndarray = top * (1 - fy) + bottom * fy
+    return blended
 
 
 def _displaced(warped: np.ndarray, luminance: np.ndarray, strength: float) -> np.ndarray:
@@ -155,13 +156,16 @@ def _displaced(warped: np.ndarray, luminance: np.ndarray, strength: float) -> np
     fill = float(np.median(luminance[covered]))
     masked_luminance = np.where(covered, luminance, fill)
 
-    smooth = np.asarray(
-        Image.fromarray((masked_luminance * 255).astype(np.uint8)).filter(
-            # Wide enough to be a fold rather than a thread, at any photo size.
-            ImageFilter.GaussianBlur(radius=max(2.0, min(width, height) * 0.006))
-        ),
-        dtype=np.float32,
-    ) / 255.0
+    smooth = (
+        np.asarray(
+            Image.fromarray((masked_luminance * 255).astype(np.uint8)).filter(
+                # Wide enough to be a fold rather than a thread, at any photo size.
+                ImageFilter.GaussianBlur(radius=max(2.0, min(width, height) * 0.006))
+            ),
+            dtype=np.float32,
+        )
+        / 255.0
+    )
 
     dy, dx = np.gradient(smooth)
     # Gradients here are small; scaling by the strength alone would barely move it.
@@ -202,7 +206,8 @@ def _garment_mask(photo: np.ndarray, alpha: np.ndarray, tolerance: float) -> np.
     fabric = np.median(chroma[covered], axis=0)
     distance = np.sqrt(((chroma - fabric) ** 2).sum(axis=2))
     # Soft edge: a hard cut leaves a cartoon outline around an arm.
-    return np.clip(1.0 - (distance - tolerance) / max(tolerance, 1e-3), 0.0, 1.0)
+    softened: np.ndarray = np.clip(1.0 - (distance - tolerance) / max(tolerance, 1e-3), 0.0, 1.0)
+    return softened
 
 
 def print_design(

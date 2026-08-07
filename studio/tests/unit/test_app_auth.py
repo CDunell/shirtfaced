@@ -24,7 +24,11 @@ def protected(monkeypatch: pytest.MonkeyPatch) -> Iterator[TestClient]:
     """An application configured the way a deployment is."""
     base = get_settings()
     settings = Settings(
-        **{**base.model_dump(), "session_secret": SECRET, "login_url": "https://admin.example/login"}
+        **{
+            **base.model_dump(),
+            "session_secret": SECRET,
+            "login_url": "https://admin.example/login",
+        }
     )
     monkeypatch.setattr("app.main.get_settings", lambda: settings)
     with TestClient(create_app()) as client:
