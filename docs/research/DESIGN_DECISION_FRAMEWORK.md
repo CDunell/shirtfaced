@@ -9,6 +9,10 @@ Convert the research constitution into a repeatable design workflow with explici
 This document does not generate concepts. It governs how approved concepts become coherent, recognisable and production-ready garments.
 
 ## Governing Documents
+- `SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` — "the research constitution" this
+  document converts into a workflow. Where any wording below drifts from its
+  exact lists, the Constitution wins; this document should not have its own
+  variant phrasing at all.
 - `GRAPHIC_DESIGN_SYSTEM_RESEARCH.md`
 - `GRAPHIC_ARCHETYPE_TAXONOMY.md`
 - `GRAPHIC_COMPOSITION_MECHANICS.md`
@@ -54,12 +58,21 @@ If the blank, fit or fabrication changes later, return to Stage 1 and revalidate
 # Stage 2 — Collection Role Assignment
 
 ## Approved roles
-- persistent core;
-- seasonal support;
-- statement graphic;
-- hero product;
-- capsule product;
-- collaboration product.
+
+The five roles in `SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` §4 — no other list:
+
+- Anchor;
+- Core;
+- Expression;
+- Hero;
+- Collaboration.
+
+An earlier version of this stage listed six differently-named roles blending this
+with `COLLECTION_ARCHITECTURE.md`'s separate four-layer model (Permanent Core /
+Seasonal Evolution / Statement Graphics / Capsules and Collaborations). That model
+answers a different question — where a product sits in the range's lifecycle, not
+which of the Constitution's five roles it holds — and the two are not
+interchangeable. Record both if useful, but do not select from a blended list.
 
 ## Required output
 The selected role plus its function in the range.
@@ -103,7 +116,8 @@ If recognition depends entirely on enlarging the logo, return to Stage 2 or Stag
 
 # Stage 4 — Layout Archetype Selection
 
-Select one approved archetype before artwork development:
+Select one approved archetype before artwork development —
+`SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` §6's exact eight:
 
 - A1 — Small front identifier / large back hero
 - A2 — Front hero / small rear signature
@@ -127,16 +141,21 @@ Every active zone must perform a distinct role. Equal duplication requires a wri
 
 # Stage 5 — Graphic Archetype Selection
 
-Select the dominant construction:
-- isolated emblem;
+Select the dominant construction — `SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` §8's
+exact nine, not a paraphrase:
 - image-led hero;
-- type-led hero;
-- image/type lockup;
-- poster or flyer composition;
-- photograph or photo treatment;
-- collage;
-- symbolic mark;
-- all-over or seam-aware field.
+- typographic hero;
+- emblem or badge;
+- image-and-title lockup;
+- poster or editorial panel;
+- symbolic icon system;
+- collage with controlled frame;
+- character or object portrait;
+- all-over or jumbo field.
+
+An earlier version of this stage used its own nine-item wording, close enough to
+look equivalent but not identical — "photograph or photo treatment" in particular
+had no clean match in §8's list. Restated to match exactly.
 
 ## Required output
 A one-sentence statement of what the eye sees first and why.
