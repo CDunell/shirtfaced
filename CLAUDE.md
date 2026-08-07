@@ -46,6 +46,10 @@ document and assume it is live.
 
 - **World canon:** `studio/worlds/world-01/WORLD.md` — the deepest document here. Read it first.
 - **Portable rules:** `studio/docs/CARRY_FORWARD_CANON.md` — what survives into new worlds.
+- **Brand voice:** `docs/foundations/BRAND_VOICE.md` — the word, the tagline grammar,
+  Identity vs Storefront voice. Holds consistency while design content changes.
+- **Characters:** `docs/foundations/CHARACTERS.md` — the recurring cast. Never named in a
+  generation prompt; see its own scope note.
 - **Production backlog:** `studio/worlds/world-01/SHOTLIST.md` and `CONTINUITY.md`.
 - **Design constitution:** `docs/research/SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md`.
 - **The kill filter:** `docs/research/DESIGN_REVIEW_SCORECARD.md` — 12 hard-fails plus a
@@ -57,7 +61,7 @@ document and assume it is live.
 
 ## Current state — read these two first
 
-- `docs/SYSTEM_AUDIT_2026-08-07.md` — gap analysis, scores, prioritised hot list, phased plan.
+- `docs/shirtfaced-audit.md` — gap analysis, scores, prioritised hot list, phased plan.
 - `docs/SESSION_HANDOVER_2026-08-07.md` — decisions and open items not yet promoted to canon.
 
 The headline finding: the thinking is far ahead of the instantiation. There is no brand
