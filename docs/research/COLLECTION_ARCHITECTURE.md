@@ -246,6 +246,66 @@ High for multi-cue cohesion; medium for the three-cue threshold.
 
 ---
 
+## Finding 11 — Two Product Lines May Separate Acquisition From Monetisation
+
+### Status
+
+**Derived planning framework, not observed or supported evidence.** This finding did not
+come from the Represent/ESSENTIALS corpus above — it comes from `docs/SESSION_HANDOVER_
+2026-08-07.md` §3. Recorded here because Hot List item 9 asks for it named explicitly, not
+because this pass's evidence standard has been met. Treat the confidence rating below
+literally.
+
+### The hypothesis
+
+| | Line 1 — Brand mark | Line 2 — Standalone design |
+|---|---|---|
+| Bought because | It's Shirtfaced | The design is good |
+| Buyer | Already knows the word | Has never heard of us |
+| Job | Monetise believers | Recruit strangers |
+| Branding | Headline | Signature — back neck, hem, sleeve |
+| Economics | High margin, infinite reorder | Variance, failure rate, drops |
+| Contains | Wordmark, crest, all drinkware, group custom | The five design mechanics |
+| Review weighting | Recognition-heavy | Must survive HF-09 |
+
+### Supporting evidence
+
+**For:** Black Milk Clothing's sequencing — designs sold first, community-branded product
+followed once an audience existed to sell it to. Unsourced beyond `SESSION_HANDOVER_2026-
+08-07.md` itself — no citation trail, unlike the Represent/ESSENTIALS findings above.
+
+No counter-example is recorded. An earlier draft of this finding cited Budgy Smuggler as a
+contradicting case; that comparison is not a model for Shirtfaced and the claim behind it
+was never independently verified, so it is withdrawn rather than repeated here unsourced.
+
+### Constitutional implication
+
+`DESIGN_REVIEW_SCORECARD.md` HF-09 ("Weak Without the Logo") already tests for the Line 2
+property without naming it: a design that fails HF-09 is functioning as Line 1 and should
+be reviewed as one — weighted toward Brand Recognition (category F) and permanent identity
+assets, not toward independent visual value. A design that clears HF-09 comfortably is
+functioning as Line 2 and should be reviewed for whether it can recruit a stranger who has
+never heard of Shirtfaced, which the current weighted categories do not separately test.
+
+Every product should record which line it is functioning as, alongside its Collection Role
+(§4 of the Constitution) and Layer (below) — a Line 1 product in the Permanent Core layer
+and a Line 2 product in the Statement Graphics layer are the common cases, but the two axes
+are independent, not the same distinction twice.
+
+### Cheapest test
+
+Post both to a cold organic surface and read tag-and-send rate, not likes — paid testing is
+the wrong instrument for an organic-first brand. Untested for Shirtfaced as of this
+document.
+
+### Confidence
+
+Low. One unsourced supporting example, no counter-example on record, no Shirtfaced-specific
+data. Do not treat the table above as settled review policy — treat it as the question the
+next handful of designs should answer.
+
+---
+
 # Collection Architecture Model
 
 The following model is derived from the findings and is intended as a planning tool.
@@ -281,6 +341,8 @@ Before approving a collection, record:
 10. Are any products competing without serving a distinct role?
 11. Can the core identity translate across tee, fleece and accessory?
 12. Does a collaboration still look like Shirtfaced?
+13. Is each product functioning as Line 1 (brand mark) or Line 2 (standalone design), and
+    is it reviewed with the matching weighting — see Finding 11?
 
 ---
 
@@ -308,7 +370,9 @@ This pass does not support:
 - a mandatory product-category mix;
 - a universal drop cadence;
 - a claim that larger collections perform better;
-- a specific pricing ladder.
+- a specific pricing ladder;
+- that the Line 1 / Line 2 split in Finding 11 is settled review policy rather than an
+  untested hypothesis.
 
 Those require neutral commercial data rather than catalogue observation alone.
 
