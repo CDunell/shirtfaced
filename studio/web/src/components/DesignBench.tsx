@@ -122,7 +122,7 @@ export function DesignBench(): React.JSX.Element {
             overrides={{ Body: { style: { width: "auto" } } }}
           >
             {result.blocked
-              ? `Blocked — ${result.untested_gates.length} gate(s) need a human, ${result.failed_gates.length} failed. A design is never approved from one image.`
+              ? `Blocked — ${String(result.untested_gates.length)} gate(s) need a human, ${String(result.failed_gates.length)} failed. A design is never approved from one image.`
               : "No blocking gates from measurement alone."}
           </Notification>
 
@@ -179,7 +179,7 @@ export function DesignBench(): React.JSX.Element {
                 <LabelSmall marginBottom="4px">Measured</LabelSmall>
                 <ParagraphXSmall margin={0} color={theme.colors.contentSecondary}>
                   {coverage !== null ? `Print coverage ${(coverage * 100).toFixed(1)}%` : "No print detected"}
-                  {typeof measurements.ink_colours === "number" && ` · ${measurements.ink_colours} ink colours`}
+                  {typeof measurements.ink_colours === "number" && ` · ${String(measurements.ink_colours)} ink colours`}
                   {measurements.light_on_dark !== undefined &&
                     ` · ${measurements.light_on_dark ? "light on dark" : "dark on light"}`}
                 </ParagraphXSmall>
@@ -231,7 +231,7 @@ export function DesignBench(): React.JSX.Element {
                   >
                     {category.rating}/5 → {category.points.toFixed(1)}/{category.max_points}
                     {category.rating === 0 && " (not assessed)"}
-                    {category.below_floor && ` — below floor of ${category.floor}`}
+                    {category.below_floor && ` — below floor of ${String(category.floor)}`}
                   </ParagraphXSmall>
                 </div>
               ))}

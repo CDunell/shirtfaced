@@ -55,7 +55,7 @@ function brandType(typography: Theme["typography"]): Theme["typography"] {
   return Object.fromEntries(
     Object.entries(typography).map(([name, value]) => [
       name,
-      value && typeof value === "object" && "fontFamily" in value
+      typeof value === "object" && "fontFamily" in value
         ? { ...value, fontFamily: FONT_SANS }
         : value,
     ]),

@@ -306,7 +306,8 @@ def _locate(source: Image.Image | Path | str) -> GarmentFrame:
     diagnostics["skin_share"] = skin
     diagnostics["subject_area"] = subject_area
 
-    shot_type = _classify_shot(skin, subject_area, touches, aspect)
+    # numpy comparisons yield numpy.bool, which is not builtins.bool.
+    shot_type = _classify_shot(skin, subject_area, bool(touches), aspect)
 
     if aspect > MAX_SUBJECT_ASPECT:
         reasons.append("SUBJECT_NOT_GARMENT_SHAPED")
