@@ -233,8 +233,72 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     "captain-fin": ("Captain Fin", "https://www.captainfin.com", "surf"),
     "workwear-hub": ("Workwear Hub", "https://www.workwearhub.com.au", "workwear"),
     "pnw-components": ("PNW Components", "https://www.pnwcomponents.com", "outdoor"),
+    # --- Creator, publisher and fandom merch: licensed characters, dense line art. ---
+    "dropout": ("Dropout", "https://store.dropout.tv", "creator-merch"),
+    "the-yetee": ("The Yetee", "https://theyetee.com", "creator-merch"),
+    "fangamer": ("Fangamer", "https://www.fangamer.com", "gaming"),
+    "sanshee": ("Sanshee", "https://sanshee.com", "gaming"),
+    "100-thieves": ("100 Thieves", "https://shop.100thieves.com", "esports"),
+    "faze-clan": ("FaZe Clan", "https://shop.fazeclan.com", "esports"),
+    # --- Veteran, tactical, patriotic: crest, banner, heavy type. ---
+    "grunt-style": ("Grunt Style", "https://gruntstyle.com", "veteran"),
+    "nine-line": ("Nine Line Apparel", "https://ninelineapparel.com", "veteran"),
+    "black-rifle-coffee": ("Black Rifle Coffee", "https://blackriflecoffee.com", "veteran"),
+    "ranger-up": ("Ranger Up", "https://rangerup.com", "veteran"),
+    # --- Cycling and running: minimal, technical, wordmark-led. ---
+    "ostroy": ("Ostroy", "https://ostroy.cc", "cycling"),
+    "satisfy": ("Satisfy Running", "https://www.satisfyrunning.com", "running"),
+    # --- Golf: crest, novelty, preppy-subverted. ---
+    "dormie-workshop": ("Dormie Workshop", "https://www.dormieworkshop.com", "golf"),
+    "malbon-golf": ("Malbon Golf", "https://www.malbongolf.com", "golf"),
+    "eastside-golf": ("Eastside Golf", "https://eastsidegolf.com", "golf"),
+    "bad-birdie": ("Bad Birdie", "https://www.badbirdie.com", "golf"),
+    # --- Climbing, snow, adventure. ---
+    "black-diamond": ("Black Diamond", "https://www.blackdiamondequipment.com", "outdoor"),
+    "cotopaxi": ("Cotopaxi", "https://www.cotopaxi.com", "outdoor"),
+    "howler-brothers": ("Howler Brothers", "https://howlerbrothers.com", "outdoor"),
+    "free-fly": ("Free Fly Apparel", "https://www.freeflyapparel.com", "outdoor"),
+    "duck-camp": ("Duck Camp", "https://www.duckcamp.com", "fishing"),
+    "sea-to-summit": ("Sea to Summit", "https://seatosummit.com.au", "outdoor"),
+    "kathmandu": ("Kathmandu", "https://www.kathmandu.com.au", "outdoor"),
+    # --- Counterculture and cause-led. ---
+    "cookies": ("Cookies", "https://cookiessf.com", "counterculture"),
+    "elevated-faith": ("Elevated Faith", "https://elevatedfaith.com", "cause"),
+    "madhappy": ("Madhappy", "https://www.madhappy.com", "cause"),
+    "the-good-patch": ("The Good Patch", "https://www.thegoodpatch.com", "cause"),
+    # --- Tattoo, barber, trade shop. ---
+    "sullen": ("Sullen Clothing", "https://www.sullenclothing.com", "tattoo"),
+    "inked-shop": ("Inked Shop", "https://inkedshop.com", "tattoo"),
+    "suavecito": ("Suavecito", "https://www.suavecito.com", "barber"),
+    "reuzel": ("Reuzel", "https://www.reuzel.com", "barber"),
+    "heatonist": ("Heatonist", "https://heatonist.com", "hospitality"),
+    # --- Mass-market novelty and print-on-demand: very high design volume. ---
+    "shirt-was-cash": ("Shirt Was Cash", "https://www.shirtwascash.com", "novelty"),
+    "tipsy-elves": ("Tipsy Elves", "https://www.tipsyelves.com", "novelty"),
+    # --- Festival merch. ---
+    "bonnaroo": ("Bonnaroo", "https://store.bonnaroo.com", "festival"),
+    "glastonbury": ("Glastonbury", "https://shop.glastonburyfestivals.co.uk", "festival"),
+    # --- More Australian labels. ---
+    "assembly-label": ("Assembly Label", "https://www.assemblylabel.com", "au-basics"),
+    "general-pants": ("General Pants", "https://www.generalpants.com", "au-streetwear"),
+    "zanerobe": ("Zanerobe", "https://zanerobe.com", "au-streetwear"),
+    "venroy": ("Venroy", "https://venroy.com.au", "au-basics"),
+    "commas": ("Commas", "https://commas.cc", "au-basics"),
+    "art-club-and-friends": ("Art Club & Friends", "https://www.artclubandfriends.com", "art-merch"),
+    # --- More Australian breweries: local humour, drinkware-heavy. ---
+    "bracket-brewing": ("Bracket Brewing", "https://www.bracketbrewing.com", "au-beer"),
+    "wildflower": ("Wildflower Brewing", "https://www.wildflowerbeer.com", "au-beer"),
+    "range-brewing": ("Range Brewing", "https://rangebrewing.com", "au-beer"),
+    "deeds-brewing": ("Deeds Brewing", "https://deedsbrewing.com.au", "au-beer"),
+    "hop-nation": ("Hop Nation", "https://www.hopnation.com.au", "au-beer"),
+    # --- US heritage and blank-adjacent. ---
+    "velva-sheen": ("Velva Sheen", "https://velvasheen.com", "americana"),
+    "altru": ("Altru Apparel", "https://www.altruapparel.com", "americana"),
+    "marine-layer": ("Marine Layer", "https://www.marinelayer.com", "americana"),
+    # --- Skate remaining. ---
+    "ripndip": ("RIPNDIP", "https://www.ripndip.com", "skate"),
+    "awake-ny": ("Awake NY", "https://www.awakenyclothing.com", "streetwear"),
 }
-
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
 
