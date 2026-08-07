@@ -48,8 +48,8 @@ document and assume it is live.
 - **Portable rules:** `studio/docs/CARRY_FORWARD_CANON.md` — what survives into new worlds.
 - **Brand voice:** `docs/foundations/BRAND_VOICE.md` — the word, the tagline grammar,
   Identity vs Storefront voice. Holds consistency while design content changes.
-- **Characters:** `docs/foundations/CHARACTERS.md` — the recurring cast. Never named in a
-  generation prompt; see its own scope note.
+- **Characters:** `docs/foundations/CHARACTERS.md` — a name list, nothing formed yet.
+  Never named in a generation prompt regardless.
 - **Production backlog:** `studio/worlds/world-01/SHOTLIST.md` and `CONTINUITY.md`.
 - **Design constitution:** `docs/research/SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md`.
 - **The kill filter:** `docs/research/DESIGN_REVIEW_SCORECARD.md` — 12 hard-fails plus a

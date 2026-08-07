@@ -90,10 +90,10 @@ link now would be fabricated continuity, not recovered continuity.
 
 ## Next Cast Priority
 
-No scene has used this table yet. `CHARACTERS.md` §1 has the name list; §2 is explicit
-that who's core, who's occasional, and who plays what role in a given scene are not
-yet decided. First use of this table is also the first real decision on any of that —
-make it for the scene in front of you, not in the abstract ahead of time.
+No scene has used this table yet. `CHARACTERS.md` is a name list only — no core group,
+no roles, no relationships decided. First use of this table is also the first real
+decision on any of that — make it for the scene in front of you, not in the abstract
+ahead of time.
 
 ---
 
