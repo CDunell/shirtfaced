@@ -42,10 +42,38 @@ USER_AGENT = (
 # and accessories unrepresented.
 PRODUCTS_PER_BRAND = 18
 
-# Images per product. The primary shot carries the graphic; a second is usually the
-# back print or an alternate colourway, both useful. More than that is bulk without
-# additional design information.
-IMAGES_PER_PRODUCT = 2
+# Images per product. Two was too few: brands commonly ship a close-up of the
+# garment alongside a full-body shot of a model wearing it, and it is the close-up
+# that can actually be measured -- a full-body frame puts the print in a few dozen
+# pixels. Threadheads names them outright (Black-Close-Up, Black-Full-Body); most
+# others number them. Taking six per product means the measurable shot is present
+# to be chosen, rather than lost to a cap of two.
+IMAGES_PER_PRODUCT = 6
+
+# Filename fragments that reveal what a shot is. Not every store labels its
+# images, so this is a hint recorded alongside the file, never a requirement.
+SHOT_HINTS: tuple[tuple[str, str], ...] = (
+    ("close-up", "close-up"),
+    ("closeup", "close-up"),
+    ("close_up", "close-up"),
+    ("full-body", "full-body"),
+    ("fullbody", "full-body"),
+    ("full_body", "full-body"),
+    ("flat", "flat"),
+    ("back", "back"),
+    ("front", "front"),
+    ("detail", "detail"),
+    ("model", "worn"),
+)
+
+
+def _shot_hint(url: str) -> str:
+    """What the store's own filename says this shot is, if anything."""
+    name = url.split("/")[-1].split("?")[0].lower()
+    for fragment, label in SHOT_HINTS:
+        if fragment in name:
+            return label
+    return ""
 
 # Requested image width in pixels. Comfortably above what any of the scorecard's
 # visual tests need — the thumbnail, blur and silhouette tests all reduce detail
@@ -465,6 +493,7 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
                     "content_hash": f"sha256:{hashlib.sha256(data).hexdigest()}",
                     "byte_size": len(data),
                     "content_type": "image/png" if extension == ".png" else "image/jpeg",
+                    "shot_hint": _shot_hint(src),
                     # The URL actually fetched, width parameter included -- the hash
                     # above is of this response, not of the unresized original.
                     "source_url": sized,
