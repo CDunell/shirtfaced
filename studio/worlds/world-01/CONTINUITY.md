@@ -77,8 +77,8 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 
 Added 7 August 2026 alongside `docs/foundations/CHARACTERS.md` (Hot List item 3).
 Nobody is named in a generation prompt — see that document's scope note. This tracks,
-for continuity and caption purposes only, which of the Core Eight a scene's "one
-bloke" or "another mate" is understood to be.
+for continuity and caption purposes only, which of the fifteen named people a scene's
+"one bloke" or "another mate" is understood to be.
 
 Shots before this table existed are marked unrecorded rather than assigned after the
 fact — nothing ties a name to a specific already-generated image, and inventing that
@@ -90,9 +90,10 @@ link now would be fabricated continuity, not recovered continuity.
 
 ## Next Cast Priority
 
-No scene has used this table yet. First use should pick two or three from the Core
-Eight whose established bit fits the scene's action, not the full eight at once —
-`CHARACTERS.md` §1 exists so the cast can pull a subset per occasion.
+No scene has used this table yet. `CHARACTERS.md` §1 has the name list; §2 is explicit
+that who's core, who's occasional, and who plays what role in a given scene are not
+yet decided. First use of this table is also the first real decision on any of that —
+make it for the scene in front of you, not in the abstract ahead of time.
 
 ---
 
