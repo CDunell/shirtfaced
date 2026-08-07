@@ -243,8 +243,8 @@ body {
   display: contents;
 }
 [data-tag="0"] .hero-img {
-  background-image: url("/products/good-times-1.webp");
-  background-position: 50% 30%;
+  background-image: url("/products/eight-ball.webp");
+  background-position: 50% 25%;
 }
 [data-tag="1"] .tl-1 {
   display: contents;
@@ -257,15 +257,15 @@ body {
   display: contents;
 }
 [data-tag="2"] .hero-img {
-  background-image: url("/products/hero-street.webp");
-  background-position: 50% 38%;
+  background-image: url("/products/built-different.webp");
+  background-position: 50% 35%;
 }
 [data-tag="3"] .tl-3 {
   display: contents;
 }
 [data-tag="3"] .hero-img {
-  background-image: url("/products/cold-beer-1.webp");
-  background-position: 50% 32%;
+  background-image: url("/products/love-fast-die-last.webp");
+  background-position: 50% 40%;
 }
 [data-tag="4"] .tl-4 {
   display: contents;
@@ -278,14 +278,14 @@ body {
   display: contents;
 }
 [data-tag="5"] .hero-img {
-  background-image: url("/products/roll-the-dice-1.webp");
-  background-position: 50% 30%;
+  background-image: url("/products/take-your-chances.webp");
+  background-position: 50% 35%;
 }
 /* No JS: the first pair still renders rather than an empty hero. */
 html:not([data-tag]) .tl-0 {
   display: contents;
 }
 html:not([data-tag]) .hero-img {
-  background-image: url("/products/good-times-1.webp");
-  background-position: 50% 30%;
+  background-image: url("/products/eight-ball.webp");
+  background-position: 50% 25%;
 }

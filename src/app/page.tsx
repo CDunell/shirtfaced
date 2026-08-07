@@ -15,10 +15,10 @@ const TRUST = [home.trust1, home.trust2, home.trust3];
 /* Photography carries these, not colour. Accents stay reserved for the things
    that actually need emphasis: primary CTA, active nav, NEW, cart count. */
 const COLLECTIONS = [
-  { label: "after dark", img: "/products/good-times-1.webp" },
+  { label: "after dark", img: "/products/not-yours.webp" },
   { label: "send it", img: "/products/send-it-2.webp" },
-  { label: "warm nights", img: "/products/cold-beer-1.webp" },
-  { label: "street", img: "/products/hero-street.webp" },
+  { label: "warm nights", img: "/products/spin-cycle.webp" },
+  { label: "street", img: "/products/built-different.webp" },
 ];
 
 export default function Home() {

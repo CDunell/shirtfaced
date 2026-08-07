@@ -34,10 +34,10 @@ export const TAGLINES: Tagline[] = [
   {
     beatOne: "Good mates",
     beatTwo: "great times",
-    image: "/products/good-times-1.webp",
+    image: "/products/eight-ball.webp",
     sizeOne: 16.6,
     sizeTwo: 16.4,
-    position: "50% 30%",
+    position: "50% 25%",
   },
   {
     beatOne: "Long lunch",
@@ -50,18 +50,18 @@ export const TAGLINES: Tagline[] = [
   {
     beatOne: "Two carloads",
     beatTwo: "one esky",
-    image: "/products/hero-street.webp",
+    image: "/products/built-different.webp",
     sizeOne: 13.9,
     sizeTwo: 22.2,
-    position: "50% 38%",
+    position: "50% 35%",
   },
   {
     beatOne: "Grand final",
     beatTwo: "either way",
-    image: "/products/cold-beer-1.webp",
+    image: "/products/love-fast-die-last.webp",
     sizeOne: 16.6,
     sizeTwo: 18.1,
-    position: "50% 32%",
+    position: "50% 40%",
   },
   {
     beatOne: "Wrong pub",
@@ -74,10 +74,10 @@ export const TAGLINES: Tagline[] = [
   {
     beatOne: "Six mates",
     beatTwo: "one tent",
-    image: "/products/roll-the-dice-1.webp",
+    image: "/products/take-your-chances.webp",
     sizeOne: 19.7,
     sizeTwo: 22.8,
-    position: "50% 30%",
+    position: "50% 35%",
   },
 ];
 

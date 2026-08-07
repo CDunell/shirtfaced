@@ -182,6 +182,21 @@ the admin Postgres database (`scripts/sync-products.mjs`), so the retirement
 takes effect whenever the demo catalog is replaced with real products, not by
 editing the generated file directly.
 
+**Fixed, not just flagged:** the retired phrase wasn't only in copy — it was
+printed directly onto the garment graphics in the placeholder hero photography
+(`good-times-1.webp`, `hero-street.webp`, `cold-beer-1.webp`,
+`roll-the-dice-1.webp`, and the unused `hero-good-times.webp`), and repeated as
+background poster set-dressing in most of those same shots. Retiring the
+tagline text alone left it plastered across the homepage a few inches from the
+new copy. The hero rotation and the homepage collections strip now point at
+the placeholder photos that don't carry it (`eight-ball`, `built-different`,
+`love-fast-die-last`, `take-your-chances`, `not-yours`, `spin-cycle`,
+`permanent`, `midnight-service`). **Same rule applies going forward:** when
+real product graphics get designed (Hot List item 5), "good times bad
+decisions" doesn't get reprinted onto a shirt any more than it gets typed into
+a tagline — the retirement is of the phrase, not of the file it used to live
+in.
+
 ---
 
 ## 5. What we never do
