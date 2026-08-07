@@ -34,12 +34,15 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from app.services.garment_frame import locate_garment  # noqa: E402
+
 CORPUS_ROOT = Path(__file__).resolve().parent.parent / "var" / "design_corpus"
 REPORT_PATH = CORPUS_ROOT / "design_structure.json"
+# Per-design records, so templates can be clustered rather than averaged.
+RAW_PATH = CORPUS_ROOT / "design_structure_raw.json"
 
 ANALYSIS_SIZE = 256
-# Torso box, matching design_extraction so structure and measurement agree.
-TORSO = (slice(90, 200), slice(80, 176))
 
 GARMENT_WORDS = re.compile(
     r"\b(tee|t-?shirts?|hoodie|sweat ?shirt|crew ?neck|jumper|cap|hat|beanie|"
@@ -114,12 +117,21 @@ def _bands(mask: np.ndarray) -> list[dict[str, float]]:
 
 
 def _analyse(path: Path) -> list[dict[str, float]] | None:
+    # The torso is located per image rather than assumed. A fixed box lands on
+    # the garment in a flat lay and on a model's face or the floor in a worn
+    # shot, and the corpus holds both; a small left-breast print measured as
+    # 93.8% "full front" that way. Frames where the garment cannot be located
+    # confidently are refused here rather than measured wrongly.
+    frame = locate_garment(path)
+    if not frame.measurable:
+        return None
     try:
         image = Image.open(path).convert("RGB").resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.LANCZOS)
     except Exception:
         return None
     pixels = np.asarray(image, dtype=np.float32)
-    centre = pixels[TORSO[0], TORSO[1], :]
+    rows, columns = frame.torso_slices()
+    centre = pixels[rows, columns, :]
     garment = _garment_colour(centre)
     distance = np.sqrt(((centre - garment) ** 2).sum(axis=2))
     off_garment = distance > 180.0
@@ -246,6 +258,7 @@ def main(argv: list[str]) -> int:
         "shapes_overall": dict(Counter(r["shape"] for r in records).most_common(10)),
     }
     REPORT_PATH.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    RAW_PATH.write_text(json.dumps(records), encoding="utf-8")
 
     print(f"\n{len(records)} designs\n")
     print("elements per design:", report["element_count_distribution"])
