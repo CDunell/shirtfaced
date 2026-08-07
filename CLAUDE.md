@@ -27,8 +27,11 @@ with an explicit scope statement that prevents it touching the others.
 `SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` before assuming a design rule applies to a
 photograph, or vice versa.
 
-**System C is reference-only.** `studio/docs/stage-2/README.md`: nothing in it reaches
-the planning model and no code reads it.
+**System C is reference-only, with one exception.** `studio/docs/stage-2/README.md`:
+the channel/campaign documents there reach nothing and no code reads them.
+`PRODUCT_PHOTOGRAPHY.md` — filed alongside them but actually part of System A's
+photography, not channel distribution — was promoted on 7 August 2026; its rules now
+live in `worlds/world-01/WORLD.md` under Product Photography Extraction.
 
 ## The rule that catches everyone
 

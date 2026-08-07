@@ -1,6 +1,12 @@
 # SHIRTFACED — PRODUCT PHOTOGRAPHY CANON
 
-**Status:** Locked foundation  
+**Status:** Promoted — 7 August 2026 (Hot List item 2). The operative rules
+(prominence scale, what extraction may and may not change) live in
+`worlds/world-01/WORLD.md` under **Product Photography Extraction**, on the
+planner's allowlist and reaching every generation request. This document
+remains the fuller production reference — shot families, styling detail,
+review gates, planning fields — for whoever builds the next shot, but where
+the two disagree, `WORLD.md` is the one the model actually sees.  
 **Stage:** 2 — Product Photography & Social Content System  
 **Date:** 5 August 2026
 
@@ -63,7 +69,7 @@ Use varied heights, builds, genders and proportions. Preserve natural posture, l
 
 ### Environmental and object studies
 
-Products may rest on kitchen chairs, car seats, pub tables, concrete stairs, balcony rails, ute trays, old timber, worn laminate or esky lids. Placement must feel left behind, not styled.
+Products may rest on kitchen chairs, pub tables, concrete stairs, balcony rails, ute trays, old timber, worn laminate or esky lids. Placement must feel left behind, not styled. No enclosed space — no car cabin, lift, tent or phone box — is ever the setting, for the product or anything else in frame; see `WORLD.md` → Vehicle Canon.
 
 ### Detail, texture and construction
 
@@ -75,17 +81,17 @@ Neat is acceptable; geometrically perfect is not. Flatlays resemble the temporar
 
 ### Packaging and shipping
 
-Show parcels on kitchen tables, at doors, in ordinary vehicles, near a garage or being packed on a worktable. Packaging is practical, tactile and premium. No confetti, influencer unboxing or invented delivery claims.
+Show parcels on kitchen tables, at doors, on a ute tray, near a garage or being packed on a worktable. Packaging is practical, tactile and premium. No confetti, influencer unboxing or invented delivery claims.
 
 ## 6. Environments, light and camera
 
-Approved environments include pubs, apartment kitchens, balconies, stairwells, old brick, concrete car parks, generic servo forecourts, ute trays, car interiors, garages, laundries, hallways, lookouts and front steps.
+Approved environments include pubs, apartment kitchens, balconies, stairwells, old brick, concrete car parks, generic servo forecourts, ute trays, garages, laundries, hallways, lookouts and front steps. No enclosed space is an approved environment, full stop — not a car cabin, not a lift, not a tent. Product photography gets no exception the rest of this world doesn't.
 
 Prohibited environments include white seamless studios, cycloramas, luxury hotels, American diners, content rooms, fashion studios, pristine designer apartments and generic ecommerce sets.
 
 Approved light comes from pubs, streetlights, servos, apartments, cars, shopfronts, overcast daylight and early windows. Added light may preserve product truth but must not announce itself. No beauty light, RGB, glossy rim light or shadowless studio finish.
 
-Rotate camera positions: across the road, through a doorway, another table, rear seat, passenger seat, pavement level, across the forecourt, inside the action and outside the conversation. The camera is another friend.
+Rotate camera positions: across the road, through a doorway, another table, beside a parked ute, pavement level, across the forecourt, inside the action and outside the conversation. The camera is another friend, never inside an enclosed space and never inside a vehicle cabin — see `WORLD.md` → Vehicle Canon, which this document does not get an exception to.
 
 ## 7. Styling and continuity
 

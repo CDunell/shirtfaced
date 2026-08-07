@@ -513,6 +513,60 @@ Never generate:
 
 ------------------------------------------------------------------------
 
+# Product Photography Extraction
+
+Product pages need clearer product moments than the documentary archive
+supplies by default. This section governs when that is allowed without
+splitting Shirtfaced into two photographic practices.
+
+There is one world. A product photograph is a quieter, clearer fragment of
+it, not a separate discipline. The Reference Standard and the Success Test
+still apply in full: if nobody wore Shirtfaced, the image must still be
+worth saving.
+
+## Prominence
+
+Most photography stays incidental. A frame may be extracted for clearer
+product use at one of four levels, and never higher:
+
+- P0 — Incidental. The default. Documentary archive, teaser, Reel.
+- P1 — Present but secondary. Lifestyle, collection, carousel.
+- P2 — Clear while still genuinely in the scene. Fit, gallery, paid social.
+- P3 — Product-led with a recognisable environment. Primary product image,
+  detail, packaging.
+
+There is no level above P3. Isolated or clinical studio treatment is never
+used, and reaching P3 still requires a real scene, real light and a real
+reason the camera is there.
+
+## What extraction changes, and what it never touches
+
+Extraction changes framing and prominence. It never relaxes a rule written
+elsewhere in this document — not Photography Language, not Lighting, not
+Locations, not People, not Wardrobe, and not Vehicle Canon. A product frame
+earns no exception to any of them.
+
+- The garment is accurate: type, colour, cut, seams, cuffs, fabric and fit
+  must match the sellable item.
+- Nobody rotates or poses to demonstrate the garment. Front, back and side
+  angles are motivated by an action already happening — carrying drinks,
+  climbing stairs, talking to a friend — never a turn staged for the camera.
+- The camera's position follows the same observer rule as everywhere else:
+  a believable position outside the space being watched.
+- No enclosed space is ever the setting, at any prominence level. Not a car
+  cabin, not a lift, not a tent, not a phone box. This holds even where the
+  general enclosed-space rule allows an outside-looking-in frame — a product
+  extraction takes no exception the rest of this document doesn't take. If
+  the product needs showing, it is on a ute tray, a table, a rail, a step —
+  never inside.
+
+Record the prominence level in the Continuity Ledger alongside hero product
+and camera position. A P2–P3 frame still has to agree with the shots around
+it in cast, light, weather and product condition — it is an extraction from
+the ledger, not a break from it.
+
+------------------------------------------------------------------------
+
 # Operating System
 
 World 1 is managed through two active production roles.

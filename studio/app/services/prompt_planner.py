@@ -50,6 +50,9 @@ PLANNING_CANON_HEADINGS = (
     # rules stop competing for room with each other.
     "Product Rotation",
     "Vehicle Canon",
+    # Promoted from stage-2/PRODUCT_PHOTOGRAPHY.md (Hot List item 2). Its own heading
+    # rather than folded into Product Rotation, same reasoning as the split above.
+    "Product Photography Extraction",
     "Prompt Construction Protocol",
     "Success Test",
 )
