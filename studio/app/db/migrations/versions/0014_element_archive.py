@@ -166,16 +166,14 @@ def upgrade() -> None:
             " AND licence_terms <> ''"
             " AND licence_source <> ''"
             " AND licence_checked_at IS NOT NULL)",
-            name="ck_archive_elements_verified_licence_complete",
+            name="verified_licence_complete",
         ),
-        sa.CheckConstraint("ink_min >= 1 AND ink_max >= ink_min", name="ck_archive_elements_inks"),
-        sa.CheckConstraint(
-            "complexity >= 0 AND complexity <= 1", name="ck_archive_elements_complexity"
-        ),
+        sa.CheckConstraint("ink_min >= 1 AND ink_max >= ink_min", name="inks"),
+        sa.CheckConstraint("complexity >= 0 AND complexity <= 1", name="complexity"),
         # Authored or ingested, never both and never neither.
         sa.CheckConstraint(
             "(recipe <> '') <> (geometry <> '')",
-            name="ck_archive_elements_recipe_xor_geometry",
+            name="recipe_xor_geometry",
         ),
     )
 
