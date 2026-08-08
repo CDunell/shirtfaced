@@ -1,4 +1,26 @@
 {
+  "illustration_part_ace_and_dice_0001": {
+    "subtype": "ace_and_dice",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "vAGLw"
+  },
+  "illustration_part_ace_of_spades_0001": {
+    "subtype": "ace_of_spades",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "A1UKV"
+  },
   "illustration_part_all_seeing_eye_0001": {
     "subtype": "all_seeing_eye",
     "style_tags": [
@@ -9,6 +31,17 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "8QXhh"
+  },
+  "illustration_part_banner_scroll_0001": {
+    "subtype": "banner_scroll",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "SGhZT"
   },
   "illustration_part_camp_chair_0001": {
     "subtype": "camp_chair",
@@ -32,6 +65,17 @@
     "source": "commissioned",
     "source_id": "3s2J0"
   },
+  "illustration_part_coiled_snake_0001": {
+    "subtype": "coiled_snake",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "eWNZx"
+  },
   "illustration_part_corrugated_iron_0001": {
     "subtype": "corrugated_iron",
     "style_tags": [
@@ -54,6 +98,17 @@
     "source": "commissioned",
     "source_id": "8RGxM"
   },
+  "illustration_part_crescent_moon_0001": {
+    "subtype": "crescent_moon",
+    "style_tags": [
+      "occult",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "WTDND"
+  },
   "illustration_part_cup_0001": {
     "subtype": "cup",
     "style_tags": [
@@ -75,6 +130,17 @@
     "source": "commissioned",
     "source_id": "Almmw"
   },
+  "illustration_part_dice_0001": {
+    "subtype": "dice",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Cmbuf"
+  },
   "illustration_part_eagle_0001": {
     "subtype": "eagle",
     "style_tags": [
@@ -86,6 +152,38 @@
     "source": "commissioned",
     "source_id": "AfxLN"
   },
+  "illustration_part_hand_of_fate_0001": {
+    "subtype": "hand_of_fate",
+    "style_tags": [
+      "occult",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "o80W5"
+  },
+  "illustration_part_hard_hat_0001": {
+    "subtype": "hard_hat",
+    "style_tags": [
+      "object",
+      "workwear"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_hard_hat_figure_0001": {
+    "subtype": "hard_hat_figure",
+    "style_tags": [
+      "object",
+      "workwear"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Bm3fu"
+  },
   "illustration_part_horseshoe_star_0001": {
     "subtype": "horseshoe_star",
     "style_tags": [
@@ -96,6 +194,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "BGTfT"
+  },
+  "illustration_part_jerry_can_0001": {
+    "subtype": "jerry_can",
+    "style_tags": [
+      "object",
+      "workwear"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "illustration_part_jetty_0001": {
     "subtype": "jetty",
@@ -150,6 +258,17 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "cbMQp"
+  },
+  "illustration_part_pallet_0001": {
+    "subtype": "pallet",
+    "style_tags": [
+      "object",
+      "utility"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "zyCYt"
   },
   "illustration_part_panther_0001": {
     "subtype": "panther",
@@ -206,6 +325,16 @@
     "source": "commissioned",
     "source_id": "tWLbM"
   },
+  "illustration_part_skate_truck_0001": {
+    "subtype": "skate_truck",
+    "style_tags": [
+      "object",
+      "workwear"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_skull_0001": {
     "subtype": "skull",
     "style_tags": [
@@ -238,6 +367,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "xxQHg"
+  },
+  "illustration_part_tape_measure_0001": {
+    "subtype": "tape_measure",
+    "style_tags": [
+      "object",
+      "workwear"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "illustration_part_thorn_branch_0001": {
     "subtype": "thorn_branch",

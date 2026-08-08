@@ -40,6 +40,16 @@
     "source": "commissioned",
     "source_id": "2WQH5"
   },
+  "texture_grunge_dense_0001": {
+    "subtype": "grunge_dense",
+    "style_tags": [
+      "distressed"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Rm30z"
+  },
   "texture_grunge_field_0001": {
     "subtype": "grunge_field",
     "style_tags": [
@@ -80,6 +90,26 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "pdmcg"
+  },
+  "texture_scratch_0001": {
+    "subtype": "scratch",
+    "style_tags": [
+      "distressed"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "LL3DZ"
+  },
+  "texture_scribble_0001": {
+    "subtype": "scribble",
+    "style_tags": [
+      "distressed"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "0SzPd"
   },
   "texture_spray_stipple_0001": {
     "subtype": "spray_stipple",

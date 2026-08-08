@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 100" width="180" height="100">
+  <ellipse cx="90" cy="50" rx="82" ry="42" fill="none" stroke="#222" stroke-width="8"/>
+  <ellipse cx="90" cy="50" rx="88" ry="48" fill="none" stroke="#222" stroke-width="1.5" stroke-dasharray="2 2"/>
+  <text x="90" y="58" text-anchor="middle" font-family="Impact, sans-serif" font-size="24" font-weight="900" fill="#222" letter-spacing="2">SF</text>
+</svg>

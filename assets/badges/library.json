@@ -1,4 +1,15 @@
 {
+  "badge_embroidered_oval_0001": {
+    "subtype": "embroidered_oval",
+    "style_tags": [
+      "label",
+      "apparel"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Words are baked <text>; they should be a slot the engine fills."
+  },
   "badge_embroidered_patch_0001": {
     "subtype": "embroidered_patch",
     "style_tags": [
@@ -31,6 +42,39 @@
     "ink_max": 2,
     "source": "commissioned",
     "provisional": "Carries <text> for its content; the words should be a slot the engine fills, not baked artwork."
+  },
+  "badge_merrowed_round_0001": {
+    "subtype": "merrowed_round",
+    "style_tags": [
+      "label",
+      "apparel"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Words are baked <text>; they should be a slot the engine fills."
+  },
+  "badge_satin_stitch_0001": {
+    "subtype": "satin_stitch",
+    "style_tags": [
+      "label",
+      "apparel"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Words are baked <text>; they should be a slot the engine fills."
+  },
+  "badge_woven_chest_0001": {
+    "subtype": "woven_chest",
+    "style_tags": [
+      "label",
+      "apparel"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Words are baked <text>; they should be a slot the engine fills."
   },
   "badge_woven_label_0001": {
     "subtype": "woven_label",

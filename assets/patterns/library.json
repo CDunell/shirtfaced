@@ -76,6 +76,28 @@
     "source": "commissioned",
     "source_id": "LX0V0"
   },
+  "pattern_ornate_frame_0001": {
+    "subtype": "ornate_frame",
+    "style_tags": [
+      "ornament",
+      "border"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Qudwt"
+  },
+  "pattern_rose_border_0001": {
+    "subtype": "rose_border",
+    "style_tags": [
+      "floral",
+      "border"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "FWYsd"
+  },
   "pattern_tapa_geometric_0001": {
     "subtype": "tapa_geometric",
     "style_tags": [
