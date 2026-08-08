@@ -31,15 +31,10 @@ COMMAND = re.compile(r"[MmLlHhVvCcSsQqTtAaZz]")
 PATH_TAG = re.compile(r'<path[^>]*\sd="([^"]+)"', re.IGNORECASE | re.DOTALL)
 VIEWBOX = re.compile(r'viewBox="\s*([-\d.]+)[\s,]+([-\d.]+)[\s,]+([-\d.]+)[\s,]+([-\d.]+)"')
 
-# Above this many drawing commands, artwork is too involved to hold together on
-# a garment at any size a garment offers. Measured from the authored elements,
-# whose most involved shape is a twelve-point burst at 25 commands.
+# The scale complexity is measured against. Not a limit -- a reference point,
+# so "how involved is this" is a number the composer can weigh against the size
+# of the print it is considering.
 BUSY_COMMANDS = 400
-
-# Artwork with more commands than this cannot be screen-printed in a small
-# number of inks without redrawing, so it is refused rather than ingested and
-# quietly disappointing someone later.
-UNPRINTABLE_COMMANDS = 4000
 
 
 class NotIngestible(Exception):
@@ -95,10 +90,14 @@ def _combined_path(svg: str) -> str:
 
 
 def complexity_of(path_data: str) -> float:
-    """How involved this artwork is, as a share of what a garment can hold.
+    """How involved this artwork is, as a number the composer can weigh.
 
     Counted from drawing commands rather than file size, because file size
     mostly measures how the exporter felt about decimal places.
+
+    This is a signal, not a limit. Something intricate is wrong for a 76mm yoke
+    print and right for a 305mm front, and the density budget already makes that
+    call per placement. Refusing it here would throw it away for both.
     """
     commands = len(COMMAND.findall(path_data))
     return min(commands / BUSY_COMMANDS, 1.0)
@@ -127,13 +126,6 @@ def ingest_svg(
         raise NotIngestible("UNREADABLE_FILE", str(error)) from error
 
     path_data = _combined_path(svg)
-    commands = len(COMMAND.findall(path_data))
-    if commands > UNPRINTABLE_COMMANDS:
-        raise NotIngestible(
-            "TOO_DETAILED_TO_PRINT",
-            f"{commands} drawing commands. This needs redrawing before it can be "
-            "separated into a small number of inks",
-        )
 
     return Element(
         id=element_key,

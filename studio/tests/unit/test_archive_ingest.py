@@ -160,13 +160,14 @@ def test_a_file_with_no_paths_is_refused_with_advice(tmp_path: Path) -> None:
     assert "rect" in raised.value.detail
 
 
-def test_artwork_too_detailed_to_separate_is_refused(tmp_path: Path) -> None:
-    """Refused now beats ingested and quietly disappointing someone later."""
+def test_intricate_artwork_is_ingested_and_scored_not_refused(tmp_path: Path) -> None:
+    """Intricate is wrong for a 76mm yoke and right for a 305mm front. The
+    density budget makes that call per placement; refusing it here would throw
+    it away for both."""
     busy = "".join(f"L {index} {index} " for index in range(5000))
     svg = f'<svg xmlns="http://www.w3.org/2000/svg"><path d="M 0 0 {busy}Z"/></svg>'
-    with pytest.raises(NotIngestible) as raised:
-        _ingest(tmp_path, svg)
-    assert raised.value.reason == "TOO_DETAILED_TO_PRINT"
+    element = _ingest(tmp_path, svg)
+    assert element.complexity == 1.0
 
 
 def test_a_missing_file_is_refused_rather_than_crashing(tmp_path: Path) -> None:

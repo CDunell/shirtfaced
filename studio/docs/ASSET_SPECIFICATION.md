@@ -1,8 +1,8 @@
 # Asset specification
 
 What the engine needs and cannot generate. Register is Australian vernacular:
-pubs, utes, the coast, the trades, backyards. Single colour, screen-print
-logic — bold shapes, confident negative space, no reliance on fine detail.
+pubs, utes, the coast, the trades, backyards. Screen-print logic — separable
+into a small number of inks.
 
 ---
 
@@ -118,5 +118,6 @@ print.
 Other formats — EPS, AI, PDF, SVG full of primitives — are convertible. The
 converter is our side of the line.
 
-**Test everything at 25mm.** Detail that reads on screen disappears on a left
-chest. What holds up small works everywhere.
+No detail ceiling. Print sizes run from a 76mm yoke to a 400mm back, and the
+engine measures how involved a piece of artwork is and places it accordingly.
+Something intricate is simply a large-print asset.
