@@ -24,6 +24,7 @@ from app.archive import registry
 from app.archive.assemble import AssembledDesign, assemble
 from app.archive.garment import Garment, GarmentError
 from app.archive.grammar import Grammar, grammars_for, suits
+from app.archive.palettes import HOUSE, choose
 from app.archive.placements import Placement
 from app.archive.placements import placement as get_placement
 from app.archive.render import Palette, RefusedToRender
@@ -35,7 +36,12 @@ MAX_OPTIONS = 6
 
 # Brand inks, most dominant first. The garment colour is chosen alongside and is
 # not an ink; contrast is a property of the pair.
-DEFAULT_INKS = ("#C6FF00", "#F2F0EA", "#101010", "#7A7A7A", "#C0452A", "#2B4B7E")
+# The inks every design used before colour became a choice, kept under their old
+# name so nothing that imported them breaks. They are now the "house" system in
+# app.archive.palettes, and a seed picks between systems rather than always
+# landing here -- so a seed composed before this change may come back in
+# different colours. That is the point of the change and not a regression.
+DEFAULT_INKS = HOUSE.inks
 
 
 @dataclass(frozen=True)
@@ -50,6 +56,10 @@ class Brief:
     inks: int = 2
     treatment: str = "clean"
     garment: str = "#101010"
+    # Empty means the seed picks one that reads on this garment. Naming one
+    # overrides that, because the owner choosing the season's colours is not
+    # the engine's business to second-guess.
+    colour_system: str = ""
 
     @property
     def content(self) -> dict[str, str]:
@@ -231,7 +241,13 @@ class DesignComposer:
                 )
             width_mm, height_mm = zone.width, zone.height
 
-        palette = Palette(garment=brief.garment, inks=tuple(DEFAULT_INKS[: brief.inks]))
+        # Contrast is a property of the pair, so the garment decides which
+        # systems are even available before the seed picks between them.
+        system = choose(brief.garment, seed, brief.colour_system)
+        palette = Palette(
+            garment=brief.garment,
+            inks=system.for_count(brief.inks, brief.garment),
+        )
         options: list[DesignOption] = []
         rejections: list[Rejection] = []
 

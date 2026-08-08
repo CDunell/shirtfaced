@@ -23,6 +23,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.archive.palettes import SYSTEMS
 from app.db.archive_models import ComposedDesign
 from app.db.session import get_db_session
 from app.domain.enums import AttemptState
@@ -52,6 +53,7 @@ class BriefIn(BaseModel):
     treatment: str = "clean"
     garment_colour: str = "#101010"
     inks: int = Field(default=2, ge=1, le=6)
+    colour_system: str = Field(default="", description="Empty lets the seed choose")
     limit: int = Field(default=6, ge=1, le=12)
 
     def to_request(self) -> Request:
@@ -65,6 +67,7 @@ class BriefIn(BaseModel):
             treatment=self.treatment,
             garment_colour=self.garment_colour,
             inks=self.inks,
+            colour_system=self.colour_system,
             limit=self.limit,
         )
 
@@ -136,6 +139,15 @@ def _refused(error: CompositionRefused) -> HTTPException:
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         detail={"reason": error.reason, "detail": error.detail},
     )
+
+
+@router.get("/palettes", summary="The ink systems available")
+def list_palettes() -> list[dict[str, Any]]:
+    """What can be printed, and what each one is for."""
+    return [
+        {"key": s.key, "label": s.label, "inks": list(s.inks), "reads_as": s.reads_as}
+        for s in SYSTEMS
+    ]
 
 
 @router.post("", response_model=list[OptionView], summary="Compose options for a brief")

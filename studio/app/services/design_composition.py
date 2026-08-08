@@ -62,6 +62,8 @@ class Request:
     garment_colour: str = "#101010"
     inks: int = 2
     style_tags: tuple[str, ...] = ()
+    # Empty lets the seed choose one that reads on this garment.
+    colour_system: str = ""
     limit: int = 6
 
 
@@ -97,6 +99,7 @@ def compose(request: Request) -> tuple[Garment, list[DesignOption]]:
             inks=request.inks,
             treatment=request.treatment,
             garment=request.garment_colour,
+            colour_system=request.colour_system,
         ),
         seed=request.seed,
         limit=request.limit,
@@ -130,7 +133,11 @@ def store(session: Session, request: Request, option: DesignOption) -> ComposedD
             "primary_text": request.primary_text,
             "secondary_text": request.secondary_text,
         },
-        palette={"garment": request.garment_colour, "inks": request.inks},
+        palette={
+            "garment": request.garment_colour,
+            "inks": request.inks,
+            "system": request.colour_system,
+        },
         treatment=request.treatment,
         grammar_key=option.grammar_key,
         parts=dict(option.parts),
@@ -188,6 +195,7 @@ def recompose(design: ComposedDesign) -> str:
         treatment=design.treatment,
         garment_colour=str(design.palette.get("garment", "#101010")),
         inks=int(design.palette.get("inks", 2)),
+        colour_system=str(design.palette.get("system", "")),
     )
     _, options = compose(request)
     for option in options:
