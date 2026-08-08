@@ -65,6 +65,11 @@ MIN_TEMPLATE_DESIGNS = 3
 # single observation count as knowledge; that is the flaw not inherited here.
 MIN_CONFIDENCE = 0.35
 
+# How far corpus attestation alone can carry a template. Brands shipping an
+# arrangement is evidence that it works; it is not evidence that it works for
+# us, and only the owner's decisions can supply that.
+CORPUS_CEILING = 0.75
+
 # Most options ever offered. More than this is not choice, it is abdication.
 MAX_OPTIONS = 3
 
@@ -277,11 +282,13 @@ def _confidence(corpus_designs: int, approved: int, decisions: int, fit: float =
     # Attested *and* suited. Either one alone overstates: a layout used by a
     # third of the corpus is not a confident answer for a brief it does not fit,
     # and a perfect fit to something nobody has ever shipped is a guess.
-    corpus_weight = _attestation(corpus_designs) * fit
+    # Corpus evidence is capped whether or not decisions exist. Applying the cap
+    # only while decisions == 0 meant the first *rejection* raised confidence --
+    # 0.476 to 0.577 -- because losing the cap was worth more than the rejection
+    # took away. A decision against something must never make it more certain.
+    corpus_weight = _attestation(corpus_designs) * fit * CORPUS_CEILING
     if decisions == 0:
-        # No decisions yet is not evidence against. It caps how far corpus
-        # attestation alone can carry a template, and nothing more.
-        return round(corpus_weight * 0.75, 4)
+        return round(corpus_weight, 4)
 
     approval_rate = approved / decisions
     owner_weight = decisions / (decisions + PRIOR)
