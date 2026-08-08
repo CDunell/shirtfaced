@@ -14,6 +14,7 @@ import { DesignBench } from "./components/DesignBench";
 import { PrintBench } from "./components/PrintBench";
 import { PromptWorkbench } from "./components/PromptWorkbench";
 import { ServiceStatus } from "./components/ServiceStatus";
+import { SocialBench } from "./components/SocialBench";
 import { WorldPage } from "./components/WorldPage";
 import type { ThemeName } from "./theme";
 
@@ -22,13 +23,14 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 
-type View = "prompts" | "print" | "compose" | "design" | "dashboard";
+type View = "prompts" | "print" | "compose" | "design" | "social" | "dashboard";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "prompts", label: "Prompts" },
   { id: "print", label: "Print" },
   { id: "compose", label: "Compose" },
   { id: "design", label: "Design" },
+  { id: "social", label: "Social" },
   { id: "dashboard", label: "Dashboard" },
 ];
 
@@ -37,10 +39,6 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   // Prompts first: generation happens elsewhere, so this is the screen that gets used.
   const [view, setView] = useState<View>("prompts");
 
-  // Admin's header, rebuilt: sticky, hairline rule, wordmark left, pill nav right.
-  // Base Web's HeaderNavigation brings its own look, which is the look we are
-  // moving away from, so the shell is plain markup and the components inside it
-  // take the shared palette from theme.ts.
   const navItem = (active: boolean) =>
     css({
       appearance: "none",
@@ -82,7 +80,6 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
             alignItems: "center",
             justifyContent: "space-between",
             gap: "12px",
-            // A phone cannot fit both. Wrapping beats a sideways scroll.
             flexWrap: "wrap",
             paddingLeft: "16px",
             paddingRight: "16px",
@@ -95,15 +92,13 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
             <span className={css({ color: theme.colors.contentTertiary })}>/ studio</span>
           </span>
 
-          <nav className={css({ display: "flex", alignItems: "center", gap: "4px" })}>
+          <nav className={css({ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" })}>
             {VIEWS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 aria-current={view === item.id ? "page" : undefined}
-                onClick={() => {
-                  setView(item.id);
-                }}
+                onClick={() => setView(item.id)}
                 className={`press ${navItem(view === item.id)}`}
               >
                 {item.label}
@@ -156,6 +151,8 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <ComposeBench />
         ) : view === "design" ? (
           <DesignBench />
+        ) : view === "social" ? (
+          <SocialBench />
         ) : (
           <>
             <h1 className={`display ${css({ fontSize: "40px", margin: "0 0 8px" })}`}>Dashboard</h1>
