@@ -137,6 +137,63 @@ def load_folder(folder: Path, family: str) -> tuple[Element, ...]:
     return tuple(found)
 
 
+RASTER_SUFFIXES = (".png", ".jpg", ".jpeg", ".tif", ".tiff", ".webp")
+
+
+def load_raster_folder(folder: Path, family: str) -> tuple[Element, ...]:
+    """Every raster in a folder, as elements of one family.
+
+    A texture, a halftone field, a bandana repeat and a scanned flash sheet are
+    all raster by nature, and three of the archive's families held nothing at
+    all because the loader only globbed for SVG. The database has allowed an
+    element without geometry since migration 0016 for exactly this; nothing was
+    reading it.
+
+    These carry no path data. They are placed by the composer the same way and
+    drawn as an image reference, so what is stored is where the file is rather
+    than what shape it makes.
+    """
+    if not folder.is_dir():
+        return ()
+
+    entries = _manifest(folder)
+    found: list[Element] = []
+    files = sorted(f for f in folder.iterdir() if f.suffix.lower() in RASTER_SUFFIXES)
+    for file in files:
+        key = file.stem
+        entry = entries.get(key, Entry())
+        found.append(
+            Element(
+                id=key,
+                family=family,
+                subtype=entry.subtype or key.replace(f"{family}_", "").rsplit("_", 1)[0],
+                licence=Licence(
+                    status=LicenceStatus.VERIFIED if entry.terms else LicenceStatus.UNVERIFIED,
+                    terms=entry.terms,
+                    source=entry.source,
+                    source_id=entry.source_id or key,
+                    source_url=entry.source_url,
+                    commercial_use=bool(entry.terms),
+                ),
+                symmetry=entry.symmetry,
+                ink_min=entry.ink_min,
+                ink_max=entry.ink_max,
+                # A raster's complexity cannot be counted from path commands, so
+                # it is taken from the manifest or left mid-range rather than
+                # guessed from the file size, which measures compression.
+                complexity=entry.complexity if entry.complexity is not None else 0.5,
+                style_tags=entry.style_tags,
+                compatible_treatments=entry.treatments,
+                exclusions=entry.exclusions,
+                provisional=entry.provisional,
+                recipe="",
+                geometry="",
+                source_file=str(file.relative_to(REPO_ROOT)),
+            )
+        )
+    return tuple(found)
+
+
 def symbols() -> tuple[Element, ...]:
     return load_folder(LIBRARY / "symbols", "symbol")
 
@@ -153,6 +210,32 @@ def illustrations() -> tuple[Element, ...]:
     return load_folder(LIBRARY / "illustration_parts", "illustration_part")
 
 
+def textures() -> tuple[Element, ...]:
+    return load_raster_folder(LIBRARY / "textures", "texture")
+
+
+def patterns() -> tuple[Element, ...]:
+    return load_raster_folder(LIBRARY / "patterns", "pattern")
+
+
+def print_effects() -> tuple[Element, ...]:
+    return load_raster_folder(LIBRARY / "print_effects", "print_effect")
+
+
+def flash() -> tuple[Element, ...]:
+    """Tattoo and occult flash, which arrives raster and is vectorised later."""
+    return load_raster_folder(LIBRARY / "flash", "illustration_part")
+
+
 def all_drawn() -> tuple[Element, ...]:
-    """Everything in the asset library, whatever family."""
-    return symbols() + ornaments() + frames() + illustrations()
+    """Everything in the asset library, whatever family, vector or raster."""
+    return (
+        symbols()
+        + ornaments()
+        + frames()
+        + illustrations()
+        + textures()
+        + patterns()
+        + print_effects()
+        + flash()
+    )

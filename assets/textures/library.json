@@ -1,0 +1,64 @@
+{
+  "texture_cracked_plastisol_0001": {
+    "subtype": "cracked_plastisol",
+    "style_tags": [
+      "distressed",
+      "screenprint"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "gvadp"
+  },
+  "texture_grunge_block_0001": {
+    "subtype": "grunge_block",
+    "style_tags": [
+      "distressed"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "2WQH5"
+  },
+  "texture_grunge_field_0001": {
+    "subtype": "grunge_field",
+    "style_tags": [
+      "distressed"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "SO7yU"
+  },
+  "texture_ink_loss_0001": {
+    "subtype": "ink_loss",
+    "style_tags": [
+      "distressed",
+      "screenprint"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "0GjWY"
+  },
+  "texture_spray_stipple_0001": {
+    "subtype": "spray_stipple",
+    "style_tags": [
+      "spray"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "prCgB"
+  },
+  "texture_wash_0001": {
+    "subtype": "wash",
+    "style_tags": [
+      "distressed"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "967We"
+  }
+}

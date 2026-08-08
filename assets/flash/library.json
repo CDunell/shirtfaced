@@ -1,0 +1,155 @@
+{
+  "illustration_part_camp_chair_0001": {
+    "subtype": "camp_chair",
+    "style_tags": [
+      "object",
+      "utility"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "vn4aU"
+  },
+  "illustration_part_corrugated_iron_0001": {
+    "subtype": "corrugated_iron",
+    "style_tags": [
+      "object",
+      "workwear"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "1qBEy"
+  },
+  "illustration_part_cup_0001": {
+    "subtype": "cup",
+    "style_tags": [
+      "object"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "N0Hgb"
+  },
+  "illustration_part_eagle_0001": {
+    "subtype": "eagle",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "AfxLN"
+  },
+  "illustration_part_horseshoe_star_0001": {
+    "subtype": "horseshoe_star",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "BGTfT"
+  },
+  "illustration_part_lightning_0001": {
+    "subtype": "lightning",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "vaicK"
+  },
+  "illustration_part_milk_crate_0001": {
+    "subtype": "milk_crate",
+    "style_tags": [
+      "object",
+      "utility"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Tsxso"
+  },
+  "illustration_part_rose_dagger_0001": {
+    "subtype": "rose_dagger",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "8Btch"
+  },
+  "illustration_part_servo_bowser_0001": {
+    "subtype": "servo_bowser",
+    "style_tags": [
+      "object",
+      "utility"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "tWLbM"
+  },
+  "illustration_part_skull_0001": {
+    "subtype": "skull",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "xbwbC"
+  },
+  "illustration_part_snake_0001": {
+    "subtype": "snake",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "v2HjL"
+  },
+  "illustration_part_swallow_0001": {
+    "subtype": "swallow",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "xxQHg"
+  },
+  "illustration_part_winged_hourglass_0001": {
+    "subtype": "winged_hourglass",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Z5TA0"
+  },
+  "illustration_part_work_boot_0001": {
+    "subtype": "work_boot",
+    "style_tags": [
+      "object",
+      "workwear"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "rCusp"
+  }
+}

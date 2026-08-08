@@ -1,0 +1,46 @@
+{
+  "pattern_bandana_paisley_0001": {
+    "subtype": "bandana_paisley",
+    "style_tags": [
+      "bandana",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "6y95H"
+  },
+  "pattern_camouflage_0001": {
+    "subtype": "camouflage",
+    "style_tags": [
+      "military",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Hbsn1"
+  },
+  "pattern_gingham_0001": {
+    "subtype": "gingham",
+    "style_tags": [
+      "classic",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "v30Co"
+  },
+  "pattern_houndstooth_0001": {
+    "subtype": "houndstooth",
+    "style_tags": [
+      "classic",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "LX0V0"
+  }
+}

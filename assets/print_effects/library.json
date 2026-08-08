@@ -1,0 +1,23 @@
+{
+  "print_effect_chenille_letter_0001": {
+    "subtype": "chenille_letter",
+    "style_tags": [
+      "varsity",
+      "applique"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "RKPmQ"
+  },
+  "print_effect_halftone_gradient_0001": {
+    "subtype": "halftone_gradient",
+    "style_tags": [
+      "halftone"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "xOwJz"
+  }
+}
