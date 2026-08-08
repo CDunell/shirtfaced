@@ -1,245 +1,204 @@
-# What has to come from outside
+# Shirtfaced — artwork and type commission brief
 
-*A brief for sourcing. Everything listed here is something the engine needs and
-I cannot make to a standard worth printing.*
-
-The rule this list is written under: anything even slightly off goes out. Not
-"good enough for now", not "passable at a small size". If it is not right, it is
-on this list.
+*For illustrators, letterers, type designers and asset suppliers.*
 
 ---
 
-## 1. What I can make, so it is not paid for twice
+## The brand
 
-Do not commission any of this.
+Shirtfaced is an Australian humour-led apparel and drinkware brand.
 
-**Parametric geometry.** Anything defined by a formula: circles, polygons of any
-side count, stars of any point count, cogs, scalloped roundels, diamonds,
-capsules, shields, arches, tickets, plaques, banners with swallowtail ends,
-crosses, chevrons, arrows, sunbursts, glints, zigzag rules, dot rows, tapered
-dividers, corner marks, brackets. These come out right first time because
-correct is computable. Variation is free -- a 6-tooth cog and a 24-tooth cog are
-one line apart.
+**Shirtfaced** is a verb and a state — something you *get*, and something you get
+*together*. It means that level of good time, not that many drinks. The sober
+mate is still shirtfaced. The word is always lower case.
 
-**Print behaviour.** Halftone screens, distress speckle, knockouts, layering,
-ink assignment, density budgeting.
-
-**Everything structural.** Type setting as outlines, arcs, slots, composition
-grammars, placement bounds, sizing, determinism, provenance records, the
-database.
-
-**Colour systems.** Palettes with contrast rules against garment colours. I can
-derive these from the corpus measurements rather than guess.
+The work lives in Australian vernacular: pubs, utes, the coast, the trades,
+backyards, the drive home. Funny rather than jokey. The kind of thing someone
+wears because it says where they are from, not because it explains a punchline.
 
 ---
 
-## 2. Typefaces — the biggest single gap
+## What we are commissioning
 
-Every design the engine makes is set in one face. That is why the sample sheets
-all look related no matter how much the arrangement changes. Nothing else on
-this list would improve the output as much.
+Artwork that becomes part of a design library, not finished designs. We build
+compositions from parts — a mark, a frame, a word, a texture — so each piece you
+supply gets used many times across many arrangements. A good mark earns its keep
+for years.
 
-**Needed: 8–12 families**, each with a full Latin character set, numerals,
-punctuation and at minimum a regular and a bold.
-
-| Class | What it is for | Priority |
-|---|---|---|
-| Athletic block, condensed | Collegiate arcs, sport, the workhorse | 1 |
-| Slab collegiate / varsity | Crests, flanked words | 1 |
-| Grotesque, wide and heavy | Oversized single-word fronts | 1 |
-| Workwear / industrial sans | Stamps, stencils, utility | 2 |
-| Stencil | The stencil grammar has no stencil face | 2 |
-| Vintage script / signwriter | Ephemera, ticket stubs, hand-painted feel | 2 |
-| Woodtype / Western display | Novelty, pub, poster | 3 |
-| Typewriter / monospace | Labels, tags, small print | 3 |
-| Blackletter | Band-merch register | 3 |
-| Rounded soft sans | Lighter, friendlier jokes | 3 |
-
-**Licence — worth getting right at purchase, because fonts are the one case
-where it is cheap to solve up front:**
-- Commercial use on goods for sale
-- The file may be vendored in a private repository (the engine converts glyphs
-  to outlines from that exact file)
-- No per-seat or per-title fee that scales with print runs
-- Open Font Licence satisfies all of the above and costs nothing
-
-**Format:** TTF or OTF. Variable fonts are fine and welcome. The engine converts
-glyphs to outlines, so hinting does not matter but a complete `cmap` does — a
-missing glyph is a hard refusal, not a substitution.
+Four categories, in the order we need them.
 
 ---
 
-## 3. Illustration — the bulk of the work
+## 1. Typefaces
 
-I cannot draw anything representational. This is not modesty; six attempts at a
-flame produced a pear three times.
+The highest priority. Everything we produce is currently set in one face, which
+puts a hard limit on how different two designs can look.
 
-**Needed: 400–800 marks.** Single-colour, print-ready, silhouette-led.
+**Wanted: 8–12 families.** Full Latin, numerals, punctuation, regular and bold
+minimum. Variable fonts welcome.
 
-### 3a. Replacements for shapes I got wrong
-
-These are in the archive now, marked as placeholders, and they are wrong:
-
-| Element | What is wrong |
+| Class | Used for |
 |---|---|
-| `symbol_wings_0001` | Reads as a bat or a moustache. Needs feather steps that scan as a wing. |
-| `symbol_flame_0001` | Reads as a pear. Needs an asymmetric flicker. |
-| `symbol_wave_0001` | The curl is passable, the face is not. |
-| `symbol_thong_0001` | Reads as a rugby ball. |
-| `symbol_palm_0001` | Fronds are radial spokes, not leaves. |
-| `symbol_mountains_0001` | Three even spikes, not a range. |
+| Athletic block, condensed | Collegiate arcs, sport — the workhorse |
+| Slab collegiate / varsity | Crests, flanked words |
+| Grotesque, wide and heavy | Oversized single-word chest and back prints |
+| Workwear / industrial sans | Stamps, utility marks |
+| Stencil | Sprayed, crated, military-surplus register |
+| Signwriter script | Hand-painted, pub, ephemera |
+| Woodtype / Western display | Poster, novelty, big claims |
+| Typewriter / monospace | Labels, tags, small print |
+| Blackletter | Band-merch register |
+| Rounded soft sans | Lighter material |
 
-### 3b. Shapes that are merely adequate, so by the rule above they go too
+**Licence.** We need commercial use on goods for sale, and to hold the font file
+in our own repository — our pipeline converts glyphs to outlines from that exact
+file, so the metrics must not shift under us. SIL Open Font Licence covers all
+of that. Retail licences are fine too; just tell us the terms so we can budget
+properly.
 
-| Element | Why |
-|---|---|
-| `symbol_anchor_0001` | Correct but stiff. No character. |
-| `symbol_crown_0001` | Three triangles on a bar. |
-| `symbol_boomerang_0001` | A curved wedge. |
-| `symbol_stubby_0001` | Readable as a bottle, dull as a mark. |
-| `symbol_tinnie_0001` | A chamfered rectangle. |
-| `symbol_spanner_0001` | Blocky. A drawn one would have taper and a proper jaw. |
-| `symbol_heart_0001` | Generic. |
+**Format.** TTF or OTF, with the full character set. Our typesetter raises an
+error on a missing glyph rather than quietly substituting one — deliberate, but
+it does mean gaps show up as blocked work rather than as a wrong-looking shirt.
 
-### 3c. Subjects not yet attempted at all
+---
 
-Grouped so a commission can be scoped in batches.
+## 2. Illustration
 
-**Australian vernacular** — the register the brand actually lives in.
+The largest body of work. **400–800 marks** over time, commissioned in batches.
+
+Single colour, silhouette-led, built to read from across a room. Screen print
+rather than editorial illustration: bold shapes, confident negative space, no
+reliance on fine detail or tone.
+
+### Batch 1 — Australian vernacular
+
+The register the brand lives in, and where we have nothing at all.
+
 Magpie, kookaburra, cockatoo, galah, kangaroo, wombat, blue heeler, goanna,
-redback, bull ant, cane toad, esky, hills hoist, ute, roo bar, servo bowser,
-milk crate, camp chair, snag on bread, meat pie, lamington, Chiko roll, zinc
-stripe, bucket hat, boardies, work boot, high-vis, stubby holder, tinnie boat,
-outboard, jetty, corrugated iron, water tank, windmill, salt bush, gum leaf,
-wattle, banksia, bottlebrush, southern cross variants, hills of the divide.
+redback, bull ant, cane toad. Esky, hills hoist, ute, roo bar, servo bowser,
+milk crate, camp chair, water tank, windmill, corrugated iron, jetty. Snag on
+bread, meat pie, lamington, Chiko roll. Zinc stripe, bucket hat, boardies, work
+boot, high-vis, stubby holder. Gum leaf, wattle, banksia, bottlebrush, salt
+bush. Southern Cross variants.
 
-**Trade and workwear.** Hammer, shifter, angle grinder, tape measure, level,
-trowel, welding mask, hard hat, gloves, drill, chalk line, sawhorse.
+### Batch 2 — Trade and workwear
 
-**Pub and social.** Schooner, pot, pint, keg, tap, bottle opener, coaster, dart,
-pool cue, jukebox, meat tray, raffle ticket, pokies, chook.
+Hammer, shifter, angle grinder, tape measure, level, trowel, welding mask, hard
+hat, gloves, drill, chalk line, sawhorse.
 
-**Coast.** Board (short, mal, fish), fin, leg rope, wax block, sea urchin,
-tinnie, crab, prawn, snapper, bream, tackle box, rod, sinker, life ring.
+### Batch 3 — Pub and social
 
-**Hands and figures.** Pointing hand, thumbs up, shaka, fist, open palm, holding
-a can, arms crossed, silhouetted figure standing, sitting, walking, running.
+Schooner, pot, pint, keg, tap, bottle opener, coaster, dart, pool cue, jukebox,
+meat tray, raffle ticket, chook.
 
-**Generic marks that every apparel archive needs.** Skull, snake, eagle, wolf,
-bear, lion, rose, laurel, oak leaf, lightning bolt (drawn, not geometric),
-flames set (multiple), wings set (multiple), dice, cards, horseshoe, star field,
-moon phases, planet, rocket, radio tower, satellite dish.
+### Batch 4 — Coast
 
-### 3d. Format requirements — what the ingestion can actually read
+Board (short, mal, fish), fin, leg rope, wax block, tinnie, outboard, crab,
+prawn, snapper, bream, tackle box, rod, sinker, life ring.
 
-- **SVG.** Not EPS, not AI, not PDF, not PNG.
-- **Paths only.** No `<rect>`, `<circle>`, `<polygon>`, `<text>` or embedded
-  raster. If the drawing tool exports primitives, convert to paths before
-  sending.
-- **Outlines, not strokes.** Every stroke expanded to a filled path. A stroke
-  scales wrongly and separates wrongly.
-- **No groups, no transforms, no clip paths, no masks, no filters.** These get
-  flattened wrongly by somebody else's software at the worst moment.
-- **One colour.** The engine assigns ink. Any fill colour in the file is
-  discarded, so do not use colour to carry meaning.
-- **Holes as counters,** wound opposite to the outer path, so they hold under
-  the default fill rule.
-- **Normalised viewBox**, origin at top-left, artwork filling it.
-- **Under 4,000 drawing commands.** Beyond that it cannot be separated into a
-  few inks without redrawing, and the ingestion refuses it.
-- **Legible at 25mm.** Test it at that size before sending. Most detail that
-  looks good on screen disappears on a left chest.
+### Batch 5 — Hands and figures
 
-### 3e. Provenance — recorded, not a barrier
+Pointing hand, thumbs up, shaka, fist, open palm, hand holding a can, arms
+crossed. Figures standing, sitting, walking, running — silhouette only.
 
-Send what you have. Nothing is turned away for want of paperwork, and anything
-supplied can be designed with immediately.
+### Batch 6 — Standard apparel marks
 
-What is worth capturing per item, because it makes the pre-release review quick
-rather than archaeological:
+Skull, snake, eagle, wolf, bear, lion, rose, laurel, oak leaf, lightning bolt,
+flames (a set), wings (a set), dice, cards, horseshoe, star field, moon phases,
+rocket, radio tower.
 
-- Where it came from and its identifier there
-- A URL that resolves to that item
-- The terms, if they are stated
-- Whether it was commissioned for us
+### Redraws
 
-Rights are reviewed once, on a finished design, before it goes on sale. An item
-with no provenance is still usable; it just means someone has to work out its
-history at that point instead of reading it off a line.
+We have crude in-house versions of these and want them drawn properly. Reference
+files available on request.
+
+Wings · flame · breaking wave · thong · palm · mountain range · anchor · crown ·
+boomerang · stubby bottle · can · spanner · heart
 
 ---
 
-## 4. Textures
+## 3. Textures
 
-Procedural distress and halftone I can make. What I cannot make is texture that
-looks like it came off a press.
-
-**Needed: 30–60 texture plates.**
+**Wanted: 30–60 plates.** Used as overlays and masks to age a print.
 
 Ink loss on a dry screen, over-inked bleed, photocopy degradation at several
-generations, dry brush, cracked plastisol on an old shirt, misregistration
-offsets, halftone moiré, paper grain, canvas weave, screen mesh, spray stipple,
-roller texture, letterpress bite, stamp-pad unevenness, worn vinyl cracking.
+generations, dry brush, cracked plastisol, misregistration offsets, halftone
+moiré, paper grain, canvas weave, screen mesh, spray stipple, roller texture,
+letterpress bite, worn vinyl.
 
-**Format:** 1-bit or greyscale PNG at 300dpi minimum, 200mm square or larger,
-tileable where the texture is a field rather than an edge. These are used as
-masks, so contrast matters more than tonal subtlety.
-
----
-
-## 5. Patterns
-
-**Needed: 40–80 repeat tiles.**
-
-Gingham, houndstooth, argyle, tartan variants, ticking stripe, pinstripe, dot
-grids, diamond lattice, chevron fields, wave repeats, camouflage-like abstract
-fields, bandana paisley, tapa-style geometric, woodblock repeats, rope repeats,
-chain-link, mesh, grid papers, topographic contours.
-
-I can generate the strictly geometric ones (stripe, grid, check, chevron, dot).
-Anything with a motif — paisley, floral, tapa, camouflage — has to be drawn.
-
-**Format:** as illustration above, plus the tile's repeat unit stated explicitly
-and proven seamless by tiling it 3×3 before sending.
+**Format.** Greyscale or 1-bit PNG, 300dpi or better, 200mm square minimum.
+Tileable where the texture is a field rather than an edge effect. High contrast
+is more useful to us than subtle tone.
 
 ---
 
-## 6. Photography
+## 4. Patterns
 
-The engine has an image slot and nothing to put in it. That is System A's
-territory and is generated, but if photographic elements are wanted *inside*
-designs — a halftoned face, a landscape knocked into a shape — those need
-supplying as high-contrast images suitable for one-colour separation.
+**Wanted: 40–80 repeat tiles** — the ones with a motif in them.
 
-**Needed if wanted at all:** 50–100 images, high contrast, clear silhouette,
-resolvable at 1-bit. Rights cleared for goods for sale, including any people in
-them.
+Bandana paisley, floral repeats, tapa-style geometric, camouflage-like abstract
+fields, woodblock repeats, rope repeats, topographic contours.
 
----
+We generate the strictly geometric ones ourselves — stripe, grid, check,
+chevron, dot — so no need to quote for those.
 
-## 7. Priority, if it is being commissioned in stages
-
-1. **Typefaces.** Nothing else changes the output as much. Even three faces
-   would break the sameness.
-2. **The thirteen shape replacements** in 3a and 3b. Small, well-specified, and
-   they remove the placeholders that are currently in the archive pretending to
-   be finished.
-3. **Australian vernacular illustration.** This is the register the brand lives
-   in and there is nothing in it.
-4. **Textures.** Cheap to source, large visible effect.
-5. **Trade, pub, coast illustration.** Volume.
-6. **Patterns.** Useful but the engine gets less out of them than out of marks.
-7. **Photography.** Only if photographic designs are actually wanted.
+**Format.** As illustration below, plus the repeat unit stated. Worth tiling it
+3×3 once before sending to confirm it is seamless.
 
 ---
 
-## 8. What to send back
+## File format
 
-For each item: the SVG (or font, or PNG), and whatever is known about where it
-came from — source, identifier, URL, terms if stated. A spreadsheet or JSON
-alongside the assets is fine. Everything is ingested and usable straight away;
-the provenance is there so the pre-release rights review is a lookup rather than
-an investigation.
+Our pipeline is vector-first, because everything gets scaled between a 90mm
+chest print and a 400mm back print. What drops straight in:
 
-If any of the format requirements in 3d are inconvenient for the supplier, say
-so and I will write a converter.
+- **SVG**, paths only
+- **Strokes expanded to filled outlines** — an unexpanded stroke scales wrongly
+  and separates wrongly at the printer
+- **No groups, transforms, clip paths or masks** — these get flattened
+  unpredictably by third-party software downstream
+- **One colour** — we assign inks per design, so any colour in the file is
+  discarded
+- **Holes as counters**, wound against the outer path
+- **Artwork filling the viewBox**, origin top-left
+
+If your tool exports differently — EPS, AI, PDF, or SVG full of primitives —
+**send it anyway and tell us.** We will write the converter. Please do not spend
+billable hours reformatting; that is our problem, not yours.
+
+One thing genuinely worth doing at your end: **look at it at 25mm.** Most detail
+that reads beautifully on screen disappears on a left chest. If it holds up
+small, it will work everywhere.
+
+---
+
+## Delivery
+
+Send the files plus whatever you know about each one. If it is original work for
+us, just say so. If it draws on a historical source, a reference, or something
+you have licensed in, note what and from where.
+
+That is not a hurdle to clear before we can use anything. Everything you send
+goes straight into the library and gets designed with immediately. We run a
+rights review once, on a finished design, before it goes on sale — and a line
+from you turns that review into a two-minute lookup instead of a research job.
+
+A spreadsheet or a text file alongside the assets is plenty.
+
+---
+
+## Terms we prefer
+
+For commissioned work: full assignment, or a broad perpetual licence to
+Shirtfaced covering goods for sale.
+
+Happy to discuss retained rights for your portfolio, credit, or your own reuse
+of the underlying style. Tell us what matters to you and we will work it out.
+
+---
+
+## Getting started
+
+A small paid test batch first — five to ten pieces from whichever category suits
+you — so we can both see how the work sits in the system before committing to a
+larger run.
