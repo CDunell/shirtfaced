@@ -1,12 +1,19 @@
 # Vector asset brief — Shirtfaced
 
 Australian humour-led premium streetwear. The register is streetwear, not
-Australiana: type-led wordmarks, small chest emblems, tattoo and occult flash,
-brand-owned characters.
+Australiana.
 
-This is derived from 12,151 product images across 188 apparel brands that we
-hold and have mined. Of 1,166 designs measured, 577 are a single element and the
-median design carries four words. The graphic is usually the name, set well.
+We hold and have mined 12,151 product images across 188 apparel brands. Use that
+evidence for **register** -- what world this brand lives in -- and not for
+direction. An earlier version of this brief quoted the medians from it (577 of
+1,166 designs are a single element; four words is the median) and concluded the
+project was type-led. The numbers are right and the conclusion does not follow:
+a median is the average of an established market, and a wordmark carries a shirt
+because the name is already known. We are not designing to be average.
+
+The archive stays neutral. It should support a bare wordmark and a full back
+illustration equally well, and which one gets made is decided per drop, not
+here.
 
 Assets feed an engine that composes designs from parts and places them in real
 print zones at real millimetre dimensions.

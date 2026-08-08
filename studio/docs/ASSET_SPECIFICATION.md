@@ -22,13 +22,43 @@ observations come from looking at roughly 180 products across 36 brands in the
 streetwear, skate, Australian streetwear and Australian humour traditions —
 enough to be confident about what recurs, not enough to put a percentage on it.
 
+## What the corpus can and cannot tell us
+
+It describes what the market already sells. That is decisive on **register** —
+it is how the souvenir Australiana was ruled out, because nothing in any
+tradition depicts its own country's wildlife — and it is worthless as a
+**direction**.
+
+The distinction got lost once already, in the other direction from the
+kookaburras. A brief written from here told a supplier the project was
+type-led, citing the medians below, and it was right about the numbers and
+wrong about what follows from them:
+
+*A median describes the average of an established market.* Designing to it is
+designing to be average. The numbers say most streetwear graphics are one
+element and four words; they do not say ours should be.
+
+*Wordmark equity is earned, not copied.* A Stüssy wordmark carries a shirt
+because Stüssy is forty-five years old. The same layout on a brand nobody knows
+is a blank shirt with an unfamiliar name on it. The corpus shows the output of
+equity, not the route to it.
+
+*It is also a constitutional violation.* `SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION`
+§2.2 lists image subject and illustration language as **seasonal variables**.
+Fixing the permanent archive as type-led is the same error as filling it with
+fauna — a seasonal decision baked into the layer that is supposed to outlast it.
+
+So the archive supports the whole range and stays neutral on direction. What a
+given drop looks like is the owner's call, made per range, against whatever that
+range is about. Nothing in this document decides it.
+
 ## What the corpus actually shows
 
 **Designs are small.** Of 1,166 mined designs, 577 are a single element and 899
 are one or two. Seven or eight elements appear four times in the whole set. The
 median design carries four words, and that holds at every element count.
 
-**They are type-led.** The dominant object on a streetwear garment is a
+**Type carries most of them.** The most common object on a streetwear garment is a
 wordmark: set straight, arched, condensed, in blackletter, in athletic script,
 in collegiate slab. Stüssy, Neighborhood, Pleasures, Born X Raised, Thrasher,
 Deathwish, Primitive, Nena and Pasadena — the graphic *is* the name, and the
@@ -69,8 +99,9 @@ illustration brief was the wrong turn, not the symbol work.
 ## Typefaces
 
 Every design is currently set in one face, which is the hardest limit on the
-work. Given that the median design is one element and four words, more faces
-changes the output more than anything else on this list.
+work. This is a capability gap, not a direction: one face means every design
+that uses type looks related whether or not it should. More faces widens what
+can be made. It does not say more type should be made.
 
 | Class | Used for |
 |---|---|

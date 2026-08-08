@@ -75,12 +75,17 @@ across 36 brands:
 
 - 577 of 1,166 designs are a single element; 899 are one or two;
 - the median design carries four words, at every element count;
-- the dominant object is a wordmark, and the craft is in the lettering;
+- the most common object is a wordmark, and the craft is in the lettering;
 - the volume product is a plain blank with a small mark at left chest;
 - illustration, where it appears, is a brand-owned character, tattoo or occult
   flash, an institutional crest, or a halftone panel.
 
-The full derivation is in `studio/docs/ASSET_SPECIFICATION.md`.
+The full derivation is in `studio/docs/ASSET_SPECIFICATION.md`, including what
+this evidence does **not** license. It settles register. It does not set a design
+direction, and reading the medians above as an instruction to make type-led work
+is the same category error as reading "Australian" as an instruction to draw
+kangaroos. §2.2 of the design constitution makes subject and illustration
+language seasonal variables; neither is decided here.
 
 ---
 
