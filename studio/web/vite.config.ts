@@ -10,20 +10,18 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
-    // Bind to localhost: the API key never reaches the browser, but there is no
-    // reason to expose a dev server to the network either.
     host: "127.0.0.1",
     proxy: {
       "/api": { target: API_TARGET, changeOrigin: true },
       "/health": { target: API_TARGET, changeOrigin: true },
       "/assets": { target: API_TARGET, changeOrigin: true },
+      // The Social bench uses the generated V1-V3 assets directly. Proxying this
+      // keeps development and the single-origin production build identical.
+      "/social-assets": { target: API_TARGET, changeOrigin: true },
     },
   },
   build: {
-    // FastAPI serves this directory. Keep it in step with WEB_DIST_ROOT.
     outDir: "dist",
-    // Not "assets": that path serves generated images from the API, and a bundle
-    // named /assets/index-*.js would be shadowed by the image route.
     assetsDir: "static",
     sourcemap: true,
   },
