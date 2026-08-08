@@ -54,9 +54,11 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
 
-      # Rebuild from the canonical brand vectors on every deploy. V3 overlays must
-      # be literal paths/primitives only: Android/WebView can successfully load an
-      # SVG while silently rasterising mask/image/symbol/use content as transparent.
+      # Rebuild from the canonical brand vectors on every deploy. Keep the SVGs as
+      # editable source outputs, but rasterise V3 to transparent PNGs for Social
+      # Studio. Android/WebView has repeatedly loaded the SVG successfully and then
+      # drawn it transparent when used as a canvas image; PNG removes that entire
+      # browser-specific rasterisation path.
       - name: Build Social assets
         run: |
           node scripts/build-social-assets.mjs
@@ -76,6 +78,21 @@ jobs:
               exit 1
             }
           done
+
+          sudo apt-get update -qq
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq librsvg2-bin
+          for file in public/social-assets/v3/*.svg; do
+            png="${file%.svg}.png"
+            rsvg-convert "$file" --format=png --output="$png"
+            test -s "$png" || {
+              echo "Failed to rasterise Social overlay: $file"
+              exit 1
+            }
+          done
+          file public/social-assets/v3/*.png | grep -q 'PNG image data' || {
+            echo "Rasterised Social overlays are not valid PNG files."
+            exit 1
+          }
 
       # Social assets are generated at repository level because the storefront and
       # Studio share the same brand source. Studio is deployed as a standalone tree,
