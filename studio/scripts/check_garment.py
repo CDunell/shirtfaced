@@ -40,6 +40,20 @@ NUMBER = re.compile(r"-?\d*\.?\d+")
 VIEWBOX = re.compile(r'viewBox="\s*([-\d.]+)[\s,]+([-\d.]+)[\s,]+([-\d.]+)[\s,]+([-\d.]+)"')
 
 KNOWN_ZONES = {p.key for p in BY_FIT["adult"]} | {"cap_front", "cap_side"}
+
+# A garment has two sleeves and the engine has one sleeve placement, so a file
+# may split a zone per side. The suffix says which side; the bounds are the
+# placement's.
+SIDE_SUFFIXES = ("_left", "_right")
+
+
+def _base_zone(key: str) -> str:
+    for suffix in SIDE_SUFFIXES:
+        if key.endswith(suffix) and key[: -len(suffix)] in KNOWN_ZONES:
+            return key[: -len(suffix)]
+    return key
+
+
 STRUCTURE_IDS = {"garment-outline", "garment-collar", "garment-seams"}
 
 # How far a zone may exceed the engine's maximum before it is reported. Two
@@ -118,13 +132,14 @@ def check(file: Path, render_to: Path | None = None) -> int:
         w, h = x1 - x0, y1 - y0
         line = f"  zone-{key:<18} {w:>5.0f} x {h:<5.0f} mm"
 
-        if key not in KNOWN_ZONES:
+        base = _base_zone(key)
+        if base not in KNOWN_ZONES:
             print(line + "   UNKNOWN ID")
             problems.append(f"zone-{key} is not a placement the engine knows")
             continue
 
         try:
-            spec = placement(key)
+            spec = placement(base)
         except KeyError:
             print(line + "   (no bounds to check)")
             continue
@@ -139,7 +154,7 @@ def check(file: Path, render_to: Path | None = None) -> int:
             problems.append(f"zone-{key} {flag}mm")
 
         # Chest side. In a front view the wearer's left is the viewer's right.
-        if key == "left_chest" and body_left is not None and body_right is not None:
+        if base == "left_chest" and body_left is not None and body_right is not None:
             centre = (body_left + body_right) / 2
             if (x0 + x1) / 2 < centre:
                 problems.append(
