@@ -1,0 +1,209 @@
+"""Taking outside artwork into the archive, without taking its rights for granted.
+
+Four of the fourteen families cannot be authored. A drawing of a hand has to be
+drawn or found, and finding it means someone else made it. That changes what
+ingestion is: mostly a rights problem wearing a file-format problem's clothes.
+
+So the rule this module is built around:
+
+    **Ingestion never marks anything usable.**
+
+Everything that comes in is recorded as unverified, with where it came from and
+what identifier it had there. Making it usable is a separate, deliberate act by
+a person who has read the actual terms for that actual item. There is no path
+through this module that produces a usable element, and that is not an
+oversight to be tidied up later.
+
+The reason is narrow and worth stating. These go on garments that are sold. A
+collection publishing open metadata has not thereby published every image under
+the same terms; an out-of-copyright work can have a scan carrying its own claim;
+and terms differ between the countries the brand sells into. None of that is
+knowable from the file, so none of it is guessed here.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from pathlib import Path
+
+from app.domain.element import Element, Licence
+from app.domain.enums import LicenceStatus
+
+# Path commands, for measuring how involved a piece of artwork is.
+COMMAND = re.compile(r"[MmLlHhVvCcSsQqTtAaZz]")
+PATH_TAG = re.compile(r'<path[^>]*\sd="([^"]+)"', re.IGNORECASE | re.DOTALL)
+VIEWBOX = re.compile(r'viewBox="\s*([-\d.]+)[\s,]+([-\d.]+)[\s,]+([-\d.]+)[\s,]+([-\d.]+)"')
+
+# Above this many drawing commands, artwork is too involved to hold together on
+# a garment at any size a garment offers. Measured from the authored elements,
+# whose most involved shape is a twelve-point burst at 25 commands.
+BUSY_COMMANDS = 400
+
+# Artwork with more commands than this cannot be screen-printed in a small
+# number of inks without redrawing, so it is refused rather than ingested and
+# quietly disappointing someone later.
+UNPRINTABLE_COMMANDS = 4000
+
+
+class NotIngestible(Exception):
+    """The file cannot become an element, with a durable reason code."""
+
+    def __init__(self, reason: str, detail: str = "") -> None:
+        super().__init__(f"{reason}: {detail}" if detail else reason)
+        self.reason = reason
+        self.detail = detail
+
+
+@dataclass(frozen=True)
+class Source:
+    """Where a piece of artwork came from.
+
+    Every field is required. A source with a blank identifier cannot be checked
+    again later, which makes it indistinguishable from something nobody
+    recorded -- and an unrecorded source is the one that gets used by accident.
+    """
+
+    name: str
+    item_id: str
+    url: str
+    note: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.name.strip():
+            raise NotIngestible("SOURCE_NOT_NAMED", "a source must say where it came from")
+        if not self.item_id.strip():
+            raise NotIngestible(
+                "SOURCE_HAS_NO_IDENTIFIER",
+                f"{self.name} artwork needs the identifier it has there, so the "
+                "terms can be checked against the item rather than the collection",
+            )
+
+
+def _combined_path(svg: str) -> str:
+    """Every path in the file, as one path.
+
+    Fills and strokes are dropped deliberately. An ingested element is geometry;
+    what colour it prints in is a decision the palette makes later, and baking
+    the original's colours in would make one ink choice permanent.
+    """
+    paths = PATH_TAG.findall(svg)
+    if not paths:
+        raise NotIngestible(
+            "NO_PATH_GEOMETRY",
+            "the file has no <path> elements. Shapes drawn as <rect>, <circle> "
+            "or <polygon> need converting to paths first, and an embedded "
+            "raster image cannot be ingested at all",
+        )
+    return " ".join(path.strip() for path in paths)
+
+
+def complexity_of(path_data: str) -> float:
+    """How involved this artwork is, as a share of what a garment can hold.
+
+    Counted from drawing commands rather than file size, because file size
+    mostly measures how the exporter felt about decimal places.
+    """
+    commands = len(COMMAND.findall(path_data))
+    return min(commands / BUSY_COMMANDS, 1.0)
+
+
+def ingest_svg(
+    file: Path,
+    *,
+    element_key: str,
+    recipe_family: str,
+    subtype: str,
+    source: Source,
+    style_tags: tuple[str, ...] = (),
+    ink_min: int = 1,
+    ink_max: int = 2,
+    symmetry: str = "none",
+) -> Element:
+    """Read one SVG into an element that is stored but not yet usable.
+
+    The returned element's licence is deliberately unverified. Nothing in this
+    module can produce a usable one, so nothing ingested can reach a garment
+    until a person records the terms for it.
+    """
+    try:
+        svg = file.read_text(encoding="utf-8")
+    except OSError as error:
+        raise NotIngestible("UNREADABLE_FILE", str(error)) from error
+
+    path_data = _combined_path(svg)
+    commands = len(COMMAND.findall(path_data))
+    if commands > UNPRINTABLE_COMMANDS:
+        raise NotIngestible(
+            "TOO_DETAILED_TO_PRINT",
+            f"{commands} drawing commands. This needs redrawing before it can be "
+            "separated into a small number of inks",
+        )
+
+    return Element(
+        id=element_key,
+        family=recipe_family,
+        subtype=subtype,
+        licence=Licence(
+            # Not a placeholder to be filled in by a script. The whole point is
+            # that a person reads the terms for this item.
+            status=LicenceStatus.UNVERIFIED,
+            source=source.name,
+            source_id=source.item_id,
+            source_url=source.url,
+            note=source.note,
+        ),
+        slots=(),
+        symmetry=symmetry,
+        ink_min=ink_min,
+        ink_max=ink_max,
+        complexity=complexity_of(path_data),
+        style_tags=style_tags,
+        compatible_treatments=("clean", "distressed"),
+        recipe="",
+        geometry=path_data,
+        source_file=str(file),
+    )
+
+
+def verify(
+    element: Element,
+    *,
+    terms: str,
+    checked_at: object,
+    commercial_use: bool,
+    note: str = "",
+) -> Element:
+    """Record that a person checked this item's terms.
+
+    Deliberately explicit about `commercial_use`. Passing False keeps the
+    element stored and refused rather than deleting it, so the same artwork is
+    not found and re-checked in six months.
+    """
+    from dataclasses import replace
+
+    if not terms.strip():
+        raise NotIngestible(
+            "TERMS_NOT_RECORDED",
+            "verifying means recording what the terms actually say, not that someone looked",
+        )
+    if not element.licence.source or not element.licence.source_id:
+        raise NotIngestible(
+            "SOURCE_INCOMPLETE",
+            "an element with no recorded source cannot be verified, because "
+            "there is nothing to check it against",
+        )
+
+    return replace(
+        element,
+        licence=Licence(
+            status=LicenceStatus.VERIFIED if commercial_use else LicenceStatus.REFUSED,
+            terms=terms,
+            source=element.licence.source,
+            source_id=element.licence.source_id,
+            source_url=element.licence.source_url,
+            checked_at=checked_at,  # type: ignore[arg-type]
+            commercial_use=commercial_use,
+            note=note or element.licence.note,
+        ),
+    )

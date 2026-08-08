@@ -103,6 +103,7 @@ def to_domain(row: ArchiveElement) -> Element:
         compatible_treatments=tuple(row.compatible_treatments),
         exclusions=tuple(row.exclusions),
         recipe=row.recipe,
+        geometry=row.geometry,
         parameters={key: float(value) for key, value in (row.parameters or {}).items()},
     )
 
@@ -145,7 +146,7 @@ class ElementRepository:
 
     # --- Writing ------------------------------------------------------------
 
-    def upsert(self, element: Element, geometry: str = "") -> str:
+    def upsert(self, element: Element, geometry: str | None = None) -> str:
         """Store one element, returning "added", "updated" or "unchanged".
 
         The feature vector is recomputed on every write rather than carried
@@ -178,7 +179,7 @@ class ElementRepository:
         row.family = family
         row.subtype = element.subtype
         row.recipe = element.recipe
-        row.geometry = geometry
+        row.geometry = element.geometry if geometry is None else geometry
         row.parameters = dict(element.parameters)
         row.slots = [_slot_to_json(slot) for slot in element.slots]
         row.symmetry = element.symmetry
@@ -224,11 +225,11 @@ class ElementRepository:
             row.licence_commercial_use,
         )
 
-    def sync(self, elements: tuple[Element, ...], geometry: str = "") -> SyncResult:
+    def sync(self, elements: tuple[Element, ...]) -> SyncResult:
         """Bring the stored archive in line with a set of elements."""
         result = SyncResult()
         for element in elements:
-            outcome = self.upsert(element, geometry=geometry)
+            outcome = self.upsert(element)
             getattr(result, outcome).append(element.id)
         self.session.flush()
         return result

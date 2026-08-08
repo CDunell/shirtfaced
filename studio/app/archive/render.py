@@ -135,7 +135,13 @@ def _fill_slot(
 
 
 def _frame_path(element: Element, width: float, height: float) -> str:
-    """The element's own outline, from its recipe and parameters."""
+    """The element's own outline: drawn from its recipe, or its own path data."""
+    # Ingested artwork carries geometry instead of a recipe. It is drawn as
+    # given rather than fitted to the box, because rescaling someone else's
+    # curves is how a traced drawing stops looking like the thing it traced.
+    if element.geometry:
+        return element.geometry
+
     parameters = element.parameters
     recipe = element.recipe
 

@@ -119,8 +119,10 @@ class Element:
     # What this element refuses. Cheaper and more honest than enumerating what
     # it permits, and it is what makes the grammar tractable.
     exclusions: tuple[str, ...] = ()
-    # Which authored recipe renders it. Ingested artwork carries a file instead.
+    # Authored elements name a recipe; ingested ones carry their own path data.
+    # Exactly one of the two, which the database enforces as a constraint.
     recipe: str = ""
+    geometry: str = ""
     source_file: str = ""
     parameters: dict[str, float] = field(default_factory=dict)
 
