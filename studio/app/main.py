@@ -84,7 +84,10 @@ def create_app() -> FastAPI:
             name="social-assets",
         )
     else:
-        logger.warning("Social assets are missing at %s; run the social asset builder.", social_assets)
+        logger.warning(
+            "Social assets are missing at %s; run the social asset builder.",
+            social_assets,
+        )
 
     dist_root = settings.web_dist_root_resolved
     if mount_interface(application, dist_root):
