@@ -15,12 +15,7 @@ import { FormControl } from "baseui/form-control";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Select, type Value } from "baseui/select";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import {
-  HeadingSmall,
-  LabelSmall,
-  ParagraphSmall,
-  ParagraphXSmall,
-} from "baseui/typography";
+import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError, fetchPhotos, uploadPhoto, type Photo } from "../api/client";
 
@@ -130,21 +125,18 @@ function analyseTheme(image: HTMLImageElement): ResolvedTheme {
   const data = ctx.getImageData(0, 0, 64, 64).data;
   const values: number[] = [];
   for (let i = 0; i < data.length; i += 16) {
-    values.push(0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]);
+    values.push(
+      0.2126 * (data[i] ?? 0) + 0.7152 * (data[i + 1] ?? 0) + 0.0722 * (data[i + 2] ?? 0),
+    );
   }
   const mean = values.reduce((sum, value) => sum + value, 0) / values.length;
-  const variance =
-    values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+  const variance = values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
   const deviation = Math.sqrt(variance);
   if (deviation > 58 && mean > 65 && mean < 205) return "adaptive";
   return mean >= 145 ? "light" : "dark";
 }
 
-function overlayPath(
-  theme: ResolvedTheme,
-  branding: Branding,
-  output: OutputKey,
-): string | null {
+function overlayPath(theme: ResolvedTheme, branding: Branding, output: OutputKey): string | null {
   if (branding === "clean") return null;
 
   const vertical = output !== "instagram_feed";
@@ -195,8 +187,12 @@ export function SocialBench(): React.JSX.Element {
   const [css, theme] = useStyletron();
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [photoValue, setPhotoValue] = useState<Value>([]);
-  const [themeValue, setThemeValue] = useState<Value>([THEME_OPTIONS[0]]);
-  const [brandingValue, setBrandingValue] = useState<Value>([BRANDING_OPTIONS[1]]);
+  const [themeValue, setThemeValue] = useState<Value>([
+    { id: "auto", label: "Auto — choose from image" },
+  ]);
+  const [brandingValue, setBrandingValue] = useState<Value>([
+    { id: "fingerprint", label: "Fingerprint — minimal mark" },
+  ]);
   const [selectedOutputs, setSelectedOutputs] = useState<Set<OutputKey>>(
     new Set(["instagram_feed", "instagram_story", "reel_cover", "tiktok_cover"]),
   );
@@ -271,8 +267,7 @@ export function SocialBench(): React.JSX.Element {
     try {
       const source = await loadImage(photo.url);
       const requested = String(themeValue[0]?.id ?? "auto") as SocialTheme;
-      const chosenTheme: ResolvedTheme =
-        requested === "auto" ? analyseTheme(source) : requested;
+      const chosenTheme: ResolvedTheme = requested === "auto" ? analyseTheme(source) : requested;
       const branding = String(brandingValue[0]?.id ?? "fingerprint") as Branding;
       const made: ExportedFile[] = [];
 
