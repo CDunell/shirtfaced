@@ -1,62 +1,139 @@
 {
   "symbol_anchor_0001": {
-    "subtype": "anchor", "symmetry": "vertical",
-    "style_tags": ["nautical", "vintage", "workwear"],
-    "source": "grok", "terms": "Generated for Shirtfaced"
+    "subtype": "anchor",
+    "symmetry": "vertical",
+    "style_tags": [
+      "nautical",
+      "vintage",
+      "workwear"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced"
   },
   "symbol_boomerang_0001": {
-    "subtype": "boomerang", "style_tags": ["australian", "classic"],
-    "source": "grok", "terms": "Generated for Shirtfaced",
+    "subtype": "boomerang",
+    "style_tags": [
+      "australian",
+      "classic"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced",
     "provisional": "Reads as a thin curve with a ball at each end rather than a boomerang. Wants thickness through the elbow and a clearer V."
   },
   "symbol_breaking_wave_0001": {
-    "subtype": "breaking_wave", "style_tags": ["surf", "australian", "coastal"],
-    "source": "grok", "terms": "Generated for Shirtfaced",
-    "provisional": "Reads as a decorative flourish rather than a wave. Wants a heavier face under the curl."
+    "subtype": "breaking_wave",
+    "style_tags": [
+      "surf",
+      "australian",
+      "coastal"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced"
   },
   "symbol_can_0001": {
-    "subtype": "can", "symmetry": "vertical", "style_tags": ["australian", "pub", "novelty"],
-    "source": "grok", "terms": "Generated for Shirtfaced",
+    "subtype": "can",
+    "symmetry": "vertical",
+    "style_tags": [
+      "australian",
+      "pub",
+      "novelty"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced",
     "provisional": "A plain rounded rectangle. Legible but characterless; wants a tab and a chamfer."
   },
   "symbol_crown_0001": {
-    "subtype": "crown", "symmetry": "vertical", "style_tags": ["classic", "novelty"],
-    "source": "grok", "terms": "Generated for Shirtfaced"
+    "subtype": "crown",
+    "symmetry": "vertical",
+    "style_tags": [
+      "classic",
+      "novelty"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced"
   },
   "symbol_flame_0001": {
-    "subtype": "flame", "style_tags": ["speed", "hot-rod", "energy"],
-    "source": "grok", "terms": "Generated for Shirtfaced"
+    "subtype": "flame",
+    "style_tags": [
+      "speed",
+      "hot-rod",
+      "energy"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced"
   },
   "symbol_heart_0001": {
-    "subtype": "heart", "symmetry": "vertical", "style_tags": ["classic", "novelty"],
-    "source": "grok", "terms": "Generated for Shirtfaced"
+    "subtype": "heart",
+    "symmetry": "vertical",
+    "style_tags": [
+      "classic",
+      "novelty"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced"
   },
   "symbol_mountain_range_0001": {
-    "subtype": "mountain_range", "style_tags": ["outdoor", "hiking"],
-    "source": "grok", "terms": "Generated for Shirtfaced"
+    "subtype": "mountain_range",
+    "style_tags": [
+      "outdoor",
+      "hiking"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced"
   },
   "symbol_palm_0001": {
-    "subtype": "palm", "style_tags": ["coastal", "holiday", "vintage"],
-    "source": "grok", "terms": "Generated for Shirtfaced"
+    "subtype": "palm",
+    "style_tags": [
+      "coastal",
+      "holiday",
+      "vintage"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced"
   },
   "symbol_spanner_0001": {
-    "subtype": "spanner", "style_tags": ["workwear", "trade", "industrial"],
-    "source": "grok", "terms": "Generated for Shirtfaced",
+    "subtype": "spanner",
+    "style_tags": [
+      "workwear",
+      "trade",
+      "industrial"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced",
     "provisional": "No open jaw visible -- reads as a dumbbell. The jaw is what makes it a spanner."
   },
   "symbol_stubby_bottle_0001": {
-    "subtype": "stubby_bottle", "symmetry": "vertical",
-    "style_tags": ["australian", "pub", "novelty"],
-    "source": "grok", "terms": "Generated for Shirtfaced"
+    "subtype": "stubby_bottle",
+    "symmetry": "vertical",
+    "style_tags": [
+      "australian",
+      "pub",
+      "novelty"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced"
   },
   "symbol_thong_0001": {
-    "subtype": "thong", "style_tags": ["australian", "coastal", "novelty"],
-    "source": "grok", "terms": "Generated for Shirtfaced",
+    "subtype": "thong",
+    "style_tags": [
+      "australian",
+      "coastal",
+      "novelty"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced",
     "provisional": "Two rounded blobs side by side. No toe post and no sole shape, so it does not read as footwear."
   },
   "symbol_wings_0001": {
-    "subtype": "wings", "symmetry": "vertical", "style_tags": ["speed", "club", "vintage"],
-    "source": "grok", "terms": "Generated for Shirtfaced",
+    "subtype": "wings",
+    "symmetry": "vertical",
+    "style_tags": [
+      "speed",
+      "club",
+      "vintage"
+    ],
+    "source": "grok",
+    "terms": "Generated for Shirtfaced",
     "provisional": "Still reads as a bat rather than feathers. Wants stepped trailing edges."
   }
 }
