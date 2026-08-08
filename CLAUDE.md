@@ -4,7 +4,7 @@ Orientation for anyone — human or agent — opening this repository.
 
 ## What this is
 
-Shirtfaced is an Australian humour-led apparel and drinkware brand. **Shirtfaced** is a
+Shirtfaced is Australian humour-led **high-end streetwear**, plus drinkware. **Shirtfaced** is a
 verb and a state: something you *get*, and something you get *together*. It means *that
 level of good time*, not *that many drinks* — the sober mate is still shirtfaced.
 
@@ -46,6 +46,9 @@ document and assume it is live.
 
 - **World canon:** `studio/worlds/world-01/WORLD.md` — the deepest document here. Read it first.
 - **Portable rules:** `studio/docs/CARRY_FORWARD_CANON.md` — what survives into new worlds.
+- **Positioning:** `docs/foundations/POSITIONING.md` — high-end streetwear, and the
+  rule that the Australian part lives in the words and characters, never in depicted
+  subject matter. Read before writing any brief about what artwork should show.
 - **Brand voice:** `docs/foundations/BRAND_VOICE.md` — the word, the tagline grammar,
   Identity vs Storefront voice. Holds consistency while design content changes.
 - **Characters:** `docs/foundations/CHARACTERS.md` — a name list, nothing formed yet.
