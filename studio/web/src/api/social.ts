@@ -1,8 +1,15 @@
 import { ApiError } from "./client";
 
 export type SocialPostState = "review_required" | "approved" | "rejected" | "queued" | "live";
+export type SocialDerivativeReviewState = "review_required" | "approved" | "rejected";
 export type PublicationState =
-  "queued" | "scheduled" | "held" | "publishing" | "published" | "failed" | "cancelled";
+  | "queued"
+  | "scheduled"
+  | "held"
+  | "publishing"
+  | "published"
+  | "failed"
+  | "cancelled";
 
 export interface SocialDerivative {
   id: string;
@@ -14,6 +21,9 @@ export interface SocialDerivative {
   sha256: string;
   byte_size: number;
   url: string;
+  review_state: SocialDerivativeReviewState;
+  rejection_reason: string | null;
+  reviewed_at: string | null;
 }
 
 export interface PublicationJob {
@@ -21,6 +31,12 @@ export interface PublicationJob {
   social_post_id: string;
   derivative_id: string;
   channel: string;
+  output_key: string;
+  filename: string;
+  derivative_url: string;
+  source_label: string;
+  caption: string;
+  campaign_id: string | null;
   state: PublicationState;
   scheduled_at: string | null;
   scheduled_timezone: string;
@@ -119,6 +135,20 @@ export async function approveSocialPost(id: string): Promise<SocialPost> {
 
 export async function rejectSocialPost(id: string, reason = ""): Promise<SocialPost> {
   return await json<SocialPost>(`/api/social/posts/${encodeURIComponent(id)}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ reason }),
+  });
+}
+
+export async function approveSocialDerivative(id: string): Promise<SocialPost> {
+  return await json<SocialPost>(`/api/social/derivatives/${encodeURIComponent(id)}/approve`, {
+    method: "POST",
+    body: "{}",
+  });
+}
+
+export async function rejectSocialDerivative(id: string, reason = ""): Promise<SocialPost> {
+  return await json<SocialPost>(`/api/social/derivatives/${encodeURIComponent(id)}/reject`, {
     method: "POST",
     body: JSON.stringify({ reason }),
   });
