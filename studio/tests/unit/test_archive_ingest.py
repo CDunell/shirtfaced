@@ -79,16 +79,38 @@ def test_the_source_is_recorded_against_the_item_not_the_collection(tmp_path: Pa
     assert element.licence.source_url.endswith("SI-1234")
 
 
-def test_a_source_with_no_item_identifier_is_refused() -> None:
-    with pytest.raises(NotIngestible) as raised:
-        Source(name="internet-archive", item_id="", url="https://example.invalid")
-    assert raised.value.reason == "SOURCE_HAS_NO_IDENTIFIER"
+def test_a_thin_source_record_does_not_stop_ingestion(tmp_path: Path) -> None:
+    """Demanding a complete trail before anything can come in turns a
+    convenience into a barrier. Material with a thin trail is still material."""
+    element = ingest_svg(
+        _write(tmp_path, SIMPLE_SVG),
+        element_key="thin_0001",
+        recipe_family="symbol",
+        subtype="s",
+        source=Source(),
+    )
+    assert element.geometry
+    assert not element.licence.source
 
 
-def test_a_source_with_no_name_is_refused() -> None:
-    with pytest.raises(NotIngestible) as raised:
-        Source(name="", item_id="x", url="https://example.invalid")
-    assert raised.value.reason == "SOURCE_NOT_NAMED"
+def test_a_complete_source_record_is_marked_as_such() -> None:
+    """So the release review knows which items it can simply look up."""
+    assert Source(name="smithsonian", item_id="SI-1", url="https://x.invalid").complete
+    assert not Source(name="internet-archive", item_id="").complete
+    assert not Source(name="", item_id="x").complete
+
+
+def test_a_file_with_no_vector_geometry_still_ingests(tmp_path: Path) -> None:
+    """The sourcing list invites a photograph of a printed shirt. Refusing one
+    here would have made that invitation a lie."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg">'
+        '<image href="data:image/png;base64,iVBORw0KGgo=" width="10" height="10"/>'
+        "</svg>"
+    )
+    element = _ingest(tmp_path, svg)
+    assert element.geometry == ""
+    assert element.licence.source == "smithsonian"
 
 
 # --- Verification is a person's act, recorded --------------------------------

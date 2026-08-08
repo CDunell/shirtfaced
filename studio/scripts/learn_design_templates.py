@@ -143,7 +143,10 @@ def main(argv: list[str]) -> int:
     families: dict[str, Any] = {}
     for count, rows in sorted(by_count.items()):
         # Below this there is not enough to distinguish a template from a one-off.
-        if count == 0 or len(rows) < 30:
+        # Was 30, which meant every element count above four produced no
+        # template at all and the engine could not compose one. A thin family is
+        # worth having with its thinness recorded; absence is not.
+        if count == 0 or len(rows) < 6:
             continue
         points = np.array([_features(r["bands"]) for r in rows], dtype=np.float64)
         wanted = min(args.clusters, max(2, len(rows) // 25))
@@ -152,7 +155,7 @@ def main(argv: list[str]) -> int:
         templates = []
         for index in range(labels.max() + 1):
             members = [rows[i] for i in range(len(rows)) if labels[i] == index]
-            if len(members) < 8:
+            if len(members) < 3:
                 continue
             slots = []
             for slot_index in range(count):

@@ -40,7 +40,10 @@ USER_AGENT = (
 # Higher than it was now that every surface is in scope rather than tees alone --
 # a dozen slots filled entirely with chest prints would leave headwear, drinkware
 # and accessories unrepresented.
-PRODUCTS_PER_BRAND = 18
+# No cap by default. An earlier value of 18 truncated 165 of 187 brands, which
+# is most of the catalogue thrown away on a number nobody chose for a reason.
+# --limit is still there for a quick run.
+PRODUCTS_PER_BRAND = 0
 
 # Images per product. Two was too few: brands commonly ship a close-up of the
 # garment alongside a full-body shot of a model wearing it, and it is the close-up
@@ -48,7 +51,9 @@ PRODUCTS_PER_BRAND = 18
 # pixels. Threadheads names them outright (Black-Close-Up, Black-Full-Body); most
 # others number them. Taking six per product means the measurable shot is present
 # to be chosen, rather than lost to a cap of two.
-IMAGES_PER_PRODUCT = 6
+# Every image a product has. Which frame turns out to be the measurable one is
+# not knowable in advance, and the rest still carry colour and styling.
+IMAGES_PER_PRODUCT = 0
 
 # Filename fragments that reveal what a shot is. Not every store labels its
 # images, so this is a hint recorded alongside the file, never a requirement.
@@ -476,7 +481,7 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
         by_type.setdefault((product.get("product_type") or "unknown").lower(), []).append(product)
 
     wanted = []
-    while len(wanted) < PRODUCTS_PER_BRAND and any(by_type.values()):
+    while (not PRODUCTS_PER_BRAND or len(wanted) < PRODUCTS_PER_BRAND) and any(by_type.values()):
         for bucket in by_type.values():
             if bucket and len(wanted) < PRODUCTS_PER_BRAND:
                 wanted.append(bucket.pop(0))
@@ -500,14 +505,17 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
 
     product_count = 0
     image_count = 0
-    for product in wanted[:PRODUCTS_PER_BRAND]:
+    for product in wanted[:PRODUCTS_PER_BRAND] if PRODUCTS_PER_BRAND else wanted:
         handle = product.get("handle") or str(product.get("id"))
         product_dir = brand_dir / "products" / handle
         product_dir.mkdir(parents=True, exist_ok=True)
 
         saved_images: list[str] = []
         provenance: list[dict[str, Any]] = []
-        for index, image in enumerate(product.get("images", [])[:IMAGES_PER_PRODUCT], start=1):
+        images = product.get("images", [])
+        for index, image in enumerate(
+            images[:IMAGES_PER_PRODUCT] if IMAGES_PER_PRODUCT else images, start=1
+        ):
             src = image.get("src")
             if not src:
                 continue

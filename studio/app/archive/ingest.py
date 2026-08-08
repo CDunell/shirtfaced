@@ -23,7 +23,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from app.archive.convert import colours_in, combined_path, has_raster, shapes_in
+from app.archive.convert import colours_in, combined_path, shapes_in
 from app.domain.element import Element, Licence
 from app.domain.enums import LicenceStatus
 
@@ -49,27 +49,23 @@ class NotIngestible(Exception):
 
 @dataclass(frozen=True)
 class Source:
-    """Where a piece of artwork came from.
+    """Where a piece of artwork came from, as far as anyone knows.
 
-    Every field is required. A source with a blank identifier cannot be checked
-    again later, which makes it indistinguishable from something nobody
-    recorded -- and an unrecorded source is the one that gets used by accident.
+    Nothing here is required. A complete record makes the pre-release review a
+    lookup instead of a search, which is worth having -- but demanding it before
+    anything can be ingested turns a convenience into a barrier, and material
+    with a thin trail is still material.
     """
 
-    name: str
-    item_id: str
-    url: str
+    name: str = ""
+    item_id: str = ""
+    url: str = ""
     note: str = ""
 
-    def __post_init__(self) -> None:
-        if not self.name.strip():
-            raise NotIngestible("SOURCE_NOT_NAMED", "a source must say where it came from")
-        if not self.item_id.strip():
-            raise NotIngestible(
-                "SOURCE_HAS_NO_IDENTIFIER",
-                f"{self.name} artwork needs the identifier it has there, so the "
-                "terms can be checked against the item rather than the collection",
-            )
+    @property
+    def complete(self) -> bool:
+        """Whether the release review can look this up without detective work."""
+        return bool(self.name.strip() and self.item_id.strip())
 
 
 def _geometry(svg: str) -> tuple[str, tuple[str, ...]]:
@@ -81,16 +77,10 @@ def _geometry(svg: str) -> tuple[str, tuple[str, ...]]:
     turning material away in the meantime.
     """
     shapes = shapes_in(svg)
-    if not shapes:
-        raise NotIngestible(
-            "NO_GEOMETRY",
-            "nothing drawable in the file"
-            + (
-                " -- it appears to be an embedded bitmap, which has no geometry to read"
-                if has_raster(svg)
-                else ""
-            ),
-        )
+    # A file with no vector geometry -- a wrapped bitmap, say -- comes in with
+    # empty geometry rather than being refused. The sourcing list invites a
+    # photograph of a printed shirt; refusing one here would have made that
+    # invitation a lie.
     return combined_path(shapes), colours_in(shapes)
 
 

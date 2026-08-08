@@ -83,11 +83,15 @@ class ArchiveElement(Base, TimestampMixin):
             "complexity >= 0 AND complexity <= 1",
             name="complexity",
         ),
-        # An element is either authored from a recipe or ingested as geometry.
-        # Neither means an empty record; both means an ambiguous one.
+        # An element may be authored from a recipe or carry its own geometry,
+        # but not both -- that would be ambiguous about which one draws it.
+        #
+        # Neither is allowed. A raster arrives with no vector geometry and is
+        # still worth holding; the earlier version refused it, which made the
+        # sourcing list's invitation to send a photograph untrue.
         CheckConstraint(
-            "(recipe <> '') <> (geometry <> '')",
-            name="recipe_xor_geometry",
+            "NOT (recipe <> '' AND geometry <> '')",
+            name="recipe_or_geometry_not_both",
         ),
         Index("ix_archive_elements_family", "family"),
         # Partial index over what the composer actually queries. It never looks
