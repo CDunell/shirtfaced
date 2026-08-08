@@ -35,10 +35,24 @@ from typing import Any, Literal
 
 ElementKind = Literal["text", "image", "logo"]
 
-# Shrinkage prior, carried across from the Feature Factory unchanged. A template
-# with two approvals out of two is not twice as trustworthy as one with one out
-# of one, and n/(n + PRIOR) says so.
+# Shrinkage prior for *owner decisions*, carried across from the Feature Factory
+# unchanged. Two approvals out of two is not twice as trustworthy as one out of
+# one, and n/(n + PRIOR) says so. Ten is right here because owner decisions
+# genuinely are few.
 PRIOR = 10.0
+
+# It is also right for corpus attestation, and the flat-looking confidence was
+# not its fault. With 33 designs behind the thinnest template, n/(n + 10) puts
+# everything above 0.77 -- and that is *correct*: ninety-two designs is a real
+# pattern, and so is thirty-three. Every arrangement here is well attested.
+#
+# The mistake was expecting attestation to discriminate. It answers "is this a
+# real pattern", to which the honest answer for all fourteen is yes. What
+# separates them is whether the arrangement suits *this* brief, which is fit --
+# so the confidence shown is the two multiplied. A well-attested layout that
+# puts a photograph where the corpus put a line of type is not a confident
+# proposal, however many brands used it for something else.
+MIN_ATTESTED = 3
 
 # A template needs at least this many corpus designs behind it to be offered.
 # Matched to the learner's own cluster floor -- a higher number here would
@@ -199,15 +213,71 @@ class ApprovalStore:
         return int(entry.get("approved", 0)), int(entry.get("decisions", 0))
 
 
-def _confidence(corpus_designs: int, approved: int, decisions: int) -> float:
+def slot_affinity(width: float, height: float) -> ElementKind | None:
+    """What a slot of these proportions held, inferred from its shape.
+
+    The corpus records slot geometry and nothing about content, so a brief of an
+    image and a phrase matched every two-element template equally -- including
+    the two that are plainly two lines of type. The shape gives it away: a slot
+    0.89 wide by 0.49 tall is a mass, and one 0.92 by 0.16 is a line of words.
+
+    Returning None for the middle band is deliberate. A slot that could be
+    either should not be evidence for or against anything.
+    """
+    if height <= 0:
+        return None
+    aspect = width / height
+    if aspect >= 4.5:
+        return "text"
+    if aspect <= 2.5:
+        return "image"
+    return None
+
+
+def _kind_fit(brief: Brief, template: dict[str, Any]) -> float:
+    """How well the supplied kinds match what this template's slots held.
+
+    Scored per slot and averaged, so a template whose shapes say image-then-
+    caption is preferred for an image and a phrase, and the two-lines-of-type
+    arrangement is not. A logo counts as an image: both are marks rather than
+    words.
+    """
+    slots = template.get("slots") or []
+    if not slots or len(slots) != len(brief.elements):
+        return 0.5
+
+    scored = 0.0
+    counted = 0
+    for element, slot in zip(brief.elements, slots, strict=False):
+        wants = slot_affinity(float(slot.get("width", 0)), float(slot.get("height", 0)))
+        if wants is None:
+            continue
+        supplied = "text" if element.kind == "text" else "image"
+        scored += 1.0 if wants == supplied else 0.0
+        counted += 1
+    # Every slot ambiguous is not a match and not a mismatch.
+    return scored / counted if counted else 0.5
+
+
+def _attestation(corpus_designs: int) -> float:
+    """Whether this arrangement is a real pattern rather than a coincidence."""
+    if corpus_designs < MIN_ATTESTED:
+        return 0.0
+    return corpus_designs / (corpus_designs + PRIOR)
+
+
+def _confidence(corpus_designs: int, approved: int, decisions: int, fit: float = 1.0) -> float:
     """How much to trust this template for this brief.
 
     Two sources, deliberately kept separate. The corpus says how well attested
     the arrangement is among brands that ship; approvals say whether it suits
-    this brand specifically. Owner decisions are given more weight per
-    observation than corpus designs, because they are about us.
+    this brand specifically. Owner decisions are weighted per observation more
+    heavily than corpus designs, because they are about us.
     """
-    corpus_weight = corpus_designs / (corpus_designs + PRIOR)
+    # Attested *and* suited. Either one alone overstates: a layout used by a
+    # third of the corpus is not a confident answer for a brief it does not fit,
+    # and a perfect fit to something nobody has ever shipped is a guess.
+    corpus_weight = _attestation(corpus_designs) * fit
     if decisions == 0:
         # No decisions yet is not evidence against. It caps how far corpus
         # attestation alone can carry a template, and nothing more.
@@ -300,7 +370,10 @@ def _fit(brief: Brief, template: dict[str, Any]) -> float:
         tradition_fit = 0.5 + 0.5 * (traditions.get(brief.tradition, 0) / total)
 
     share = float(template.get("share") or 0)
-    return round(0.5 * word_fit + 0.3 * tradition_fit + 0.2 * share, 4)
+    kind_fit = _kind_fit(brief, template)
+    # Kind carries the most weight of the four. Putting a photograph where the
+    # corpus put a line of type is a worse mistake than being two words off.
+    return round(0.4 * kind_fit + 0.3 * word_fit + 0.2 * tradition_fit + 0.1 * share, 4)
 
 
 class CompositionEngine:
@@ -401,10 +474,12 @@ class CompositionEngine:
         for template in eligible:
             key = self.template_key(count, str(template.get("id") or template["name"]))
             approved, decisions = self.approvals.history(key)
-            confidence = _confidence(int(template["designs"]), approved, decisions)
+            # Fit first: confidence is attestation times fit, so it cannot be
+            # computed before the fit it depends on.
+            fit = _fit(brief, template)
+            confidence = _confidence(int(template["designs"]), approved, decisions, fit)
             if confidence < MIN_CONFIDENCE:
                 continue
-            fit = _fit(brief, template)
             slots = _assign(brief, template["slots"])
             if len(slots) < count:
                 # The template cannot hold everything supplied. Not a refusal on

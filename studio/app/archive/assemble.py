@@ -61,6 +61,47 @@ class AssembledDesign:
     assembler_version: str = ASSEMBLER_VERSION
 
 
+# One-colour separation, as a filter.
+#
+# Supplied flash arrives as JPEG, which has no transparency, so a mark placed on
+# a black garment brought a white rectangle with it and a texture laid over a
+# design washed the whole panel grey. Both are the same fault: the file is a
+# picture and a print is ink or no ink.
+#
+# So luminance becomes alpha -- white transparent, black opaque -- and the
+# result is flooded with a single colour. That is what a printer does to
+# one-colour artwork, and it is why these files are black on white in the first
+# place.
+SEPARATION_FILTER = (
+    '<filter id="{id}" x="0" y="0" width="100%" height="100%" '
+    'color-interpolation-filters="sRGB">'
+    '<feColorMatrix type="matrix" values="'
+    "0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  "
+    # Alpha from inverted luminance: a white pixel lands at 0, a black one at 1.
+    '-0.2126 -0.7152 -0.0722 0 1"/>'
+    '<feComponentTransfer><feFuncA type="linear" slope="{slope}" intercept="0"/>'
+    "</feComponentTransfer>"
+    '<feFlood flood-color="{ink}" result="ink"/>'
+    '<feComposite in="ink" in2="SourceGraphic" operator="in"/>'
+    "</filter>"
+)
+
+
+def _archive_url(source_file: str) -> str:
+    """Where a stored artwork file is served from.
+
+    `source_file` is repository-relative -- `assets/flash/wolf.jpg` -- and the
+    route that serves it is mounted at /archive, so the leading folder is
+    replaced rather than kept. Referring to /assets/... instead pointed at the
+    generated-image store, which addresses by UUID and answered every one of
+    these with a 404.
+    """
+    path = source_file.replace("\\", "/").lstrip("/")
+    if path.startswith("assets/"):
+        path = path[len("assets/") :]
+    return f"archive/{path}"
+
+
 def _candidates(part: Part, elements: tuple[Element, ...]) -> list[Element]:
     """Archive elements that could fill this role.
 
@@ -102,7 +143,23 @@ def _pick(
         overlap = len(set(style_tags) & set(element.style_tags))
         # A style match is worth about four times an ordinary candidate, so it
         # usually wins and occasionally does not.
-        weights.append(1.0 + 4.0 * overlap)
+        weight = 1.0 + 4.0 * overlap
+
+        # Drawn artwork outranks parametric geometry for the same role. Both are
+        # legitimate and a formula makes a better octagon than anyone can draw,
+        # but across two hundred seeds the most-used parts were a label bar, a
+        # row of dots and a droplet, while sixty-nine pieces of drawn flash
+        # filled eight per cent of slots. The archive was reaching its weakest
+        # material most often, which is the opposite of what having it is for.
+        if element.source_file:
+            weight *= 3.0
+
+        # And a placeholder loses to anything else that fits. It is in the
+        # archive so a role can be filled at all, not so it can be chosen.
+        if element.provisional:
+            weight *= 0.25
+
+        weights.append(weight)
 
     total = sum(weights)
     draw = generator.random() * total
@@ -266,15 +323,19 @@ def assemble(
         # every one of them. Drawn as an image reference rather than converted,
         # because tracing a scan of a wolf's head produces a worse wolf.
         if not element.geometry and not element.recipe and element.source_file:
+            ink = palette.garment if solid_ground else palette.ink(0)
+            filter_id = f"sep{order}"
             drawn.append(
                 (
                     part.layer,
                     order,
-                    f'<g transform="translate({num(width_mm * part.left)} '
+                    SEPARATION_FILTER.format(id=filter_id, ink=ink, slope=1.0)
+                    + f'<g transform="translate({num(width_mm * part.left)} '
                     f'{num(height_mm * part.top)})">'
-                    f'<image href="/{element.source_file.replace(chr(92), "/")}" '
+                    f'<image href="/{_archive_url(element.source_file)}" '
                     f'width="{num(box_width)}" height="{num(box_height)}" '
-                    f'preserveAspectRatio="xMidYMid meet"/></g>',
+                    f'preserveAspectRatio="xMidYMid meet" '
+                    f'filter="url(#{filter_id})"/></g>',
                 )
             )
             chosen[part.role] = element.id
@@ -336,10 +397,14 @@ def assemble(
         # separator disagrees about how. Painting the wear in the colour of the
         # cloth is what an eroded print actually looks like, and it survives
         # being flattened.
+        # Separated the same way and flooded with the *garment* colour, so the
+        # texture eats holes in the ink instead of laying a grey film over the
+        # whole panel. Screen blending did the latter and looked like fog.
         canvas.add(
-            f'<image href="/{wear.source_file.replace(chr(92), "/")}" '
+            SEPARATION_FILTER.format(id="wear", ink=palette.garment, slope=1.0)
+            + f'<image href="/{_archive_url(wear.source_file)}" '
             f'x="0" y="0" width="{num(width_mm)}" height="{num(height_mm)}" '
-            f'preserveAspectRatio="none" style="mix-blend-mode:screen" '
+            f'preserveAspectRatio="none" filter="url(#wear)" '
             f'opacity="{num(wear_strength)}"/>'
         )
 

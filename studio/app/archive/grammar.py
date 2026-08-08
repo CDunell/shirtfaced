@@ -126,7 +126,7 @@ GRAMMARS: tuple[Grammar, ...] = (
             Part(role="frame", families=("frame", "badge"), layer=0),
             Part(
                 role="mark",
-                families=("symbol",),
+                families=("symbol", "illustration_part"),
                 top=0.34,
                 left=0.34,
                 width=0.32,
@@ -264,7 +264,7 @@ GRAMMARS: tuple[Grammar, ...] = (
             ),
             Part(
                 role="mark",
-                families=("symbol",),
+                families=("symbol", "illustration_part"),
                 top=0.74,
                 left=0.42,
                 width=0.16,
@@ -294,7 +294,7 @@ GRAMMARS: tuple[Grammar, ...] = (
             ),
             Part(
                 role="left_mark",
-                families=("symbol", "ornament"),
+                families=("symbol", "ornament", "illustration_part"),
                 top=0.40,
                 left=0.02,
                 width=0.16,
@@ -303,7 +303,7 @@ GRAMMARS: tuple[Grammar, ...] = (
             ),
             Part(
                 role="right_mark",
-                families=("symbol", "ornament"),
+                families=("symbol", "ornament", "illustration_part"),
                 top=0.40,
                 left=0.82,
                 width=0.16,
@@ -333,7 +333,7 @@ GRAMMARS: tuple[Grammar, ...] = (
         parts=(
             Part(
                 role="mark",
-                families=("symbol",),
+                families=("symbol", "illustration_part"),
                 top=0.04,
                 left=0.36,
                 width=0.28,
@@ -422,7 +422,7 @@ GRAMMARS: tuple[Grammar, ...] = (
             ),
             Part(
                 role="mark",
-                families=("symbol",),
+                families=("symbol", "illustration_part"),
                 top=0.80,
                 left=0.28,
                 width=0.44,

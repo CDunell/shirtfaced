@@ -243,6 +243,21 @@ class DesignComposer:
 
         # Contrast is a property of the pair, so the garment decides which
         # systems are even available before the seed picks between them.
+        # A distressed brief gets a real texture over it rather than only the
+        # drawn speckle. The positioning calls lived-in print quality a feature
+        # -- pigment fade, cracked plastisol, honest distress -- and the archive
+        # has twenty-nine textures and print effects that nothing was using,
+        # because a texture is not a part and no grammar asks for one.
+        wear: Element | None = None
+        if brief.treatment == "distressed":
+            worn = [
+                element
+                for element in self.elements
+                if element.family in ("texture", "print_effect") and element.source_file
+            ]
+            if worn:
+                wear = worn[rng_for(seed, "wear").randrange(len(worn))]
+
         system = choose(brief.garment, seed, brief.colour_system)
         palette = Palette(
             garment=brief.garment,
@@ -272,6 +287,7 @@ class DesignComposer:
                     width_mm=width_mm,
                     height_mm=height_mm,
                     treatment=brief.treatment,
+                    wear=wear,
                 )
             except RefusedToRender as error:
                 rejections.append(Rejection(grammar.key, error.reason))

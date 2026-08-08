@@ -15,7 +15,7 @@ from starlette.staticfiles import StaticFiles
 
 from app import __version__
 from app.config import PROJECT_ROOT, Settings, get_settings
-from app.routes import api, assets, compose, design, health, printing
+from app.routes import api, archive_files, assets, compose, design, health, printing
 from app.security import SESSION_COOKIE, verify_session_token
 from app.web import mount_interface
 
@@ -72,6 +72,7 @@ def create_app() -> FastAPI:
     application.include_router(assets.router)
     application.include_router(design.router)
     application.include_router(compose.router)
+    application.include_router(archive_files.router)
 
     # Social templates are generated from the repository's real wordmark/smiley
     # into public/social-assets. Studio consumes exactly those files rather than
