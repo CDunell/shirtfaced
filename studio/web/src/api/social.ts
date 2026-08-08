@@ -64,21 +64,18 @@ export interface LocalSocialDerivative {
 
 async function fail(response: Response): Promise<never> {
   const body = (await response.clone().json().catch(() => null)) as { detail?: unknown } | null;
+  const detail = typeof body?.detail === "string" ? body.detail : null;
   throw new ApiError(
     response.status,
-    body?.detail ? String(body.detail) : `The Studio service returned ${String(response.status)}.`,
+    detail ?? `The Studio service returned ${String(response.status)}.`,
   );
 }
 
 async function json<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(path, {
-    ...init,
-    headers: {
-      Accept: "application/json",
-      ...(init?.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
-      ...init?.headers,
-    },
-  });
+  const headers = new Headers(init?.headers);
+  headers.set("Accept", "application/json");
+  if (!(init?.body instanceof FormData)) headers.set("Content-Type", "application/json");
+  const response = await fetch(path, { ...init, headers });
   if (!response.ok) return await fail(response);
   return (await response.json()) as T;
 }
@@ -106,9 +103,7 @@ export async function saveSocialPost(input: {
       })),
     ),
   );
-  for (const derivative of input.derivatives) {
-    body.append("files", derivative.blob, derivative.filename);
-  }
+  for (const derivative of input.derivatives) body.append("files", derivative.blob, derivative.filename);
   return await json<SocialPost>("/api/social/posts", { method: "POST", body });
 }
 
