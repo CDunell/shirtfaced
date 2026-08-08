@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160mm" height="100mm" viewBox="0 0 160 100">
+  <!-- Shirtfaced — symbol_crown_0001.svg
+       Simple royal crown silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 15,85
+    L 20,40
+    L 45,60
+    L 60,25
+    L 80,55
+    L 100,25
+    L 115,60
+    L 140,40
+    L 145,85
+    Z
+    M 25,85
+    L 25,95
+    L 135,95
+    L 135,85
+    Z"/>
+</svg>

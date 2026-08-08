@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="130mm" viewBox="0 0 140 130">
+  <!-- Shirtfaced — symbol_heart_0001.svg
+       Classic heart, bold solid silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 70,120
+    C 20,80 5,50 5,35
+    C 5,15 20,5 40,5
+    C 55,5 65,15 70,25
+    C 75,15 85,5 100,5
+    C 120,5 135,15 135,35
+    C 135,50 120,80 70,120
+    Z"/>
+</svg>

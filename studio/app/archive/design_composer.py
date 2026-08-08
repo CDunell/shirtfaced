@@ -20,7 +20,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.archive import authored
+from app.archive import registry
 from app.archive.assemble import AssembledDesign, assemble
 from app.archive.garment import Garment, GarmentError
 from app.archive.grammar import Grammar, grammars_for, suits
@@ -162,7 +162,7 @@ class DesignComposer:
 
     def __init__(self, approvals_path: Path, elements: tuple[Element, ...] | None = None) -> None:
         self.approvals = ApprovalStore(approvals_path)
-        self.elements = elements if elements is not None else authored.ALL
+        self.elements = elements if elements is not None else registry.all_elements()
 
     def compose(
         self,
@@ -302,11 +302,12 @@ class DesignComposer:
 
         gaps: list[str] = []
         if brief.style_tags:
+            known = registry.by_id()
             matched = any(
-                set(brief.style_tags) & set(authored.BY_ID[key].style_tags)
+                set(brief.style_tags) & set(known[key].style_tags)
                 for option in options[:limit]
                 for key in option.parts.values()
-                if key in authored.BY_ID
+                if key in known
             )
             if not matched:
                 gaps.append(
@@ -314,12 +315,13 @@ class DesignComposer:
                     "style ranked the arrangement rather than the parts"
                 )
 
+        known = registry.by_id()
         standing_in = sorted(
             {
                 key
                 for option in options[:limit]
                 for key in option.parts.values()
-                if key in authored.BY_ID and authored.BY_ID[key].provisional
+                if key in known and known[key].provisional
             }
         )
         if standing_in:

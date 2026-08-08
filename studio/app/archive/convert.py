@@ -194,6 +194,43 @@ def _apply(path_data: str, matrix: tuple[float, float, float, float, float, floa
     return " ".join(out)
 
 
+def transform(path_data: str, matrix: tuple[float, float, float, float, float, float]) -> str:
+    """Apply a 2x3 matrix to path data, baking it into the coordinates."""
+    return _apply(path_data, matrix)
+
+
+def fit_to_box(path_data: str, box: float) -> str:
+    """Scale and centre path data into a square box of the given size.
+
+    Files arrive in whatever coordinate space their author used, and a grammar
+    places a part as a share of its box, so an element carrying its own scale
+    would be a different size in every composition.
+
+    Scaled about its own bounds rather than its viewBox, because exporters
+    leave whitespace and a mark padded by a wide viewBox would otherwise come
+    out smaller than an identical one that was cropped.
+    """
+    numbers = [float(v) for v in NUMBER.findall(path_data)]
+    xs, ys = numbers[0::2], numbers[1::2]
+    if not xs or not ys:
+        return path_data
+
+    width = max(xs) - min(xs)
+    height = max(ys) - min(ys)
+    factor = box / max(width, height, 1e-6)
+    return _apply(
+        path_data,
+        (
+            factor,
+            0.0,
+            0.0,
+            factor,
+            -min(xs) * factor + (box - width * factor) / 2,
+            -min(ys) * factor + (box - height * factor) / 2,
+        ),
+    )
+
+
 def shapes_in(svg: str) -> list[Shape]:
     """Every drawn thing in the file, as paths, with the colours they arrived in.
 

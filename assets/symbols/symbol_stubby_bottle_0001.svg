@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80mm" height="160mm" viewBox="0 0 80 160">
+  <!-- Shirtfaced — symbol_stubby_bottle_0001.svg
+       Australian stubby beer bottle, silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 30,10
+    L 50,10
+    L 52,25
+    L 55,30
+    L 55,50
+    L 60,55
+    L 62,140
+    C 62,150 55,155 40,155
+    C 25,155 18,150 18,140
+    L 20,55
+    L 25,50
+    L 25,30
+    L 28,25
+    Z
+    M 32,15
+    L 48,15
+    L 49,22
+    L 31,22
+    Z"/>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220mm" height="100mm" viewBox="0 0 220 100">
+  <!-- Shirtfaced — symbol_mountain_range_0001.svg
+       Simple mountain range silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 5,90
+    L 40,30
+    L 55,50
+    L 90,15
+    L 120,45
+    L 150,20
+    L 180,55
+    L 215,25
+    L 215,90
+    Z"/>
+</svg>

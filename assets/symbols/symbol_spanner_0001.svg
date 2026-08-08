@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180mm" height="60mm" viewBox="0 0 180 60">
+  <!-- Shirtfaced — symbol_spanner_0001.svg
+       Open-ended spanner / wrench silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 15,20
+    C 5,20 5,40 15,40
+    L 25,40
+    L 25,45
+    L 40,45
+    L 40,35
+    L 130,35
+    L 130,45
+    L 145,45
+    L 145,40
+    L 155,40
+    C 165,40 165,20 155,20
+    L 145,20
+    L 145,15
+    L 130,15
+    L 130,25
+    L 40,25
+    L 40,15
+    L 25,15
+    L 25,20
+    Z
+    M 20,25
+    C 18,25 18,35 20,35
+    L 25,35
+    L 25,25
+    Z
+    M 150,25
+    C 152,25 152,35 150,35
+    L 145,35
+    L 145,25
+    Z"/>
+</svg>

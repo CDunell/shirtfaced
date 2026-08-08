@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120mm" height="180mm" viewBox="0 0 120 180">
+  <!-- Shirtfaced — symbol_anchor_0001.svg
+       Classic anchor, bold filled silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 60,10
+    C 50,10 45,18 45,28
+    C 45,38 50,45 60,45
+    C 70,45 75,38 75,28
+    C 75,18 70,10 60,10
+    Z
+    M 55,45
+    L 55,130
+    L 30,130
+    C 20,130 15,140 20,150
+    L 35,165
+    L 45,155
+    L 40,150
+    L 55,150
+    L 55,170
+    L 65,170
+    L 65,150
+    L 80,150
+    L 75,155
+    L 85,165
+    L 100,150
+    C 105,140 100,130 90,130
+    L 65,130
+    L 65,45
+    Z"/>
+</svg>

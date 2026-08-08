@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="180mm" height="100mm" viewBox="0 0 180 100">
+  <!-- Shirtfaced — symbol_boomerang_0001.svg
+       Classic returning boomerang silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 20,70
+    C 15,50 25,30 45,25
+    C 70,18 100,30 120,50
+    C 140,70 160,75 170,60
+    C 175,50 170,40 160,40
+    C 150,40 145,50 150,58
+    C 145,65 130,60 115,45
+    C 95,25 65,15 40,25
+    C 25,30 20,45 25,60
+    Z"/>
+</svg>

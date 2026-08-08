@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="90mm" height="140mm" viewBox="0 0 90 140">
+  <!-- Shirtfaced — symbol_can_0001.svg
+       Beer / soft-drink can silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 20,25
+    C 20,15 30,10 45,10
+    C 60,10 70,15 70,25
+    L 72,120
+    C 72,130 60,135 45,135
+    C 30,135 18,130 18,120
+    Z
+    M 25,30
+    L 65,30
+    L 65,35
+    L 25,35
+    Z
+    M 30,15
+    L 60,15
+    L 60,20
+    L 30,20
+    Z"/>
+</svg>

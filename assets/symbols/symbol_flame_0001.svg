@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120mm" height="180mm" viewBox="0 0 120 180">
+  <!-- Shirtfaced — symbol_flame_0001.svg
+       Classic rising flame, single solid silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 60,170
+    C 40,150 25,120 30,90
+    C 20,70 25,45 40,30
+    C 35,50 45,65 55,55
+    C 50,35 60,15 75,10
+    C 70,30 80,50 70,65
+    C 85,55 95,40 90,25
+    C 105,40 110,70 100,95
+    C 115,120 100,150 80,170
+    C 75,160 65,165 60,170
+    Z"/>
+</svg>

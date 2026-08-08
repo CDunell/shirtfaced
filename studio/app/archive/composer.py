@@ -27,7 +27,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.archive import authored
+from app.archive import registry
 from app.archive.placements import Placement
 from app.archive.placements import placement as get_placement
 from app.archive.render import (
@@ -256,7 +256,7 @@ class ArchiveComposer:
 
     def __init__(self, approvals_path: Path, elements: tuple[Element, ...] | None = None) -> None:
         self.approvals = ApprovalStore(approvals_path)
-        self.elements = elements if elements is not None else authored.ALL
+        self.elements = elements if elements is not None else registry.all_elements()
 
     def compose(self, brief: Brief, seed: int, limit: int = MAX_OPTIONS) -> ArchiveComposition:
         """Answer the brief, or refuse it with a reason. Never raises."""
@@ -370,7 +370,7 @@ class ArchiveComposer:
 
         if brief.style_tags:
             matched = any(
-                set(brief.style_tags) & set(authored.BY_ID[option.element_id].style_tags)
+                set(brief.style_tags) & set(registry.by_id()[option.element_id].style_tags)
                 for option in options
             )
             if not matched:

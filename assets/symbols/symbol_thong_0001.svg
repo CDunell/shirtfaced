@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="160mm" viewBox="0 0 140 160">
+  <!-- Shirtfaced — symbol_thong_0001.svg
+       Classic Australian thong (flip-flop), silhouette. -->
+  <path id="mark" fill="#222" d="
+    M 30,20
+    C 20,25 15,40 18,60
+    L 25,140
+    C 28,150 40,155 50,150
+    L 55,145
+    L 60,150
+    C 70,155 85,150 88,140
+    L 95,60
+    C 98,40 93,25 83,20
+    C 75,15 65,18 60,30
+    L 55,70
+    L 50,30
+    C 45,18 38,15 30,20
+    Z
+    M 50,75
+    L 55,75
+    L 58,130
+    L 52,135
+    L 47,130
+    Z"/>
+</svg>
