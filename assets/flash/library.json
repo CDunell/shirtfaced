@@ -32,6 +32,58 @@
     "source": "commissioned",
     "source_id": "8QXhh"
   },
+  "illustration_part_allseeing_eye_0001": {
+    "subtype": "allseeing_eye",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_allseeing_eye_0002_0001": {
+    "subtype": "allseeing_eye",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_anchor_clean_0001": {
+    "subtype": "anchor",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_banner_blank_0002_0001": {
+    "subtype": "banner_blank",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "illustration_part_banner_blank_clean_0001": {
+    "subtype": "banner_blank",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
   "illustration_part_banner_scroll_0001": {
     "subtype": "banner_scroll",
     "style_tags": [
@@ -119,6 +171,26 @@
     "source": "commissioned",
     "source_id": "N0Hgb"
   },
+  "illustration_part_dagger_heart_rose_0001": {
+    "subtype": "dagger_heart_rose",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_dagger_rose_0001": {
+    "subtype": "dagger_rose",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_dagger_roses_banner_0001": {
     "subtype": "dagger_roses_banner",
     "style_tags": [
@@ -152,6 +224,16 @@
     "source": "commissioned",
     "source_id": "AfxLN"
   },
+  "illustration_part_gas_bottle_0001": {
+    "subtype": "gas_bottle",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_hand_of_fate_0001": {
     "subtype": "hand_of_fate",
     "style_tags": [
@@ -184,6 +266,16 @@
     "source": "commissioned",
     "source_id": "Bm3fu"
   },
+  "illustration_part_horseshoe_clean_0001": {
+    "subtype": "horseshoe",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_horseshoe_star_0001": {
     "subtype": "horseshoe_star",
     "style_tags": [
@@ -194,6 +286,26 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "BGTfT"
+  },
+  "illustration_part_hourglass_wings_0001": {
+    "subtype": "hourglass_wings",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_hourglass_wings_0002_0001": {
+    "subtype": "hourglass_wings",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "illustration_part_jerry_can_0001": {
     "subtype": "jerry_can",
@@ -227,6 +339,26 @@
     "source": "commissioned",
     "source_id": "XwjJQ"
   },
+  "illustration_part_lighthouse_0001": {
+    "subtype": "lighthouse",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_lighthouse_0002_0001": {
+    "subtype": "lighthouse",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_lightning_0001": {
     "subtype": "lightning",
     "style_tags": [
@@ -249,6 +381,16 @@
     "source": "commissioned",
     "source_id": "Tsxso"
   },
+  "illustration_part_milk_crates_stacked_0001": {
+    "subtype": "milk_crates_stacked",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_moon_phases_0001": {
     "subtype": "moon_phases",
     "style_tags": [
@@ -258,6 +400,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "cbMQp"
+  },
+  "illustration_part_moon_stars_0001": {
+    "subtype": "moon_stars",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "illustration_part_pallet_0001": {
     "subtype": "pallet",
@@ -281,6 +433,36 @@
     "source": "commissioned",
     "source_id": "yhWdf"
   },
+  "illustration_part_panther_0002_0001": {
+    "subtype": "panther",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_panther_0003_0001": {
+    "subtype": "panther_0003",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_panther_full_0001_0001": {
+    "subtype": "panther_full_0001",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_reaper_0001": {
     "subtype": "reaper",
     "style_tags": [
@@ -291,6 +473,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "nZpod"
+  },
+  "illustration_part_road_sign_0001": {
+    "subtype": "road_sign",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "illustration_part_rose_cross_0001": {
     "subtype": "rose_cross",
@@ -314,6 +506,36 @@
     "source": "commissioned",
     "source_id": "8Btch"
   },
+  "illustration_part_rose_thorns_0001": {
+    "subtype": "rose_thorns",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_serpent_0002_0001": {
+    "subtype": "serpent",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_serpent_0003_0001": {
+    "subtype": "serpent_0003",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_servo_bowser_0001": {
     "subtype": "servo_bowser",
     "style_tags": [
@@ -324,6 +546,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "tWLbM"
+  },
+  "illustration_part_ship_0001": {
+    "subtype": "ship",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "illustration_part_skate_truck_0001": {
     "subtype": "skate_truck",
@@ -357,6 +589,16 @@
     "source": "commissioned",
     "source_id": "v2HjL"
   },
+  "illustration_part_stepladder_0001": {
+    "subtype": "stepladder",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_swallow_0001": {
     "subtype": "swallow",
     "style_tags": [
@@ -389,6 +631,16 @@
     "source": "commissioned",
     "source_id": "Q98W6"
   },
+  "illustration_part_traffic_cone_0001": {
+    "subtype": "traffic_cone",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_winged_hourglass_0001": {
     "subtype": "winged_hourglass",
     "style_tags": [
@@ -410,6 +662,26 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "elIU2"
+  },
+  "illustration_part_wolf_0002_0001": {
+    "subtype": "wolf",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_wolf_0003_0001": {
+    "subtype": "wolf_0003",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "illustration_part_work_boot_0001": {
     "subtype": "work_boot",

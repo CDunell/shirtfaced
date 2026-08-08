@@ -21,6 +21,15 @@
     "source": "commissioned",
     "source_id": "Hbsn1"
   },
+  "pattern_chain_border_0001": {
+    "subtype": "chain_border",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "pattern_chain_repeat_0001": {
     "subtype": "chain_repeat",
     "style_tags": [
@@ -76,6 +85,15 @@
     "source": "commissioned",
     "source_id": "LX0V0"
   },
+  "pattern_laurel_border_0001": {
+    "subtype": "laurel_border",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "pattern_ornate_frame_0001": {
     "subtype": "ornate_frame",
     "style_tags": [
@@ -87,6 +105,16 @@
     "source": "commissioned",
     "source_id": "Qudwt"
   },
+  "pattern_rope_border_0001": {
+    "subtype": "rope_border",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
   "pattern_rose_border_0001": {
     "subtype": "rose_border",
     "style_tags": [
@@ -97,6 +125,15 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "FWYsd"
+  },
+  "pattern_scallop_border_0001": {
+    "subtype": "scallop_border",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "pattern_tapa_geometric_0001": {
     "subtype": "tapa_geometric",
@@ -141,5 +178,14 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "C7GTE"
+  },
+  "pattern_wave_repeat_0001": {
+    "subtype": "wave_repeat",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   }
 }

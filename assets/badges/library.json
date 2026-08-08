@@ -21,6 +21,81 @@
     "source": "commissioned",
     "provisional": "Carries <text> for its content; the words should be a slot the engine fills, not baked artwork."
   },
+  "badge_empty_circle_merrow_0001": {
+    "subtype": "empty_circle_merrow",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "badge_empty_circle_simple_0001": {
+    "subtype": "empty_circle_simple",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "badge_empty_diamond_0001": {
+    "subtype": "empty_diamond",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "badge_empty_merrow_oval_0001": {
+    "subtype": "empty_merrow_oval",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "badge_empty_oval_merrow_0002_0001": {
+    "subtype": "empty_oval_merrow",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "badge_empty_rect_merrow_0001": {
+    "subtype": "empty_rect_merrow",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "badge_empty_shield_0001": {
+    "subtype": "empty_shield",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "badge_empty_shield_0002_0001": {
+    "subtype": "empty_shield",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "badge_flag_label_0001": {
     "subtype": "flag_label",
     "style_tags": [

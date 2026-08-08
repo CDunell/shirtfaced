@@ -10,6 +10,16 @@
     "source": "commissioned",
     "source_id": "RKPmQ"
   },
+  "print_effect_discharge_bleed_0001": {
+    "subtype": "discharge_bleed",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
   "print_effect_halftone_gradient_0001": {
     "subtype": "halftone_gradient",
     "style_tags": [
@@ -19,5 +29,75 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "xOwJz"
+  },
+  "print_effect_letterpress_bite_0001": {
+    "subtype": "letterpress_bite",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "print_effect_misregistration_0001": {
+    "subtype": "misregistration",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "print_effect_misregistration_0002_0001": {
+    "subtype": "misregistration",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "print_effect_photocopy_degradation_0001": {
+    "subtype": "photocopy_degradation",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "print_effect_screen_mesh_0001": {
+    "subtype": "screen_mesh",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "print_effect_worn_vinyl_0002_0001": {
+    "subtype": "worn_vinyl",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "print_effect_worn_vinyl_crack_0001": {
+    "subtype": "worn_vinyl_crack",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
   }
 }

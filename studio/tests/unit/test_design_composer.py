@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from app.archive import authored
+from app.archive import authored, registry
 from app.archive.design_composer import Brief, DesignComposer
 
 BRIEF = Brief(
@@ -171,11 +171,18 @@ def test_rejecting_lowers_confidence(tmp_path: Path) -> None:
 
 
 def test_placeholders_are_reported_when_one_is_chosen(composer: DesignComposer) -> None:
-    """A crude shape must not pass as finished work just because it rendered."""
+    """A crude shape must not pass as finished work just because it rendered.
+
+    Asked of the registry rather than of ``authored``, because that is what the
+    composer draws from. An authored placeholder that a drawn file has since
+    superseded is no longer standing in for anything -- checking the authored
+    table would report a finished flame as crude.
+    """
+    known = registry.by_id()
     for seed in range(1, 40):
         result = composer.compose(BRIEF, seed=seed)
         used = {key for option in result.options for key in option.parts.values()}
-        if any(authored.BY_ID[key].provisional for key in used if key in authored.BY_ID):
+        if any(known[key].provisional for key in used if key in known):
             assert any("standing in" in gap for gap in result.gaps)
             return
     pytest.skip("no placeholder was chosen across the seeds tried")

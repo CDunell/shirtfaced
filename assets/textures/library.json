@@ -20,6 +20,16 @@
     "source": "commissioned",
     "source_id": "gvadp"
   },
+  "texture_cracked_plastisol_clean_0001": {
+    "subtype": "cracked_plastisol",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
   "texture_fine_grain_0001": {
     "subtype": "fine_grain",
     "style_tags": [
@@ -39,6 +49,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "2WQH5"
+  },
+  "texture_grunge_clean_0001": {
+    "subtype": "grunge",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
   },
   "texture_grunge_dense_0001": {
     "subtype": "grunge_dense",
@@ -69,6 +89,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "QzFNp"
+  },
+  "texture_halftone_clean_0001": {
+    "subtype": "halftone",
+    "style_tags": [
+      "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "watermark": "supplier mark in the lower-right corner; crop or clean before release"
   },
   "texture_ink_loss_0001": {
     "subtype": "ink_loss",
