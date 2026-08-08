@@ -37,14 +37,25 @@ from app.archive.placements import Placement
 DENSITY_BUDGET = 1.0
 
 
-# Where the budget lands for a print of a given width. A left chest at 90mm gets
-# a fraction of what a full front gets, because it is seen at the same distance
-# and is a quarter of the size.
-def density_budget(placement: Placement) -> float:
-    """The load this placement can carry."""
+def density_budget_for(width_mm: float) -> float:
+    """The load a print of this width can carry.
+
+    Taken from the print's actual width rather than from the placement table.
+    Designs are sized to the garment's own zone, so reading the budget off the
+    table meant a 280mm yoke zone got the allowance for the table's 76mm one
+    and every grammar was refused.
+
+    A left chest at 90mm carries a fraction of what a full front does, because
+    it is seen from the same distance and is a quarter of the size.
+    """
     reference = 230.0  # a centre chest, the size most designs are drawn for
-    scale = min(placement.max_width_mm / reference, 1.35)
+    scale = min(width_mm / reference, 1.35)
     return round(DENSITY_BUDGET * max(scale, 0.35), 3)
+
+
+def density_budget(placement: Placement) -> float:
+    """The load this placement carries at its typical size."""
+    return density_budget_for(placement.typical_width_mm)
 
 
 @dataclass(frozen=True)
@@ -80,6 +91,12 @@ class Grammar:
     # What it reads as, in plain terms, so a suggestion can explain itself.
     reads_as: str
     parts: tuple[Part, ...]
+    # The shape this arrangement wants, as width over height. A crest is
+    # square, a flanked word is wide, a tower is tall. Parts are proportional
+    # to whatever box they are given, so a tower in a 2.5:1 zone is a squashed
+    # tower and a crest in a sleeve is a stretched crest -- neither is refused
+    # by anything that only counts density.
+    aspect: float = 1.0
     style_tags: tuple[str, ...] = ()
     # Minimum inks. A grammar that relies on a knockout cannot be one colour.
     ink_min: int = 1
@@ -136,6 +153,7 @@ GRAMMARS: tuple[Grammar, ...] = (
                 optional=True,
             ),
         ),
+        aspect=0.95,  # square-ish, like a badge
         style_tags=("institutional", "club", "heraldic"),
         ink_min=1,
         ink_max=3,
@@ -174,6 +192,7 @@ GRAMMARS: tuple[Grammar, ...] = (
                 optional=True,
             ),
         ),
+        aspect=1.0,  # the mark wants room beneath the word
         style_tags=("skate", "streetwear", "band-merch"),
         ink_min=1,
         ink_max=3,
@@ -214,6 +233,7 @@ GRAMMARS: tuple[Grammar, ...] = (
                 optional=True,
             ),
         ),
+        aspect=1.0,  # a frame around centred type
         style_tags=("utilitarian", "workwear", "vintage"),
         ink_min=1,
         ink_max=2,
@@ -253,6 +273,7 @@ GRAMMARS: tuple[Grammar, ...] = (
                 optional=True,
             ),
         ),
+        aspect=1.6,  # type-led and wide
         style_tags=("military", "utilitarian", "workwear"),
         ink_min=1,
         ink_max=2,
@@ -300,6 +321,7 @@ GRAMMARS: tuple[Grammar, ...] = (
                 optional=True,
             ),
         ),
+        aspect=2.2,  # marks either side of a word
         style_tags=("collegiate", "athletic", "classic"),
         ink_min=1,
         ink_max=2,
@@ -348,6 +370,7 @@ GRAMMARS: tuple[Grammar, ...] = (
                 optional=True,
             ),
         ),
+        aspect=0.65,  # stacked up the middle
         style_tags=("modern", "streetwear", "bold"),
         ink_min=1,
         ink_max=2,
@@ -367,7 +390,48 @@ GRAMMARS: tuple[Grammar, ...] = (
                 layer=0,
             ),
         ),
+        aspect=1.0,  # one shape
         style_tags=("modern", "minimal"),
+        ink_min=1,
+        ink_max=2,
+    ),
+    Grammar(
+        key="sleeve_run",
+        name="Sleeve run",
+        reads_as="a word running down the arm, the way a sponsor stripe does",
+        aspect=0.28,  # long and narrow, the shape of a sleeve
+        parts=(
+            Part(
+                role="title",
+                top=0.06,
+                left=0.02,
+                width=0.96,
+                height=0.62,
+                layer=0,
+                slot="primary_text",
+            ),
+            Part(
+                role="rule",
+                families=("ornament",),
+                top=0.72,
+                left=0.15,
+                width=0.70,
+                height=0.05,
+                layer=0,
+                optional=True,
+            ),
+            Part(
+                role="mark",
+                families=("symbol",),
+                top=0.80,
+                left=0.28,
+                width=0.44,
+                height=0.16,
+                layer=0,
+                optional=True,
+            ),
+        ),
+        style_tags=("sport", "utilitarian", "modern"),
         ink_min=1,
         ink_max=2,
     ),
@@ -397,6 +461,7 @@ GRAMMARS: tuple[Grammar, ...] = (
                 optional=True,
             ),
         ),
+        aspect=1.7,  # a stub is wider than it is tall
         style_tags=("ephemera", "vintage", "novelty"),
         ink_min=1,
         ink_max=2,
@@ -453,3 +518,17 @@ def grammars_for(supplied_slots: set[str], available_families: set[str]) -> list
     # beats one that drops the second on the floor.
     fits.sort(key=lambda fit: (-fit.fills, len(fit.unfilled), fit.grammar.key))
     return fits
+
+
+# How far a zone's proportions may differ from a grammar's before the result
+# stops being that arrangement. Beyond this a crest in a sleeve is not a narrow
+# crest, it is a different and worse thing.
+MAX_ASPECT_MISMATCH = 2.0
+
+
+def suits(grammar: Grammar, width_mm: float, height_mm: float) -> bool:
+    """Whether this arrangement survives a box of these proportions."""
+    if height_mm <= 0 or grammar.aspect <= 0:
+        return False
+    ratio = (width_mm / height_mm) / grammar.aspect
+    return 1 / MAX_ASPECT_MISMATCH <= ratio <= MAX_ASPECT_MISMATCH

@@ -25,7 +25,7 @@ import random
 from dataclasses import dataclass, field
 
 from app.archive import geometry
-from app.archive.grammar import Grammar, Part, density_budget
+from app.archive.grammar import Grammar, Part, density_budget_for
 from app.archive.placements import Placement
 from app.archive.render import Palette, RefusedToRender, _frame_path
 from app.archive.svg import Canvas, num, rng_for
@@ -160,7 +160,8 @@ def assemble(
 ) -> AssembledDesign:
     """Build one design from a grammar. Same inputs, same bytes."""
     generator = rng_for(seed, grammar.key, "assemble")
-    allowed = density_budget(placement)
+    # From the box actually being drawn into, not from the table.
+    allowed = density_budget_for(width_mm)
     spent = 0.0
 
     chosen: dict[str, str] = {}

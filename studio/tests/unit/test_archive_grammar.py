@@ -21,15 +21,22 @@ CENTRE_CHEST = placement("centre_chest")
 
 
 def _build(key: str, seed: int = 8374, **kwargs):
+    """Build at the placement's own size, which is how the composer calls it.
+
+    This used to pass a fixed 230mm whatever placement it was given, so the
+    placement had no effect on the density budget and a left-chest test was
+    really a centre-chest test wearing a label.
+    """
+    where = kwargs.pop("placement", CENTRE_CHEST)
     return assemble(
         BY_KEY[key],
         kwargs.pop("content", CONTENT),
         authored.ALL,
         kwargs.pop("palette", PALETTE),
-        kwargs.pop("placement", CENTRE_CHEST),
+        where,
         seed=seed,
-        width_mm=230,
-        height_mm=230,
+        width_mm=kwargs.pop("width_mm", where.typical_width_mm),
+        height_mm=kwargs.pop("height_mm", where.typical_height_mm),
     )
 
 

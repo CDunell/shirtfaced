@@ -23,7 +23,7 @@ from pathlib import Path
 from app.archive import authored
 from app.archive.assemble import AssembledDesign, assemble
 from app.archive.garment import Garment, GarmentError
-from app.archive.grammar import Grammar, grammars_for
+from app.archive.grammar import Grammar, grammars_for, suits
 from app.archive.placements import Placement
 from app.archive.placements import placement as get_placement
 from app.archive.render import Palette, RefusedToRender
@@ -237,6 +237,14 @@ class DesignComposer:
 
         for fit in fits:
             grammar = fit.grammar
+            if not suits(grammar, width_mm, height_mm):
+                rejections.append(
+                    Rejection(
+                        grammar.key,
+                        f"WRONG_SHAPE_FOR_ZONE:{width_mm:.0f}x{height_mm:.0f}",
+                    )
+                )
+                continue
             try:
                 design = assemble(
                     grammar,
