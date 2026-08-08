@@ -38,19 +38,23 @@ def client(session: Session, tmp_path: Path) -> Iterator[TestClient]:
     application.dependency_overrides.clear()
 
 
-def test_review_queue_and_fake_publish_are_durable_and_idempotent(
-    client: TestClient, session: Session
-) -> None:
+def _photo(session: Session, label: str = "Friday servo") -> Photo:
     photo = Photo(
-        relative_path="uploads/source.jpg",
-        label="Friday servo",
+        relative_path=f"uploads/{label.lower().replace(' ', '-')}.jpg",
+        label=label,
         mime_type="image/jpeg",
         width=1600,
         height=2000,
     )
     session.add(photo)
     session.flush()
+    return photo
 
+
+def test_review_queue_and_fake_publish_are_durable_and_idempotent(
+    client: TestClient, session: Session
+) -> None:
+    photo = _photo(session)
     metadata = [
         {
             "output_key": "instagram_feed",
@@ -76,6 +80,7 @@ def test_review_queue_and_fake_publish_are_durable_and_idempotent(
     assert package["source_label"] == "Friday servo"
     assert len(package["derivatives"]) == 1
     derivative = package["derivatives"][0]
+    assert derivative["review_state"] == "review_required"
 
     downloaded = client.get(derivative["url"])
     assert downloaded.status_code == 200
@@ -84,6 +89,7 @@ def test_review_queue_and_fake_publish_are_durable_and_idempotent(
     approved = client.post(f"/api/social/posts/{package['id']}/approve", json={})
     assert approved.status_code == 200
     assert approved.json()["state"] == "approved"
+    assert approved.json()["derivatives"][0]["review_state"] == "approved"
 
     queued = client.post(
         f"/api/social/posts/{package['id']}/queue",
@@ -95,6 +101,8 @@ def test_review_queue_and_fake_publish_are_durable_and_idempotent(
     assert jobs[0]["state"] == "scheduled"
     assert jobs[0]["locked"] is False
     assert jobs[0]["recommended_at"] is not None
+    assert jobs[0]["source_label"] == "Friday servo"
+    assert jobs[0]["output_key"] == "instagram_feed"
     job_id = jobs[0]["id"]
 
     first = client.post(f"/api/social/jobs/{job_id}/publish-now", json={})
@@ -111,3 +119,65 @@ def test_review_queue_and_fake_publish_are_durable_and_idempotent(
     persisted = client.get("/api/social/posts?state=live")
     assert persisted.status_code == 200
     assert [item["id"] for item in persisted.json()] == [package["id"]]
+
+
+def test_only_approved_derivatives_enter_the_publication_queue(
+    client: TestClient, session: Session
+) -> None:
+    photo = _photo(session, "Beach run")
+    metadata = [
+        {
+            "output_key": "instagram_feed",
+            "width": 1080,
+            "height": 1350,
+            "filename": "SF_BEACH-RUN_IG-FEED.jpg",
+        },
+        {
+            "output_key": "tiktok_cover",
+            "width": 1080,
+            "height": 1920,
+            "filename": "SF_BEACH-RUN_TIKTOK-COVER.jpg",
+        },
+    ]
+    created = client.post(
+        "/api/social/posts",
+        data={
+            "source_photo_id": str(photo.id),
+            "theme": "light",
+            "branding": "identity",
+            "caption": "Sunday looked better from here.",
+            "derivative_metadata": json.dumps(metadata),
+        },
+        files=[
+            ("files", ("feed.jpg", b"feed-derivative", "image/jpeg")),
+            ("files", ("tiktok.jpg", b"tiktok-derivative", "image/jpeg")),
+        ],
+    )
+    assert created.status_code == 201, created.text
+    package = created.json()
+    feed, tiktok = package["derivatives"]
+
+    approved = client.post(f"/api/social/derivatives/{feed['id']}/approve", json={})
+    assert approved.status_code == 200
+    assert approved.json()["state"] == "review_required"
+
+    rejected = client.post(
+        f"/api/social/derivatives/{tiktok['id']}/reject", json={"reason": "Wrong crop"}
+    )
+    assert rejected.status_code == 200
+    reviewed = rejected.json()
+    assert reviewed["state"] == "approved"
+    assert [item["review_state"] for item in reviewed["derivatives"]] == [
+        "approved",
+        "rejected",
+    ]
+
+    queued = client.post(
+        f"/api/social/posts/{package['id']}/queue",
+        json={"timezone": "Australia/Brisbane", "scheduled_at": None},
+    )
+    assert queued.status_code == 200, queued.text
+    jobs = queued.json()
+    assert len(jobs) == 1
+    assert jobs[0]["derivative_id"] == feed["id"]
+    assert jobs[0]["output_key"] == "instagram_feed"
