@@ -10,34 +10,39 @@ const [lockupSrc, wordmarkSrc, smileySrc] = await Promise.all([
   readFile("DEV/smiley.svg", "utf8"),
 ]);
 
-function symbolFromSvg(source, id) {
+function brandFromSvg(source, id) {
   const viewBox = source.match(/viewBox="([^"]+)"/)?.[1];
   if (!viewBox) throw new Error(`Missing viewBox in ${id}`);
-  const inner = source.replace(/^.*?<svg[^>]*>/s, "").replace(/<\/svg>\s*$/s, "");
-  const recolourable = inner
+  const [minX, minY, width, height] = viewBox.split(/\s+/).map(Number);
+  if (![minX, minY, width, height].every(Number.isFinite) || width <= 0 || height <= 0) {
+    throw new Error(`Invalid viewBox in ${id}: ${viewBox}`);
+  }
+  const inner = source
+    .replace(/^.*?<svg[^>]*>/s, "")
+    .replace(/<\/svg>\s*$/s, "")
     .replace(/\sfill="(?!none)[^"]*"/gi, ' fill="currentColor"')
     .replace(/\sstroke="(?!none)[^"]*"/gi, ' stroke="currentColor"');
-  return `<symbol id="${id}" viewBox="${viewBox}" preserveAspectRatio="xMidYMid meet">${recolourable}</symbol>`;
+  return { id, minX, minY, width, height, inner };
 }
 
-const SYMBOLS = [
-  symbolFromSvg(lockupSrc, "brand-lockup"),
-  symbolFromSvg(wordmarkSrc, "brand-wordmark"),
-  symbolFromSvg(smileySrc, "brand-smiley"),
-].join("");
+const LOCKUP = brandFromSvg(lockupSrc, "brand-lockup");
+const WORDMARK = brandFromSvg(wordmarkSrc, "brand-wordmark");
+const SMILEY = brandFromSvg(smileySrc, "brand-smiley");
 
-function defs() {
-  return `<defs>${SYMBOLS}</defs>`;
-}
 function svg(w, h, body, bg = "none") {
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${defs()}${bg !== "none" ? `<rect width="100%" height="100%" fill="${bg}"/>` : ""}${body}</svg>\n`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${bg !== "none" ? `<rect width="100%" height="100%" fill="${bg}"/>` : ""}${body}</svg>\n`;
 }
-const useBrand = (id, x, y, w, h, c) =>
-  `<use href="#${id}" x="${x}" y="${y}" width="${w}" height="${h}" color="${c}" fill="${c}"/>`;
-const lockup = (x, y, w, h, c = COLORS.paper) => useBrand("brand-lockup", x, y, w, h, c);
-const wordmark = (x, y, w, h, c = COLORS.paper) =>
-  useBrand("brand-wordmark", x, y, w, h, c);
-const smiley = (x, y, w, h, c = COLORS.lime) => useBrand("brand-smiley", x, y, w, h, c);
+
+function placeBrand(brand, x, y, w, h, c) {
+  const scale = Math.min(w / brand.width, h / brand.height);
+  const tx = x + (w - brand.width * scale) / 2 - brand.minX * scale;
+  const ty = y + (h - brand.height * scale) / 2 - brand.minY * scale;
+  return `<g transform="translate(${tx} ${ty}) scale(${scale})" color="${c}" fill="${c}">${brand.inner}</g>`;
+}
+
+const lockup = (x, y, w, h, c = COLORS.paper) => placeBrand(LOCKUP, x, y, w, h, c);
+const wordmark = (x, y, w, h, c = COLORS.paper) => placeBrand(WORDMARK, x, y, w, h, c);
+const smiley = (x, y, w, h, c = COLORS.lime) => placeBrand(SMILEY, x, y, w, h, c);
 const line = (x1, y1, x2, y2, c = COLORS.paper, sw = 3, o = 1) =>
   `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c}" stroke-width="${sw}" opacity="${o}"/>`;
 const rect = (x, y, w, h, c, rx = 0, o = 1, stroke = "none", sw = 0) =>
@@ -83,9 +88,13 @@ assets.set("v3/light-corner-mark-4x5.svg", svg(1080, 1350, wordmark(62, 1195, 22
 assets.set("v3/dark-corner-mark-4x5.svg", svg(1080, 1350, wordmark(62, 1195, 220, 52, COLORS.paper)));
 assets.set("v3/adaptive-corner-mark-4x5.svg", svg(1080, 1350, rect(48, 1175, 270, 90, COLORS.ink, 12, .74) + wordmark(68, 1194, 220, 52, COLORS.paper)));
 
+const indirectSvg = /data:image\/svg\+xml|<mask\b|<symbol\b|<use\b|<image\b/i;
 for (const [relative, content] of assets) {
-  if (content.includes("data:image/svg+xml") || content.includes("<mask")) {
-    throw new Error(`Nested SVG/mask is not allowed in social overlay: ${relative}`);
+  if (indirectSvg.test(content)) {
+    throw new Error(`Indirect/mobile-unsafe SVG content is not allowed: ${relative}`);
+  }
+  if (relative.startsWith("v3/") && !content.includes("<path")) {
+    throw new Error(`Social overlay contains no literal brand paths: ${relative}`);
   }
   const path = join(OUT, relative);
   await mkdir(dirname(path), { recursive: true });
@@ -103,4 +112,4 @@ const manifest = {
   files: [...assets.keys()],
 };
 await writeFile(join(OUT, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", "utf8");
-console.log(`Generated ${assets.size} standalone Shirtfaced social assets in ${OUT}`);
+console.log(`Generated ${assets.size} literal-path Shirtfaced social assets in ${OUT}`);
