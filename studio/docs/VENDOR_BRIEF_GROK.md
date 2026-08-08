@@ -1,7 +1,12 @@
 # Vector asset brief — Shirtfaced
 
-Australian humour-led apparel brand. Register is Australian vernacular: pubs,
-utes, the coast, the trades, backyards.
+Australian humour-led premium streetwear. The register is streetwear, not
+Australiana: type-led wordmarks, small chest emblems, tattoo and occult flash,
+brand-owned characters.
+
+This is derived from 12,151 product images across 188 apparel brands that we
+hold and have mined. Of 1,166 designs measured, 577 are a single element and the
+median design carries four words. The graphic is usually the name, set well.
 
 Assets feed an engine that composes designs from parts and places them in real
 print zones at real millimetre dimensions.
@@ -65,12 +70,13 @@ set.
 
 ---
 
-## 2. Thirteen redraws
+## 2. Five redraws
 
-Single marks. Crude versions exist.
+Single marks. Eight of the original thirteen are done and accepted — flame,
+palm, crown, anchor, stubby bottle, heart, mountain range, breaking wave. These
+five are still standing in:
 
-wings · flame · breaking wave · thong · palm · mountain range · anchor · crown ·
-boomerang · stubby bottle · can · spanner · heart
+wings · boomerang · can · spanner · thong
 
 ---
 
@@ -78,28 +84,27 @@ boomerang · stubby bottle · can · spanner · heart
 
 Single marks, silhouette-led, readable across a room.
 
-**Australian vernacular** — magpie, kookaburra, cockatoo, galah, kangaroo,
-wombat, blue heeler, goanna, redback, cane toad, esky, hills hoist, ute, roo
-bar, servo bowser, milk crate, camp chair, water tank, windmill, corrugated
-iron, jetty, snag on bread, meat pie, lamington, Chiko roll, zinc stripe,
-bucket hat, boardies, work boot, high-vis, stubby holder, gum leaf, wattle,
-banksia, bottlebrush, Southern Cross variants.
+**Tattoo and flash** — skull, snake, eagle, wolf, panther, rose, dagger, dice,
+cards, horseshoe, swallow, anchor, lightning, flame, wings, hourglass, hand of
+fate, banner scroll, laurel, crescent moon, star field.
 
-**Trade** — hammer, shifter, angle grinder, tape measure, level, trowel,
-welding mask, hard hat, gloves, drill, chalk line, sawhorse.
+**Occult and horror** — reaper, cross, inverted arch, moon phases, candle, eye,
+serpent, thorn, flame sigil.
 
-**Pub** — schooner, pot, pint, keg, tap, bottle opener, coaster, dart, pool
-cue, jukebox, meat tray, raffle ticket, chook.
+**Character and mascot** — a drawn figure with a face and a posture, invented
+rather than observed, with enough personality to carry twenty designs and be
+recognised each time. This is the highest-value item on the whole brief.
 
-**Coast** — board (short, mal, fish), fin, leg rope, wax block, tinnie,
-outboard, crab, prawn, snapper, bream, tackle box, rod, sinker, life ring.
+**Panels and plates** — rectangular halftone or collage panels with borders,
+torn edges, taped corners. Globe wireframes, grids, contour fields, star charts.
 
-**Hands and figures** — pointing hand, thumbs up, shaka, fist, open palm, hand
-holding a can, arms crossed, figures standing, sitting, walking, running.
+**Hands and figures** — pointing hand, thumbs up, fist, open palm, hand holding
+a can, arms crossed. Figures standing, sitting, walking, running.
 
-**Standard apparel marks** — skull, snake, eagle, wolf, bear, lion, rose,
-laurel, oak leaf, lightning bolt, flames, wings, dice, cards, horseshoe, star
-field, moon phases, rocket, radio tower.
+**Not this** — no wildlife, no native flora, no national food, no domestic
+infrastructure. Depicting Australia literally is the souvenir register, and no
+brand in our evidence works that way. What is Australian about Shirtfaced lives
+in the words and the characters, not in a catalogue of fauna.
 
 ---
 

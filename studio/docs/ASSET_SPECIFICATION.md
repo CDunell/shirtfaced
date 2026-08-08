@@ -1,17 +1,65 @@
 # Sourcing list
 
-What we are hunting for. Register is Australian vernacular — pubs, utes, the
-coast, the trades, backyards.
+What we are hunting for.
 
-Categories below are where the obvious holes are, not a boundary. Anything good
-that is not on the list is still wanted.
+## Where this list comes from
+
+The first version of this document was written from imagination. It asked for
+magpies, kookaburras, cockatoos, galahs, goannas, cane toads, hills hoists,
+lamingtons and Chiko rolls, on the reasoning that Shirtfaced is Australian and
+humour-led, so its artwork should depict Australian things. Twelve of those were
+drawn and delivered. Every one of them reads as souvenir-shop iconography,
+because that is what the list was.
+
+We have 12,151 product images from 188 apparel brands in `var/design_corpus/`,
+including thirty streetwear brands, twenty skate, ten Australian streetwear and
+three Australian humour. The list should have been derived from those in the
+first place. This version is.
+
+Two kinds of evidence sit behind it. The mined numbers are in
+`var/design_corpus/design_structure.json` and cover 1,166 designs. The subject
+observations come from looking at roughly 180 products across 36 brands in the
+streetwear, skate, Australian streetwear and Australian humour traditions —
+enough to be confident about what recurs, not enough to put a percentage on it.
+
+## What the corpus actually shows
+
+**Designs are small.** Of 1,166 mined designs, 577 are a single element and 899
+are one or two. Seven or eight elements appear four times in the whole set. The
+median design carries four words, and that holds at every element count.
+
+**They are type-led.** The dominant object on a streetwear garment is a
+wordmark: set straight, arched, condensed, in blackletter, in athletic script,
+in collegiate slab. Stüssy, Neighborhood, Pleasures, Born X Raised, Thrasher,
+Deathwish, Primitive, Nena and Pasadena — the graphic *is* the name, and the
+craft is in the lettering.
+
+**Most garments carry almost nothing.** A very large share of what these brands
+sell is a plain blank with a small embroidered or printed mark at left chest.
+That is the volume product. The big back print is the exception.
+
+**Where illustration appears it is one of four things.** A brand-owned character
+or mascot, invented rather than observed — the Toy Machine monster, the
+RipNDip cat, the Deathwish skull. Tattoo and occult flash — skulls, roses,
+daggers, reapers, crosses, stars, flames, wings, snakes. A sports or
+institutional crest. Or a rectangular photographic or collage panel dropped into
+the chest like a plate.
+
+**No brand in the corpus depicts its own country's wildlife or food.** Not the
+Australian streetwear brands, not the Australian humour brands. The register
+that was asked for does not appear in any of the evidence we hold.
+
+The symbols already drawn — flame, crown, heart, anchor, wings, breaking wave —
+sit inside the tattoo-flash lineage above and are on register. The vernacular
+illustration brief was the wrong turn, not the symbol work.
 
 ---
 
 ## Typefaces
 
 Every design is currently set in one face, which is the hardest limit on the
-work. More faces changes the output more than anything else here.
+work. Given that the median design is one element and four words, more faces
+changes the output more than anything else on this list.
 
 | Class | Used for |
 |---|---|
@@ -23,7 +71,8 @@ work. More faces changes the output more than anything else here.
 | Signwriter script | Hand-painted, pub, ephemera |
 | Woodtype / Western display | Poster, novelty |
 | Typewriter / monospace | Labels, tags, small print |
-| Blackletter | Band-merch |
+| Blackletter | Band-merch, and far more common in the corpus than expected |
+| Athletic script | Chain-stitch and varsity lettering |
 | Rounded soft sans | Lighter material |
 
 **One real constraint.** The font file gets held in the repository and glyphs
@@ -32,49 +81,74 @@ file that stays — different metrics mean different designs.
 
 ---
 
+## Lettering furniture
+
+The parts a wordmark is built with, which the corpus uses constantly and the
+archive barely has.
+
+Arch and curve baselines at several radii. Condensed and extended containers.
+Drop shadows, offsets, outlines, inline strokes, bevels. Underline rules with
+end caps. Brackets, slashes, asterisks, daggers, registration and trademark
+marks. Numerals as display objects. Small-caps label bars. Two- and
+three-letter monogram containers.
+
+---
+
+## Emblems for the small mark
+
+The left-chest mark is the highest-volume graphic these brands print, and it has
+to survive at 60–90 mm. Small crests, shields, ovals, rosettes, seals, boxed
+logotypes, stars, crosses, pennants, circular stamps with type on the ring.
+
+---
+
 ## Illustration
 
-### Australian vernacular
+### Tattoo and flash
 
-Magpie, kookaburra, cockatoo, galah, kangaroo, wombat, blue heeler, goanna,
-redback, bull ant, cane toad. Esky, hills hoist, ute, roo bar, servo bowser,
-milk crate, camp chair, water tank, windmill, corrugated iron, jetty. Snag on
-bread, meat pie, lamington, Chiko roll. Zinc stripe, bucket hat, boardies, work
-boot, high-vis, stubby holder. Gum leaf, wattle, banksia, bottlebrush, salt
-bush. Southern Cross variants.
+Skull, snake, eagle, wolf, panther, rose, dagger, dice, cards, horseshoe,
+swallow, anchor, lightning, flame, wings, hourglass, hand of fate, banner
+scroll, laurel, crescent moon, star field. Traditional and fine-line both.
 
-### Trade and workwear
+### Occult and horror
 
-Hammer, shifter, angle grinder, tape measure, level, trowel, welding mask, hard
-hat, gloves, drill, chalk line, sawhorse.
+Reaper, cross, inverted arch, moon phases, candle, eye, serpent, thorn, flame
+sigil. Recurs heavily across skate and Australian alt.
 
-### Pub and social
+### Character and mascot
 
-Schooner, pot, pint, keg, tap, bottle opener, coaster, dart, pool cue, jukebox,
-meat tray, raffle ticket, chook.
+A drawn character with a face and a posture that could be *ours* — a figure with
+enough personality to appear on twenty designs and be recognised each time. The
+corpus is emphatic that these are invented, not observed. See
+`docs/foundations/CHARACTERS.md`, which is a name list and nothing more.
 
-### Coast
+### Panels and plates
 
-Board (short, mal, fish), fin, leg rope, wax block, tinnie, outboard, crab,
-prawn, snapper, bream, tackle box, rod, sinker, life ring.
+Rectangular photographic or collage panels, halftone-screened, with a border.
+Torn-edge and taped-corner treatments. Globe wireframes, grids, contour and
+topographic fields, star charts.
 
 ### Hands and figures
 
-Pointing hand, thumbs up, shaka, fist, open palm, hand holding a can, arms
-crossed. Figures standing, sitting, walking, running.
-
-### Standard apparel marks
-
-Skull, snake, eagle, wolf, bear, lion, rose, laurel, oak leaf, lightning bolt,
-flames, wings, dice, cards, horseshoe, star field, moon phases, rocket, radio
-tower.
+Pointing hand, thumbs up, fist, open palm, hand holding a can, arms crossed.
+Figures standing, sitting, walking, running.
 
 ### Redraws
 
 Crude in-house versions exist and need replacing:
 
-wings · flame · breaking wave · thong · palm · mountain range · anchor · crown ·
-boomerang · stubby bottle · can · spanner · heart
+wings · thong · boomerang · can · spanner
+
+The remaining eight — flame, palm, crown, anchor, stubby bottle, heart, mountain
+range, breaking wave — are done.
+
+### Not this
+
+No wildlife, no native flora, no national food, no domestic infrastructure. Not
+because Australia is off-limits, but because depicting it literally is the
+souvenir register and no brand we are measuring against works that way. What is
+Australian about Shirtfaced belongs in the words and the characters, which are
+System A's business, not in a catalogue of fauna.
 
 ---
 
