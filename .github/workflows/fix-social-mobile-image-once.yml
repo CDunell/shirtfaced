@@ -1,0 +1,102 @@
+name: Fix Social mobile image once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/fix-social-mobile-image-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Patch Social source loader
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('studio/web/src/components/SocialBench.tsx')
+          s = p.read_text()
+          old_import = 'import { ApiError, fetchPhotos, uploadPhoto, type Photo } from "../api/client";\n'
+          new_import = old_import + 'import { loadCanvasImage } from "../lib/loadCanvasImage";\n'
+          if '../lib/loadCanvasImage' not in s:
+              s = s.replace(old_import, new_import)
+          old_fn = '''function loadImage(url: string): Promise<HTMLImageElement> {\n  return new Promise((resolve, reject) => {\n    const image = new Image();\n    image.onload = () => resolve(image);\n    image.onerror = () => reject(new Error("The source image could not be loaded."));\n    image.src = url;\n  });\n}\n\n'''
+          if old_fn not in s:
+              raise SystemExit('old loadImage helper not found')
+          s = s.replace(old_fn, '')
+          s = s.replace('const source = await loadImage(photo.url);', 'const source = await loadCanvasImage(photo.url);')
+          # Overlay SVGs are static public assets and should keep the simple direct loader.
+          marker = 'function cover(\n'
+          direct_loader = '''function loadOverlayImage(url: string): Promise<HTMLImageElement> {\n  return new Promise((resolve, reject) => {\n    const image = new Image();\n    image.onload = () => resolve(image);\n    image.onerror = () => reject(new Error("A Shirtfaced overlay could not be loaded."));\n    image.src = url;\n  });\n}\n\n'''
+          pos = s.index(marker)
+          s = s[:pos] + direct_loader + s[pos:]
+          s = s.replace('ctx.drawImage(await loadImage(overlay), 0, 0, spec.width, spec.height);', 'ctx.drawImage(await loadOverlayImage(overlay), 0, 0, spec.width, spec.height);')
+          p.write_text(s)
+          PY
+      - name: Add loader regression test
+        run: |
+          cat > studio/web/src/lib/loadCanvasImage.test.ts <<'EOF'
+          import { afterEach, describe, expect, it, vi } from "vitest";
+          import { loadCanvasImage } from "./loadCanvasImage";
+
+          class FakeImage {
+            src = "";
+            complete = true;
+            naturalWidth = 1200;
+            onload: (() => void) | null = null;
+            onerror: (() => void) | null = null;
+            decode = vi.fn(async () => undefined);
+          }
+
+          describe("loadCanvasImage", () => {
+            afterEach(() => vi.restoreAllMocks());
+
+            it("fetches stored WebP bytes before decoding for canvas use", async () => {
+              const blob = new Blob(["webp-bytes"], { type: "image/webp" });
+              const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+                new Response(blob, { status: 200, headers: { "Content-Type": "image/webp" } }),
+              );
+              vi.stubGlobal("Image", FakeImage);
+              const create = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:studio-photo");
+              const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
+
+              const image = await loadCanvasImage("/api/photos/abc/image");
+
+              expect(fetchMock).toHaveBeenCalledWith("/api/photos/abc/image", {
+                credentials: "same-origin",
+                cache: "no-store",
+              });
+              expect(image.src).toBe("blob:studio-photo");
+              expect(create).toHaveBeenCalledWith(expect.objectContaining({ type: "image/webp" }));
+              expect(revoke).toHaveBeenCalledWith("blob:studio-photo");
+            });
+
+            it("reports an HTTP failure before attempting image decode", async () => {
+              vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("missing", { status: 404 }));
+              await expect(loadCanvasImage("/api/photos/missing/image")).rejects.toThrow("(404)");
+            });
+          });
+          EOF
+      - name: Validate frontend
+        run: |
+          cd studio/web
+          npm ci
+          npm run lint
+          npm run format:check || (npm run format && npm run format:check)
+          npm run typecheck
+          npm test -- --run
+          npm run build
+      - name: Commit fix
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/web/src/components/SocialBench.tsx studio/web/src/lib/loadCanvasImage.ts studio/web/src/lib/loadCanvasImage.test.ts
+          git commit -m "fix: load Social source images robustly on mobile"
+          git push
