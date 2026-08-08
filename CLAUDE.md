@@ -42,6 +42,55 @@ imported.** A section not on the allowlist is invisible to the planner.
 Promotion steps are in `studio/docs/stage-2/README.md`. Do not add a rule to a research
 document and assume it is live.
 
+## Read this before writing code
+
+Name the document that governs what you are about to build. If you cannot name
+one, search for it — do not start. Every expensive mistake in this repository so
+far has been caught by that one question, asked too late.
+
+| Building | Read first |
+|---|---|
+| The design engine | `studio/docs/DESIGN_ENGINE_ADAPTATION.md` — the architecture, agreed before the build |
+| Anything about the corpus | `studio/docs/DESIGN_CORPUS_SCHEMA.md`, and `studio/var/design_corpus/` itself |
+| A brief for supplied assets | `studio/docs/ASSET_SPECIFICATION.md` — and audit `assets/` before asking for anything |
+| What the brand is | `docs/foundations/POSITIONING.md`, `BRAND_VOICE.md` |
+| Product design rules | `docs/research/SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` |
+| Migrations or deploys | `studio/docs/LOCAL_RUNBOOK.md`, `ORACLE_CLOUD_DEPLOYMENT.md`, `.github/workflows/deploy.yml` |
+
+`DESIGN_ENGINE_ADAPTATION.md` opens by recording that the first attempt went
+straight to code and produced a duplicate of something that already existed. It
+happened again afterwards. Reading it costs one turn; not reading it has cost
+several days.
+
+## Standing rules, and why they exist
+
+These were each learned by breaking them. The reason matters more than the rule,
+because a rule with no reason gets re-derived away.
+
+**A constraint exists only if it is a property of the machine, or a decision the
+owner made. Never one you derived.** Invented constraints so far: a licence gate
+at intake, a single-colour mandate, a 25mm legibility test, a single-path rule,
+an `id="mark"` requirement, a no-detached-subpaths rule, a 20mm minimum print,
+and watermarks refused at the door. Each looked like rigour. Each narrowed what
+could come in. Where something genuinely does not work, fix the engine — that is
+what the even-odd fill and the stroke outliner are.
+
+**Everything gets ingested.** The rights question is asked once, before release,
+where there is a design to ask it about. Not at the door.
+
+**Direction is the owner's.** The corpus settles register — it is how souvenir
+Australiana was ruled out. It does not set a design direction. Reading its
+medians as an instruction to make type-led work is the same category error as
+reading "Australian" as an instruction to draw kangaroos.
+
+**Look at it before saying it works.** Rendering has caught what the numbers
+called fine five times: a ute's wheels, an EPS gradient burying six hundred
+shapes, an ink the same colour as the garment, a design laid out at 756 pixels
+in a 250-pixel card, a checker that drew every circle as a lens.
+
+**Finish, then report.** Naming something as outstanding is not the same as
+doing it.
+
 ## Where things actually are
 
 - **World canon:** `studio/worlds/world-01/WORLD.md` — the deepest document here. Read it first.
