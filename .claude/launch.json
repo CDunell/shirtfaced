@@ -2,19 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "shirtfaced",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3200"],
-      "port": 3200
-    },
-    {
-      "name": "shirtfaced-admin",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "admin", "run", "dev", "--", "--port", "3201"],
-      "port": 3201
-    },
-    {
-      "name": "shirtfaced-studio-web",
+      "name": "studio-web",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "studio/web", "run", "dev", "--", "--port", "5173"],
       "port": 5173

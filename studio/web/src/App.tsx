@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useStyletron } from "baseui";
 import { ParagraphMedium } from "baseui/typography";
 
+import { ComposeBench } from "./components/ComposeBench";
 import { DesignBench } from "./components/DesignBench";
 import { PrintBench } from "./components/PrintBench";
 import { PromptWorkbench } from "./components/PromptWorkbench";
@@ -21,11 +22,12 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 
-type View = "prompts" | "print" | "design" | "dashboard";
+type View = "prompts" | "print" | "compose" | "design" | "dashboard";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "prompts", label: "Prompts" },
   { id: "print", label: "Print" },
+  { id: "compose", label: "Compose" },
   { id: "design", label: "Design" },
   { id: "dashboard", label: "Dashboard" },
 ];
@@ -150,6 +152,8 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <PromptWorkbench />
         ) : view === "print" ? (
           <PrintBench />
+        ) : view === "compose" ? (
+          <ComposeBench />
         ) : view === "design" ? (
           <DesignBench />
         ) : (

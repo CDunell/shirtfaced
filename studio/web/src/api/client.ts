@@ -648,3 +648,106 @@ export async function scoreDesign(file: File, designName?: string): Promise<Desi
   }
   return (await response.json()) as DesignScore;
 }
+
+// --- Composing designs from the archive -------------------------------------
+
+export interface ComposeBrief {
+  seed: number;
+  garment_key: string;
+  primary_text: string;
+  secondary_text: string;
+  placement: string;
+  fit: string;
+  treatment: string;
+  garment_colour: string;
+  inks: number;
+  limit: number;
+}
+
+export interface ComposedOption {
+  grammar_key: string;
+  grammar_name: string;
+  reads_as: string;
+  rationale: string;
+  score: number;
+  confidence: number;
+  approvals: number;
+  decisions: number;
+  width_mm: number;
+  height_mm: number;
+  content_hash: string;
+  parts: Record<string, string>;
+  svg: string;
+}
+
+export interface StoredDesign {
+  id: string;
+  seed: number;
+  garment_key: string;
+  placement_key: string;
+  grammar_key: string;
+  state: AttemptState;
+  width_mm: number;
+  height_mm: number;
+  content_hash: string;
+  parts: Record<string, unknown>;
+  decided_by: string;
+  decision_note: string;
+  svg: string;
+}
+
+/** Answer a brief. Stores nothing: looking is free and reversible. */
+export async function composeDesign(
+  brief: Partial<ComposeBrief> & { seed: number; garment_key: string },
+  signal?: AbortSignal,
+): Promise<ComposedOption[]> {
+  return request<ComposedOption[]>("/api/compose", "POST", signal, brief);
+}
+
+/** Keep one option. The server recomposes rather than trusting posted artwork. */
+export async function keepDesign(
+  brief: Partial<ComposeBrief> & { seed: number; garment_key: string },
+  grammarKey: string,
+  signal?: AbortSignal,
+): Promise<StoredDesign> {
+  const query = new URLSearchParams({ grammar_key: grammarKey });
+  return request<StoredDesign>(`/api/compose/designs?${query.toString()}`, "POST", signal, brief);
+}
+
+export async function listDesigns(state?: string, signal?: AbortSignal): Promise<StoredDesign[]> {
+  const query = state ? `?${new URLSearchParams({ state }).toString()}` : "";
+  return request<StoredDesign[]>(`/api/compose/designs${query}`, "GET", signal);
+}
+
+/** Settle a design. The name is required: an approval nobody signed is not one. */
+export async function decideDesign(
+  designId: string,
+  approved: boolean,
+  decidedBy: string,
+  note = "",
+  signal?: AbortSignal,
+): Promise<StoredDesign> {
+  return request<StoredDesign>(`/api/compose/designs/${designId}/decision`, "POST", signal, {
+    approved,
+    decided_by: decidedBy,
+    note,
+  });
+}
+
+export interface Reproducibility {
+  reproducible: boolean;
+  content_hash?: string;
+  assembler_version: string;
+  state?: string;
+  awaiting?: boolean;
+  reason?: string;
+  detail?: string;
+}
+
+/** Rebuild a stored design from its brief and report whether the bytes match. */
+export async function verifyDesign(
+  designId: string,
+  signal?: AbortSignal,
+): Promise<Reproducibility> {
+  return request<Reproducibility>(`/api/compose/designs/${designId}/verify`, "POST", signal);
+}
