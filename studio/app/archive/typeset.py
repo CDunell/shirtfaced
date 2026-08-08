@@ -34,10 +34,44 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # Vendored, and versioned with the repository. A font update changes metrics and
 # therefore every composition ever produced, so the file is part of the archive
-# rather than part of the machine.
-FONT_FILES = {
-    "shirtfaced": REPO_ROOT / "assets" / "type" / "Shirtfaced-Regular.ttf",
+# rather than part of the machine. Nothing here ever reads an installed system
+# font: the same word must set identically on every machine.
+TYPE_DIR = REPO_ROOT / "assets" / "type"
+
+# The name a caller asks for, when it is not the file's own stem.
+FACE_ALIASES = {
+    "shirtfaced": "Shirtfaced-Regular",
 }
+
+
+@lru_cache(maxsize=1)
+def _font_files() -> dict[str, Path]:
+    """Every vendored face, keyed by the name a caller asks for.
+
+    Discovered rather than listed, so adding a typeface is dropping a file in
+    `assets/type/` instead of editing this module. Faces are the hardest limit
+    on the output -- the median design is one element and four words, so the
+    face largely is the design -- and a code change per font is friction in
+    exactly the wrong place.
+
+    A .ttf wins over a .otf of the same name. Both work; picking deterministically
+    matters more than which one wins, because the choice is baked into every
+    composition the face ever sets.
+    """
+    found: dict[str, Path] = {}
+    if TYPE_DIR.is_dir():
+        for suffix in (".otf", ".ttf"):
+            for file in sorted(TYPE_DIR.glob(f"*{suffix}")):
+                found[file.stem] = file
+    for alias, stem in FACE_ALIASES.items():
+        if stem in found:
+            found[alias] = found[stem]
+    return found
+
+
+def faces() -> tuple[str, ...]:
+    """The faces available to set with, aliases included."""
+    return tuple(sorted(_font_files()))
 
 
 class MissingGlyph(Exception):
@@ -62,9 +96,12 @@ class SetText:
 
 @lru_cache(maxsize=8)
 def _font(face: str) -> TTFont:
-    path = FONT_FILES.get(face)
+    path = _font_files().get(face)
     if path is None or not path.is_file():
-        raise FileNotFoundError(f"no vendored font file for face {face!r}")
+        available = ", ".join(faces()) or "none"
+        raise FileNotFoundError(
+            f"no vendored font file for face {face!r}; available: {available}"
+        )
     return TTFont(str(path))
 
 

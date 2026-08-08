@@ -20,7 +20,7 @@ import pytest
 from app.archive import authored
 from app.archive.render import Palette, RefusedToRender, render
 from app.archive.svg import num, rng_for
-from app.archive.typeset import MissingGlyph, set_arc, set_line
+from app.archive.typeset import MissingGlyph, faces, set_arc, set_line
 from app.domain.element import Licence
 from app.domain.enums import LicenceStatus
 
@@ -187,3 +187,24 @@ def test_setting_text_is_reproducible() -> None:
         set_arc("SHIRTFACED", radius=40, cap_height=12).path
         == set_arc("SHIRTFACED", radius=40, cap_height=12).path
     )
+
+
+def test_faces_are_discovered_from_the_type_folder() -> None:
+    """Adding a typeface must be dropping in a file, not editing a module.
+
+    The face is close to being the design -- the median streetwear graphic is
+    one element and four words -- so a code change per font is friction in
+    exactly the wrong place.
+    """
+    available = faces()
+
+    assert "shirtfaced" in available, "the alias stopped resolving"
+    assert "Shirtfaced-Regular" in available, "the file stem is not addressable"
+
+
+def test_an_unknown_face_names_what_is_available() -> None:
+    """A missing font is a setup problem, and the error should say which."""
+    with pytest.raises(FileNotFoundError) as caught:
+        set_line("SHIRTFACED", face="no-such-face")
+
+    assert "shirtfaced" in str(caught.value), "the error does not list the faces we have"
