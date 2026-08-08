@@ -13,6 +13,7 @@ import { Tag, KIND as TAG_KIND } from "baseui/tag";
 import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError, fetchPhotos, uploadPhoto, type Photo } from "../api/client";
+import { loadCanvasImage } from "../lib/loadCanvasImage";
 import {
   approveSocialPost,
   fetchSocialLive,
@@ -86,11 +87,11 @@ function describe(cause: unknown): string {
   return cause instanceof Error ? cause.message : String(cause);
 }
 
-function loadImage(url: string): Promise<HTMLImageElement> {
+function loadOverlayImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("The source image could not be loaded."));
+    image.onerror = () => reject(new Error("A Shirtfaced overlay could not be loaded."));
     image.src = url;
   });
 }
@@ -247,7 +248,7 @@ export function SocialBench(): React.JSX.Element {
     setError(null);
     setSavedId(null);
     try {
-      const source = await loadImage(photo.url);
+      const source = await loadCanvasImage(photo.url);
       const requested = String(themeValue[0]?.id ?? "auto") as SocialTheme;
       const chosenTheme: ResolvedTheme = requested === "auto" ? analyseTheme(source) : requested;
       const branding = String(brandingValue[0]?.id ?? "fingerprint") as Branding;
@@ -260,7 +261,7 @@ export function SocialBench(): React.JSX.Element {
         if (!ctx) throw new Error("Canvas rendering is unavailable in this browser.");
         cover(ctx, source, spec.width, spec.height);
         const overlay = overlayPath(chosenTheme, branding, spec.key);
-        if (overlay) ctx.drawImage(await loadImage(overlay), 0, 0, spec.width, spec.height);
+        if (overlay) ctx.drawImage(await loadOverlayImage(overlay), 0, 0, spec.width, spec.height);
         const blob = await blobFromCanvas(canvas);
         const filename = `SF_${cleanName(photo.label)}_${spec.suffix}.jpg`;
         made.push({ ...spec, blob, url: URL.createObjectURL(blob), filename, theme: chosenTheme });
