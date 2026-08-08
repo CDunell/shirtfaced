@@ -14,6 +14,7 @@ from sqlalchemy import desc, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.adapters.asset_store import AssetStoreError, FilesystemAssetStore
+from app.adapters.social_publisher import FakeSocialPublisher, SocialPublisher
 from app.config import Settings, get_settings
 from app.db.models import Photo
 from app.db.session import get_db_session
@@ -30,6 +31,8 @@ from app.db.social_models import (
 router = APIRouter(prefix="/api/social", tags=["social"])
 SessionDependency = Annotated[Session, Depends(get_db_session)]
 SettingsDependency = Annotated[Settings, Depends(get_settings)]
+
+DEFAULT_PUBLISHER: SocialPublisher = FakeSocialPublisher()
 
 OUTPUT_CHANNELS: dict[str, SocialChannel] = {
     "instagram_feed": SocialChannel.INSTAGRAM_FEED,
@@ -436,34 +439,68 @@ def cancel_job(job_id: uuid.UUID, session: SessionDependency) -> JobView:
     return _job_view(job)
 
 
-@router.post("/jobs/{job_id}/publish-now", response_model=JobView)
-def fake_publish_now(job_id: uuid.UUID, session: SessionDependency) -> JobView:
-    """Publish through the deterministic fake adapter; safe to call twice."""
-    job = session.get(PublicationJob, job_id)
-    if job is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such publication job.")
+def _publish_job(
+    job: PublicationJob, session: Session, publisher: SocialPublisher = DEFAULT_PUBLISHER
+) -> JobView:
+    """Execute one approved job through a replaceable platform adapter."""
     if job.state == PublicationState.CANCELLED:
         raise HTTPException(status.HTTP_409_CONFLICT, "Cancelled jobs cannot publish.")
     if job.state == PublicationState.PUBLISHED:
         return _job_view(job)
-
     post = _load_post(job.social_post_id, session)
     if post.approved_at is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "The social package is not approved.")
-
     job.state = PublicationState.PUBLISHING
     session.flush()
-    job.external_post_id = f"fake:{job.channel.value}:{job.id}"
+    try:
+        result = publisher.publish(job)
+    except Exception as error:
+        job.state = PublicationState.FAILED
+        job.failure_reason = str(error)
+        job.retry_count += 1
+        session.commit()
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Publisher failed.") from error
+    job.external_post_id = result.external_post_id
     job.published_at = dt.datetime.now(dt.UTC)
     job.failure_reason = None
     job.state = PublicationState.PUBLISHED
     remaining = [
-        item for item in post.jobs if item.id != job.id and item.state != PublicationState.PUBLISHED
+        item
+        for item in post.jobs
+        if item.id != job.id
+        and item.state not in {PublicationState.PUBLISHED, PublicationState.CANCELLED}
     ]
     if not remaining:
         post.state = SocialPostState.LIVE
     session.commit()
     return _job_view(job)
+
+
+@router.post("/jobs/{job_id}/publish-now", response_model=JobView)
+def fake_publish_now(job_id: uuid.UUID, session: SessionDependency) -> JobView:
+    """Execute one job through the configured publisher; safe to call twice."""
+    job = session.get(PublicationJob, job_id)
+    if job is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such publication job.")
+    return _publish_job(job, session)
+
+
+@router.post("/queue/run-due", response_model=list[JobView])
+def run_due_jobs(session: SessionDependency) -> list[JobView]:
+    """Execution hook for cron/worker infrastructure; publish all due unlocked jobs."""
+    now = dt.datetime.now(dt.UTC)
+    jobs = (
+        session.execute(
+            select(PublicationJob)
+            .where(PublicationJob.state == PublicationState.SCHEDULED)
+            .where(PublicationJob.scheduled_at.is_not(None))
+            .where(PublicationJob.scheduled_at <= now)
+            .order_by(PublicationJob.scheduled_at, PublicationJob.created_at)
+        )
+        .scalars()
+        .all()
+    )
+    return [_publish_job(job, session) for job in jobs]
 
 
 @router.get("/derivatives/{derivative_id}/file")
