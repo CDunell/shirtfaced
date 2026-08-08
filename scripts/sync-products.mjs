@@ -50,9 +50,23 @@ async function reachable(sql) {
     await sql`SELECT 1`;
     return true;
   } catch (error) {
+    const why = error.code || error.message;
+
+    // Falling back is right on a dev machine and wrong on the box. Production
+    // builds against a database local to the server, so unreachable there means
+    // something is broken -- and quietly shipping the last committed snapshot
+    // would publish stale prices and a stale catalogue with nothing to show for
+    // it. Loud on the way out beats silent and wrong.
+    if (process.env.NODE_ENV === "production" || process.env.CI) {
+      throw new Error(
+        `${SCRIPT}: cannot reach the shop database (${why}) during a production ` +
+          "build. Refusing to publish the committed snapshot in its place.",
+      );
+    }
+
     console.log(
-      `${SCRIPT}: cannot reach the shop database (${error.code || error.message}) — ` +
-        "using the committed snapshot as-is. Open the SSH tunnel to refresh it.",
+      `${SCRIPT}: cannot reach the shop database (${why}) — using the committed ` +
+        "snapshot as-is. Open the SSH tunnel to refresh it.",
     );
     return false;
   }
