@@ -1,0 +1,47 @@
+name: Format Social once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/format-social-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Format Python
+        working-directory: studio
+        run: |
+          pip install ruff
+          ruff format app/routes/social.py app/db/migrations/versions/0019_social_derivative_review.py tests/integration/test_social_publishing_api.py
+      - name: Format interface
+        working-directory: studio/web
+        run: |
+          npm ci
+          npx prettier --write src/api/social.ts src/components/SocialBench.tsx
+      - name: Commit formatter output
+        run: |
+          if [ -z "$(git status --porcelain -- studio/)" ]; then
+            echo "No formatter changes"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/app/routes/social.py \
+            studio/app/db/migrations/versions/0019_social_derivative_review.py \
+            studio/tests/integration/test_social_publishing_api.py \
+            studio/web/src/api/social.ts \
+            studio/web/src/components/SocialBench.tsx
+          git commit -m "style: format social review pipeline"
+          git push
