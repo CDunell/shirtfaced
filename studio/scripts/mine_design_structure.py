@@ -219,6 +219,41 @@ def _bands(mask: np.ndarray) -> list[dict[str, float]]:
     return bands
 
 
+def _analyse_flat(path: Path) -> list[dict[str, float]] | None:
+    """Bands from flat artwork, where the design is the whole image.
+
+    No garment to find and none to subtract. A print-on-demand listing publishes
+    the design on a plain field, so the background is whatever the border is and
+    everything else is ink -- which is the measurement the brand corpus can only
+    approximate through a collar, a fold and a shadow.
+    """
+    try:
+        image = (
+            Image.open(path).convert("RGB").resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.LANCZOS)
+        )
+    except Exception:
+        return None
+    pixels = np.asarray(image, dtype=np.float32)
+    edge = max(3, ANALYSIS_SIZE // 40)
+    border = np.concatenate(
+        [
+            pixels[:edge].reshape(-1, 3),
+            pixels[-edge:].reshape(-1, 3),
+            pixels[:, :edge].reshape(-1, 3),
+            pixels[:, -edge:].reshape(-1, 3),
+        ]
+    )
+    if border.std(axis=0).mean() > 24:
+        # Not a plain field. Either the artwork bleeds to the edge or this is a
+        # photograph after all, and in both cases the background is unknowable.
+        return None
+    field = np.median(border, axis=0)
+    mask = np.sqrt(((pixels - field) ** 2).sum(axis=2)) > 60.0
+    if mask.mean() < 0.004:
+        return None
+    return _bands(mask)
+
+
 def _analyse(path: Path) -> list[dict[str, float]] | None:
     # The torso is located per image rather than assumed. A fixed box lands on
     # the garment in a flat lay and on a model's face or the floor in a worn
@@ -272,18 +307,34 @@ def _shape_of(bands: list[dict[str, float]]) -> str:
     return "framed centre — support above and below"
 
 
+FLAT_ROOT = Path(__file__).resolve().parent.parent / "var" / "design_corpus_flat"
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=0)
+    parser.add_argument(
+        "--flat",
+        action="store_true",
+        help="mine var/design_corpus_flat, where the design is the whole image",
+    )
     args = parser.parse_args(argv[1:])
 
-    if not CORPUS_ROOT.is_dir():
-        print("No corpus. Run scripts/collect_design_corpus.py first.", file=sys.stderr)
+    # The flat corpus needs a different analyser and nothing else. There is no
+    # garment to find, so the background is whatever the border is -- which is
+    # the measurement the brand corpus can only approximate through a collar, a
+    # fold and a shadow.
+    root = FLAT_ROOT if args.flat else CORPUS_ROOT
+    analyse = _analyse_flat if args.flat else _analyse
+
+    if not root.is_dir():
+        which = "collect_flat_artwork.py" if args.flat else "collect_design_corpus.py"
+        print(f"No corpus at {root}. Run scripts/{which} first.", file=sys.stderr)
         return 2
 
     records: list[dict[str, Any]] = []
     seen = 0
-    for brand_dir in sorted(CORPUS_ROOT.iterdir()):
+    for brand_dir in sorted(root.iterdir()):
         brand_file = brand_dir / "brand.json"
         if not brand_file.is_file():
             continue
@@ -315,14 +366,10 @@ def main(argv: list[str]) -> int:
             # per cent do, and on those the room, the model and their skin are
             # simply not in the picture -- which is most of what the band
             # extraction was fighting. What remains is the garment's own edges.
-            flat = [name for name in images if _flat_on_white(product_dir / name)]
-            frames = flat or list(images)
+            studio = [name for name in images if _flat_on_white(product_dir / name)]
+            frames = studio or list(images)
 
-            readings = [
-                found
-                for name in frames
-                if (found := _analyse(product_dir / name))
-            ]
+            readings = [found for name in frames if (found := analyse(product_dir / name))]
             if not readings:
                 continue
             # The frame yielding fewest elements wins. Noise only ever adds
@@ -392,15 +439,17 @@ def main(argv: list[str]) -> int:
         "layouts": layouts,
         "shapes_overall": dict(Counter(r["shape"] for r in records).most_common(10)),
     }
-    REPORT_PATH.write_text(json.dumps(report, indent=2), encoding="utf-8")
-    RAW_PATH.write_text(json.dumps(records), encoding="utf-8")
+    report_path = REPORT_PATH.with_name("design_structure_flat.json") if args.flat else REPORT_PATH
+    raw_path = RAW_PATH.with_name("design_structure_flat_raw.json") if args.flat else RAW_PATH
+    report_path.write_text(json.dumps(report, indent=2), encoding="utf-8")
+    raw_path.write_text(json.dumps(records), encoding="utf-8")
 
     print(f"\n{len(records)} designs\n")
     print("elements per design:", report["element_count_distribution"])
     print("\ncommonest compositions:")
     for shape, n in list(report["shapes_overall"].items())[:6]:
         print(f"  {n:>5}  {shape}")
-    print(f"\nwritten to {REPORT_PATH}")
+    print(f"\nwritten to {report_path}")
     return 0
 
 

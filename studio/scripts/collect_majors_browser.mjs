@@ -27,7 +27,9 @@ import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const CORPUS = join(HERE, "..", "var", "design_corpus");
+const CORPUS = process.argv.includes("--flat")
+  ? join(HERE, "..", "var", "design_corpus_flat")
+  : join(HERE, "..", "var", "design_corpus");
 const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const PORT = 9491;
 
@@ -63,6 +65,54 @@ const MAJORS = {
   urbanoutfitters: ["Urban Outfitters", "major-highstreet", "https://www.urbanoutfitters.com"],
   timberland: ["Timberland", "major-outdoor", "https://www.timberland.com"],
 };
+
+/**
+ * Print-on-demand marketplaces, where the design *is* the product and is
+ * published flat and isolated rather than photographed on a garment. Every
+ * measurement taken off a brand photograph is an inference around a collar, a
+ * fold and a shadow; here there is no garment in the frame at all.
+ *
+ * Kept apart from MAJORS and written to a separate corpus, because this is a
+ * different design population and its register must not leak into ours. What is
+ * wanted from it is placement and combination -- see POSITIONING.md on why those
+ * are a different question from what a design depicts.
+ *
+ * These carry their listing URLs directly. Brand taxonomies move constantly,
+ * which is why MAJORS discovers listings from each site's own navigation; a
+ * marketplace search URL is a stable interface and does not need finding.
+ */
+const MARKETPLACES = {
+  teepublic: ["TeePublic", "flat_artwork", [
+    "https://www.teepublic.com/t-shirts?query=graphic",
+    "https://www.teepublic.com/t-shirts?query=vintage",
+    "https://www.teepublic.com/t-shirts?query=typography",
+  ]],
+  threadless: ["Threadless", "flat_artwork", [
+    "https://www.threadless.com/search?q=graphic",
+    "https://www.threadless.com/search?q=typography",
+  ]],
+  redbubble: ["Redbubble", "flat_artwork", [
+    "https://www.redbubble.com/shop/graphic+t-shirts",
+    "https://www.redbubble.com/shop/typography+t-shirts",
+  ]],
+};
+
+/**
+ * The full-size asset behind a grid thumbnail.
+ *
+ * A marketplace search grid serves one derived size and every other value 404s,
+ * so 313px is all a listing gives up. The product page requests 630 -- and the
+ * URL is the same design, same timestamp, with the size token changed, so the
+ * larger asset can be had without visiting the page at all. Verified on every
+ * design collected so far: thirteen of thirteen.
+ *
+ * The watermarked variant carries a `wmk` token; the same URL without it is
+ * clean. 630 is the ceiling and 1200 refuses either way.
+ */
+function fullSize(url) {
+  if (!url.includes("images.teepublic.com")) return url;
+  return url.replace(/s_313/, "s_630").replace(/,wmk,/, ",").replace(/\.webp/, ".jpg");
+}
 
 /** Category links worth following, in preference order. */
 const CATEGORY_PATTERNS = [
@@ -230,8 +280,9 @@ async function fetchImage(url) {
 const slugify = (text) =>
   text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 60) || "product";
 
-async function collectBrand(slug, [name, tradition, homepage]) {
-  const listings = await discoverListings(homepage);
+async function collectBrand(slug, [name, tradition, homepage], listingUrls = null) {
+  // A marketplace supplies its own listings; a brand's have to be found.
+  const listings = listingUrls ?? (await discoverListings(homepage));
   if (listings.length === 0) return { slug, status: "skipped", reason: "no garment categories found in navigation" };
   console.log(`    ${listings.length} listing(s): ${listings[0].slice(0, 70)}`);
   const found = [];
@@ -279,7 +330,7 @@ async function collectBrand(slug, [name, tradition, homepage]) {
 
     const saved = [];
     const provenance = [];
-    const candidates = [item.src].slice(0, IMAGES_PER_PRODUCT);
+    const candidates = [fullSize(item.src)].slice(0, IMAGES_PER_PRODUCT);
     for (const [index, url] of candidates.entries()) {
       const bytes = await fetchImage(url);
       if (!bytes) continue;
@@ -329,8 +380,10 @@ async function collectBrand(slug, [name, tradition, homepage]) {
     : { slug, status: "collected", products, images };
 }
 
-const wanted = process.argv.slice(2).filter((a) => a in MAJORS);
-const brands = wanted.length ? wanted : Object.keys(MAJORS);
+const flatMode = process.argv.includes("--flat");
+const catalogue = flatMode ? MARKETPLACES : MAJORS;
+const wanted = process.argv.slice(2).filter((a) => a in catalogue);
+const brands = wanted.length ? wanted : Object.keys(catalogue);
 
 const chrome = spawn(CHROME, ["--headless=new", `--remote-debugging-port=${PORT}`, "--disable-gpu",
   "--no-first-run", "--hide-scrollbars", "--disable-blink-features=AutomationControlled",
@@ -344,7 +397,10 @@ const results = [];
 for (const slug of brands) {
   await openTab();
   try {
-    const result = await collectBrand(slug, MAJORS[slug]);
+    const entry = catalogue[slug];
+    const result = flatMode
+      ? await collectBrand(slug, [entry[0], entry[1], ""], entry[2])
+      : await collectBrand(slug, entry);
     results.push(result);
     console.log(
       result.status === "collected"
