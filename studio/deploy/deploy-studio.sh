@@ -77,6 +77,12 @@ for world in worlds/*/; do
   ./.venv/bin/python -m app.cli import-world "$slug"
 done
 
+say "Syncing the element archive"
+# Idempotent, and it is what makes an authored element reachable by the
+# composer at all. Reports what it changed and names anything held but not
+# licence-verified, since an unusable element is work nobody can reach.
+./.venv/bin/python -m app.cli sync-archive
+
 say "Building the interface"
 if [ -d web ]; then
   ( cd web && npm install --silent && npm run build --silent )

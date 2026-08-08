@@ -82,6 +82,40 @@ def _import_world(slug: str) -> int:
     return EXIT_OK
 
 
+def _sync_archive() -> int:
+    """Bring the stored archive in line with the authored elements.
+
+    Idempotent, and it says what it changed. A sync that reports work it did not
+    do makes the report worthless, which is the only reason anyone runs it.
+    """
+    from app.archive import authored
+    from app.archive.repository import ElementRepository
+
+    session_factory = get_session_factory()
+    with session_factory() as session:
+        repository = ElementRepository(session)
+        result = repository.sync(authored.ALL)
+        audit = repository.licence_audit()
+        unverified = repository.unverified()
+        session.commit()
+
+    print(
+        f"{result.total} authored element(s): "
+        f"{len(result.added)} added, {len(result.updated)} updated, "
+        f"{len(result.unchanged)} unchanged"
+    )
+    print(
+        "  licences: "
+        + ", ".join(f"{status} {count}" for status, count in sorted(audit.items()) if count)
+    )
+    # Named rather than counted. An element held but unusable is work already
+    # done that nobody can reach, and it should be visible on every run rather
+    # than waiting for someone to think of querying for it.
+    for key, source, status in unverified:
+        print(f"  {status}: {key} (from {source or 'no source recorded'})")
+    return EXIT_OK
+
+
 def _list_attempts(slug: str) -> int:
 
     with get_session_factory()() as session:
@@ -223,6 +257,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Write the image-to-video prompt instead. Upload the frame separately.",
     )
 
+    subcommands.add_parser(
+        "sync-archive",
+        help="Store the authored archive elements and their feature vectors",
+    )
+
     arguments = parser.parse_args(argv)
 
     try:
@@ -232,6 +271,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _validate_world(arguments.slug)
         if arguments.command == "import-world":
             return _import_world(arguments.slug)
+        if arguments.command == "sync-archive":
+            return _sync_archive()
         if arguments.command == "prompt":
             return _write_prompt(arguments.slug, arguments.shot, arguments.out, arguments.video)
         if arguments.command == "attempts":
