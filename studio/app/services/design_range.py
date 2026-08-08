@@ -44,6 +44,7 @@ from app.services.composition_engine import (
     Composition,
     CompositionEngine,
     Element,
+    Option,
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -199,6 +200,31 @@ def _forms_for(zone_width: float, zone_height: float, count: int) -> tuple[Form,
     return tuple(f for f in fits if f.height * zone_height / count >= MIN_PRINT_MM)
 
 
+def _footprint(option: Option) -> tuple[float, float]:
+    """The share of the print area the chosen arrangement actually occupies."""
+    top = min(s.top for s in option.slots)
+    bottom = max(s.top + s.height for s in option.slots)
+    width = max(s.width for s in option.slots)
+    return width, bottom - top
+
+
+def _form_for(option: Option, candidates: tuple[Form, ...]) -> Form:
+    """The container whose proportions match what the corpus arrangement needs.
+
+    Taking the first that fits was a default dressed as a decision, and it meant
+    a two-line lockup and a full-bleed hero were printed at identical size. The
+    template already says how much room its arrangement wants -- a band of type
+    occupies a fifth of the height, a lead-and-caption nearly half -- so the
+    form is the container closest to that, which makes the size a consequence of
+    the evidence rather than of list order.
+    """
+    want_width, want_height = _footprint(option)
+    return min(
+        candidates,
+        key=lambda f: abs(f.width - want_width) + 2.0 * abs(f.height - want_height),
+    )
+
+
 def _surface_sets_for(zones: dict[str, tuple[str, Zone]]) -> tuple[tuple[str, ...], ...]:
     """The surface combinations this garment can carry, across both views."""
     available = set(zones)
@@ -261,7 +287,11 @@ def build(
             continue
 
         placed: list[Placed] = []
-        for zone_key in sets[0]:
+        # Every combination the garment can carry, not the first one that
+        # matched. `sets[0]` meant full_front always won and the chest-and-back
+        # architecture -- the commonest two-surface treatment there is -- could
+        # never be reached on any garment.
+        for zone_key in [key for combination in sets for key in combination]:
             found = zones.get(zone_key) or next(
                 (v for k, v in zones.items() if k.startswith(zone_key)), None
             )
@@ -281,12 +311,20 @@ def build(
                     tradition=tradition,
                 )
             )
+            if any(p.zone_key == zone_key for p in placed):
+                continue
+
+            form = (
+                _form_for(composition.options[0], forms)
+                if composition.composable and composition.options
+                else forms[0]
+            )
             placed.append(
                 Placed(
                     view=view,
                     zone_key=zone_key,
                     scale_role=SCALE_ROLE.get(zone.base_key, "S2"),
-                    form=forms[0],
+                    form=form,
                     zone_width_mm=zone.width,
                     zone_height_mm=zone.height,
                     composition=composition,
