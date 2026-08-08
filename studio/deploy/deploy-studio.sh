@@ -63,47 +63,47 @@ say "Syncing the element archive"
 ./.venv/bin/python -m app.cli sync-archive
 
 say "Checking Social render assets"
+# Production Social rendering uses rasterized PNGs. SVGs remain alongside them as
+# editable/source assets, but GO must not depend on browser SVG rasterisation.
 SOCIAL_ROOT="$ROOT/public/social-assets/v3"
 required_social_assets=(
-  light-corner-mark-4x5.svg
-  dark-corner-mark-4x5.svg
-  adaptive-corner-mark-4x5.svg
-  light-feed-4x5.svg
-  dark-feed-4x5.svg
-  adaptive-feed-badge-4x5.svg
-  light-title-bug-9x16.svg
-  dark-title-bug-9x16.svg
-  light-reel-9x16.svg
-  dark-reel-9x16.svg
-  adaptive-reel-badge-9x16.svg
+  light-corner-mark-4x5.png
+  dark-corner-mark-4x5.png
+  adaptive-corner-mark-4x5.png
+  light-feed-4x5.png
+  dark-feed-4x5.png
+  adaptive-feed-badge-4x5.png
+  light-title-bug-9x16.png
+  dark-title-bug-9x16.png
+  light-reel-9x16.png
+  dark-reel-9x16.png
+  adaptive-reel-badge-9x16.png
 )
 for asset in "${required_social_assets[@]}"; do
   if [ ! -s "$SOCIAL_ROOT/$asset" ]; then
-    echo "Missing Social render asset: $SOCIAL_ROOT/$asset" >&2
+    echo "Missing rasterized Social render asset: $SOCIAL_ROOT/$asset" >&2
     exit 1
   fi
 done
-./.venv/bin/python - <<'PY'
-from pathlib import Path
-from xml.etree import ElementTree
-
-root = Path("public/social-assets/v3")
-for path in root.glob("*.svg"):
-    ElementTree.parse(path)
-print("Social render assets present and valid SVG XML.")
-PY
 
 say "Building the interface"
 if [ -d web ]; then
   ( cd web && npm install --silent && npm run build --silent )
 
+  # SocialBench source names the canonical SVG overlays. Production swaps those
+  # references to the rasterized PNG twins before the bundle is served. This keeps
+  # source/editing assets vector while making canvas composition deterministic on
+  # Android/WebView. A unique query string also prevents stale image-cache reuse.
   SOCIAL_ASSET_VERSION=$(date +%s)
   find web/dist -type f -name '*.js' -print0 | xargs -0 sed -i \
-    -E "s#(/social-assets/v3/[^\"']+\.svg)#\1?v=${SOCIAL_ASSET_VERSION}#g"
+    -E "s#(/social-assets/v3/[^\"']+)\.svg#\1.png?v=${SOCIAL_ASSET_VERSION}#g"
 
-  # Fail if any built JS still contains an unversioned Social SVG reference.
-  if grep -R -E -q "/social-assets/v3/[^\"']+\.svg([\"']|$)" web/dist; then
-    echo "Built Studio still contains an unversioned Social overlay URL." >&2
+  if grep -R -E -q "/social-assets/v3/[^\"']+\.svg" web/dist; then
+    echo "Built Studio still contains a Social SVG runtime reference." >&2
+    exit 1
+  fi
+  if ! grep -R -E -q "/social-assets/v3/[^\"']+\.png\?v=" web/dist; then
+    echo "Built Studio contains no versioned Social PNG runtime references." >&2
     exit 1
   fi
 fi
