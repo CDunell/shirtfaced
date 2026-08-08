@@ -1,0 +1,9 @@
+[Unit]
+Description=Shirtfaced Social publication queue pass
+After=network-online.target shirtfaced-studio.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/var/www/shirtfaced-app/studio
+EnvironmentFile=/etc/shirtfaced/studio.env
+ExecStart=/var/www/shirtfaced-app/studio/.venv/bin/python scripts/run_social_publish_queue.py

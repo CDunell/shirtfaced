@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Shirtfaced Social publication queue every minute
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=60s
+AccuracySec=5s
+Persistent=true
+Unit=shirtfaced-social-publisher.service
+
+[Install]
+WantedBy=timers.target

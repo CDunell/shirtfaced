@@ -85,6 +85,13 @@ class Settings(BaseSettings):
     # pinned frames sit outside this cap and never age out.
     reference_active_limit: int = Field(default=16, ge=1, le=100)
 
+    # --- Social publishing ------------------------------------------------------
+    # Scheduled delivery is intentionally inert until an account adapter is connected.
+    social_publishing_enabled: bool = False
+    social_publisher_mode: Literal["disabled", "fake", "platform"] = "disabled"
+    social_max_attempts: int = Field(default=5, ge=1, le=20)
+    social_retry_base_seconds: int = Field(default=60, ge=5, le=86400)
+
     # --- Interface --------------------------------------------------------------
     # Built Base Web assets. In development the Vite dev server serves these instead
     # and proxies the API, so this directory may not exist.

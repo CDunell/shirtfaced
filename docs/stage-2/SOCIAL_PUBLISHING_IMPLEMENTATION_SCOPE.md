@@ -212,3 +212,11 @@ A user can:
 10. retain all records across page reloads/restarts.
 
 CI must pass migrations/model registration, Python lint/type/tests, frontend lint/type/tests/build.
+
+## Scheduled delivery worker — 2026-08-09
+
+The queue now has one execution service shared by manual **Publish now** and the minute
+systemd timer. Attempts, exponential retry timing, terminal failure, adapter identity and
+publish receipts are persisted. Production publishing defaults to disabled: the worker is
+a no-op until a platform account adapter is explicitly connected. Test environments may
+select the deterministic fake adapter; production must never record fake posts as live.

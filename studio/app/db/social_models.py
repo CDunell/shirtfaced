@@ -7,7 +7,7 @@ import uuid
 from enum import StrEnum
 
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, Integer, String, Text, func, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin
@@ -139,6 +139,7 @@ class PublicationJob(Base, TimestampMixin):
     __tablename__ = "publication_jobs"
     __table_args__ = (
         Index("ix_publication_jobs_state_scheduled_at", "state", "scheduled_at"),
+        Index("ix_publication_jobs_retry_due", "state", "next_attempt_at"),
         Index("ix_publication_jobs_post_id", "social_post_id"),
     )
 
@@ -173,6 +174,11 @@ class PublicationJob(Base, TimestampMixin):
     published_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     failure_reason: Mapped[str | None] = mapped_column(Text)
     retry_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    max_attempts: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("5"))
+    next_attempt_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    last_attempt_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    adapter: Mapped[str | None] = mapped_column(String(120))
+    publish_receipt: Mapped[dict[str, object] | None] = mapped_column(JSONB)
 
     post: Mapped[SocialPost] = relationship(back_populates="jobs")
     derivative: Mapped[SocialDerivative] = relationship(back_populates="jobs")

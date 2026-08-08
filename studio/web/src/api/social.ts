@@ -40,6 +40,11 @@ export interface PublicationJob {
   published_at: string | null;
   failure_reason: string | null;
   retry_count: number;
+  max_attempts: number;
+  next_attempt_at: string | null;
+  last_attempt_at: string | null;
+  adapter: string | null;
+  publish_receipt: Record<string, unknown> | null;
 }
 
 export interface SocialPost {

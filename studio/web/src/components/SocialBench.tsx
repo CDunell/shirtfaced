@@ -736,6 +736,12 @@ export function SocialBench(): React.JSX.Element {
                         {job.locked ? "manual" : "recommended"}
                       </ParagraphXSmall>
                       {job.caption ? <ParagraphXSmall>{job.caption}</ParagraphXSmall> : null}
+                      {job.failure_reason ? (
+                        <ParagraphXSmall>
+                          Delivery: {job.failure_reason} · attempt {String(job.retry_count)}/
+                          {String(job.max_attempts)}
+                        </ParagraphXSmall>
+                      ) : null}
                     </div>
                   </div>
                   <div
@@ -810,7 +816,7 @@ export function SocialBench(): React.JSX.Element {
                       size={SIZE.mini}
                       onClick={() => void act(() => publishSocialJobNow(job.id))}
                     >
-                      Fake publish now
+                      Publish now
                     </Button>
                     <Button
                       size={SIZE.mini}

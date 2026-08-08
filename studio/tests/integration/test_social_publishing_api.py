@@ -29,6 +29,8 @@ def client(session: Session, tmp_path: Path) -> Iterator[TestClient]:
         db_sslmode="disable",
         assets_root=assets_root,
         debug=True,
+        social_publishing_enabled=True,
+        social_publisher_mode="fake",
     )
     application = create_app()
     application.dependency_overrides[get_db_session] = lambda: session
@@ -111,6 +113,9 @@ def test_review_queue_and_fake_publish_are_durable_and_idempotent(
     assert second.status_code == 200
     assert first.json()["state"] == "published"
     assert first.json()["external_post_id"] == second.json()["external_post_id"]
+    assert first.json()["adapter"] == "fake"
+    assert first.json()["publish_receipt"]["provider"] == "fake"
+    assert first.json()["retry_count"] == 1
 
     live = client.get("/api/social/live")
     assert live.status_code == 200

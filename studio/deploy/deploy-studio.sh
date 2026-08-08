@@ -109,6 +109,12 @@ if [ -d web ]; then
   ( cd web && npm install --silent && npm run build --silent )
 fi
 
+say "Installing Social publisher timer"
+sudo install -m 0644 "$STUDIO_DIR/deploy/shirtfaced-social-publisher.service" /etc/systemd/system/shirtfaced-social-publisher.service
+sudo install -m 0644 "$STUDIO_DIR/deploy/shirtfaced-social-publisher.timer" /etc/systemd/system/shirtfaced-social-publisher.timer
+sudo systemctl daemon-reload
+sudo systemctl enable --now shirtfaced-social-publisher.timer
+
 say "Restarting"
 sudo systemctl restart shirtfaced-studio
 
