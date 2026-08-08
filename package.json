@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "eslint",
     "sync:products": "node scripts/sync-products.mjs",
-    "sync:content": "node scripts/sync-content.mjs"
+    "sync:content": "node scripts/sync-content.mjs",
+    "video:generate": "node scripts/image-to-video.mjs"
   },
   "dependencies": {
     "next": "16.2.12",
