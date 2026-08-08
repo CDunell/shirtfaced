@@ -25,6 +25,27 @@ jobs:
       - name: Install
         working-directory: studio/web
         run: npm ci
+      - name: Fix strict TypeScript edges
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("studio/web/src/components/SocialBench.tsx")
+          text = path.read_text()
+          text = text.replace(
+              "values.push(0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2]);",
+              "values.push(0.2126 * (data[i] ?? 0) + 0.7152 * (data[i + 1] ?? 0) + 0.0722 * (data[i + 2] ?? 0));",
+          )
+          text = text.replace(
+              "const [themeValue, setThemeValue] = useState<Value>([THEME_OPTIONS[0]]);",
+              'const [themeValue, setThemeValue] = useState<Value>([{ id: "auto", label: "Auto — choose from image" }]);',
+          )
+          text = text.replace(
+              "const [brandingValue, setBrandingValue] = useState<Value>([BRANDING_OPTIONS[1]]);",
+              'const [brandingValue, setBrandingValue] = useState<Value>([{ id: "fingerprint", label: "Fingerprint — minimal mark" }]);',
+          )
+          path.write_text(text)
+          PY
       - name: Format
         working-directory: studio/web
         run: npx prettier --write src/App.tsx src/components/SocialBench.tsx
@@ -36,7 +57,7 @@ jobs:
           npm run typecheck
           npm test
           npm run build
-      - name: Commit formatting
+      - name: Commit fixes and formatting
         run: |
           if [ -z "$(git status --porcelain -- studio/web/src/App.tsx studio/web/src/components/SocialBench.tsx)" ]; then
             echo "Already formatted"
@@ -45,5 +66,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add studio/web/src/App.tsx studio/web/src/components/SocialBench.tsx
-          git commit -m "style: format Social Studio"
+          git commit -m "fix: validate Social Studio interface"
           git push
