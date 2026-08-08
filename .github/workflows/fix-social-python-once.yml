@@ -1,4 +1,5 @@
 name: Fix Social publishing backend once
+# rerun after social integration coverage
 
 on:
   push:
