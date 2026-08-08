@@ -20,8 +20,10 @@ new = '''                    <form
                       onSubmit={(event) => {
                         event.preventDefault();
                         const form = new FormData(event.currentTarget);
-                        const date = String(form.get("schedule-date") ?? "");
-                        const time = String(form.get("schedule-time") ?? "");
+                        const dateEntry = form.get("schedule-date");
+                        const timeEntry = form.get("schedule-time");
+                        const date = typeof dateEntry === "string" ? dateEntry : "";
+                        const time = typeof timeEntry === "string" ? timeEntry : "";
                         if (!date || !time) return;
                         void act(() =>
                           scheduleSocialJob(job.id, new Date(`${date}T${time}`).toISOString()),
