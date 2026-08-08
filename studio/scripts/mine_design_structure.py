@@ -82,6 +82,37 @@ EDGE_MAX_HEIGHT = 0.18
 EDGE_MIN_WIDTH = 0.70
 
 
+# What the store itself called each shot, in the order we would rather measure.
+# A print crop beats a torso crop beats a whole body, and the shop already knows
+# which is which -- collect_design_corpus.py has been recording `shot_hint` in
+# every provenance file all along and nothing has ever read it.
+HINT_ORDER = ("flat", "detail", "close-up", "front", "back")
+
+
+def _hinted_frames(product_dir: Path, images: list[str]) -> list[str]:
+    """Frames the store named as the closest look at the print."""
+    provenance = product_dir / "provenance.json"
+    if not provenance.is_file():
+        return []
+    try:
+        records = json.loads(provenance.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []
+
+    by_name: dict[str, str] = {}
+    for record in records:
+        name = str(record.get("provenance_id", "")).rsplit("/", 1)[-1]
+        for image in images:
+            if Path(image).stem == name:
+                by_name[image] = str(record.get("shot_hint", ""))
+
+    for hint in HINT_ORDER:
+        matching = [image for image in images if by_name.get(image) == hint]
+        if matching:
+            return matching
+    return []
+
+
 def _flat_on_white(path: Path) -> bool:
     """Whether this frame is the garment alone on a plain studio field.
 
@@ -366,8 +397,27 @@ def main(argv: list[str]) -> int:
             # per cent do, and on those the room, the model and their skin are
             # simply not in the picture -- which is most of what the band
             # extraction was fighting. What remains is the garment's own edges.
+            # What the store called it, then what the pixels say, then whatever
+            # is left. A named close-up puts the print across most of the frame;
+            # the full-body shot of the same garment gives it a tenth of the
+            # height and everything measured off it is coarser for no reason.
+            hinted = _hinted_frames(product_dir, list(images))
             studio = [name for name in images if _flat_on_white(product_dir / name)]
-            frames = studio or list(images)
+            frames = hinted or studio or list(images)
+
+            # Most stores do not name their shots -- filename hints cover under a
+            # fifth of the corpus -- so where they do not, the frame filling most
+            # of the picture with garment is the closest look at the print. It is
+            # already measured: locate_garment computes subject_area per frame
+            # and, like the hints and the extra frames, nothing has read it.
+            if not hinted and len(frames) > 1:
+                framed = [
+                    (locate_garment(product_dir / name).subject_area, name) for name in frames
+                ]
+                framed = [(area, name) for area, name in framed if area > 0]
+                if framed:
+                    framed.sort(reverse=True)
+                    frames = [name for _area, name in framed]
 
             readings = [found for name in frames if (found := analyse(product_dir / name))]
             if not readings:
