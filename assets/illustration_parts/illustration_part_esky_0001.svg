@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="140mm" height="120mm" viewBox="0 0 140 120">
+  <!-- Shirtfaced — illustration_part_esky_0001.svg
+       Classic Australian esky / cooler, solid with lid and handles. -->
+  <path id="mark" fill="#222" fill-rule="evenodd" d="
+    M 20,35
+    L 30,25
+    L 110,25
+    L 120,35
+    L 120,100
+    L 20,100
+    Z
+    M 35,40
+    L 105,40
+    L 105,50
+    L 35,50
+    Z
+    M 25,15
+    L 40,15
+    L 40,25
+    L 25,25
+    Z
+    M 100,15
+    L 115,15
+    L 115,25
+    L 100,25
+    Z"/>
+</svg>

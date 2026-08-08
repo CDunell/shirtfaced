@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="120mm" height="80mm" viewBox="0 0 120 80">
+  <!-- Shirtfaced — illustration_part_meat_pie_0001.svg
+       Classic Australian meat pie, top view with crust. -->
+  <path id="mark" fill="#222" fill-rule="evenodd" d="
+    M 20,40
+    C 20,20 40,10 60,10
+    C 80,10 100,20 100,40
+    C 100,60 80,70 60,70
+    C 40,70 20,60 20,40
+    Z
+    M 35,35
+    C 35,25 45,20 60,20
+    C 75,20 85,25 85,35
+    C 85,45 75,50 60,50
+    C 45,50 35,45 35,35
+    Z"/>
+</svg>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="160mm" height="70mm" viewBox="0 0 160 70">
+  <!-- Shirtfaced — illustration_part_snag_on_bread_0001.svg
+       Sausage in bread (snag), classic Aussie. -->
+  <path id="mark" fill="#222" d="
+    M 15,35
+    C 15,20 30,10 50,10
+    L 110,10
+    C 130,10 145,20 145,35
+    C 145,50 130,60 110,60
+    L 50,60
+    C 30,60 15,50 15,35
+    Z
+    M 40,25
+    C 35,25 35,45 40,45
+    C 55,45 100,45 120,45
+    C 125,45 125,25 120,25
+    Z"/>
+</svg>
