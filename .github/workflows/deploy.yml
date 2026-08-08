@@ -54,10 +54,9 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
 
-      # Rebuild from the canonical brand vectors on every deploy. The generated
-      # SVGs are standalone: no nested SVG images and no mask indirection, because
-      # Android/WebView canvas rendering can load those files successfully yet draw
-      # the nested brand content as transparent.
+      # Rebuild from the canonical brand vectors on every deploy. V3 overlays must
+      # be literal paths/primitives only: Android/WebView can successfully load an
+      # SVG while silently rasterising mask/image/symbol/use content as transparent.
       - name: Build Social assets
         run: |
           node scripts/build-social-assets.mjs
@@ -67,10 +66,16 @@ jobs:
           test -s public/social-assets/v3/light-reel-9x16.svg
           test -s public/social-assets/v3/dark-reel-9x16.svg
           test -s public/social-assets/v3/adaptive-reel-badge-9x16.svg
-          if grep -R -E 'data:image/svg\+xml|<mask' public/social-assets/v3; then
-            echo "Social overlay build still contains mobile-unsafe nested SVG or masks."
+          if grep -R -E 'data:image/svg\+xml|<mask|<symbol|<use|<image' public/social-assets/v3; then
+            echo "Social overlay build contains indirect/mobile-unsafe SVG content."
             exit 1
           fi
+          for file in public/social-assets/v3/*.svg; do
+            grep -q '<path' "$file" || {
+              echo "Social overlay has no literal brand paths: $file"
+              exit 1
+            }
+          done
 
       # Social assets are generated at repository level because the storefront and
       # Studio share the same brand source. Studio is deployed as a standalone tree,
