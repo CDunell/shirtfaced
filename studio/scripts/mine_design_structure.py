@@ -64,6 +64,51 @@ MERGE_GAP = 0.02
 # A band shorter than this is a stray highlight, not a design element.
 MIN_BAND_HEIGHT = 0.035
 
+# A garment edge, not a print. A collar, a hem, a shoulder shadow and the curve
+# under a sleeve all clear the ink threshold, run the width of the torso, are
+# thin, and are one smooth unbroken shape. Real full-width type is also thin and
+# also spans the torso -- and breaks into letters, so its largest piece holds
+# almost none of the ink.
+#
+# Calibrated against forty-five bands labelled by eye, with the measurements
+# written in the same pass that drew them: it removes nine of the twenty-one
+# garment edges in that sample and none of the twenty-four design elements.
+#
+# It does not catch the other noise class -- halftone photograph texture and
+# dotted washes, which are low share rather than high -- so roughly half the
+# contamination survives this.
+EDGE_SHARE = 0.80
+EDGE_MAX_HEIGHT = 0.18
+EDGE_MIN_WIDTH = 0.70
+
+
+def _flat_on_white(path: Path) -> bool:
+    """Whether this frame is the garment alone on a plain studio field.
+
+    Not a quality judgement: a photograph of a model in a room contains a face,
+    hair, a background and a floor, and every one of them clears an ink
+    threshold tuned for print. The same garment shot flat on white contains the
+    garment.
+    """
+    try:
+        image = Image.open(path).convert("RGB").resize((140, 140), Image.LANCZOS)
+    except Exception:
+        return False
+    pixels = np.asarray(image, dtype=np.float32)
+    border = np.concatenate(
+        [
+            pixels[:5].reshape(-1, 3),
+            pixels[-5:].reshape(-1, 3),
+            pixels[:, :5].reshape(-1, 3),
+            pixels[:, -5:].reshape(-1, 3),
+        ]
+    )
+    if border.std(axis=0).mean() >= 6 or border.mean() <= 232:
+        return False
+    inked = (np.abs(pixels - border.mean(axis=0)).sum(axis=2) > 90).mean()
+    # An empty field and a frame filled edge to edge are both unusable.
+    return 0.02 < inked < 0.55
+
 
 def _garment_colour(centre: np.ndarray) -> np.ndarray:
     margin = max(4, centre.shape[1] // 6)
@@ -150,6 +195,15 @@ def _bands(mask: np.ndarray) -> list[dict[str, float]]:
         if cols.size == 0:
             continue
         inked = block[:, cols[0] : cols[-1] + 1]
+        pieces, largest = _components(inked)
+        band_height = (bottom - top) / height
+        band_width = (cols[-1] - cols[0] + 1) / width
+        if (
+            largest >= EDGE_SHARE
+            and band_height <= EDGE_MAX_HEIGHT
+            and band_width >= EDGE_MIN_WIDTH
+        ):
+            continue
         bands.append(
             {
                 "top": round(top / height, 3),
@@ -158,8 +212,8 @@ def _bands(mask: np.ndarray) -> list[dict[str, float]]:
                 "centre_x": round(float(cols.mean()) / width, 3),
                 "density": round(float(block.mean()), 3),
                 "transitions": _transitions(inked),
-                "pieces": _components(inked)[0],
-                "largest_share": _components(inked)[1],
+                "pieces": pieces,
+                "largest_share": largest,
             }
         )
     return bands
@@ -246,9 +300,35 @@ def main(argv: list[str]) -> int:
             images = product.get("images") or []
             if not images:
                 continue
-            bands = _analyse(product_dir / images[0])
-            if not bands:
+            # Every frame that can be measured, not just the first.
+            #
+            # One frame per product was one photograph's opinion treated as the
+            # product's structure: a fold across the chest, a shadow under a
+            # sleeve or a hand in front of the print became an element of the
+            # design. The corpus holds four to six shots per product precisely
+            # so a measurable one is present.
+            #
+            # The frame yielding the fewest elements wins. Noise only ever adds
+            # bands -- a shadow cannot hide a print -- so the cleanest reading of
+            # the same garment is the one with least of it.
+            # Flat studio frames first, where the product has one. Forty-three
+            # per cent do, and on those the room, the model and their skin are
+            # simply not in the picture -- which is most of what the band
+            # extraction was fighting. What remains is the garment's own edges.
+            flat = [name for name in images if _flat_on_white(product_dir / name)]
+            frames = flat or list(images)
+
+            readings = [
+                found
+                for name in frames
+                if (found := _analyse(product_dir / name))
+            ]
+            if not readings:
                 continue
+            # The frame yielding fewest elements wins. Noise only ever adds
+            # bands -- a shadow cannot hide a print -- so the cleanest reading of
+            # the same garment is the one with least of it.
+            bands = min(readings, key=len)
             words = [
                 w
                 for w in re.findall(
