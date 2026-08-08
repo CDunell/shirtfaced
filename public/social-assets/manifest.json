@@ -1,0 +1,35 @@
+{
+  "generatedAt": "2026-08-08T09:36:00.790Z",
+  "palette": {
+    "ink": "#0d0d0d",
+    "paper": "#f2f0ed",
+    "lime": "#c6ff33"
+  },
+  "sourceAssets": [
+    "DEV/logo-lockup.svg",
+    "DEV/shirtfaced.svg",
+    "DEV/smiley.svg"
+  ],
+  "files": [
+    "v1/overlay-feed-4x5.svg",
+    "v1/overlay-feed-square.svg",
+    "v1/overlay-reel-9x16.svg",
+    "v1/reel-title-bug.svg",
+    "v1/reel-lower-third-blank.svg",
+    "v1/reel-endcard-white.svg",
+    "v1/reel-endcard-lime.svg",
+    "v1/overlay-drop-panel-4x5.svg",
+    "v1/notice-update-base-4x5.svg",
+    "v1/guide-reel-safe-zone.svg",
+    "v2/reel-opener-overlay.svg",
+    "v2/reel-scene-stamp-blank.svg",
+    "v2/reel-timestamp-badge-blank.svg",
+    "v2/story-drop-teaser-9x16.svg",
+    "v2/drop-live-banner-4x5.svg",
+    "v2/carousel-end-slide-4x5.svg",
+    "v2/story-update-base-9x16.svg",
+    "v2/reel-cut-card-brand.svg",
+    "v2/product-proof-slide-4x5.svg",
+    "v2/reel-cover-badge-4x5.svg"
+  ]
+}
