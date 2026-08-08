@@ -119,6 +119,21 @@ PY
 say "Building the interface"
 if [ -d web ]; then
   ( cd web && npm install --silent && npm run build --silent )
+
+  # SocialBench intentionally requests static overlay SVGs. Android/WebView can
+  # hold an old transparent SVG in its image cache even after a hard page reload,
+  # because every deploy historically reused the exact same URL. Stamp every
+  # social overlay URL in the built bundle with this deploy's unique version so
+  # GO is forced to fetch the bytes that were deployed with this interface.
+  SOCIAL_ASSET_VERSION=$(date +%s)
+  find web/dist -type f -name '*.js' -print0 | xargs -0 sed -i \
+    -E "s#(/social-assets/v3/[^\"']+\.svg)#\1?v=${SOCIAL_ASSET_VERSION}#g"
+
+  # Prove the live bundle no longer contains an unversioned Social overlay URL.
+  if grep -R -E -q '/social-assets/v3/[^"'"']+\.svg["'"']' web/dist; then
+    echo "Built Studio still contains an unversioned Social overlay URL." >&2
+    exit 1
+  fi
 fi
 
 say "Restarting"
