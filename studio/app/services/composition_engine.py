@@ -41,9 +41,10 @@ ElementKind = Literal["text", "image", "logo"]
 PRIOR = 10.0
 
 # A template needs at least this many corpus designs behind it to be offered.
-# Below it, the "template" is a handful of one-offs that happened to land near
-# each other.
-MIN_TEMPLATE_DESIGNS = 8
+# Matched to the learner's own cluster floor -- a higher number here would
+# silently discard families the learner had already decided were worth naming,
+# and the confidence attached to each already says how thin it is.
+MIN_TEMPLATE_DESIGNS = 3
 
 # Placement confidence below this is not evidence, it is noise wearing a number.
 # The Feature Factory's equivalent gate is `total_samples > 0`, which lets a
@@ -450,14 +451,17 @@ class CompositionEngine:
                 "placement is not separately attested"
             )
 
-        # Graded doubt shrinks the number of options offered rather than
-        # padding out to three regardless.
-        best = scored[0].confidence
-        offered = MAX_OPTIONS if best >= 0.6 else (2 if best >= 0.45 else 1)
+        # Everything that scored is offered, up to the cap.
+        #
+        # This used to shrink the list when confidence was low -- three above
+        # 0.6, two above 0.45, otherwise one. With no approval history
+        # confidence is capped at corpus weight x 0.75, so it rarely cleared 0.6
+        # and the cap almost always bit. Confidence is already reported against
+        # every option; hiding the rest decides for the reader twice.
 
         return Composition(
             composable=True,
-            options=tuple(scored[:offered]),
+            options=tuple(scored[:MAX_OPTIONS]),
             gaps=tuple(gaps),
             features=features,
         )

@@ -55,13 +55,18 @@ def test_composing_is_deterministic(composer: ArchiveComposer) -> None:
     assert [o.svg for o in one.options] == [o.svg for o in two.options]
 
 
-def test_a_small_placement_refuses_intricate_elements(composer: ArchiveComposer) -> None:
-    """A badge at 90mm across is a smudge from two metres."""
+def test_whether_intricacy_suits_a_small_print_is_the_budgets_job(
+    composer: ArchiveComposer,
+) -> None:
+    """The composer used to reject on an absolute complexity threshold, which
+    duplicated the density budget more crudely -- the budget weighs the whole
+    composition against the placement's actual size. See the grammar tests for
+    a crest being refused from a left chest on those grounds."""
     result = composer.compose(replace(BADGE_BRIEF, placement="left_chest"), seed=1)
     assert result.composable
-    chosen = {option.element_id for option in result.options}
-    assert not any(element_id.startswith("badge_") for element_id in chosen)
-    assert any(rejection.reason == "TOO_COMPLEX_FOR_PLACEMENT" for rejection in result.rejections)
+    assert not any(
+        rejection.reason == "TOO_COMPLEX_FOR_PLACEMENT" for rejection in result.rejections
+    )
 
 
 @pytest.mark.parametrize(

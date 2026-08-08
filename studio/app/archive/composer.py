@@ -152,20 +152,17 @@ def _gate_slots_are_fillable(element: Element, brief: Brief, placement: Placemen
     return f"NO_SLOT_FOR:{','.join(sorted(missing))}" if missing else ""
 
 
-def _gate_complexity_for_placement(element: Element, brief: Brief, placement: Placement) -> str:
-    """An intricate element on a small placement is a smudge."""
-    if placement.max_width_mm > SMALL_PLACEMENT_MM:
-        return ""
-    if element.complexity > SMALL_PLACEMENT_MAX_COMPLEXITY:
-        return "TOO_COMPLEX_FOR_PLACEMENT"
-    return ""
+# Whether an intricate element suits a small print is a real question, and the
+# density budget in grammar.py already answers it -- proportionally, against the
+# placement's actual size, and across the whole composition rather than one part
+# at a time. A second absolute threshold here only rejected things the budget
+# would have weighed properly.
 
 
 GATES = (
     _gate_fits_the_job,
     _gate_has_slots,
     _gate_slots_are_fillable,
-    _gate_complexity_for_placement,
 )
 
 

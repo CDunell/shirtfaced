@@ -24,6 +24,7 @@ import hashlib
 import random
 from dataclasses import dataclass, field
 
+from app.archive import geometry
 from app.archive.grammar import Grammar, Part, density_budget
 from app.archive.placements import Placement
 from app.archive.render import Palette, RefusedToRender, _frame_path
@@ -64,15 +65,17 @@ def _candidates(part: Part, elements: tuple[Element, ...]) -> list[Element]:
     """Archive elements that could fill this role.
 
     A part asking for a frame gets frames; a part asking for nothing in
-    particular gets anything without slots of its own, because an element with
-    its own slots is a design rather than a component.
+    particular gets anything.
+
+    An element that declares its own text slots is not excluded. A badge used as
+    a crest's frame simply has its own slots ignored while the grammar puts its
+    title where the grammar says -- which is more useful than refusing a shape
+    for carrying a feature nobody asked it to use.
     """
     found = []
     for element in elements:
         family = element.recipe.split(".", 1)[0] if element.recipe else element.family
         if part.families and family not in part.families:
-            continue
-        if part.slot:
             continue
         found.append(element)
     return found
@@ -153,6 +156,7 @@ def assemble(
     seed: int,
     width_mm: float,
     height_mm: float,
+    treatment: str = "clean",
 ) -> AssembledDesign:
     """Build one design from a grammar. Same inputs, same bytes."""
     generator = rng_for(seed, grammar.key, "assemble")
@@ -275,6 +279,13 @@ def assemble(
     canvas = Canvas(width_mm, height_mm)
     for _, _, markup in sorted(drawn, key=lambda item: (item[0], item[1])):
         canvas.add(markup)
+
+    if treatment == "distressed":
+        # Drilled out in the garment colour, over everything, so the wear reads
+        # across the whole design rather than one part at a time.
+        generator = rng_for(seed, grammar.key, "distress")
+        for mark in geometry.distress(width_mm, height_mm, generator):
+            canvas.path(mark, fill=palette.garment)
 
     svg = canvas.to_svg()
     return AssembledDesign(
