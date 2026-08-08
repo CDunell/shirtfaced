@@ -96,12 +96,139 @@ def _polygon(raw: str, close: bool) -> str:
     return f"{head} {body}" + (" Z" if close else "")
 
 
+TRANSFORM = re.compile(r"(translate|scale|matrix)\s*\(([^)]*)\)", re.I)
+GROUP_OPEN = re.compile(r"<g\b([^>]*)>", re.I | re.S)
+GROUP_CLOSE = re.compile(r"</g\s*>", re.I)
+
+
+def _matrix_of(raw: str) -> tuple[float, float, float, float, float, float]:
+    """One transform attribute as a 2x3 matrix, applied left to right."""
+    result = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+    for kind, body in TRANSFORM.findall(raw):
+        values = [float(v) for v in NUMBER.findall(body)]
+        if kind.lower() == "translate":
+            step = (1.0, 0.0, 0.0, 1.0, values[0], values[1] if len(values) > 1 else 0.0)
+        elif kind.lower() == "scale":
+            sx = values[0] if values else 1.0
+            sy = values[1] if len(values) > 1 else sx
+            step = (sx, 0.0, 0.0, sy, 0.0, 0.0)
+        elif len(values) >= 6:
+            step = (values[0], values[1], values[2], values[3], values[4], values[5])
+        else:
+            continue
+        result = _compose(result, step)
+    return result
+
+
+def _compose(
+    outer: tuple[float, float, float, float, float, float],
+    inner: tuple[float, float, float, float, float, float],
+) -> tuple[float, float, float, float, float, float]:
+    a1, b1, c1, d1, e1, f1 = outer
+    a2, b2, c2, d2, e2, f2 = inner
+    return (
+        a1 * a2 + c1 * b2,
+        b1 * a2 + d1 * b2,
+        a1 * c2 + c1 * d2,
+        b1 * c2 + d1 * d2,
+        a1 * e2 + c1 * f2 + e1,
+        b1 * e2 + d1 * f2 + f1,
+    )
+
+
+def _apply(path_data: str, matrix: tuple[float, float, float, float, float, float]) -> str:
+    """Bake a matrix into path coordinates.
+
+    Done rather than emitting a nested transform, because a transform is a
+    promise that whatever opens the file will apply it the same way, and
+    flattening it here means the geometry is the geometry.
+    """
+    a, b, c, d, e, f = matrix
+    if (a, b, c, d, e, f) == (1.0, 0.0, 0.0, 1.0, 0.0, 0.0):
+        return path_data
+
+    def point(x: float, y: float) -> tuple[str, str]:
+        return num(a * x + c * y + e), num(b * x + d * y + f)
+
+    scale = max(abs(a), abs(d)) or 1.0
+    out: list[str] = []
+    tokens = path_data.replace(",", " ").split()
+    index = 0
+    while index < len(tokens):
+        token = tokens[index]
+        upper = token.upper()
+        if upper in ("M", "L", "T"):
+            out.append(token)
+            out.extend(point(float(tokens[index + 1]), float(tokens[index + 2])))
+            index += 3
+        elif upper == "C":
+            out.append(token)
+            for step in range(3):
+                out.extend(
+                    point(float(tokens[index + 1 + step * 2]), float(tokens[index + 2 + step * 2]))
+                )
+            index += 7
+        elif upper in ("S", "Q"):
+            out.append(token)
+            for step in range(2):
+                out.extend(
+                    point(float(tokens[index + 1 + step * 2]), float(tokens[index + 2 + step * 2]))
+                )
+            index += 5
+        elif upper == "A":
+            out.append(token)
+            out.append(num(float(tokens[index + 1]) * scale))
+            out.append(num(float(tokens[index + 2]) * scale))
+            out.extend(tokens[index + 3 : index + 6])
+            out.extend(point(float(tokens[index + 6]), float(tokens[index + 7])))
+            index += 8
+        elif upper in ("H", "V"):
+            # Rewritten as a line, since a horizontal move stops being horizontal
+            # under a matrix that rotates or shears.
+            out.append(token)
+            out.append(num(float(tokens[index + 1]) * scale))
+            index += 2
+        else:
+            out.append(token)
+            index += 1
+    return " ".join(out)
+
+
 def shapes_in(svg: str) -> list[Shape]:
     """Every drawn thing in the file, as paths, with the colours they arrived in.
+
+    Group transforms are resolved and baked into the coordinates. Ignoring them
+    puts every transformed shape at the wrong place, which is silent and looks
+    like a placement bug rather than a parsing one.
 
     Order is preserved, because in SVG that is stacking order and stacking order
     is part of the drawing.
     """
+    # Where each group opens and closes, so a shape knows its inherited matrix.
+    stack: list[tuple[int, tuple[float, float, float, float, float, float]]] = []
+    boundaries: list[tuple[int, int, tuple[float, float, float, float, float, float]]] = []
+    events = sorted(
+        [(m.start(), "open", m.group(1)) for m in GROUP_OPEN.finditer(svg)]
+        + [(m.start(), "close", "") for m in GROUP_CLOSE.finditer(svg)]
+    )
+    for position, kind, attributes in events:
+        if kind == "open":
+            inherited = stack[-1][1] if stack else (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+            transform = re.search(r'transform="([^"]*)"', attributes)
+            matrix = _compose(inherited, _matrix_of(transform.group(1))) if transform else inherited
+            stack.append((position, matrix))
+        elif stack:
+            start, matrix = stack.pop()
+            boundaries.append((start, position, matrix))
+
+    def matrix_at(position: int) -> tuple[float, float, float, float, float, float]:
+        best = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+        span = None
+        for start, end, matrix in boundaries:
+            if start < position < end and (span is None or end - start < span):
+                span, best = end - start, matrix
+        return best
+
     found: list[Shape] = []
     for match in TAG.finditer(svg):
         tag = match.group(1).lower()
@@ -135,7 +262,7 @@ def shapes_in(svg: str) -> list[Shape]:
             data = ""
 
         if data:
-            found.append(Shape(path=data, fill=fill))
+            found.append(Shape(path=_apply(data, matrix_at(match.start())), fill=fill))
     return found
 
 

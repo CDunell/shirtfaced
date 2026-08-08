@@ -22,6 +22,7 @@ from pathlib import Path
 
 from app.archive import authored
 from app.archive.assemble import AssembledDesign, assemble
+from app.archive.garment import Garment, GarmentError
 from app.archive.grammar import Grammar, grammars_for
 from app.archive.placements import Placement
 from app.archive.placements import placement as get_placement
@@ -163,10 +164,23 @@ class DesignComposer:
         self.approvals = ApprovalStore(approvals_path)
         self.elements = elements if elements is not None else authored.ALL
 
-    def compose(self, brief: Brief, seed: int, limit: int = MAX_OPTIONS) -> Composition:
-        """Answer the brief, or refuse it with a reason. Never raises."""
+    def compose(
+        self,
+        brief: Brief,
+        seed: int,
+        limit: int = MAX_OPTIONS,
+        garment: Garment | None = None,
+    ) -> Composition:
+        """Answer the brief, or refuse it with a reason. Never raises.
+
+        When a garment is supplied, designs are sized to that garment's actual
+        zone rather than to the placement table. The table is a default drawn
+        from production guidance; the garment in front of you is the physical
+        fact, and a 200mm zone cannot hold a 229mm print however typical that
+        size is elsewhere.
+        """
         try:
-            return self._compose(brief, seed, limit)
+            return self._compose(brief, seed, limit, garment)
         except Exception as error:
             return Composition(
                 composable=False,
@@ -174,7 +188,9 @@ class DesignComposer:
                 refusal_detail=type(error).__name__,
             )
 
-    def _compose(self, brief: Brief, seed: int, limit: int) -> Composition:
+    def _compose(
+        self, brief: Brief, seed: int, limit: int, garment: Garment | None = None
+    ) -> Composition:
         if not brief.supplied_slots:
             return Composition(
                 composable=False,
@@ -202,6 +218,19 @@ class DesignComposer:
                 ),
             )
 
+        # The garment's own zone wins where there is one.
+        width_mm, height_mm = placement.typical_width_mm, placement.typical_height_mm
+        if garment is not None:
+            try:
+                zone = garment.zone(brief.placement)
+            except GarmentError as error:
+                return Composition(
+                    composable=False,
+                    refusal_reason=error.reason,
+                    refusal_detail=error.detail,
+                )
+            width_mm, height_mm = zone.width, zone.height
+
         palette = Palette(garment=brief.garment, inks=tuple(DEFAULT_INKS[: brief.inks]))
         options: list[DesignOption] = []
         rejections: list[Rejection] = []
@@ -216,8 +245,8 @@ class DesignComposer:
                     palette,
                     placement,
                     seed=seed,
-                    width_mm=placement.typical_width_mm,
-                    height_mm=placement.typical_height_mm,
+                    width_mm=width_mm,
+                    height_mm=height_mm,
                     treatment=brief.treatment,
                 )
             except RefusedToRender as error:
