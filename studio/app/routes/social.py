@@ -59,6 +59,9 @@ class DerivativeView(BaseModel):
     sha256: str
     byte_size: int
     url: str
+    review_state: str
+    rejection_reason: str | None
+    reviewed_at: dt.datetime | None
 
 
 class JobView(BaseModel):
@@ -66,6 +69,12 @@ class JobView(BaseModel):
     social_post_id: uuid.UUID
     derivative_id: uuid.UUID
     channel: str
+    output_key: str
+    filename: str
+    derivative_url: str
+    source_label: str
+    caption: str
+    campaign_id: uuid.UUID | None
     state: str
     scheduled_at: dt.datetime | None
     scheduled_timezone: str
@@ -107,12 +116,21 @@ class ScheduleInput(BaseModel):
     timezone: str = "Australia/Brisbane"
 
 
-def _job_view(job: PublicationJob) -> JobView:
+def _job_view(job: PublicationJob, session: Session) -> JobView:
+    derivative = session.get(SocialDerivative, job.derivative_id)
+    post = session.get(SocialPost, job.social_post_id)
+    photo = session.get(Photo, post.source_photo_id) if post else None
     return JobView(
         id=job.id,
         social_post_id=job.social_post_id,
         derivative_id=job.derivative_id,
         channel=job.channel.value,
+        output_key=derivative.output_key if derivative else "missing",
+        filename=derivative.filename if derivative else "Missing derivative",
+        derivative_url=f"/api/social/derivatives/{job.derivative_id}/file",
+        source_label=photo.label if photo else "Missing source",
+        caption=post.caption if post else "",
+        campaign_id=post.campaign_id if post else None,
         state=job.state.value,
         scheduled_at=job.scheduled_at,
         scheduled_timezone=job.scheduled_timezone,
@@ -122,6 +140,23 @@ def _job_view(job: PublicationJob) -> JobView:
         published_at=job.published_at,
         failure_reason=job.failure_reason,
         retry_count=job.retry_count,
+    )
+
+
+def _derivative_view(item: SocialDerivative) -> DerivativeView:
+    return DerivativeView(
+        id=item.id,
+        output_key=item.output_key,
+        channel=item.channel.value,
+        width=item.width,
+        height=item.height,
+        filename=item.filename,
+        sha256=item.sha256,
+        byte_size=item.byte_size,
+        url=f"/api/social/derivatives/{item.id}/file",
+        review_state=item.review_state,
+        rejection_reason=item.rejection_reason,
+        reviewed_at=item.reviewed_at,
     )
 
 
@@ -139,21 +174,8 @@ def _post_view(post: SocialPost, session: Session) -> PostView:
         approved_at=post.approved_at,
         rejected_at=post.rejected_at,
         created_at=post.created_at,
-        derivatives=[
-            DerivativeView(
-                id=item.id,
-                output_key=item.output_key,
-                channel=item.channel.value,
-                width=item.width,
-                height=item.height,
-                filename=item.filename,
-                sha256=item.sha256,
-                byte_size=item.byte_size,
-                url=f"/api/social/derivatives/{item.id}/file",
-            )
-            for item in post.derivatives
-        ],
-        jobs=[_job_view(item) for item in post.jobs],
+        derivatives=[_derivative_view(item) for item in post.derivatives],
+        jobs=[_job_view(item, session) for item in post.jobs],
     )
 
 
@@ -166,6 +188,27 @@ def _load_post(post_id: uuid.UUID, session: Session) -> SocialPost:
     if post is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such social post.")
     return post
+
+
+def _sync_post_review_state(post: SocialPost) -> None:
+    """Roll derivative decisions up without overriding queued/live packages."""
+    if post.state in {SocialPostState.QUEUED, SocialPostState.LIVE}:
+        return
+    states = [item.review_state for item in post.derivatives]
+    if not states or "review_required" in states:
+        post.state = SocialPostState.REVIEW_REQUIRED
+        post.approved_at = None
+        post.rejected_at = None
+        return
+    now = dt.datetime.now(dt.UTC)
+    if "approved" in states:
+        post.state = SocialPostState.APPROVED
+        post.approved_at = post.approved_at or now
+        post.rejected_at = None
+    else:
+        post.state = SocialPostState.REJECTED
+        post.rejected_at = post.rejected_at or now
+        post.approved_at = None
 
 
 def _default_policy(session: Session) -> CadencePolicy:
@@ -230,9 +273,7 @@ async def create_post(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such source photo.")
 
     try:
-        metadata = [
-            DerivativeInput.model_validate(item) for item in json.loads(derivative_metadata)
-        ]
+        metadata = [DerivativeInput.model_validate(item) for item in json.loads(derivative_metadata)]
     except (ValueError, TypeError) as error:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY, "Invalid derivative metadata."
@@ -280,6 +321,7 @@ async def create_post(
                 sha256=stored.sha256,
                 byte_size=stored.byte_size,
                 filename=meta.filename,
+                review_state="review_required",
             )
         )
 
@@ -300,32 +342,80 @@ def list_posts(session: SessionDependency, state: SocialPostState | None = None)
 
 @router.post("/posts/{post_id}/approve", response_model=PostView)
 def approve_post(post_id: uuid.UUID, session: SessionDependency) -> PostView:
+    """Approve every still-pending output; kept as the fast package-level action."""
     post = _load_post(post_id, session)
-    if post.state == SocialPostState.REJECTED:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Rejected packages cannot be approved.")
-    post.state = SocialPostState.APPROVED
-    post.approved_at = dt.datetime.now(dt.UTC)
+    if post.state in {SocialPostState.QUEUED, SocialPostState.LIVE}:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Queued packages cannot be re-reviewed.")
+    now = dt.datetime.now(dt.UTC)
+    for derivative in post.derivatives:
+        if derivative.review_state == "review_required":
+            derivative.review_state = "approved"
+            derivative.rejection_reason = None
+            derivative.reviewed_at = now
+    _sync_post_review_state(post)
     session.commit()
     return _post_view(_load_post(post_id, session), session)
 
 
 @router.post("/posts/{post_id}/reject", response_model=PostView)
 def reject_post(post_id: uuid.UUID, body: RejectInput, session: SessionDependency) -> PostView:
-    del body  # reserved for the durable approval-decision ledger in the next domain phase
+    """Reject every output in a package when the whole treatment is wrong."""
     post = _load_post(post_id, session)
     if post.jobs:
         raise HTTPException(status.HTTP_409_CONFLICT, "Queued packages cannot be rejected.")
-    post.state = SocialPostState.REJECTED
-    post.rejected_at = dt.datetime.now(dt.UTC)
+    now = dt.datetime.now(dt.UTC)
+    for derivative in post.derivatives:
+        derivative.review_state = "rejected"
+        derivative.rejection_reason = body.reason or None
+        derivative.reviewed_at = now
+    _sync_post_review_state(post)
     session.commit()
     return _post_view(_load_post(post_id, session), session)
+
+
+@router.post("/derivatives/{derivative_id}/approve", response_model=PostView)
+def approve_derivative(derivative_id: uuid.UUID, session: SessionDependency) -> PostView:
+    derivative = session.get(SocialDerivative, derivative_id)
+    if derivative is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such social derivative.")
+    post = _load_post(derivative.social_post_id, session)
+    if post.state in {SocialPostState.QUEUED, SocialPostState.LIVE}:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Queued outputs cannot be re-reviewed.")
+    derivative.review_state = "approved"
+    derivative.rejection_reason = None
+    derivative.reviewed_at = dt.datetime.now(dt.UTC)
+    _sync_post_review_state(post)
+    session.commit()
+    return _post_view(_load_post(post.id, session), session)
+
+
+@router.post("/derivatives/{derivative_id}/reject", response_model=PostView)
+def reject_derivative(
+    derivative_id: uuid.UUID, body: RejectInput, session: SessionDependency
+) -> PostView:
+    derivative = session.get(SocialDerivative, derivative_id)
+    if derivative is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such social derivative.")
+    post = _load_post(derivative.social_post_id, session)
+    if post.state in {SocialPostState.QUEUED, SocialPostState.LIVE} or derivative.jobs:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Queued outputs cannot be rejected.")
+    derivative.review_state = "rejected"
+    derivative.rejection_reason = body.reason or None
+    derivative.reviewed_at = dt.datetime.now(dt.UTC)
+    _sync_post_review_state(post)
+    session.commit()
+    return _post_view(_load_post(post.id, session), session)
 
 
 @router.post("/posts/{post_id}/queue", response_model=list[JobView])
 def queue_post(post_id: uuid.UUID, body: QueueInput, session: SessionDependency) -> list[JobView]:
     post = _load_post(post_id, session)
     if post.state not in {SocialPostState.APPROVED, SocialPostState.QUEUED}:
-        raise HTTPException(status.HTTP_409_CONFLICT, "Approve the post before queueing it.")
+        raise HTTPException(status.HTTP_409_CONFLICT, "Finish review before queueing the post.")
+
+    approved_derivatives = [item for item in post.derivatives if item.review_state == "approved"]
+    if not approved_derivatives:
+        raise HTTPException(status.HTTP_409_CONFLICT, "No approved outputs are available to queue.")
 
     policy = _default_policy(session)
     recommended = _recommended_time(session, policy, body.timezone)
@@ -335,7 +425,7 @@ def queue_post(post_id: uuid.UUID, body: QueueInput, session: SessionDependency)
         job.derivative_id: job for job in post.jobs if job.state != PublicationState.CANCELLED
     }
 
-    for derivative in post.derivatives:
+    for derivative in approved_derivatives:
         if derivative.id in existing:
             continue
         session.add(
@@ -354,7 +444,7 @@ def queue_post(post_id: uuid.UUID, body: QueueInput, session: SessionDependency)
     post.state = SocialPostState.QUEUED
     session.commit()
     post = _load_post(post.id, session)
-    return [_job_view(job) for job in post.jobs]
+    return [_job_view(job, session) for job in post.jobs]
 
 
 @router.get("/queue", response_model=list[JobView])
@@ -377,7 +467,7 @@ def list_queue(session: SessionDependency) -> list[JobView]:
         .scalars()
         .all()
     )
-    return [_job_view(job) for job in jobs]
+    return [_job_view(job, session) for job in jobs]
 
 
 @router.get("/live", response_model=list[JobView])
@@ -391,7 +481,7 @@ def list_live(session: SessionDependency) -> list[JobView]:
         .scalars()
         .all()
     )
-    return [_job_view(job) for job in jobs]
+    return [_job_view(job, session) for job in jobs]
 
 
 @router.post("/jobs/{job_id}/schedule", response_model=JobView)
@@ -410,7 +500,7 @@ def schedule_job(job_id: uuid.UUID, body: ScheduleInput, session: SessionDepende
     job.locked = True
     job.state = PublicationState.SCHEDULED
     session.commit()
-    return _job_view(job)
+    return _job_view(job, session)
 
 
 @router.post("/jobs/{job_id}/hold", response_model=JobView)
@@ -423,7 +513,7 @@ def hold_job(job_id: uuid.UUID, session: SessionDependency) -> JobView:
     job.state = PublicationState.HELD
     job.locked = True
     session.commit()
-    return _job_view(job)
+    return _job_view(job, session)
 
 
 @router.post("/jobs/{job_id}/cancel", response_model=JobView)
@@ -436,7 +526,7 @@ def cancel_job(job_id: uuid.UUID, session: SessionDependency) -> JobView:
     job.state = PublicationState.CANCELLED
     job.locked = True
     session.commit()
-    return _job_view(job)
+    return _job_view(job, session)
 
 
 def _publish_job(
@@ -446,10 +536,11 @@ def _publish_job(
     if job.state == PublicationState.CANCELLED:
         raise HTTPException(status.HTTP_409_CONFLICT, "Cancelled jobs cannot publish.")
     if job.state == PublicationState.PUBLISHED:
-        return _job_view(job)
+        return _job_view(job, session)
     post = _load_post(job.social_post_id, session)
-    if post.approved_at is None:
-        raise HTTPException(status.HTTP_409_CONFLICT, "The social package is not approved.")
+    derivative = session.get(SocialDerivative, job.derivative_id)
+    if post.approved_at is None or derivative is None or derivative.review_state != "approved":
+        raise HTTPException(status.HTTP_409_CONFLICT, "The social output is not approved.")
     job.state = PublicationState.PUBLISHING
     session.flush()
     try:
@@ -473,7 +564,7 @@ def _publish_job(
     if not remaining:
         post.state = SocialPostState.LIVE
     session.commit()
-    return _job_view(job)
+    return _job_view(job, session)
 
 
 @router.post("/jobs/{job_id}/publish-now", response_model=JobView)
