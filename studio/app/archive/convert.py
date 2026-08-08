@@ -15,6 +15,7 @@ from __future__ import annotations
 import math
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 from app.archive.svg import num
 
@@ -452,6 +453,29 @@ def outline_stroke(path_data: str, width: float) -> str:
 def combined_path(shapes: list[Shape]) -> str:
     """All the geometry as one path, for single-ink use."""
     return " ".join(shape.path for shape in shapes if shape.path)
+
+
+def shapes_in_postscript(data: bytes) -> list[Shape]:
+    """Illustrator EPS or AI as shapes, so a bought pack ingests like anything else.
+
+    Kept beside ``shapes_in`` rather than inside it because the input is bytes
+    and the parser is a different animal -- PostScript operators rather than
+    XML. Callers that do not care which they have should use ``shapes_in_file``.
+    """
+    from app.archive.eps import read
+
+    art = read(data)
+    return [Shape(path=path, fill=fill) for path, fill in art.paths if path]
+
+
+def shapes_in_file(path: Path) -> list[Shape]:
+    """Whatever the file is, as shapes. Format is our problem, not the sender's."""
+    suffix = path.suffix.lower()
+    if suffix in (".eps", ".ai", ".ps"):
+        return shapes_in_postscript(path.read_bytes())
+    if suffix == ".svg":
+        return shapes_in(path.read_text(encoding="utf-8", errors="replace"))
+    return []
 
 
 def has_raster(svg: str) -> bool:
