@@ -7,6 +7,7 @@ with ``alembic upgrade head``.
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -46,6 +47,22 @@ class RequireAdminSession(BaseHTTPMiddleware):
         return RedirectResponse(f"{self._settings.login_url}?next={request.url}", status_code=307)
 
 
+def _social_assets_root() -> Path | None:
+    """Return the Social template directory for either production or monorepo dev.
+
+    Production deploys Studio as its own tree, so the templates live at
+    ``studio/public/social-assets``. Local development still has the repository-level
+    generated directory. Keeping both locations explicit avoids depending on the
+    production folder happening to share a parent with the storefront checkout.
+    """
+
+    candidates = (
+        PROJECT_ROOT / "public" / "social-assets",
+        PROJECT_ROOT.parent / "public" / "social-assets",
+    )
+    return next((candidate for candidate in candidates if candidate.is_dir()), None)
+
+
 def create_app() -> FastAPI:
     """Build the application."""
     settings = get_settings()
@@ -75,20 +92,21 @@ def create_app() -> FastAPI:
     application.include_router(archive_files.router)
     application.include_router(social.router)
 
-    # Social templates are generated from the repository's real wordmark/smiley
-    # into public/social-assets. Studio consumes exactly those files rather than
-    # maintaining a second copy of the brand assets.
-    social_assets = PROJECT_ROOT.parent / "public" / "social-assets"
-    if social_assets.is_dir():
+    # Social templates are generated from the repository's real wordmark/smiley.
+    # Deployment copies the exact generated files into Studio's own public tree so
+    # this service never depends on a sibling storefront checkout existing.
+    social_assets = _social_assets_root()
+    if social_assets is not None:
         application.mount(
             "/social-assets",
             StaticFiles(directory=social_assets, check_dir=True),
             name="social-assets",
         )
     else:
-        logger.warning(
-            "Social assets are missing at %s; run the social asset builder.",
-            social_assets,
+        logger.error(
+            "Social assets are missing. Expected them in %s or %s.",
+            PROJECT_ROOT / "public" / "social-assets",
+            PROJECT_ROOT.parent / "public" / "social-assets",
         )
 
     dist_root = settings.web_dist_root_resolved
