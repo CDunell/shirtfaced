@@ -1,20 +1,22 @@
 # SHIRTFACED — SOCIAL PUBLISHING IMPLEMENTATION SCOPE
 
-**Status:** Implementation contract  
+**Status:** Implemented foundation + derivative review gate  
 **Target:** Turn Social Studio from browser-only exporter into a persistent approval + queue + fake-publish system without locking the domain to Meta/TikTok APIs.
 
-## Build in this phase
+## Built
 
 1. Persist generated social post packages and exact derivative files.
-2. Store source photo, theme, branding, caption, output metadata, checksums and immutable derivative paths.
+2. Store source photo, theme, branding, publishing caption, output metadata, checksums and immutable derivative paths.
 3. Add post states: `review_required`, `approved`, `rejected`, `queued`, `live`.
-4. Add explicit approval/rejection endpoints.
-5. Add publication jobs with channel, schedule, timezone, locked flag, cadence policy and state.
-6. Add queue operations: schedule, hold, cancel and publish-now.
-7. Add a fake publisher adapter that returns stable external IDs and proves idempotent queue transitions before real platform credentials exist.
-8. Add Social Studio views for **Create**, **Approval**, **Queue** and **Live**.
-9. Add a default cadence recommendation hook. The current implementation uses deterministic policy data; the future Marketing Engine can replace the recommendation provider without changing Social Studio or publication records.
-10. Add event-ready fields (`campaign_id`, `cadence_policy_id`, `recommended_at`, `locked`) so Campaign/Drop and Marketing Engine can plug in later.
+4. Add derivative review states: `review_required`, `approved`, `rejected`, with optional rejection reason and review timestamp.
+5. Allow either package-level **Approve all / Reject all** or per-output approval decisions.
+6. Queue only approved derivatives; rejected outputs never become publication jobs.
+7. Add publication jobs with channel, schedule, timezone, locked flag, cadence policy and state.
+8. Add queue operations: schedule, hold, cancel/remove and publish-now.
+9. Add a fake publisher adapter that returns stable external IDs and proves idempotent queue transitions before real platform credentials exist.
+10. Add Social Studio views for **Create**, **Approval**, **Queue** and **Live**, with persistent media previews through the flow.
+11. Add a default cadence recommendation hook. The current implementation uses deterministic policy data; the future Marketing Engine can replace the recommendation provider without changing Social Studio or publication records.
+12. Keep orchestration hooks (`campaign_id`, `cadence_policy_id`, `recommended_at`, `locked`) so Campaign/Drop and Marketing Engine can plug in later.
 
 ## Explicitly not in this phase
 
@@ -32,16 +34,16 @@ Those are adapters/consumers of this persistence and queue layer, not reasons to
 
 ### SocialPost
 
-One reviewed package built from one source asset.
+One review package built from one source asset.
 
 ```text
 id
 source_photo_id
 theme
 branding
-caption
+caption                      # publishing caption; never implied to be burned into media
 state
-campaign_id?                # future hook, opaque UUID for now
+campaign_id?                 # future hook, opaque UUID for now
 approved_at?
 rejected_at?
 created_at
@@ -50,7 +52,7 @@ updated_at
 
 ### SocialDerivative
 
-Exact immutable file produced by GO.
+Exact immutable file produced by GO plus its human review decision.
 
 ```text
 id
@@ -64,10 +66,15 @@ height
 sha256
 byte_size
 filename
+review_state                 # review_required | approved | rejected
+rejection_reason?
+reviewed_at?
 created_at
 ```
 
-A derivative never mutates after approval. Regeneration creates a new SocialPost package/version.
+The media bytes never mutate after Save for review. Regeneration creates a new SocialPost package/version. Review state may change only before the derivative is queued.
+
+Post state rolls up from derivative state: while any derivative remains pending the package remains `review_required`; when review is complete and at least one derivative is approved it becomes `approved`; when all derivatives are rejected it becomes `rejected`.
 
 ### CadencePolicy
 
@@ -83,11 +90,11 @@ created_at
 updated_at
 ```
 
-The first seeded/default behaviour is a deterministic fallback only. Future Marketing Engine recommendations can supply better times without changing the schema.
+The seeded/default behaviour is a deterministic fallback only. Future Marketing Engine recommendations can supply better times without changing the schema.
 
 ### PublicationJob
 
-One channel-specific publication intent.
+One approved derivative's channel-specific publication intent.
 
 ```text
 id
@@ -110,19 +117,24 @@ updated_at
 
 States: `queued`, `scheduled`, `held`, `publishing`, `published`, `failed`, `cancelled`.
 
+Queue/live API views also expose source label, output key, filename, derivative URL, publishing caption and campaign hook so the UI does not need to reconstruct post context from IDs.
+
 ## API contract
 
 ```text
-POST /api/social/posts                 multipart package from GO
+POST /api/social/posts                         multipart package from GO
 GET  /api/social/posts?state=...
-POST /api/social/posts/{id}/approve
-POST /api/social/posts/{id}/reject
-POST /api/social/posts/{id}/queue
+POST /api/social/posts/{id}/approve            approve all pending outputs
+POST /api/social/posts/{id}/reject             reject all outputs
+POST /api/social/derivatives/{id}/approve      approve one output
+POST /api/social/derivatives/{id}/reject       reject one output
+POST /api/social/posts/{id}/queue              create jobs for approved outputs only
 GET  /api/social/queue
-PATCH/POST /api/social/jobs/{id}/schedule
+POST /api/social/jobs/{id}/schedule
 POST /api/social/jobs/{id}/hold
 POST /api/social/jobs/{id}/cancel
 POST /api/social/jobs/{id}/publish-now
+POST /api/social/queue/run-due                 worker/cron execution hook
 GET  /api/social/derivatives/{id}/file
 ```
 
@@ -131,16 +143,22 @@ GET  /api/social/derivatives/{id}/file
 ### Create
 Existing asset → treatment → branding → outputs → GO.
 
-GO still creates local previews immediately. A second action, **Save for review**, persists the exact generated bytes and metadata. This avoids making experimentation create database noise.
+GO creates local previews immediately. **Save for review** persists the exact generated bytes and metadata, then moves the operator into Approval. Experimentation therefore stays cheap and database noise stays out of the durable pipeline.
+
+The caption field is explicitly labelled **Publishing caption**. It travels with the post package and is not rendered onto the image/video.
 
 ### Approval
-Shows persistent packages in `review_required` with source, derivative previews, caption and exact treatment. Human can approve or reject.
+Shows persistent packages with source, caption, exact treatment and each derivative as its own review card. Human can approve/reject each output or approve/reject the whole package in one action.
+
+A package cannot leave review while any derivative is still pending. Rejected derivatives remain durable evidence of the decision but never enter Queue.
 
 ### Queue
-Approval makes the package eligible for scheduling. **Queue recommended** asks the cadence service for the next slot. Human can override date/time; an override sets `locked=true` so future marketing/cadence automation must work around it.
+**Queue approved outputs** asks the cadence service for the next slot and creates one job per approved derivative only. Queue cards carry media preview, source, output/channel, caption, current schedule and whether that schedule is recommended or manually locked.
+
+Human can override date/time, publish now through the fake adapter, hold or remove a job. A manual schedule sets `locked=true` so future marketing/cadence automation must work around it.
 
 ### Live
-Published fake/real jobs are visible with external ID and actual publish timestamp.
+Published fake/real jobs remain visible with media preview, source/output context, external ID and actual publish timestamp.
 
 ## Cadence fallback
 
@@ -158,7 +176,7 @@ The recommendation service is deliberately replaceable.
 
 `FakeSocialPublisher.publish(job)` returns a deterministic platform-style external ID derived from the job ID. Re-publishing an already published job returns the same result and creates no duplicate.
 
-This validates the hard parts first: persistence, approval, schedule state, retries, idempotency and UI flow.
+This validates persistence, human approval, schedule state, retries, idempotency and UI flow before platform credentials complicate the system.
 
 ## Future hooks
 
@@ -172,10 +190,10 @@ The Marketing Engine may later:
 
 It may not:
 
-- alter approved derivative bytes;
+- alter reviewed derivative bytes;
 - alter a human-locked schedule;
 - approve creative;
-- publish a rejected/unapproved package;
+- publish a rejected/unapproved derivative;
 - silently create paid spend.
 
 ## Acceptance criteria
@@ -185,10 +203,10 @@ A user can:
 1. choose a real Studio photo;
 2. GO and inspect outputs;
 3. persist those exact outputs as a review package;
-4. approve it;
-5. queue it at a recommended or manual date/time;
-6. see it in Queue;
-7. execute fake publish;
+4. approve/reject outputs individually or as a package;
+5. queue only the approved outputs at a recommended or manual date/time;
+6. see media and publishing context in Queue;
+7. hold, remove, reschedule or execute fake publish;
 8. see it in Live with one stable external ID;
 9. repeat publish safely without duplication;
 10. retain all records across page reloads/restarts.
