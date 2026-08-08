@@ -216,8 +216,67 @@ def _render(svg: str, width_mm: float, height_mm: float, out: Path) -> None:
     image.save(out)
 
 
+def _cubic(p0, c1, c2, p3, steps: int = 20) -> list[tuple[float, float]]:
+    out = []
+    for step in range(1, steps + 1):
+        t = step / steps
+        u = 1 - t
+        out.append(
+            (
+                u**3 * p0[0] + 3 * u**2 * t * c1[0] + 3 * u * t**2 * c2[0] + t**3 * p3[0],
+                u**3 * p0[1] + 3 * u**2 * t * c1[1] + 3 * u * t**2 * c2[1] + t**3 * p3[1],
+            )
+        )
+    return out
+
+
+def _quadratic(p0, c, p2, steps: int = 14) -> list[tuple[float, float]]:
+    out = []
+    for step in range(1, steps + 1):
+        t = step / steps
+        u = 1 - t
+        out.append(
+            (
+                u * u * p0[0] + 2 * u * t * c[0] + t * t * p2[0],
+                u * u * p0[1] + 2 * u * t * c[1] + t * t * p2[1],
+            )
+        )
+    return out
+
+
+def _elliptical(start, radius_x, radius_y, end, steps: int = 16) -> list[tuple[float, float]]:
+    """Good enough for looking at: a half-ellipse bulging off the chord.
+
+    Not the SVG spec's parameterisation. This tool exists to show whether a
+    shape looks right, and a curve drawn as a straight line -- which is what
+    this did before -- makes every dome read as a triangle.
+    """
+    import math
+
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    length = math.hypot(dx, dy) or 1.0
+    normal = (-dy / length, dx / length)
+    bulge = max(radius_x, radius_y) * 0.55
+    out = []
+    for step in range(1, steps + 1):
+        t = step / steps
+        arc = math.sin(math.pi * t) * bulge
+        out.append(
+            (
+                start[0] + dx * t + normal[0] * arc,
+                start[1] + dy * t + normal[1] * arc,
+            )
+        )
+    return out
+
+
 def _flatten(path_data: str) -> list[list[tuple[float, float]]]:
-    """Path to polygons, straight segments only -- enough to check placement."""
+    """Path to polygons, with curves actually subdivided.
+
+    An earlier version jumped a cubic straight to its endpoint, so every curve
+    drew as a chord. Domes read as triangles and I sent five headwear files
+    back to be redrawn for a fault in this function.
+    """
     tokens = re.findall(r"[MLCAQHVZmlcaqhvz]|-?\d*\.?\d+", path_data)
     polygons: list[list[tuple[float, float]]] = []
     current: list[tuple[float, float]] = []
@@ -236,16 +295,23 @@ def _flatten(path_data: str) -> list[list[tuple[float, float]]]:
             current.append(point)
             index += 3
         elif token == "C":
-            point = (float(tokens[index + 5]), float(tokens[index + 6]))
-            current.append(point)
+            control_one = (float(tokens[index + 1]), float(tokens[index + 2]))
+            control_two = (float(tokens[index + 3]), float(tokens[index + 4]))
+            end = (float(tokens[index + 5]), float(tokens[index + 6]))
+            current.extend(_cubic(point, control_one, control_two, end))
+            point = end
             index += 7
         elif token == "A":
-            point = (float(tokens[index + 6]), float(tokens[index + 7]))
-            current.append(point)
+            end = (float(tokens[index + 6]), float(tokens[index + 7]))
+            radius_x, radius_y = float(tokens[index + 1]), float(tokens[index + 2])
+            current.extend(_elliptical(point, radius_x, radius_y, end))
+            point = end
             index += 8
         elif token == "Q":
-            point = (float(tokens[index + 3]), float(tokens[index + 4]))
-            current.append(point)
+            control = (float(tokens[index + 1]), float(tokens[index + 2]))
+            end = (float(tokens[index + 3]), float(tokens[index + 4]))
+            current.extend(_quadratic(point, control, end))
+            point = end
             index += 5
         elif token == "H":
             point = (float(tokens[index + 1]), point[1])

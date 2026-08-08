@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="260mm" height="280mm" viewBox="0 0 260 280">
+  <!--
+    Shirtfaced — garment_beanie_front.svg
+    Beanie / knit cap (redrawn)
+    Flat measurements used:
+      - Canvas: 260 × 280 mm
+      - Body width: ~220 mm
+      - Height (to cuff top): ~200 mm (taller dome)
+      - Cuff depth: ~55 mm
+      - zone-cap_front ≤110×60 mm
+      - zone-cap_side_left/right ≤65×40 mm
+      - zone-cap_back ≤70×40 mm (no closure, consistent size)
+  -->
+
+  <!-- Beanie body — taller dome -->
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.4"
+        d="M 20,140
+           C 20,50 70,10 130,10
+           C 190,10 240,50 240,140
+           L 245,200
+           L 15,200
+           Z"/>
+
+  <!-- Cuff -->
+  <path id="garment-cuff"
+        fill="#e0e0e0"
+        stroke="#222"
+        stroke-width="1.2"
+        d="M 15,200
+           L 15,255
+           L 245,255
+           L 245,200
+           Z"/>
+
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.7"
+        stroke-dasharray="2 3"
+        d="M 130,10 L 130,200
+           M 85,25 L 80,200
+           M 175,25 L 180,200"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-cap_front"
+        fill="#4a90e2"
+        fill-opacity="0.22"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 75,40
+           L 185,40
+           L 188,100
+           L 72,100
+           Z"/>
+
+  <path id="zone-cap_side_left"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 30,90
+           L 75,80
+           L 78,140
+           L 32,145
+           Z"/>
+
+  <path id="zone-cap_side_right"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 185,80
+           L 230,90
+           L 228,145
+           L 182,140
+           Z"/>
+
+  <path id="zone-cap_back"
+        fill="#e67e22"
+        fill-opacity="0.20"
+        stroke="#d35400"
+        stroke-width="1"
+        d="M 95,160
+           L 165,160
+           L 168,200
+           L 92,200
+           Z"/>
+
+</svg>

@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="260mm" height="220mm" viewBox="0 0 260 220">
+  <!--
+    Shirtfaced — garment_cap_trucker_front.svg
+    Trucker / mesh-back cap (redrawn)
+    Flat measurements used:
+      - Canvas: 260 × 220 mm
+      - Crown width: ~190 mm
+      - Crown height: ~105 mm (dome)
+      - Brim slightly longer/curved
+      - zone-cap_front ≤110×60 mm
+      - zone-cap_side_left/right ≤65×40 mm
+      - zone-cap_back ≤70×40 mm (above adjustment strap)
+  -->
+
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.4"
+        d="M 35,115
+           C 35,50 85,12 130,12
+           C 175,12 225,50 225,115
+           L 238,130
+           C 248,145 250,165 242,180
+           L 222,195
+           L 38,195
+           L 18,180
+           C 10,165 12,145 22,130
+           Z"/>
+
+  <path id="garment-brim"
+        fill="#e0e0e0"
+        stroke="#222"
+        stroke-width="1.2"
+        d="M 38,195
+           C 70,215 100,225 130,225
+           C 160,225 190,215 222,195
+           L 212,187
+           C 185,203 155,210 130,210
+           C 105,210 75,203 48,187
+           Z"/>
+
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.7"
+        stroke-dasharray="3 2"
+        d="M 130,12 L 130,195
+           M 90,28 L 85,180
+           M 170,28 L 175,180"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-cap_front"
+        fill="#4a90e2"
+        fill-opacity="0.22"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 75,38
+           L 185,38
+           L 188,98
+           L 72,98
+           Z"/>
+
+  <path id="zone-cap_side_left"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 40,118
+           L 75,108
+           L 78,148
+           L 42,153
+           Z"/>
+
+  <path id="zone-cap_side_right"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 185,108
+           L 220,118
+           L 218,153
+           L 182,148
+           Z"/>
+
+  <path id="zone-cap_back"
+        fill="#e67e22"
+        fill-opacity="0.20"
+        stroke="#d35400"
+        stroke-width="1"
+        d="M 95,160
+           L 165,160
+           L 168,195
+           L 92,195
+           Z"/>
+
+</svg>

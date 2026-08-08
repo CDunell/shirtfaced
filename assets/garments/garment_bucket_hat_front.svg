@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="280mm" height="220mm" viewBox="0 0 280 220">
+  <!--
+    Shirtfaced — garment_bucket_hat_front.svg
+    Bucket hat (redrawn)
+    Flat measurements used:
+      - Canvas: 280 × 220 mm
+      - Crown width: ~185 mm
+      - Crown height: ~85 mm (shallower dome)
+      - Brim width: ~55 mm all around
+      - zone-cap_front ≤110×60 mm
+      - zone-cap_side_left/right ≤65×40 mm
+      - zone-cap_back ≤70×40 mm (no closure, consistent size)
+  -->
+
+  <!-- Crown — shallower dome -->
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.4"
+        d="M 47.5,95
+           C 47.5,45 90,15 140,15
+           C 190,15 232.5,45 232.5,95
+           L 237,125
+           L 43,125
+           Z"/>
+
+  <!-- Brim -->
+  <path id="garment-brim"
+        fill="#e8e8e8"
+        stroke="#222"
+        stroke-width="1.3"
+        d="M 43,125
+           C 20,140 8,165 10,185
+           C 25,210 80,220 140,220
+           C 200,220 255,210 270,185
+           C 272,165 260,140 237,125
+           Z"/>
+
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.7"
+        stroke-dasharray="3 2"
+        d="M 140,15 L 140,125
+           M 100,25 L 97,125
+           M 180,25 L 183,125"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-cap_front"
+        fill="#4a90e2"
+        fill-opacity="0.22"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 85,35
+           L 195,35
+           L 198,95
+           L 82,95
+           Z"/>
+
+  <path id="zone-cap_side_left"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 50,75
+           L 85,65
+           L 88,115
+           L 52,118
+           Z"/>
+
+  <path id="zone-cap_side_right"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 195,65
+           L 230,75
+           L 228,118
+           L 192,115
+           Z"/>
+
+  <path id="zone-cap_back"
+        fill="#e67e22"
+        fill-opacity="0.20"
+        stroke="#d35400"
+        stroke-width="1"
+        d="M 105,100
+           L 175,100
+           L 178,125
+           L 102,125
+           Z"/>
+
+</svg>

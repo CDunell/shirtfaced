@@ -28,13 +28,15 @@ sit in the wrong place.
 | `garment_crop_front.svg` | good |
 | `garment_tank_muscle_front.svg` | good — redrawn with a proper deep armhole |
 | `garment_tee_crew_back.svg` | good |
+| `garment_cap_dad_front.svg` | good |
+| `garment_cap_trucker_front.svg` | good |
+| `garment_cap_snapback_front.svg` | good |
+| `garment_bucket_hat_front.svg` | good |
+| `garment_beanie_front.svg` | good |
 
 ## Missing
 
-The headwear set. Caps, bucket hat and beanie were drawn once and sent back:
-the crowns came out as triangles rather than domes, they were drawn at roughly
-1.7x life size, `zone-cap_side` held both sides in one path, and none carried
-`zone-cap_back`.
+Back views for the crop, the tank and the headwear. Everything else is here.
 
 ## Zones larger than the defaults
 
