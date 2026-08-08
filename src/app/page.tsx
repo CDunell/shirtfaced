@@ -211,7 +211,8 @@ export default function Home() {
 
       {/* ---------------- Brand line ----------------
           Duration scales with the number of taglines so growing the library does
-          not turn the marquee into a high-speed eye test. */}
+          not turn the marquee into a high-speed eye test. Hero display strips
+          punctuation; the marquee deliberately restores the spoken cadence. */}
       <section className="mt-12 overflow-hidden bg-ink py-5">
         <div
           className="marquee-track flex w-max"
@@ -224,7 +225,7 @@ export default function Home() {
                   key={t.beatOne}
                   className="display px-5 text-[26px] whitespace-nowrap text-paper"
                 >
-                  {t.beatOne} {t.beatTwo} <span className="text-lime lowercase">{LINE_THREE}</span>
+                  {t.beatOne}, {t.beatTwo}, <span className="text-lime lowercase">{LINE_THREE}.</span>
                 </span>
               ))}
             </span>
