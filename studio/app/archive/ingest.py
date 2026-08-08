@@ -23,6 +23,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from app.archive.convert import colours_in, combined_path, has_raster, shapes_in
 from app.domain.element import Element, Licence
 from app.domain.enums import LicenceStatus
 
@@ -71,22 +72,26 @@ class Source:
             )
 
 
-def _combined_path(svg: str) -> str:
-    """Every path in the file, as one path.
+def _geometry(svg: str) -> tuple[str, tuple[str, ...]]:
+    """The file's geometry as one path, and the palette it arrived in.
 
-    Fills and strokes are dropped deliberately. An ingested element is geometry;
-    what colour it prints in is a decision the palette makes later, and baking
-    the original's colours in would make one ink choice permanent.
+    Primitives -- rect, circle, ellipse, polygon, polyline, line -- are
+    converted here rather than refused. Asking whoever sent the file to convert
+    them first is asking someone else to do work that belongs on this side, and
+    turning material away in the meantime.
     """
-    paths = PATH_TAG.findall(svg)
-    if not paths:
+    shapes = shapes_in(svg)
+    if not shapes:
         raise NotIngestible(
-            "NO_PATH_GEOMETRY",
-            "the file has no <path> elements. Shapes drawn as <rect>, <circle> "
-            "or <polygon> need converting to paths first, and an embedded "
-            "raster image cannot be ingested at all",
+            "NO_GEOMETRY",
+            "nothing drawable in the file"
+            + (
+                " -- it appears to be an embedded bitmap, which has no geometry to read"
+                if has_raster(svg)
+                else ""
+            ),
         )
-    return " ".join(path.strip() for path in paths)
+    return combined_path(shapes), colours_in(shapes)
 
 
 def complexity_of(path_data: str) -> float:
@@ -125,7 +130,7 @@ def ingest_svg(
     except OSError as error:
         raise NotIngestible("UNREADABLE_FILE", str(error)) from error
 
-    path_data = _combined_path(svg)
+    path_data, source_colours = _geometry(svg)
 
     return Element(
         id=element_key,
@@ -149,6 +154,7 @@ def ingest_svg(
         compatible_treatments=("clean", "distressed"),
         recipe="",
         geometry=path_data,
+        source_colours=source_colours,
         source_file=str(file),
     )
 

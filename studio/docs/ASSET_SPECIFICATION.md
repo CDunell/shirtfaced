@@ -1,14 +1,17 @@
-# Asset specification
+# Sourcing list
 
-What the engine needs and cannot generate. Register is Australian vernacular:
-pubs, utes, the coast, the trades, backyards. Screen-print logic — separable
-into a small number of inks.
+What we are hunting for. Register is Australian vernacular — pubs, utes, the
+coast, the trades, backyards.
+
+Categories below are where the obvious holes are, not a boundary. Anything good
+that is not on the list is still wanted.
 
 ---
 
-## Typefaces — 8 to 12 families
+## Typefaces
 
-Full Latin, numerals, punctuation, regular and bold minimum. Variable welcome.
+Every design is currently set in one face, which is the hardest limit on the
+work. More faces changes the output more than anything else here.
 
 | Class | Used for |
 |---|---|
@@ -23,15 +26,13 @@ Full Latin, numerals, punctuation, regular and bold minimum. Variable welcome.
 | Blackletter | Band-merch |
 | Rounded soft sans | Lighter material |
 
-TTF or OTF. Full character set — the typesetter errors on a missing glyph
-rather than substituting, so gaps surface as blocked work.
-
-The file gets held in the repository and glyphs converted to outlines from it,
-so whatever arrives has to be the file that stays.
+**One real constraint.** The font file gets held in the repository and glyphs
+are converted to outlines from that exact file. Whatever arrives has to be the
+file that stays — different metrics mean different designs.
 
 ---
 
-## Illustration — 400 to 800 marks
+## Illustration
 
 ### Australian vernacular
 
@@ -60,13 +61,13 @@ prawn, snapper, bream, tackle box, rod, sinker, life ring.
 ### Hands and figures
 
 Pointing hand, thumbs up, shaka, fist, open palm, hand holding a can, arms
-crossed. Figures standing, sitting, walking, running — silhouette only.
+crossed. Figures standing, sitting, walking, running.
 
 ### Standard apparel marks
 
 Skull, snake, eagle, wolf, bear, lion, rose, laurel, oak leaf, lightning bolt,
-flames (set), wings (set), dice, cards, horseshoe, star field, moon phases,
-rocket, radio tower.
+flames, wings, dice, cards, horseshoe, star field, moon phases, rocket, radio
+tower.
 
 ### Redraws
 
@@ -77,47 +78,45 @@ boomerang · stubby bottle · can · spanner · heart
 
 ---
 
-## Textures — 30 to 60 plates
+## Textures
 
 Ink loss on a dry screen, over-inked bleed, photocopy degradation at several
 generations, dry brush, cracked plastisol, misregistration offsets, halftone
 moiré, paper grain, canvas weave, screen mesh, spray stipple, roller texture,
 letterpress bite, worn vinyl.
 
-Greyscale or 1-bit PNG, 300dpi+, 200mm square minimum. Tileable where the
-texture is a field rather than an edge. Contrast matters more than tone.
+Raster suits these. Bigger and higher contrast is more useful than subtle.
 
 ---
 
-## Patterns — 40 to 80 tiles
+## Patterns
 
 Bandana paisley, floral repeats, tapa-style geometric, camouflage-like abstract
-fields, woodblock repeats, rope repeats, topographic contours.
+fields, woodblock repeats, rope repeats, topographic contours, gingham,
+houndstooth, argyle, tartan, ticking stripe, bandana borders.
 
-Motif patterns only. Stripe, grid, check, chevron and dot are generated
-in-house.
-
-Repeat unit stated. Seamless.
+A seamless tile is directly usable. A non-repeating panel is still worth having
+as source material.
 
 ---
 
 ## Format
 
-Vector, because everything scales between a 90mm chest print and a 400mm back
-print.
+**Send whatever exists.** SVG, EPS, AI, PDF, PNG, JPG, a photograph of a printed
+shirt. Everything gets ingested, and conversion is our side of the line — the
+pipeline already reads paths, rectangles, circles, ellipses, polygons and lines,
+and anything it does not read yet gets a converter written for it.
 
-- SVG, paths only
-- Strokes expanded to filled outlines — unexpanded strokes scale and separate
-  wrongly
-- No groups, transforms, clip paths or masks — flattened unpredictably
-  downstream
-- One colour; inks are assigned per design, so colour in the file is discarded
-- Holes as counters, wound against the outer path
-- Artwork filling the viewBox, origin top-left
+Colour is kept, not stripped. The engine assigns its own inks per design, but
+the palette a piece arrived in is information about it and is recorded.
 
-Other formats — EPS, AI, PDF, SVG full of primitives — are convertible. The
-converter is our side of the line.
+Two things that are useful rather than required:
 
-No detail ceiling. Print sizes run from a 76mm yoke to a 400mm back, and the
-engine measures how involved a piece of artwork is and places it accordingly.
-Something intricate is simply a large-print asset.
+- **Vector where it exists.** Prints run from a 76mm yoke to a 400mm back, and
+  vector scales across that range without resampling. Raster still ingests.
+- **Higher resolution than seems necessary.** Detail can be thrown away later.
+  It cannot be added.
+
+No detail ceiling, no colour limit, no minimum size. The engine measures how
+involved a piece of artwork is and places it accordingly — something intricate
+is a large-print asset, not a reject.

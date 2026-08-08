@@ -129,6 +129,11 @@ class Element:
     # it is waiting for keeps the hole visible until it is filled.
     provisional: str = ""
 
+    # The colours the artwork arrived in, in drawing order. The engine assigns
+    # its own inks, but how many colours the original used and which they were
+    # is impossible to recover once discarded.
+    source_colours: tuple[str, ...] = ()
+
     # Authored elements name a recipe; ingested ones carry their own path data.
     # Exactly one of the two, which the database enforces as a constraint.
     recipe: str = ""

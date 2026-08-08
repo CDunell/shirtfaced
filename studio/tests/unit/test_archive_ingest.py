@@ -135,11 +135,12 @@ def test_non_commercial_terms_mark_it_refused_rather_than_deleting_it(tmp_path: 
 # --- What the file itself can and cannot be ---------------------------------
 
 
-def test_geometry_is_taken_and_colour_is_not(tmp_path: Path) -> None:
-    """Baking the original's colours in would make one ink choice permanent."""
+def test_geometry_and_the_source_palette_both_survive(tmp_path: Path) -> None:
+    """The engine assigns its own inks. What colours the original used is
+    information about the artwork, and unrecoverable once thrown away."""
     element = _ingest(tmp_path)
     assert "M 10 10" in element.geometry
-    assert "#ff0000" not in element.geometry
+    assert element.source_colours == ("#ff0000",)
 
 
 def test_several_paths_become_one_element(tmp_path: Path) -> None:
@@ -152,12 +153,20 @@ def test_several_paths_become_one_element(tmp_path: Path) -> None:
     assert "M 20 20" in element.geometry
 
 
-def test_a_file_with_no_paths_is_refused_with_advice(tmp_path: Path) -> None:
-    svg = '<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>'
-    with pytest.raises(NotIngestible) as raised:
-        _ingest(tmp_path, svg)
-    assert raised.value.reason == "NO_PATH_GEOMETRY"
-    assert "rect" in raised.value.detail
+def test_primitives_are_converted_rather_than_refused(tmp_path: Path) -> None:
+    """Asking a supplier to convert shapes first is asking them to do work that
+    belongs on this side, and turning material away until they do."""
+    svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg">'
+        '<rect x="1" y="2" width="10" height="8" fill="#00f"/>'
+        '<circle cx="20" cy="20" r="5" fill="#0f0"/>'
+        '<polygon points="0,0 4,0 2,4" fill="#f00"/>'
+        "</svg>"
+    )
+    element = _ingest(tmp_path, svg)
+    assert "M 1 2" in element.geometry
+    assert "A 5 5" in element.geometry
+    assert element.source_colours == ("#00f", "#0f0", "#f00")
 
 
 def test_intricate_artwork_is_ingested_and_scored_not_refused(tmp_path: Path) -> None:
