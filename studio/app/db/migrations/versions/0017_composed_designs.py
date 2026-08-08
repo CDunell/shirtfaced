@@ -86,10 +86,11 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.func.now(),
         ),
-        # Short names. The metadata convention is
-        # ck_%(table_name)s_%(constraint_name)s and alembic applies it here too,
-        # so an already-qualified name comes out doubled.
-        sa.UniqueConstraint("content_hash", name="composed_designs_content_hash"),
+        # The check convention is ck_%(table_name)s_%(constraint_name)s, so those
+        # names stay short and get qualified. The unique convention keys off the
+        # column instead, so an explicit name is used verbatim and has to arrive
+        # already qualified or the models and the schema drift apart.
+        sa.UniqueConstraint("content_hash", name="uq_composed_designs_content_hash"),
         sa.CheckConstraint("seed >= 0", name="seed_not_negative"),
         sa.CheckConstraint(
             "state NOT IN ('approved', 'rejected') OR decided_by <> ''",
