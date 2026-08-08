@@ -1,0 +1,124 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="640mm" height="760mm" viewBox="0 0 640 760">
+  <!--
+    Shirtfaced — garment_tee_vneck_front.svg
+    Adult Medium base
+    Flat measurements used:
+      - Canvas: 640 × 760 mm
+      - Chest (flat width between side seams): 510 mm, centred
+        Left side seam x=65, right side seam x=575
+      - Shoulder width: ~420 mm
+      - Shoulder slope: ~18° from horizontal
+      - V-neck depth: ~110 mm from HPS
+      - Neck opening width at shoulder: ~180 mm
+      - Collar/binding depth: ~18–20 mm following the V
+      - Armpit y≈278
+      - Body length (HPS to hem): ~730 mm
+  -->
+
+  <!-- Garment outline (front) — V-neck -->
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.5"
+        d="M 230,42
+           L 310,150
+           L 410,42
+           L 445,55
+           C 505,85 560,135 595,180
+           L 610,235
+           L 548,260
+           L 575,278
+           L 575,740
+           L 65,740
+           L 65,278
+           L 92,260
+           L 30,235
+           L 45,180
+           C 80,135 135,85 195,55
+           Z"/>
+
+  <!-- Collar / binding — follows the V, ~20 mm deep -->
+  <path id="garment-collar"
+        fill="#e8e8e8"
+        stroke="#222"
+        stroke-width="1.1"
+        d="M 230,42
+           L 310,150
+           L 410,42
+           L 400,58
+           L 310,155
+           L 240,58
+           Z"/>
+
+  <!-- Seams -->
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.8"
+        stroke-dasharray="4 3"
+        d="M 195,55 L 165,80
+           M 445,55 L 475,80
+           M 65,278 L 65,740
+           M 575,278 L 575,740
+           M 92,260 L 65,278
+           M 548,260 L 575,278"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-full_front"
+        fill="#4a90e2"
+        fill-opacity="0.18"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 167.5,160
+           L 472.5,160
+           L 472.5,510
+           L 167.5,510
+           Z"/>
+
+  <path id="zone-centre_chest"
+        fill="#e74c3c"
+        fill-opacity="0.22"
+        stroke="#c0392b"
+        stroke-width="1"
+        d="M 220,180
+           L 420,180
+           L 420,400
+           L 220,400
+           Z"/>
+
+  <path id="zone-left_chest"
+        fill="#27ae60"
+        fill-opacity="0.25"
+        stroke="#1e8449"
+        stroke-width="1"
+        d="M 385,155
+           L 475,155
+           L 475,245
+           L 385,245
+           Z"/>
+
+  <path id="zone-short_sleeve_left"
+        fill="#9b59b6"
+        fill-opacity="0.20"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 38,155
+           L 98,112
+           L 110,130
+           L 55,180
+           Z"/>
+
+  <path id="zone-short_sleeve_right"
+        fill="#9b59b6"
+        fill-opacity="0.20"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 602,155
+           L 542,112
+           L 530,130
+           L 585,180
+           Z"/>
+
+</svg>

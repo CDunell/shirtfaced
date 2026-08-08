@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="640mm" height="760mm" viewBox="0 0 640 760">
+  <!--
+    Shirtfaced — garment_tank_muscle_front.svg
+    Adult Medium muscle/tank base
+    Flat measurements used:
+      - Canvas: 640 × 760 mm
+      - Chest (flat width between side seams): 510 mm, centred
+        Left side seam x=65, right side seam x=575
+      - Wide armhole (muscle cut)
+      - Shoulder strap width: ~40–50 mm
+      - Neck opening width: 200 mm
+      - Armhole depth: deeper, ~320 mm
+      - Body length (HPS to hem): ~720 mm
+  -->
+
+  <!-- Garment outline (front) — muscle tank, deep armholes -->
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.5"
+        d="M 220,35
+           C 250,18 290,12 320,12
+           C 350,12 390,18 420,35
+           L 440,55
+           C 460,90 480,150 490,220
+           L 500,300
+           L 505,380
+           L 500,450
+           L 490,520
+           L 475,580
+           L 455,640
+           L 430,700
+           L 400,735
+           L 240,735
+           L 210,700
+           L 185,640
+           L 165,580
+           L 150,520
+           L 140,450
+           L 135,380
+           L 140,300
+           L 150,220
+           C 160,150 180,90 200,55
+           Z"/>
+
+  <!-- Collar / binding around neck and armholes would be complex; simple neck ring -->
+  <path id="garment-collar"
+        fill="#e8e8e8"
+        stroke="#222"
+        stroke-width="1.1"
+        d="M 220,35
+           C 250,18 290,12 320,12
+           C 350,12 390,18 420,35
+           L 415,55
+           C 385,40 355,34 320,34
+           C 285,34 255,40 225,55
+           Z"/>
+
+  <!-- Seams / armhole indication -->
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.8"
+        stroke-dasharray="4 3"
+        d="M 200,55 L 150,220
+           M 440,55 L 490,220
+           M 65,0
+           M 150,300 L 150,735
+           M 490,300 L 490,735"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-full_front"
+        fill="#4a90e2"
+        fill-opacity="0.18"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 175,120
+           L 465,120
+           L 465,520
+           L 175,520
+           Z"/>
+
+  <path id="zone-centre_chest"
+        fill="#e74c3c"
+        fill-opacity="0.22"
+        stroke="#c0392b"
+        stroke-width="1"
+        d="M 220,150
+           L 420,150
+           L 420,390
+           L 220,390
+           Z"/>
+
+  <path id="zone-left_chest"
+        fill="#27ae60"
+        fill-opacity="0.25"
+        stroke="#1e8449"
+        stroke-width="1"
+        d="M 370,130
+           L 460,130
+           L 460,220
+           L 370,220
+           Z"/>
+
+</svg>

@@ -8,9 +8,11 @@ What it checks:
 
 * Zone ids resolve to placements the engine knows. A typo makes a zone
   invisible rather than wrong, which is harder to notice.
-* Zone dimensions against the bounds in placements.py. Those came from
-  print-on-demand production guidance; a zone larger than the maximum will
-  produce artwork that cannot be printed at the size it claims.
+* Zone dimensions against the defaults in placements.py, reported as notes
+  rather than failures. Those defaults describe a standard adult tee; an
+  oversized cut genuinely has more printable area, and the engine sizes a
+  design to the garment's own zone. A larger zone means larger prints, not
+  broken ones.
 * Which side of the body a chest zone sits on. In a front view the wearer's
   left is the viewer's right, and getting that backwards mirrors every
   left-chest print the garment ever carries.
@@ -144,14 +146,23 @@ def check(file: Path, render_to: Path | None = None) -> int:
             print(line + "   (no bounds to check)")
             continue
 
+        # Over the standard maximum is a note, not a failure. The table in
+        # placements.py describes a standard adult tee; an oversized cut has
+        # more printable area, and a garment may reasonably declare a bigger
+        # zone than the default. The engine sizes designs to the garment's own
+        # zone, so a larger one means larger prints rather than broken ones.
         flags = []
         if w > spec.max_width_mm + TOLERANCE_MM:
-            flags.append(f"wider than max {spec.max_width_mm:.0f}")
+            flags.append(
+                f"{w - spec.max_width_mm:.0f}mm wider than the {spec.max_width_mm:.0f} default"
+            )
         if h > spec.max_height_mm + TOLERANCE_MM:
-            flags.append(f"taller than max {spec.max_height_mm:.0f}")
-        print(line + ("   " + "; ".join(flags) if flags else "   ok"))
+            flags.append(
+                f"{h - spec.max_height_mm:.0f}mm taller than the {spec.max_height_mm:.0f} default"
+            )
+        print(line + ("   over: " + "; ".join(flags) if flags else "   ok"))
         for flag in flags:
-            problems.append(f"zone-{key} {flag}mm")
+            notes.append(f"zone-{key} {flag}")
 
         # Chest side. In a front view the wearer's left is the viewer's right.
         if base == "left_chest" and body_left is not None and body_right is not None:

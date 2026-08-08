@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="900mm" height="760mm" viewBox="0 0 900 760">
+  <!--
+    Shirtfaced — garment_tee_longsleeve_back.svg
+    Adult Medium base
+    Flat measurements used:
+      - Canvas: 900 × 760 mm
+      - Chest (flat width between side seams): 510 mm, centred at x=195–705
+      - Shoulder width: ~420 mm
+      - Shoulder slope: ~18°
+      - Armpit y≈278
+      - Sleeve length (shoulder to cuff): ~580 mm
+      - Body length (HPS to hem): ~730 mm
+  -->
+
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.5"
+        d="M 340,42
+           C 365,28 400,22 430,22
+           C 460,22 495,28 520,42
+           L 555,55
+           C 620,90 700,140 780,190
+           L 820,240
+           L 835,320
+           L 845,420
+           L 850,520
+           L 845,600
+           L 820,650
+           L 780,670
+           L 720,655
+           L 680,600
+           L 660,520
+           L 655,420
+           L 650,340
+           L 640,290
+           L 705,278
+           L 705,740
+           L 195,740
+           L 195,278
+           L 260,290
+           L 250,340
+           L 245,420
+           L 240,520
+           L 220,600
+           L 180,655
+           L 120,670
+           L 80,650
+           L 55,600
+           L 50,520
+           L 55,420
+           L 65,320
+           L 80,240
+           L 120,190
+           C 200,140 280,90 345,55
+           Z"/>
+
+  <path id="garment-collar"
+        fill="#e8e8e8"
+        stroke="#222"
+        stroke-width="1.1"
+        d="M 340,42
+           C 365,28 400,22 430,22
+           C 460,22 495,28 520,42
+           L 515,62
+           C 490,50 460,44 430,44
+           C 400,44 370,50 345,62
+           Z"/>
+
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.8"
+        stroke-dasharray="4 3"
+        d="M 345,55 L 310,80
+           M 555,55 L 590,80
+           M 195,278 L 195,740
+           M 705,278 L 705,740
+           M 260,290 L 195,278
+           M 640,290 L 705,278"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-full_back"
+        fill="#4a90e2"
+        fill-opacity="0.18"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 297.5,110
+           L 602.5,110
+           L 602.5,510
+           L 297.5,510
+           Z"/>
+
+  <path id="zone-upper_back_yoke"
+        fill="#e67e22"
+        fill-opacity="0.20"
+        stroke="#d35400"
+        stroke-width="1"
+        d="M 310,95
+           L 590,95
+           L 590,280
+           L 310,280
+           Z"/>
+
+  <path id="zone-outer_back_neck"
+        fill="#f39c12"
+        fill-opacity="0.28"
+        stroke="#d68910"
+        stroke-width="0.9"
+        d="M 380,30
+           L 480,30
+           L 475,70
+           L 385,70
+           Z"/>
+
+  <path id="zone-long_sleeve_left"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 90,280
+           L 160,250
+           L 180,320
+           L 170,420
+           L 155,520
+           L 130,580
+           L 90,560
+           L 100,480
+           L 110,380
+           Z"/>
+
+  <path id="zone-long_sleeve_right"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 810,280
+           L 740,250
+           L 720,320
+           L 730,420
+           L 745,520
+           L 770,580
+           L 810,560
+           L 800,480
+           L 790,380
+           Z"/>
+
+</svg>

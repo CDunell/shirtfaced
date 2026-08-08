@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="640mm" height="760mm" viewBox="0 0 640 760">
+  <!--
+    Shirtfaced — garment_tee_vneck_back.svg
+    Adult Medium base
+    Flat measurements used:
+      - Canvas: 640 × 760 mm
+      - Chest (flat width between side seams): 510 mm, centred
+        Left side seam x=65, right side seam x=575
+      - Shoulder width: ~420 mm
+      - Shoulder slope: ~18° from horizontal
+      - Back neck is still a shallow curve (V is front only)
+      - Armpit y≈278
+      - Body length (HPS to hem): ~730 mm
+  -->
+
+  <!-- Garment outline (back) — standard back neck, same body as front -->
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.5"
+        d="M 230,42
+           C 255,28 290,22 320,22
+           C 350,22 385,28 410,42
+           L 445,55
+           C 505,85 560,135 595,180
+           L 610,235
+           L 548,260
+           L 575,278
+           L 575,740
+           L 65,740
+           L 65,278
+           L 92,260
+           L 30,235
+           L 45,180
+           C 80,135 135,85 195,55
+           Z"/>
+
+  <!-- Outer back neck -->
+  <path id="garment-collar"
+        fill="#e8e8e8"
+        stroke="#222"
+        stroke-width="1.1"
+        d="M 230,42
+           C 255,28 290,22 320,22
+           C 350,22 385,28 410,42
+           L 405,62
+           C 380,50 350,44 320,44
+           C 290,44 260,50 235,62
+           Z"/>
+
+  <!-- Seams -->
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.8"
+        stroke-dasharray="4 3"
+        d="M 195,55 L 165,80
+           M 445,55 L 475,80
+           M 65,278 L 65,740
+           M 575,278 L 575,740
+           M 92,260 L 65,278
+           M 548,260 L 575,278"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-full_back"
+        fill="#4a90e2"
+        fill-opacity="0.18"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 167.5,110
+           L 472.5,110
+           L 472.5,510
+           L 167.5,510
+           Z"/>
+
+  <path id="zone-upper_back_yoke"
+        fill="#e67e22"
+        fill-opacity="0.20"
+        stroke="#d35400"
+        stroke-width="1"
+        d="M 180,95
+           L 460,95
+           L 460,280
+           L 180,280
+           Z"/>
+
+  <path id="zone-outer_back_neck"
+        fill="#f39c12"
+        fill-opacity="0.28"
+        stroke="#d68910"
+        stroke-width="0.9"
+        d="M 270,30
+           L 370,30
+           L 365,70
+           L 275,70
+           Z"/>
+
+  <path id="zone-short_sleeve_left"
+        fill="#9b59b6"
+        fill-opacity="0.20"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 38,155
+           L 98,112
+           L 110,130
+           L 55,180
+           Z"/>
+
+  <path id="zone-short_sleeve_right"
+        fill="#9b59b6"
+        fill-opacity="0.20"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 602,155
+           L 542,112
+           L 530,130
+           L 585,180
+           Z"/>
+
+</svg>
