@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/format-social-once.yml"
+      - "studio/web/src/App.tsx"
+      - "studio/web/src/components/SocialBench.tsx"
   workflow_dispatch:
 
 permissions:
