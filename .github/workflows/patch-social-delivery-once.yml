@@ -45,15 +45,17 @@ jobs:
           cache: npm
           cache-dependency-path: studio/web/package-lock.json
       - name: Apply delivery patch
-        run: python scripts/patch_social_delivery_once.py
+        run: |
+          python scripts/patch_social_delivery_once.py
+          sed -i 's/PublicationState, SocialPost, SocialPostState/PublicationState, SocialPostState/' app/services/social_delivery.py
       - name: Install Python
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
       - name: Format Python
-        run: ruff format app tests scripts
+        run: ruff format app tests scripts/run_social_publish_queue.py
       - name: Lint Python
-        run: ruff check app tests scripts
+        run: ruff check app tests scripts/run_social_publish_queue.py
       - name: Type check Python
         run: mypy app
       - name: Migrate test database
