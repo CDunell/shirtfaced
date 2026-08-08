@@ -99,9 +99,7 @@ def _font(face: str) -> TTFont:
     path = _font_files().get(face)
     if path is None or not path.is_file():
         available = ", ".join(faces()) or "none"
-        raise FileNotFoundError(
-            f"no vendored font file for face {face!r}; available: {available}"
-        )
+        raise FileNotFoundError(f"no vendored font file for face {face!r}; available: {available}")
     return TTFont(str(path))
 
 

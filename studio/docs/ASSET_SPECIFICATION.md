@@ -194,3 +194,15 @@ Two things that are useful rather than required:
 No detail ceiling, no colour limit, no minimum size. The engine measures how
 involved a piece of artwork is and places it accordingly — something intricate
 is a large-print asset, not a reject.
+
+**And no structural rules.** Briefs sent from here have twice carried conditions
+that were invented rather than derived: a single closed path, a required `id`, no
+detached subpaths, and a test at 25–30mm. The converter merges any number of
+shapes into one path; nothing reads the id; detached subpaths are legitimate;
+ingested artwork fills even-odd so winding direction does not matter; and the
+size test was removed once already before being written back in.
+
+The rule this document is under is the one that governs intake generally:
+everything comes in, the engine copes, and whether a finished design may be sold
+is asked once, before release. A condition on what may arrive is not a standard,
+it is a smaller archive.

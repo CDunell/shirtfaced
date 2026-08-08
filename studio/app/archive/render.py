@@ -308,6 +308,12 @@ def render(
                 stroke=palette.ink(0),
                 stroke_width=num(stroke * min(width_mm, height_mm) / 100),
             )
+        elif element.source_file:
+            # Ingested artwork fills even-odd so that nesting decides what is a
+            # hole. Under nonzero a counter has to be wound against the shape
+            # around it, and supplied files frequently are not -- the hole then
+            # fills solid with nothing to show it happened.
+            canvas.path(outline, fill=palette.ink(0), fill_rule="evenodd")
         else:
             canvas.path(outline, fill=palette.ink(0))
 

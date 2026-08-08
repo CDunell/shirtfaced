@@ -1,24 +1,19 @@
 """Check an artwork SVG before it joins the element archive.
 
-Companion to `check_garment.py`, which checks print zones. This checks the
-artwork itself, and it exists because the faults that matter are invisible in
-the path data. A file can parse cleanly, ingest without complaint and be wrong
-the moment it renders.
+Companion to `check_garment.py`, which checks print zones. This describes the
+artwork itself.
 
-Three have now arrived more than once:
+**It is a report, not a gate.** Nothing here decides whether a file may be
+ingested; everything is ingested. It exists so that what arrived is visible
+without opening thirty files by hand, and so that anything the pipeline cannot
+read yet is named as work for us rather than treated as a fault in the artwork.
 
-* **Counters wound with the outline.** Default fill is nonzero winding, so a
-  hole wound the same direction as the shape around it adds mass instead of
-  cutting. The ring on a spanner, the eye on a bird, the rims on a can. Nothing
-  errors; the hole is simply not there.
-* **Detached subpaths.** A lid drawn clear of its body reads as a separate mark
-  at full size and as debris at print size.
-* **Strokes.** An outline drawn as a stroke rather than a filled shape vanishes
-  when the file is flattened to a silhouette, which is how every element in the
-  archive is stored.
+The first version of this scored files out of a total and printed FAIL, which
+made a description into a filter. That was the same instinct that put a
+single-path rule and a size test into a supplier brief, wearing a different hat.
 
-Bulk artwork -- a bought pack, a vectorised sheet -- is where these cluster, so
-this is built to be pointed at a folder as well as a file.
+Bulk artwork -- a bought pack, a vectorised sheet -- is what this is for, so it
+takes a folder as readily as a file.
 
     python scripts/check_element.py flash/skull.svg
     python scripts/check_element.py flash/ --render out.png
@@ -76,7 +71,11 @@ def _inside(inner: tuple[float, ...], outer: tuple[float, ...]) -> bool:
 
 
 def check(file: Path) -> tuple[list[str], list[str]]:
-    """Problems and notes for one file. Problems mean send it back."""
+    """What is in one file: problems, then notes.
+
+    A problem here means there is no artwork to place -- an empty file, an
+    outline with no area. Everything else is a note describing what arrived.
+    """
     problems: list[str] = []
     notes: list[str] = []
 
@@ -86,15 +85,15 @@ def check(file: Path) -> tuple[list[str], list[str]]:
         return ([f"unreadable: {error}"], [])
 
     if "<text" in svg:
-        problems.append(
-            "contains <text>; the archive stores outlines, and a font reference "
-            "renders differently wherever the font is missing"
+        notes.append(
+            "contains <text>; the converter does not read it yet, so those words "
+            "will not arrive -- a converter is ours to write"
         )
     strokes = STROKE.findall(svg)
     if strokes:
-        problems.append(
+        notes.append(
             f"stroked geometry ({', '.join(sorted(set(strokes)))}); strokes are lost "
-            "when the file is flattened to a silhouette -- convert to filled outlines"
+            "on flattening, so the artwork needs outlining -- also ours to do"
         )
 
     shapes = shapes_in(svg)
@@ -130,23 +129,20 @@ def check(file: Path) -> tuple[list[str], list[str]]:
             detached.append(index)
 
     if same_wound:
-        problems.append(
-            f"{len(same_wound)} counter(s) wound the same way as the outline and no "
-            "fill-rule=evenodd; under nonzero fill these add mass instead of cutting "
-            "a hole, so the holes are not there"
+        notes.append(
+            f"{len(same_wound)} counter(s) wound with the outline rather than against "
+            "it; ingested artwork is filled even-odd, so nesting decides and these cut "
+            "correctly anyway"
         )
     if detached:
-        notes.append(
-            f"{len(detached)} subpath(s) outside the main outline; intended for a "
-            "constellation or a scatter, wrong for a single mark"
-        )
+        notes.append(f"{len(detached)} subpath(s) outside the main outline")
     if specks:
         notes.append(f"{len(specks)} subpath(s) under {SPECK_SHARE:.1%} of the artwork")
 
     x0, y0, x1, y1 = boxes[outer]
     width, height = x1 - x0, y1 - y0
     if width <= 0 or height <= 0:
-        problems.append("outline has no area")
+        problems.append("outline has no area; there is no artwork here to place")
     else:
         notes.append(
             f"{len(shapes)} shape(s), {len(subpaths)} subpath(s), aspect {width / height:.2f}"
@@ -239,21 +235,23 @@ def main(argv: list[str]) -> int:
         print("no SVG files found")
         return 1
 
-    failed = 0
+    empty = 0
     for file in files:
         problems, notes = check(file)
-        status = "FAIL" if problems else "ok"
-        print(f"{status:>4}  {file.name}")
+        print(f"  {file.name}")
         for note in notes:
-            print(f"        - {note}")
+            print(f"      - {note}")
         for problem in problems:
-            print(f"        ! {problem}")
-        failed += bool(problems)
+            print(f"      ! {problem}")
+        empty += bool(problems)
 
-    print(f"\n{len(files) - failed} of {len(files)} usable")
+    tail = f", {empty} with no artwork in them" if empty else ""
+    print(f"\n{len(files)} file(s) described{tail}")
     if args.render:
         _render(files, args.render)
-    return 1 if failed else 0
+    # Zero unless a file was literally empty. Describing artwork is not a test,
+    # and a non-zero exit would turn this back into the gate it stopped being.
+    return 1 if empty else 0
 
 
 if __name__ == "__main__":

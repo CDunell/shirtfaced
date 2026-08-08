@@ -258,11 +258,18 @@ def assemble(
         stroke = element.parameters.get("stroke", 0.0)
         filled = stroke <= 0
         ink = palette.garment if (solid_ground and filled) else palette.ink(0)
+        # Ingested artwork fills even-odd, authored geometry fills nonzero.
+        # Under nonzero a hole has to be wound against the shape around it, and
+        # supplied artwork frequently is not -- a ring, an eye, a rim wound the
+        # same way silently fills solid. Even-odd makes nesting decide, so a
+        # file that would have arrived "wrong" is simply right. The rule is ours
+        # to get correct, not a condition on what we are allowed to accept.
+        rule = ' fill-rule="evenodd"' if element.source_file else ""
         attributes = (
             f'fill="none" stroke="{ink}" '
             f'stroke-width="{num(stroke * min(box_width, box_height) / 100)}"'
             if stroke > 0
-            else f'fill="{ink}"'
+            else f'fill="{ink}"{rule}'
         )
         # A filled shape covering most of the design becomes the ground that
         # everything after it has to knock out of.

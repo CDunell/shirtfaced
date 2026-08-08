@@ -123,8 +123,28 @@ symbol_flame_0001.svg           frame_ribbon_0001.svg
 
 ## Format
 
-- SVG. Primitives fine — rect, circle, ellipse, polygon, line all convert.
-- Strokes expanded to filled outlines.
-- Holes as counters, wound against the outer path.
-- Colour welcome; the engine reassigns inks per design.
-- No detail ceiling. Prints run 76mm to 400mm. Do not simplify defensively.
+**Send the artwork. There are no structural rules.**
+
+Earlier briefs asked for a single closed path with `id="mark"`, no detached
+subpaths, counters wound against the outline, and a shape that survives at
+25–30mm. Three of those were invented and the fourth is ours to handle:
+
+- the converter already merges any number of paths, rects, circles, ellipses,
+  polygons and lines into one — multi-path files have always ingested;
+- nothing reads the `id`;
+- detached subpaths are fine, and a constellation or a scatter needs them;
+- ingested artwork is filled even-odd, so nesting decides what is a hole and
+  winding direction no longer matters;
+- there is no size test. Prints run 76mm to 400mm and the engine measures how
+  involved a piece is and places it accordingly. Something intricate is a
+  large-print asset, not a reject. Do not simplify defensively.
+
+Colour is welcome and is recorded; the engine assigns its own inks per design.
+
+Two things that help without being required: vector where it exists, because
+prints span 76mm to 400mm and vector scales across that without resampling; and
+higher resolution than seems necessary, because detail can be thrown away later
+and cannot be added.
+
+Anything the pipeline cannot read yet gets a converter written for it. That is
+our side of the line, not a reason to send less.
