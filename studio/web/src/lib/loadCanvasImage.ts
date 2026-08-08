@@ -23,8 +23,12 @@ export async function loadCanvasImage(url: string): Promise<HTMLImageElement> {
   try {
     const image = new Image();
     const loaded = new Promise<HTMLImageElement>((resolve, reject) => {
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("The source image bytes could not be decoded."));
+      image.onload = () => {
+        resolve(image);
+      };
+      image.onerror = () => {
+        reject(new Error("The source image bytes could not be decoded."));
+      };
     });
     image.src = objectUrl;
     return await loaded;
