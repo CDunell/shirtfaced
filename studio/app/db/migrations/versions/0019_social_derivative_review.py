@@ -21,7 +21,12 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     op.add_column(
         "social_derivatives",
-        sa.Column("review_state", sa.String(length=32), server_default="review_required", nullable=False),
+        sa.Column(
+            "review_state",
+            sa.String(length=32),
+            server_default="review_required",
+            nullable=False,
+        ),
     )
     op.add_column(
         "social_derivatives",
@@ -40,7 +45,8 @@ def upgrade() -> None:
     # Existing package approvals pre-date per-output review. Preserve their intent.
     op.execute(
         "UPDATE social_derivatives d SET review_state = 'approved', reviewed_at = p.approved_at "
-        "FROM social_posts p WHERE d.social_post_id = p.id AND p.state IN ('approved', 'queued', 'live')"
+        "FROM social_posts p WHERE d.social_post_id = p.id "
+        "AND p.state IN ('approved', 'queued', 'live')"
     )
     op.execute(
         "UPDATE social_derivatives d SET review_state = 'rejected', reviewed_at = p.rejected_at "
