@@ -1,0 +1,57 @@
+name: Fix Social publishing backend once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/fix-social-python-once.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        working-directory: studio
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Harden enum migration
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('studio/app/db/migrations/versions/0018_social_publishing.py')
+          s = p.read_text()
+          s = s.replace('name="social_post_state"\n)', 'name="social_post_state", create_type=False\n)')
+          s = s.replace('name="publication_state",\n)', 'name="publication_state", create_type=False,\n)')
+          s = s.replace('name="social_channel"\n)', 'name="social_channel", create_type=False\n)')
+          p.write_text(s)
+          PY
+      - name: Fix and format
+        working-directory: studio
+        run: |
+          ruff check . --fix
+          ruff format .
+      - name: Validate backend
+        working-directory: studio
+        run: |
+          ruff check .
+          ruff format --check .
+          mypy app
+      - name: Commit fixes
+        run: |
+          if [ -z "$(git status --porcelain -- studio/app/db/migrations/versions/0018_social_publishing.py studio/app/db/social_models.py studio/app/routes/social.py)" ]; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/app/db/migrations/versions/0018_social_publishing.py studio/app/db/social_models.py studio/app/routes/social.py
+          git commit -m "style: validate Social publishing backend"
+          git push
