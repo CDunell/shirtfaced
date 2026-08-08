@@ -92,8 +92,8 @@ def check(file: Path) -> tuple[list[str], list[str]]:
     strokes = STROKE.findall(svg)
     if strokes:
         notes.append(
-            f"stroked geometry ({', '.join(sorted(set(strokes)))}); strokes are lost "
-            "on flattening, so the artwork needs outlining -- also ours to do"
+            f"stroked geometry ({', '.join(sorted(set(strokes)))}); thickened into "
+            "fillable outlines on ingest"
         )
 
     shapes = shapes_in(svg)

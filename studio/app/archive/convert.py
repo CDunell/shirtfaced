@@ -32,6 +32,9 @@ class Shape:
 
     path: str
     fill: str = ""
+    # Recorded so a stroked shape can be thickened into a fillable outline.
+    # Filling a stroked path as-is turns a line drawing into a solid blob.
+    stroke_width: float = 0.0
 
 
 def _attributes(raw: str) -> dict[str, str]:
@@ -299,7 +302,16 @@ def shapes_in(svg: str) -> list[Shape]:
             data = ""
 
         if data:
-            found.append(Shape(path=_apply(data, matrix_at(match.start())), fill=fill))
+            # A shape with a stroke and no fill is a drawing, not a silhouette.
+            # Thicken it here so the rest of the pipeline sees a fillable shape
+            # and nobody downstream has to know the difference.
+            stroke = attributes.get("stroke", "").strip().lower()
+            stroked = bool(stroke) and stroke != "none"
+            width = _number(attributes, "stroke-width", 1.0) if stroked else 0.0
+            path = _apply(data, matrix_at(match.start()))
+            if stroked and fill.lower() in ("", "none"):
+                path = outline_stroke(path, width) or path
+            found.append(Shape(path=path, fill=fill, stroke_width=width))
     return found
 
 
@@ -316,6 +328,127 @@ def colours_in(shapes: list[Shape]) -> tuple[str, ...]:
         if colour and colour not in ("none", "transparent") and colour not in seen:
             seen.append(colour)
     return tuple(seen)
+
+
+def _polyline(path_data: str, steps: int = 12) -> list[tuple[float, float]]:
+    """A path as points, curves subdivided.
+
+    Only accurate enough to thicken a stroke by. Arcs are walked as their
+    chord's circular approximation rather than the spec's parameterisation,
+    because a stroke's own width swamps the difference.
+    """
+    tokens = re.findall(r"[MmLlHhVvCcSsQqTtAaZz]|-?\d*\.?\d+(?:[eE][-+]?\d+)?", path_data)
+    points: list[tuple[float, float]] = []
+    x = y = 0.0
+    start_x = start_y = 0.0
+    index = 0
+    command = ""
+
+    def number() -> float:
+        nonlocal index
+        value = float(tokens[index])
+        index += 1
+        return value
+
+    while index < len(tokens):
+        token = tokens[index]
+        if re.match(r"[A-Za-z]", token):
+            command = token
+            index += 1
+            if command in "Zz":
+                if points:
+                    points.append((start_x, start_y))
+                x, y = start_x, start_y
+                continue
+        relative = command.islower()
+        upper = command.upper()
+        try:
+            if upper == "M":
+                nx, ny = number(), number()
+                x, y = (x + nx, y + ny) if relative else (nx, ny)
+                start_x, start_y = x, y
+                points.append((x, y))
+                command = "l" if relative else "L"
+            elif upper == "L":
+                nx, ny = number(), number()
+                x, y = (x + nx, y + ny) if relative else (nx, ny)
+                points.append((x, y))
+            elif upper == "H":
+                nx = number()
+                x = x + nx if relative else nx
+                points.append((x, y))
+            elif upper == "V":
+                ny = number()
+                y = y + ny if relative else ny
+                points.append((x, y))
+            elif upper in ("C", "S", "Q", "T", "A"):
+                count = {"C": 6, "S": 4, "Q": 4, "T": 2, "A": 7}[upper]
+                values = [number() for _ in range(count)]
+                ex, ey = values[-2], values[-1]
+                end = (x + ex, y + ey) if relative else (ex, ey)
+                for step in range(1, steps + 1):
+                    ratio = step / steps
+                    points.append((x + (end[0] - x) * ratio, y + (end[1] - y) * ratio))
+                x, y = end
+            else:
+                index += 1
+        except (IndexError, ValueError):
+            break
+    return points
+
+
+def _offset_side(points: list[tuple[float, float]], half: float) -> list[tuple[float, float]]:
+    """One side of a stroked polyline, offset by half its width."""
+    out: list[tuple[float, float]] = []
+    for index in range(len(points) - 1):
+        (x1, y1), (x2, y2) = points[index], points[index + 1]
+        dx, dy = x2 - x1, y2 - y1
+        length = math.hypot(dx, dy)
+        if length < 1e-9:
+            continue
+        nx, ny = -dy / length * half, dx / length * half
+        out.append((x1 + nx, y1 + ny))
+        out.append((x2 + nx, y2 + ny))
+    return out
+
+
+def outline_stroke(path_data: str, width: float) -> str:
+    """A stroked path as a filled outline.
+
+    Supplied line art is frequently strokes rather than shapes -- a bought pack,
+    a traced sheet, a technical drawing. The archive stores filled silhouettes,
+    so filling a stroked path directly turns a drawing of a water tank into a
+    black blob.
+
+    Rather than refuse those files, or ask everyone who sends us artwork to
+    outline first, the geometry is thickened here: each subpath is walked as a
+    polyline, offset by half the stroke width on both sides, and closed. Joins
+    are butted rather than mitred, which is visible only where a stroke doubles
+    back on itself at an acute angle, and is the difference between a file we
+    can use and one we cannot.
+    """
+    if width <= 0:
+        return path_data
+
+    half = width / 2.0
+    pieces: list[str] = []
+    for raw in path_data.split("M")[1:]:
+        body = "M" + raw
+        closed = body.rstrip().upper().endswith("Z")
+        points = _polyline(body)
+        if len(points) < 2:
+            continue
+        if closed and points[0] != points[-1]:
+            points.append(points[0])
+        left = _offset_side(points, half)
+        right = _offset_side(list(reversed(points)), half)
+        if not left or not right:
+            continue
+        ring = left + right
+        pieces.append(
+            "M " + " L ".join(f"{num(x)} {num(y)}" for x, y in ring) + " Z"
+        )
+    return " ".join(pieces)
 
 
 def combined_path(shapes: list[Shape]) -> str:
