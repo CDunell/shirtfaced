@@ -23,7 +23,7 @@ function responseWithBlob(blob: Blob): Response {
   return {
     ok: true,
     status: 200,
-    blob: vi.fn(async () => blob),
+    blob: vi.fn(() => Promise.resolve(blob)),
   } as unknown as Response;
 }
 
