@@ -126,7 +126,8 @@ class ArchiveComposition:
 # buried in one function. Each returns a reason code or an empty string. ---
 
 
-def _gate_licence(element: Element, brief: Brief, placement: Placement) -> str:
+def _gate_fits_the_job(element: Element, brief: Brief, placement: Placement) -> str:
+    """Inks and treatment. Not rights -- those are a release question."""
     usable, reason = element.usable_with(brief.inks, brief.treatment)
     return "" if usable else reason
 
@@ -161,7 +162,7 @@ def _gate_complexity_for_placement(element: Element, brief: Brief, placement: Pl
 
 
 GATES = (
-    _gate_licence,
+    _gate_fits_the_job,
     _gate_has_slots,
     _gate_slots_are_fillable,
     _gate_complexity_for_placement,

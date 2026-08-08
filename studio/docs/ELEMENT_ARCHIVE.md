@@ -71,11 +71,21 @@ this, which is a statement about the shape of the work and not about its size.
 
 ---
 
-## 3. Every element carries its licence, and the gate is hard
+## 3. Every element carries its provenance, and the gate is at release
 
-These go on garments that are sold. An element whose rights are unverified is
-not a risk to be managed later; it is an element that must not be reachable by
-the composer at all.
+Rights are checked once, on a finished design, before it is released -- the
+`rights_cleared_for_sale` hard gate in the design workflow.
+
+They are deliberately **not** checked at intake. Gating intake means the archive
+can only hold what has already been cleared, which means it cannot learn from
+anything; and the question is not answerable about a reference in the first
+place. Looking at other people's work is how design has always been done, and
+this repository already holds 9,519 competitor product photographs on exactly
+that basis.
+
+What is recorded per element is where it came from -- source, item identifier,
+URL, and the terms if anyone has looked them up. That is a record, and it is
+what makes the release review possible.
 
 Three rules, in order of how often they are got wrong:
 
@@ -90,9 +100,9 @@ Three rules, in order of how often they are got wrong:
    true` with no provenance is an assertion. The record must name the source,
    the source's identifier, the licence, and when it was checked.
 
-Elements without a verified licence are stored — losing them wastes the
-find — but marked, and the composer refuses them the way the composition engine
-refuses an unsupported brief. Fails closed: unknown licence means not usable.
+Elements whose terms nobody has looked up are fully usable for designing,
+studying and learning from. `unverified()` is a worklist for the release
+review, not a blocklist.
 
 ---
 

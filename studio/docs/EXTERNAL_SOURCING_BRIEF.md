@@ -25,7 +25,8 @@ one line apart.
 ink assignment, density budgeting.
 
 **Everything structural.** Type setting as outlines, arcs, slots, composition
-grammars, placement bounds, sizing, determinism, the licence gate, the database.
+grammars, placement bounds, sizing, determinism, provenance records, the
+database.
 
 **Colour systems.** Palettes with contrast rules against garment colours. I can
 derive these from the corpus measurements rather than guess.
@@ -54,12 +55,13 @@ punctuation and at minimum a regular and a bold.
 | Blackletter | Band-merch register | 3 |
 | Rounded soft sans | Lighter, friendlier jokes | 3 |
 
-**Licence requirements, and these are hard requirements:**
-- Commercial use on goods for sale, explicitly permitted
-- Redistribution of the font file within a private repository permitted, or a
-  licence that survives the file being vendored
+**Licence — worth getting right at purchase, because fonts are the one case
+where it is cheap to solve up front:**
+- Commercial use on goods for sale
+- The file may be vendored in a private repository (the engine converts glyphs
+  to outlines from that exact file)
 - No per-seat or per-title fee that scales with print runs
-- Open Font Licence is ideal and free of all of the above problems
+- Open Font Licence satisfies all of the above and costs nothing
 
 **Format:** TTF or OTF. Variable fonts are fine and welcome. The engine converts
 glyphs to outlines, so hinting does not matter but a complete `cmap` does — a
@@ -128,7 +130,7 @@ bear, lion, rose, laurel, oak leaf, lightning bolt (drawn, not geometric),
 flames set (multiple), wings set (multiple), dice, cards, horseshoe, star field,
 moon phases, planet, rocket, radio tower, satellite dish.
 
-### 3d. Format requirements — non-negotiable, the ingestion refuses otherwise
+### 3d. Format requirements — what the ingestion can actually read
 
 - **SVG.** Not EPS, not AI, not PDF, not PNG.
 - **Paths only.** No `<rect>`, `<circle>`, `<polygon>`, `<text>` or embedded
@@ -148,18 +150,22 @@ moon phases, planet, rocket, radio tower, satellite dish.
 - **Legible at 25mm.** Test it at that size before sending. Most detail that
   looks good on screen disappears on a left chest.
 
-### 3e. Licence requirements — every item, individually
+### 3e. Provenance — recorded, not a barrier
 
-- Commercial use on goods for sale
-- The item's own identifier at its source, not just the collection's
+Send what you have. Nothing is turned away for want of paperwork, and anything
+supplied can be designed with immediately.
+
+What is worth capturing per item, because it makes the pre-release review quick
+rather than archaeological:
+
+- Where it came from and its identifier there
 - A URL that resolves to that item
-- The terms as written, quoted, not summarised
-- Date checked
+- The terms, if they are stated
+- Whether it was commissioned for us
 
-An item without an identifier cannot be re-checked later and will be stored as
-unusable. This is not bureaucracy: a museum publishing open metadata has not
-published every image in it under the same terms, and an out-of-copyright work
-can have a scan carrying its own claim.
+Rights are reviewed once, on a finished design, before it goes on sale. An item
+with no provenance is still usable; it just means someone has to work out its
+history at that point instead of reading it off a line.
 
 ---
 
@@ -229,12 +235,11 @@ them.
 
 ## 8. What to send back
 
-For each item: the SVG (or font, or PNG), and one line of provenance —
-source name, item identifier, URL, licence terms as written, date checked. A
-spreadsheet or a JSON file alongside the assets is fine. The ingestion reads
-them, records everything as unverified, and nothing becomes usable until the
-terms are entered against the item.
+For each item: the SVG (or font, or PNG), and whatever is known about where it
+came from — source, identifier, URL, terms if stated. A spreadsheet or JSON
+alongside the assets is fine. Everything is ingested and usable straight away;
+the provenance is there so the pre-release rights review is a lookup rather than
+an investigation.
 
 If any of the format requirements in 3d are inconvenient for the supplier, say
-so and I will write a converter. What cannot be worked around is the licence
-trail, because these go on garments that are sold.
+so and I will write a converter.

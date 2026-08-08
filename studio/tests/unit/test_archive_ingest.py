@@ -1,8 +1,9 @@
-"""Bringing outside artwork in without assuming we may use it.
+"""Bringing outside artwork in.
 
-The thing being tested is mostly a refusal. Ingestion must not be able to
-produce a usable element by any route, because these go on garments that are
-sold and no file can tell you what its terms are.
+Everything comes in and everything can be designed with. What is tested here is
+that the file is readable as geometry and that where it came from travels with
+it -- because the rights question is asked later, about a finished design, and
+whoever asks it needs to know what to look up.
 """
 
 from __future__ import annotations
@@ -20,7 +21,7 @@ from app.archive.ingest import (
     ingest_svg,
     verify,
 )
-from app.archive.render import Palette, RefusedToRender, render
+from app.archive.render import Palette, render
 from app.domain.enums import LicenceStatus
 
 SOURCE = Source(
@@ -55,17 +56,19 @@ def _ingest(tmp_path: Path, svg: str = SIMPLE_SVG):
 # --- The rule the module exists to hold -------------------------------------
 
 
-def test_ingesting_never_produces_a_usable_element(tmp_path: Path) -> None:
+def test_ingesting_records_the_terms_as_unknown(tmp_path: Path) -> None:
+    """Unknown is the honest state for something nobody has looked up. It is
+    not a block -- see the next test."""
     element = _ingest(tmp_path)
     assert element.licence.status is LicenceStatus.UNVERIFIED
-    assert not element.licence.usable
 
 
-def test_an_ingested_element_cannot_be_rendered_until_it_is_verified(tmp_path: Path) -> None:
+def test_an_ingested_element_can_be_designed_with_immediately(tmp_path: Path) -> None:
+    """Other people's work is what everyone learns from. Turning away from it
+    to avoid seeing it is not caution, it is not looking."""
     element = _ingest(tmp_path)
-    with pytest.raises(RefusedToRender) as raised:
-        render(element, {}, Palette(inks=("#C6FF00",)), seed=1)
-    assert raised.value.reason == "LICENCE_UNVERIFIED"
+    result = render(element, {}, Palette(inks=("#C6FF00",)), seed=1)
+    assert "<path" in result.svg
 
 
 def test_the_source_is_recorded_against_the_item_not_the_collection(tmp_path: Path) -> None:

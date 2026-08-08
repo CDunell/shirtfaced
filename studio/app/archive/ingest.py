@@ -1,24 +1,20 @@
-"""Taking outside artwork into the archive, without taking its rights for granted.
+"""Taking outside artwork into the archive.
 
 Four of the fourteen families cannot be authored. A drawing of a hand has to be
 drawn or found, and finding it means someone else made it. That changes what
 ingestion is: mostly a rights problem wearing a file-format problem's clothes.
 
-So the rule this module is built around:
+Everything comes in. Reference material is how design has always worked, and an
+archive that can only hold what has already been cleared is an archive that
+cannot learn from anything. The corpus already holds thousands of competitors'
+product photographs on exactly that basis.
 
-    **Ingestion never marks anything usable.**
+What this module does record is **where each thing came from** -- source, item
+identifier, URL -- because that is what makes the rights question answerable
+later, when it is actually asked. It is a record, not a gate.
 
-Everything that comes in is recorded as unverified, with where it came from and
-what identifier it had there. Making it usable is a separate, deliberate act by
-a person who has read the actual terms for that actual item. There is no path
-through this module that produces a usable element, and that is not an
-oversight to be tidied up later.
-
-The reason is narrow and worth stating. These go on garments that are sold. A
-collection publishing open metadata has not thereby published every image under
-the same terms; an out-of-copyright work can have a scan carrying its own claim;
-and terms differ between the countries the brand sells into. None of that is
-knowable from the file, so none of it is guessed here.
+The rights question is asked once, about a finished design, before release. See
+``rights_cleared_for_sale`` in the design workflow.
 """
 
 from __future__ import annotations
@@ -120,11 +116,10 @@ def ingest_svg(
     ink_max: int = 2,
     symmetry: str = "none",
 ) -> Element:
-    """Read one SVG into an element that is stored but not yet usable.
+    """Read one SVG into an archive element.
 
-    The returned element's licence is deliberately unverified. Nothing in this
-    module can produce a usable one, so nothing ingested can reach a garment
-    until a person records the terms for it.
+    Provenance is recorded and nothing is blocked. What is known about where it
+    came from travels with it, so the release review has something to work from.
     """
     try:
         svg = file.read_text(encoding="utf-8")

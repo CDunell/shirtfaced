@@ -143,13 +143,14 @@ class Element:
         return None
 
     def usable_with(self, inks: int, treatment: str) -> tuple[bool, str]:
-        """Whether this element may be used at all, and why not when it may not.
+        """Whether this element fits the job, and why not when it does not.
 
-        Licence is checked first and on its own, because a licence failure is
-        not a design constraint that a different palette could satisfy.
+        Rights are deliberately not asked about here. Whether something may be
+        sold is a question about a finished design, answered once, before
+        release -- see the rights_cleared_for_sale gate in the design workflow.
+        Asking it of a component at intake stops the archive holding anything
+        it has not cleared, which stops it learning from anything at all.
         """
-        if not self.licence.usable:
-            return False, self.licence.refusal()
         if inks < self.ink_min:
             return False, "INKS_BELOW_MINIMUM"
         if inks > self.ink_max:

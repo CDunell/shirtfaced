@@ -19,9 +19,10 @@ another.
 *No deferred layout.* Text is outlines, not a font reference, so the file does
 not become a different design on a machine with different fonts installed.
 
-The licence gate is enforced before anything is drawn. An element whose rights
-are unverified is not rendered at all -- not watermarked, not rendered with a
-warning. These go on garments that are sold.
+Rights are not checked here. Anything in the archive can be drawn, composed
+with and looked at, which is what an archive is for. Whether a finished design
+may be *sold* is asked once, before release, where there is a design to ask it
+about -- see ``rights_cleared_for_sale`` in the design workflow.
 """
 
 from __future__ import annotations

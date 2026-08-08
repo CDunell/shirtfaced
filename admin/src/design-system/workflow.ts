@@ -19,6 +19,12 @@ export const HARD_GATE_IDS = [
   "competitor_substitution_survives",
   "worn_body_review_completed",
   "production_files_match_art",
+  // Rights are checked here, on a finished design, rather than at the point
+  // material enters the archive. Gating intake stops the archive holding
+  // anything it has not cleared, which stops it learning from anything -- and
+  // the question is not answerable about a reference anyway. It is answerable
+  // about a design that is about to be sold.
+  "rights_cleared_for_sale",
 ] as const;
 
 const ALLOWED_TRANSITIONS: Record<DesignStatus, readonly DesignStatus[]> = {

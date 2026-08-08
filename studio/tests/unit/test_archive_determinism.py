@@ -5,8 +5,9 @@ now does not produce the file that was approved, the archive has not done the
 one job it exists to do, and the failure is silent until someone compares two
 garments.
 
-These also assert the licence gate, because an element whose rights are
-unverified must be unreachable rather than merely discouraged.
+They also cover what provenance does and does not do: it travels with an
+element and it never blocks one. Whether a design may be sold is asked once,
+before release.
 """
 
 from __future__ import annotations
@@ -99,34 +100,37 @@ def test_numbers_are_formatted_one_way() -> None:
     assert num(1.50000001) == num(1.5)
 
 
-# --- The licence gate -------------------------------------------------------
+# --- Provenance travels, and does not block ---------------------------------
 
 
-def test_an_unverified_element_is_refused() -> None:
+def test_an_element_whose_terms_are_unknown_still_renders() -> None:
+    """Whether a design may be sold is a release question, asked once, about a
+    finished design -- not a question a component can answer."""
     element = replace(authored.element("badge_shield_0001"), licence=Licence())
-    with pytest.raises(RefusedToRender) as raised:
-        render(element, CONTENT, PALETTE, seed=1)
-    assert raised.value.reason == "LICENCE_UNVERIFIED"
+    result = render(element, CONTENT, PALETTE, seed=1)
+    assert result.svg.startswith("<svg")
 
 
-def test_a_verified_licence_missing_its_source_is_refused() -> None:
-    """Verified is a claim about what was checked, not a flag to be set."""
+def test_where_something_came_from_travels_with_it() -> None:
+    """Provenance is a record rather than a gate. It is what makes the rights
+    question answerable later, when it is actually asked."""
     element = replace(
         authored.element("badge_shield_0001"),
         licence=Licence(
-            status=LicenceStatus.VERIFIED,
-            terms="CC0",
-            source="",
-            checked_at=date(2026, 8, 8),
-            commercial_use=True,
+            status=LicenceStatus.UNVERIFIED,
+            source="internet-archive",
+            source_id="IA-9911",
+            source_url="https://example.invalid/IA-9911",
         ),
     )
-    with pytest.raises(RefusedToRender) as raised:
-        render(element, CONTENT, PALETTE, seed=1)
-    assert raised.value.reason == "LICENCE_INCOMPLETE"
+    assert element.licence.source == "internet-archive"
+    assert element.licence.source_id == "IA-9911"
+    render(element, CONTENT, PALETTE, seed=1)
 
 
-def test_a_non_commercial_licence_is_refused() -> None:
+def test_non_commercial_terms_are_recorded_not_blocked() -> None:
+    """Recorded so the release review sees it. Not blocked, because designing
+    with something and selling it are different acts."""
     element = replace(
         authored.element("badge_shield_0001"),
         licence=Licence(
@@ -137,9 +141,9 @@ def test_a_non_commercial_licence_is_refused() -> None:
             commercial_use=False,
         ),
     )
-    with pytest.raises(RefusedToRender) as raised:
-        render(element, CONTENT, PALETTE, seed=1)
-    assert raised.value.reason == "LICENCE_NON_COMMERCIAL"
+    assert element.licence.terms == "CC BY-NC"
+    assert not element.licence.commercial_use
+    assert render(element, CONTENT, PALETTE, seed=1).svg.startswith("<svg")
 
 
 def test_every_authored_element_declares_a_usable_licence() -> None:

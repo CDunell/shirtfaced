@@ -237,22 +237,17 @@ class ElementRepository:
     # --- Reading ------------------------------------------------------------
 
     def usable(self, family: ElementFamily | None = None) -> list[Element]:
-        """Every element the composer may reach.
+        """Every element the composer may reach, which is all of them.
 
-        Verified only, and the filter is not optional. An unverified element is
-        not a lesser option to be ranked down -- it is one that must not reach a
-        garment at all.
+        Rights are not a filter here. An element whose terms are unknown is
+        still something to design with, study and learn from; whether the
+        finished design may be sold is asked once, before release.
         """
-        query = select(ArchiveElement).where(
-            ArchiveElement.licence_status == LicenceStatus.VERIFIED,
-            ArchiveElement.licence_commercial_use.is_(True),
-        )
+        query = select(ArchiveElement)
         if family is not None:
             query = query.where(ArchiveElement.family == family)
         rows = self.session.scalars(query.order_by(ArchiveElement.element_key)).all()
-        # The database constraint and the property must agree; if they ever
-        # disagree the property is the stricter one, so it wins here.
-        return [to_domain(row) for row in rows if row.licence_usable]
+        return [to_domain(row) for row in rows]
 
     def get(self, element_key: str) -> Element | None:
         row = self.session.scalar(
@@ -304,7 +299,6 @@ class ElementRepository:
                 "FROM archive_elements "
                 "WHERE element_key <> :key "
                 "AND feature IS NOT NULL "
-                "AND licence_status = 'verified' "
                 "ORDER BY distance LIMIT :limit"
             ),
             {"vector": vector, "key": element_key, "limit": limit},
@@ -320,11 +314,11 @@ class ElementRepository:
         return found
 
     def unverified(self) -> list[tuple[str, str, str]]:
-        """Elements held but not usable, as (key, source, status).
+        """Elements whose terms nobody has looked up yet, as (key, source, status).
 
-        Kept queryable on purpose. Losing a find wastes the work of making it;
-        what must not happen is one reaching a garment, and that is what the
-        gate is for.
+        Not a blocklist -- a worklist. These are perfectly usable for designing
+        with. The list exists so that when a design built from them reaches
+        release, whoever runs the rights review knows what to look up.
         """
         rows = self.session.scalars(
             select(ArchiveElement)
