@@ -1,27 +1,21 @@
 name: Deploy
 
 on:
-  # Deploying without a code change is a real need: placing a secret for the
-  # first time, or re-running after fixing something on the box.
-  workflow_dispatch:
   push:
     branches: [main]
-    paths-ignore:
-      - "*.md"
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-production
-      cancel-in-progress: false
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up deploy key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          printf '%s\n' "${{ secrets.ORACLE_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
 
@@ -53,9 +47,27 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
 
+      # Rebuild from the canonical brand vectors on every deploy. The generated
+      # SVGs are standalone: no nested SVG images and no mask indirection, because
+      # Android/WebView canvas rendering can load those files successfully yet draw
+      # the nested brand content as transparent.
+      - name: Build Social assets
+        run: |
+          node scripts/build-social-assets.mjs
+          test -s public/social-assets/v3/light-feed-4x5.svg
+          test -s public/social-assets/v3/dark-feed-4x5.svg
+          test -s public/social-assets/v3/adaptive-feed-badge-4x5.svg
+          test -s public/social-assets/v3/light-reel-9x16.svg
+          test -s public/social-assets/v3/dark-reel-9x16.svg
+          test -s public/social-assets/v3/adaptive-reel-badge-9x16.svg
+          if grep -R -E 'data:image/svg\+xml|<mask' public/social-assets/v3; then
+            echo "Social overlay build still contains mobile-unsafe nested SVG or masks."
+            exit 1
+          fi
+
       # Social assets are generated at repository level because the storefront and
       # Studio share the same brand source. Studio is deployed as a standalone tree,
-      # so copy those generated files into its own public directory explicitly.
+      # so copy those freshly generated files into its own public directory explicitly.
       - name: Sync Social assets into Studio
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
