@@ -33,9 +33,14 @@ zone-centre_chest    zone-full_front       zone-left_chest
 zone-full_back       zone-upper_back_yoke  zone-short_sleeve
 zone-long_sleeve     zone-inner_neck_label zone-outer_back_neck
 zone-pocket          zone-cap_front        zone-cap_side
+zone-cap_back
 ```
 
-Include only the zones that garment has.
+Include only the zones that garment has. A zone that exists per side takes a
+`_left` / `_right` suffix.
+
+`zone-cap_back` sits above the adjustment strap on a snapback or buckle. On a
+fitted cap with no closure the whole back panel is available.
 
 **File:**
 

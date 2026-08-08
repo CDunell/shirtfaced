@@ -197,6 +197,51 @@ ADULT_PLACEMENTS: tuple[Placement, ...] = (
         offset_to_mm=inches(1.5),
         offset_reference="back_collar_seam",
     ),
+    # --- Headwear. A cap's panels are small and structured, and the print sits
+    # inside a panel rather than on an open field, so these are panel-usable
+    # areas rather than a share of the garment. ---
+    Placement(
+        key="cap_front",
+        label="Cap front panel",
+        panel="cap",
+        max_width_mm=110.0,
+        max_height_mm=60.0,
+        typical_width_mm=90.0,
+        typical_height_mm=50.0,
+        offset_from_mm=15.0,
+        offset_to_mm=25.0,
+        offset_reference="peak_seam",
+        note="Structured six-panel front. A seam runs up the centre on some blanks.",
+    ),
+    Placement(
+        key="cap_side",
+        label="Cap side panel",
+        panel="cap",
+        max_width_mm=65.0,
+        max_height_mm=40.0,
+        typical_width_mm=50.0,
+        typical_height_mm=30.0,
+        offset_from_mm=15.0,
+        offset_to_mm=25.0,
+        offset_reference="peak_seam",
+    ),
+    Placement(
+        key="cap_back",
+        label="Cap back",
+        panel="cap",
+        max_width_mm=70.0,
+        max_height_mm=40.0,
+        typical_width_mm=55.0,
+        typical_height_mm=30.0,
+        offset_from_mm=10.0,
+        offset_to_mm=20.0,
+        offset_reference="closure",
+        note=(
+            "Sits above the adjustment strap on a snapback or buckle. On a "
+            "fitted cap with no closure the whole back panel is available, so "
+            "the maximum here is the constrained case."
+        ),
+    ),
     Placement(
         key="pocket",
         label="Pocket",

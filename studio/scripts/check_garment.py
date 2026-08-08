@@ -41,7 +41,7 @@ ID_TAG = re.compile(r'<path[^>]*\bid="([^"]+)"[^>]*>', re.I | re.S)
 NUMBER = re.compile(r"-?\d*\.?\d+")
 VIEWBOX = re.compile(r'viewBox="\s*([-\d.]+)[\s,]+([-\d.]+)[\s,]+([-\d.]+)[\s,]+([-\d.]+)"')
 
-KNOWN_ZONES = {p.key for p in BY_FIT["adult"]} | {"cap_front", "cap_side"}
+KNOWN_ZONES = {p.key for p in BY_FIT["adult"]}
 
 # A garment has two sleeves and the engine has one sleeve placement, so a file
 # may split a zone per side. The suffix says which side; the bounds are the
