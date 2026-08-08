@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-08T09:36:00.790Z",
+  "generatedAt": "2026-08-08T09:59:05.622Z",
   "palette": {
     "ink": "#0d0d0d",
     "paper": "#f2f0ed",
@@ -10,6 +10,11 @@
     "DEV/shirtfaced.svg",
     "DEV/smiley.svg"
   ],
+  "variants": {
+    "light": "bright/daylight imagery",
+    "dark": "night/dark imagery",
+    "adaptive": "mixed or changing contrast"
+  },
   "files": [
     "v1/overlay-feed-4x5.svg",
     "v1/overlay-feed-square.svg",
@@ -30,6 +35,19 @@
     "v2/story-update-base-9x16.svg",
     "v2/reel-cut-card-brand.svg",
     "v2/product-proof-slide-4x5.svg",
-    "v2/reel-cover-badge-4x5.svg"
+    "v2/reel-cover-badge-4x5.svg",
+    "v3/light-feed-4x5.svg",
+    "v3/light-reel-9x16.svg",
+    "v3/light-title-bug-9x16.svg",
+    "v3/light-cover-badge-4x5.svg",
+    "v3/dark-feed-4x5.svg",
+    "v3/dark-reel-9x16.svg",
+    "v3/dark-title-bug-9x16.svg",
+    "v3/adaptive-feed-badge-4x5.svg",
+    "v3/adaptive-reel-badge-9x16.svg",
+    "v3/adaptive-timestamp-9x16.svg",
+    "v3/light-corner-mark-4x5.svg",
+    "v3/dark-corner-mark-4x5.svg",
+    "v3/adaptive-corner-mark-4x5.svg"
   ]
 }
