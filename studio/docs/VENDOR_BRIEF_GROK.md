@@ -91,9 +91,9 @@ fate, banner scroll, laurel, crescent moon, star field.
 **Occult and horror** — reaper, cross, inverted arch, moon phases, candle, eye,
 serpent, thorn, flame sigil.
 
-**Character and mascot** — a drawn figure with a face and a posture, invented
-rather than observed, with enough personality to carry twenty designs and be
-recognised each time. This is the highest-value item on the whole brief.
+**No mascot.** A cartoon character is a skate convention -- Toy Machine, RipNDip,
+Deathwish -- and appears on none of the streetwear brands in our evidence. It is
+the wrong register for a premium brand and it is not on this brief.
 
 **Panels and plates** — rectangular halftone or collage panels with borders,
 torn edges, taped corners. Globe wireframes, grids, contour fields, star charts.

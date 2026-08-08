@@ -38,12 +38,23 @@ craft is in the lettering.
 sell is a plain blank with a small embroidered or printed mark at left chest.
 That is the volume product. The big back print is the exception.
 
-**Where illustration appears it is one of four things.** A brand-owned character
-or mascot, invented rather than observed — the Toy Machine monster, the
-RipNDip cat, the Deathwish skull. Tattoo and occult flash — skulls, roses,
-daggers, reapers, crosses, stars, flames, wings, snakes. A sports or
-institutional crest. Or a rectangular photographic or collage panel dropped into
-the chest like a plate.
+**Where illustration appears it depends which tradition you look at, and the
+two do not mix.**
+
+In *skate* — Toy Machine, RipNDip, Deathwish, Primitive — it is a brand-owned
+cartoon mascot: a monster, a cat, an imp. That convention is deliberately
+juvenile and it is load-bearing for those brands.
+
+In *streetwear* — Stüssy, Noah, WTAPS, Neighborhood, Undefeated, Kith, Aimé Leon
+Dore, Sporty & Rich, Born X Raised, Awake — there are **no mascots at all**. The
+illustration that does appear is tattoo and occult flash, an institutional or
+sports crest, or a rectangular halftone panel dropped into the chest like a
+plate.
+
+An earlier version of this document collapsed those two into one line and asked
+a supplier for a mascot. Shirtfaced is streetwear, not skate. A cartoon
+character is the wrong register and it is not a small miss — it is the
+difference between a brand adults buy and one that reads as merchandise.
 
 **No brand in the corpus depicts its own country's wildlife or food.** Not the
 Australian streetwear brands, not the Australian humour brands. The register
@@ -115,12 +126,16 @@ scroll, laurel, crescent moon, star field. Traditional and fine-line both.
 Reaper, cross, inverted arch, moon phases, candle, eye, serpent, thorn, flame
 sigil. Recurs heavily across skate and Australian alt.
 
-### Character and mascot
+### Not a mascot
 
-A drawn character with a face and a posture that could be *ours* — a figure with
-enough personality to appear on twenty designs and be recognised each time. The
-corpus is emphatic that these are invented, not observed. See
-`docs/foundations/CHARACTERS.md`, which is a name list and nothing more.
+No cartoon character. See the tradition split above: mascots are a skate
+convention and absent from every streetwear brand in the corpus.
+
+`docs/foundations/CHARACTERS.md` is not a brief for one. It is a cast of fifteen
+named Australians — Brock, Charlotte, Damo, SK — who belong to the universe and
+appear in *photography*, System A's business. Citing it next to the word mascot
+confused a documentary cast with a drawn logo animal, which is how a supplier
+came to start building one.
 
 ### Panels and plates
 
