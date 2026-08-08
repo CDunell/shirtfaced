@@ -144,3 +144,47 @@ def test_decisions_are_keyed_by_template_not_by_name(engine: CompositionEngine) 
     assert len(set(keys)) == len(keys), "two options share an approval key"
     if len(set(names)) < len(names):
         assert len(set(keys)) > len(set(names)), "colliding names were not separated by id"
+
+
+def test_the_measured_signal_refines_the_proxy_rather_than_muting_it() -> None:
+    """An undecided measurement must hand back, not veto.
+
+    Slot content type is measured from how much of a slot's ink sits in its
+    largest piece -- type is many letters, a mark is one shape. The measurement
+    is only trustworthy at the extremes, because joined script scores like a
+    mark however many words it spells.
+
+    Returning "unknown" in the middle looked conservative and was not: every
+    slot came back ambiguous, the kind term flatlined, and an image with a
+    phrase scored identically to two phrases. Proportion is a worse signal than
+    the measurement and a much better one than nothing.
+    """
+    from app.services.composition_engine import slot_affinity
+
+    # Decisive measurements win outright.
+    assert slot_affinity(0.9, 0.5, largest_share=0.10) == "text"
+    assert slot_affinity(0.9, 0.16, largest_share=0.95) == "image"
+
+    # An undecided one falls through to proportion rather than erasing it.
+    assert slot_affinity(0.92, 0.16, largest_share=0.6) == "text"
+    assert slot_affinity(0.89, 0.49, largest_share=0.6) == "image"
+
+
+def test_an_image_and_a_phrase_do_not_score_like_two_phrases() -> None:
+    """The whole reason content type is measured at all."""
+    engine = CompositionEngine(TEMPLATES, Path("/nonexistent/approvals.json"))
+    lockup = engine.compose(
+        Brief(
+            elements=(Element(kind="image", content="photo"), Element(kind="text", content="WORD")),
+            tradition="streetwear",
+        )
+    )
+    two_lines = engine.compose(
+        Brief(
+            elements=(Element(kind="text", content="ONE"), Element(kind="text", content="TWO")),
+            tradition="streetwear",
+        )
+    )
+
+    assert lockup.composable and two_lines.composable
+    assert lockup.options[0].template_id != two_lines.options[0].template_id

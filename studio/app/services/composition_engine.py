@@ -70,6 +70,22 @@ MIN_CONFIDENCE = 0.35
 # us, and only the owner's decisions can supply that.
 CORPUS_CEILING = 0.75
 
+# How much of a slot's ink sits in its single largest piece. A line of type is
+# many separate letters so no piece holds much; a mark or a photograph is one
+# dominant shape. Recorded by the miner as `largest_share`.
+#
+# Calibrated by labelling forty-three rendered bands by eye rather than by
+# aspect, because aspect is the proxy this replaces and cannot also be the
+# answer key. The bands land where the labels do: type at 0.12, 0.13, 0.30 and
+# 0.32, images from 0.63 up.
+#
+# Deliberately conservative, because one labelled band breaks the rule -- the
+# Hundreds script at 0.61 is type, and joined lettering is a single component
+# however many words it spells. So the signal only speaks at the extremes and
+# says nothing between them, where it would be guessing.
+SHARE_TEXT = 0.35
+SHARE_IMAGE = 0.85
+
 # Most options ever offered. More than this is not choice, it is abdication.
 MAX_OPTIONS = 3
 
@@ -218,17 +234,37 @@ class ApprovalStore:
         return int(entry.get("approved", 0)), int(entry.get("decisions", 0))
 
 
-def slot_affinity(width: float, height: float) -> ElementKind | None:
-    """What a slot of these proportions held, inferred from its shape.
+def slot_affinity(
+    width: float, height: float, largest_share: float | None = None
+) -> ElementKind | None:
+    """What a slot held: measured if the corpus recorded it, inferred if not.
 
-    The corpus records slot geometry and nothing about content, so a brief of an
-    image and a phrase matched every two-element template equally -- including
-    the two that are plainly two lines of type. The shape gives it away: a slot
-    0.89 wide by 0.49 tall is a mass, and one 0.92 by 0.16 is a line of words.
+    A line of type is many separate letters, so no single piece holds much of
+    the ink; a mark or a photograph is one dominant shape. That is structure
+    rather than proportion, which matters because proportion is wrong exactly
+    where it counts -- heavy block type at image proportions reads as an image.
 
-    Returning None for the middle band is deliberate. A slot that could be
-    either should not be evidence for or against anything.
+    Two candidates were tried and discarded before this one. Density does not
+    separate them: inside the ambiguous aspect band its distribution is
+    unimodal. Nor do ink-to-gap transitions per row -- promising on twenty-five
+    bands and flat across all 2,554, because unnormalised they were mostly
+    measuring band width.
+
+    Proportion remains the fallback for templates mined before the signal
+    existed. Returning None for the middle of either band is deliberate: a slot
+    that could be either should not be evidence for or against anything.
     """
+    if largest_share is not None and largest_share > 0:
+        if largest_share <= SHARE_TEXT:
+            return "text"
+        if largest_share >= SHARE_IMAGE:
+            return "image"
+        # Undecided, not silent. Returning None here replaced a proxy that
+        # discriminated with one that says nothing: every slot came back
+        # ambiguous, the kind term flatlined at 0.5, and an image with a phrase
+        # scored identically to two phrases. A measurement that cannot decide
+        # should hand back to the thing that could, not veto it.
+
     if height <= 0:
         return None
     aspect = width / height
@@ -254,7 +290,12 @@ def _kind_fit(brief: Brief, template: dict[str, Any]) -> float:
     scored = 0.0
     counted = 0
     for element, slot in zip(brief.elements, slots, strict=False):
-        wants = slot_affinity(float(slot.get("width", 0)), float(slot.get("height", 0)))
+        recorded = slot.get("largest_share")
+        wants = slot_affinity(
+            float(slot.get("width", 0)),
+            float(slot.get("height", 0)),
+            float(recorded) if recorded is not None else None,
+        )
         if wants is None:
             continue
         supplied = "text" if element.kind == "text" else "image"

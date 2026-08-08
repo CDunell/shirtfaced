@@ -160,6 +160,13 @@ def main(argv: list[str]) -> int:
             slots = []
             for slot_index in range(count):
                 bands = [m["bands"][slot_index] for m in members]
+                # What the slot held, carried through from the mine rather than
+                # inferred downstream from its proportions. Aspect was the only
+                # signal available and it is wrong exactly where it matters:
+                # heavy block type at image proportions reads as an image.
+                transitions = [b.get("transitions", 0.0) for b in bands]
+                densities = [b.get("density", 0.0) for b in bands]
+                shares = [b.get("largest_share", 0.0) for b in bands]
                 slots.append(
                     {
                         "slot": slot_index + 1,
@@ -167,6 +174,9 @@ def main(argv: list[str]) -> int:
                         "height": round(statistics.median(b["height"] for b in bands), 3),
                         "width": round(statistics.median(b["width"] for b in bands), 3),
                         "centre_x": round(statistics.median(b["centre_x"] for b in bands), 3),
+                        "density": round(statistics.median(densities), 3),
+                        "transitions": round(statistics.median(transitions), 4),
+                        "largest_share": round(statistics.median(shares), 4),
                     }
                 )
             templates.append(

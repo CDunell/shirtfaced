@@ -33,6 +33,7 @@ from typing import Any
 
 import numpy as np
 from PIL import Image
+from scipy import ndimage
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.services.garment_frame import locate_garment
@@ -72,6 +73,50 @@ def _garment_colour(centre: np.ndarray) -> np.ndarray:
     return np.median(flanks, axis=0)
 
 
+def _components(block: np.ndarray) -> tuple[float, float]:
+    """How the ink in a band is broken up, and how much sits in one piece.
+
+    A line of type is many separate letters, so no single piece holds much of
+    the ink. A mark or a photograph is one dominant shape with specks around it.
+    That is a property of structure rather than of proportion, which matters
+    because proportion is wrong exactly where it counts: heavy block type at
+    image proportions reads as an image.
+
+    Returns pieces per unit width, and the largest piece's share of the ink.
+    The second is the one that carries -- the first also counts halftone speckle,
+    which is why a photograph can come back with more pieces than a word.
+    """
+    if block.size == 0 or block.shape[1] < 2:
+        return 0.0, 0.0
+    labelled, count = ndimage.label(block)
+    if count == 0:
+        return 0.0, 0.0
+    sizes = ndimage.sum(block, labelled, range(1, count + 1))
+    total = float(sizes.sum()) or 1.0
+    return round(count / block.shape[1], 4), round(float(sizes.max()) / total, 4)
+
+
+def _transitions(block: np.ndarray) -> float:
+    """Ink-to-gap changes across a typical row, normalised by width.
+
+    What the geometry cannot say. A slot 0.89 wide by 0.49 tall is a mass and
+    one 0.92 by 0.16 is a line of words, which works until heavy block type
+    arrives at image proportions -- and then aspect calls it an image, and
+    density does not separate them either: inside the ambiguous aspect band the
+    density distribution is unimodal.
+
+    Structure does separate them. Letters alternate ink and gap many times
+    across a row; a photograph or a solid mark alternates a handful. Measured on
+    the median row so one ragged edge cannot carry the number, and divided by
+    the band's own width so it stays a ratio -- every other dimension here is
+    dimensionless for the same reason.
+    """
+    if block.size == 0 or block.shape[1] < 2:
+        return 0.0
+    changes = np.abs(np.diff(block.astype(np.int8), axis=1)).sum(axis=1)
+    return round(float(np.median(changes)) / block.shape[1], 4)
+
+
 def _bands(mask: np.ndarray) -> list[dict[str, float]]:
     """Horizontal runs of ink, top to bottom, as fractions of the torso box."""
     height, width = mask.shape
@@ -104,6 +149,7 @@ def _bands(mask: np.ndarray) -> list[dict[str, float]]:
         cols = np.nonzero(block.any(axis=0))[0]
         if cols.size == 0:
             continue
+        inked = block[:, cols[0] : cols[-1] + 1]
         bands.append(
             {
                 "top": round(top / height, 3),
@@ -111,6 +157,9 @@ def _bands(mask: np.ndarray) -> list[dict[str, float]]:
                 "width": round((cols[-1] - cols[0] + 1) / width, 3),
                 "centre_x": round(float(cols.mean()) / width, 3),
                 "density": round(float(block.mean()), 3),
+                "transitions": _transitions(inked),
+                "pieces": _components(inked)[0],
+                "largest_share": _components(inked)[1],
             }
         )
     return bands
