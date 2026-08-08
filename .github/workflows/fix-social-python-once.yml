@@ -37,6 +37,7 @@ jobs:
       - name: Fix and format
         working-directory: studio
         run: |
+          ruff format .
           ruff check . --fix
           ruff format .
       - name: Validate backend
