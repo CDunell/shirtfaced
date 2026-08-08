@@ -47,6 +47,10 @@ class Entry:
     exclusions: tuple[str, ...] = ()
     treatments: tuple[str, ...] = ("clean", "distressed")
     provisional: str = ""
+    # A supplier mark inside the image. Recorded, never a reason to refuse the
+    # file: removing it is our work, and whether a design may be sold is asked
+    # once, before release.
+    watermark: str = ""
     source: str = ""
     source_id: str = ""
     source_url: str = ""
@@ -74,6 +78,7 @@ def _manifest(folder: Path) -> dict[str, Entry]:
             exclusions=tuple(value.get("exclusions", ())),
             treatments=tuple(value.get("treatments", ("clean", "distressed"))),
             provisional=value.get("provisional", ""),
+            watermark=value.get("watermark", ""),
             source=value.get("source", ""),
             source_id=value.get("source_id", ""),
             source_url=value.get("source_url", ""),
@@ -98,10 +103,12 @@ def load_folder(folder: Path, family: str) -> tuple[Element, ...]:
         except OSError:
             continue
 
+        # A file the converter cannot read yet still comes in. The schema has
+        # allowed an element without geometry since migration 0016, and skipping
+        # it here would be a gate at the door -- everything is ingested, and the
+        # gap is a converter for us to write rather than a fault in the file.
         shapes = shapes_in(svg)
-        if not shapes:
-            continue
-        geometry = fit_to_box(combined_path(shapes), UNIT)
+        geometry = fit_to_box(combined_path(shapes), UNIT) if shapes else ""
 
         import re
 
@@ -222,6 +229,15 @@ def print_effects() -> tuple[Element, ...]:
     return load_raster_folder(LIBRARY / "print_effects", "print_effect")
 
 
+def devices() -> tuple[Element, ...]:
+    """90s-register containers, seals, chevrons and print marks, as raster."""
+    return load_raster_folder(LIBRARY / "devices", "frame")
+
+
+def wordmarks() -> tuple[Element, ...]:
+    return load_folder(LIBRARY / "wordmarks", "wordmark")
+
+
 def badges() -> tuple[Element, ...]:
     return load_folder(LIBRARY / "badges", "badge")
 
@@ -243,4 +259,6 @@ def all_drawn() -> tuple[Element, ...]:
         + print_effects()
         + flash()
         + badges()
+        + devices()
+        + wordmarks()
     )

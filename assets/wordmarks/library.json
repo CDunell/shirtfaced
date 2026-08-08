@@ -1,0 +1,62 @@
+{
+  "lettering_90s_block_0001": {
+    "subtype": "90s_block",
+    "style_tags": [
+      "90s",
+      "block",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Set as <text>; the converter does not read it yet, so it carries no geometry."
+  },
+  "lettering_outline_90s_0001": {
+    "subtype": "outline_90s",
+    "style_tags": [
+      "90s",
+      "block",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Set as <text>; the converter does not read it yet, so it carries no geometry."
+  },
+  "lettering_stacked_90s_0001": {
+    "subtype": "stacked_90s",
+    "style_tags": [
+      "90s",
+      "block",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Set as <text>; the converter does not read it yet, so it carries no geometry."
+  },
+  "wordmark_heavy_block_0001": {
+    "subtype": "heavy_block",
+    "style_tags": [
+      "90s",
+      "block",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Set as <text>; the converter does not read it yet, so it carries no geometry."
+  },
+  "wordmark_heavy_block_outline_0001": {
+    "subtype": "heavy_block_outline",
+    "style_tags": [
+      "90s",
+      "block",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Set as <text>; the converter does not read it yet, so it carries no geometry."
+  }
+}

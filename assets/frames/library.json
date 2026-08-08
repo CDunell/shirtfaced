@@ -1,0 +1,134 @@
+{
+  "frame_banner_blank_0001": {
+    "subtype": "banner_blank",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_box_logo_container_0001": {
+    "subtype": "box_logo_container",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_cartouche_0001": {
+    "subtype": "cartouche",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_crest_shield_0001": {
+    "subtype": "crest_shield",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_monogram_container_0001": {
+    "subtype": "monogram_container",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_rosette_0001": {
+    "subtype": "rosette",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_seal_double_0001": {
+    "subtype": "seal_double",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_seal_simple_0001": {
+    "subtype": "seal_simple",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_seal_stamp_0001": {
+    "subtype": "seal_stamp",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_shield_plain_0001": {
+    "subtype": "shield_plain",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_shield_pointed_0001": {
+    "subtype": "shield_pointed",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "frame_simple_oval_seal_0001": {
+    "subtype": "simple_oval_seal",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  }
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <path d="M110,30 Q60,50 40,100 Q30,150 55,190" fill="none" stroke="#222" stroke-width="3"/>
+  <path d="M110,30 Q160,50 180,100 Q190,150 165,190" fill="none" stroke="#222" stroke-width="3"/>
+  <!-- simplified leaf marks left -->
+  <ellipse cx="55" cy="70" rx="12" ry="6" transform="rotate(-40 55 70)" fill="none" stroke="#222" stroke-width="1.5"/>
+  <ellipse cx="42" cy="100" rx="12" ry="6" transform="rotate(-20 42 100)" fill="none" stroke="#222" stroke-width="1.5"/>
+  <ellipse cx="45" cy="130" rx="12" ry="6" transform="rotate(5 45 130)" fill="none" stroke="#222" stroke-width="1.5"/>
+  <ellipse cx="58" cy="160" rx="12" ry="6" transform="rotate(25 58 160)" fill="none" stroke="#222" stroke-width="1.5"/>
+  <!-- right -->
+  <ellipse cx="165" cy="70" rx="12" ry="6" transform="rotate(40 165 70)" fill="none" stroke="#222" stroke-width="1.5"/>
+  <ellipse cx="178" cy="100" rx="12" ry="6" transform="rotate(20 178 100)" fill="none" stroke="#222" stroke-width="1.5"/>
+  <ellipse cx="175" cy="130" rx="12" ry="6" transform="rotate(-5 175 130)" fill="none" stroke="#222" stroke-width="1.5"/>
+  <ellipse cx="162" cy="160" rx="12" ry="6" transform="rotate(-25 162 160)" fill="none" stroke="#222" stroke-width="1.5"/>
+  <circle cx="110" cy="110" r="22" fill="none" stroke="#222" stroke-width="2"/>
+</svg>

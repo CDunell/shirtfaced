@@ -32,6 +32,28 @@ the first principle of the product design constitution — *a SHIRTFACED garment
 succeed as a desirable product before brand context, humour, story or marketing is
 applied* — and this document is the register that principle implies.
 
+### The continuum, in the owner's words
+
+Recorded verbatim, 8 August 2026:
+
+> Shirtfaced sits in the quality Australian surf/skate streetwear continuum of
+> the mid-to-late 90s -- the same world as Globe, Mooks, Billabong, Quiksilver
+> and the better local skate shops -- carried forward rather than re-enacted.
+>
+> It reads as durable, high-contrast and slightly irreverent: strong graphics
+> that work equally as a clean left-chest seal or a full-back flash piece, with
+> lived-in print quality (pigment fade, cracked plastisol, honest distress)
+> treated as a feature.
+>
+> Australian in attitude and standard, never in souvenir content. Eclectic at
+> the level of individual designs; consistent at the level of permanent devices,
+> type treatments and textures.
+
+That last line is the resolution of section 2. It also settles a question this
+document previously left open: the archive is consistent, the designs are not,
+and neither this file nor anything in `studio/docs/` decides what a drop looks
+like.
+
 Nothing else about market tier, price point, distribution or competitive set has
 been decided. Do not infer any of it from this document.
 

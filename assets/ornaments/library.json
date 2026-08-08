@@ -1,0 +1,13 @@
+{
+  "ornament_laurel_wreath_0001": {
+    "subtype": "laurel_wreath",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  }
+}

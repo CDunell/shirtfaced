@@ -10,6 +10,17 @@
     "source": "grok",
     "terms": "Generated for Shirtfaced"
   },
+  "symbol_arrow_bold_0001": {
+    "subtype": "arrow_bold",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "symbol_boomerang_0001": {
     "subtype": "boomerang",
     "style_tags": [
@@ -41,6 +52,28 @@
     "source": "grok",
     "terms": "Generated for Shirtfaced",
     "provisional": "A plain rounded rectangle. Legible but characterless; wants a tab and a chamfer."
+  },
+  "symbol_chevron_set_0001": {
+    "subtype": "chevron_set",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "symbol_chevron_triple_0001": {
+    "subtype": "chevron_triple",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "symbol_crown_0001": {
     "subtype": "crown",
@@ -101,6 +134,17 @@
     "source": "grok",
     "terms": "Generated for Shirtfaced",
     "provisional": "No open jaw visible -- reads as a dumbbell. The jaw is what makes it a spanner."
+  },
+  "symbol_starburst_0001": {
+    "subtype": "starburst",
+    "style_tags": [
+      "90s",
+      "skate",
+      "street"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "symbol_stubby_bottle_0001": {
     "subtype": "stubby_bottle",

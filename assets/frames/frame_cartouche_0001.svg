@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 140" width="280" height="140">
+  <path d="M30,20 Q10,20 10,40 L10,100 Q10,120 30,120 L250,120 Q270,120 270,100 L270,40 Q270,20 250,20 Z" fill="none" stroke="#222" stroke-width="3.5"/>
+  <path d="M40,32 Q25,32 25,45 L25,95 Q25,108 40,108 L240,108 Q255,108 255,95 L255,45 Q255,32 240,32 Z" fill="none" stroke="#222" stroke-width="1.5"/>
+  <text x="140" y="82" text-anchor="middle" font-family="Impact, sans-serif" font-size="28" font-weight="900" fill="#222" letter-spacing="2">SHIRTFACED</text>
+</svg>

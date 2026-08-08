@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <circle cx="100" cy="100" r="90" fill="none" stroke="#222" stroke-width="5"/>
+  <circle cx="100" cy="100" r="78" fill="none" stroke="#222" stroke-width="1.5"/>
+  <circle cx="100" cy="100" r="55" fill="none" stroke="#222" stroke-width="2"/>
+  <text x="100" y="108" text-anchor="middle" font-family="Impact, sans-serif" font-size="28" font-weight="900" fill="#222">SF</text>
+  <path d="M100,22 L105,40 L100,35 L95,40 Z" fill="#222"/>
+  <path d="M100,178 L105,160 L100,165 L95,160 Z" fill="#222"/>
+</svg>
