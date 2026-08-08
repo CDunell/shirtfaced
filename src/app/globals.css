@@ -79,7 +79,8 @@ body {
 
 /* Buttons depress — tactile, not bouncy. */
 .press {
-  transition: transform 180ms var(--ease-out-natural),
+  transition:
+    transform 180ms var(--ease-out-natural),
     opacity 180ms var(--ease-out-natural),
     background-color 180ms var(--ease-out-natural);
 }
@@ -212,15 +213,21 @@ body {
 /* ---------------------------------------------------------------------------
    Hero tagline rotation.
 
-   All six pairs ship in the DOM; CSS reveals one. display:none also hides the
-   other five from assistive tech, so the page announces one headline. Each
+   Every pair ships in the DOM; CSS reveals one. display:none also hides the
+   rest from assistive tech, so the page announces one headline. Each
    pair is two stacked beats, so the reveal rule targets a wrapper
    (display:contents, not block) — the wrapper drops out of layout but its two
    beat spans still stack normally.
 
    The paired photo is a CSS background rather than an <img>: a background on a
    rule that doesn't match is never fetched, so exactly one image downloads.
-   An <img> per line would pull all six.
+   An <img> per line would pull all of them, which is the whole reason the
+   per-index rule survives at fifty-four pairs.
+
+   The rules below are generated from lib/taglines.ts by
+   scripts/build-tagline-css.mjs. Do not edit them here -- the image path and
+   the focal point live in the data, and hand-editing puts the same fact in two
+   places.
 
    cqw on each beat is the point — Anton has one weight, so a fixed font-size
    makes "One esky" (9 chars) strand whitespace while "Two carloads" (12)
@@ -231,7 +238,7 @@ body {
 }
 /* cqw on the tagline resolves against this box. Sizing it narrower on desktop
    scales the whole block down without breaking the flush-width relationship
-   between the six pairs. */
+   between the pairs. */
 .tagline-box {
   container-type: inline-size;
 }
@@ -239,6 +246,7 @@ body {
   display: none;
 }
 
+/* @generated tagline rotation — build-tagline-css.mjs */
 [data-tag="0"] .tl-0 {
   display: contents;
 }
@@ -281,6 +289,342 @@ body {
   background-image: url("/products/take-your-chances.webp");
   background-position: 50% 35%;
 }
+[data-tag="6"] .tl-6 {
+  display: contents;
+}
+[data-tag="6"] .hero-img {
+  background-image: url("/products/midnight-service.webp");
+  background-position: 50% 35%;
+}
+[data-tag="7"] .tl-7 {
+  display: contents;
+}
+[data-tag="7"] .hero-img {
+  background-image: url("/products/not-yours.webp");
+  background-position: 50% 40%;
+}
+[data-tag="8"] .tl-8 {
+  display: contents;
+}
+[data-tag="8"] .hero-img {
+  background-image: url("/products/permanent.webp");
+  background-position: 50% 45%;
+}
+[data-tag="9"] .tl-9 {
+  display: contents;
+}
+[data-tag="9"] .hero-img {
+  background-image: url("/products/roll-the-dice-1.webp");
+  background-position: 50% 35%;
+}
+[data-tag="10"] .tl-10 {
+  display: contents;
+}
+[data-tag="10"] .hero-img {
+  background-image: url("/products/send-it-1.webp");
+  background-position: 50% 40%;
+}
+[data-tag="11"] .tl-11 {
+  display: contents;
+}
+[data-tag="11"] .hero-img {
+  background-image: url("/products/send-it-2.webp");
+  background-position: 50% 45%;
+}
+[data-tag="12"] .tl-12 {
+  display: contents;
+}
+[data-tag="12"] .hero-img {
+  background-image: url("/products/spin-cycle.webp");
+  background-position: 50% 35%;
+}
+[data-tag="13"] .tl-13 {
+  display: contents;
+}
+[data-tag="13"] .hero-img {
+  background-image: url("/products/take-your-chances.webp");
+  background-position: 50% 40%;
+}
+[data-tag="14"] .tl-14 {
+  display: contents;
+}
+[data-tag="14"] .hero-img {
+  background-image: url("/products/built-different.webp");
+  background-position: 50% 45%;
+}
+[data-tag="15"] .tl-15 {
+  display: contents;
+}
+[data-tag="15"] .hero-img {
+  background-image: url("/products/cold-beer-1.webp");
+  background-position: 50% 35%;
+}
+[data-tag="16"] .tl-16 {
+  display: contents;
+}
+[data-tag="16"] .hero-img {
+  background-image: url("/products/eight-ball.webp");
+  background-position: 50% 40%;
+}
+[data-tag="17"] .tl-17 {
+  display: contents;
+}
+[data-tag="17"] .hero-img {
+  background-image: url("/products/good-times-1.webp");
+  background-position: 50% 45%;
+}
+[data-tag="18"] .tl-18 {
+  display: contents;
+}
+[data-tag="18"] .hero-img {
+  background-image: url("/products/hero-good-times.webp");
+  background-position: 50% 35%;
+}
+[data-tag="19"] .tl-19 {
+  display: contents;
+}
+[data-tag="19"] .hero-img {
+  background-image: url("/products/hero-street.webp");
+  background-position: 50% 40%;
+}
+[data-tag="20"] .tl-20 {
+  display: contents;
+}
+[data-tag="20"] .hero-img {
+  background-image: url("/products/love-fast-die-last.webp");
+  background-position: 50% 45%;
+}
+[data-tag="21"] .tl-21 {
+  display: contents;
+}
+[data-tag="21"] .hero-img {
+  background-image: url("/products/midnight-service.webp");
+  background-position: 50% 35%;
+}
+[data-tag="22"] .tl-22 {
+  display: contents;
+}
+[data-tag="22"] .hero-img {
+  background-image: url("/products/not-yours.webp");
+  background-position: 50% 40%;
+}
+[data-tag="23"] .tl-23 {
+  display: contents;
+}
+[data-tag="23"] .hero-img {
+  background-image: url("/products/permanent.webp");
+  background-position: 50% 45%;
+}
+[data-tag="24"] .tl-24 {
+  display: contents;
+}
+[data-tag="24"] .hero-img {
+  background-image: url("/products/roll-the-dice-1.webp");
+  background-position: 50% 35%;
+}
+[data-tag="25"] .tl-25 {
+  display: contents;
+}
+[data-tag="25"] .hero-img {
+  background-image: url("/products/send-it-1.webp");
+  background-position: 50% 40%;
+}
+[data-tag="26"] .tl-26 {
+  display: contents;
+}
+[data-tag="26"] .hero-img {
+  background-image: url("/products/send-it-2.webp");
+  background-position: 50% 45%;
+}
+[data-tag="27"] .tl-27 {
+  display: contents;
+}
+[data-tag="27"] .hero-img {
+  background-image: url("/products/spin-cycle.webp");
+  background-position: 50% 35%;
+}
+[data-tag="28"] .tl-28 {
+  display: contents;
+}
+[data-tag="28"] .hero-img {
+  background-image: url("/products/take-your-chances.webp");
+  background-position: 50% 40%;
+}
+[data-tag="29"] .tl-29 {
+  display: contents;
+}
+[data-tag="29"] .hero-img {
+  background-image: url("/products/built-different.webp");
+  background-position: 50% 45%;
+}
+[data-tag="30"] .tl-30 {
+  display: contents;
+}
+[data-tag="30"] .hero-img {
+  background-image: url("/products/cold-beer-1.webp");
+  background-position: 50% 35%;
+}
+[data-tag="31"] .tl-31 {
+  display: contents;
+}
+[data-tag="31"] .hero-img {
+  background-image: url("/products/eight-ball.webp");
+  background-position: 50% 40%;
+}
+[data-tag="32"] .tl-32 {
+  display: contents;
+}
+[data-tag="32"] .hero-img {
+  background-image: url("/products/good-times-1.webp");
+  background-position: 50% 45%;
+}
+[data-tag="33"] .tl-33 {
+  display: contents;
+}
+[data-tag="33"] .hero-img {
+  background-image: url("/products/hero-good-times.webp");
+  background-position: 50% 35%;
+}
+[data-tag="34"] .tl-34 {
+  display: contents;
+}
+[data-tag="34"] .hero-img {
+  background-image: url("/products/hero-street.webp");
+  background-position: 50% 40%;
+}
+[data-tag="35"] .tl-35 {
+  display: contents;
+}
+[data-tag="35"] .hero-img {
+  background-image: url("/products/love-fast-die-last.webp");
+  background-position: 50% 45%;
+}
+[data-tag="36"] .tl-36 {
+  display: contents;
+}
+[data-tag="36"] .hero-img {
+  background-image: url("/products/midnight-service.webp");
+  background-position: 50% 35%;
+}
+[data-tag="37"] .tl-37 {
+  display: contents;
+}
+[data-tag="37"] .hero-img {
+  background-image: url("/products/not-yours.webp");
+  background-position: 50% 40%;
+}
+[data-tag="38"] .tl-38 {
+  display: contents;
+}
+[data-tag="38"] .hero-img {
+  background-image: url("/products/permanent.webp");
+  background-position: 50% 45%;
+}
+[data-tag="39"] .tl-39 {
+  display: contents;
+}
+[data-tag="39"] .hero-img {
+  background-image: url("/products/roll-the-dice-1.webp");
+  background-position: 50% 35%;
+}
+[data-tag="40"] .tl-40 {
+  display: contents;
+}
+[data-tag="40"] .hero-img {
+  background-image: url("/products/send-it-1.webp");
+  background-position: 50% 40%;
+}
+[data-tag="41"] .tl-41 {
+  display: contents;
+}
+[data-tag="41"] .hero-img {
+  background-image: url("/products/send-it-2.webp");
+  background-position: 50% 45%;
+}
+[data-tag="42"] .tl-42 {
+  display: contents;
+}
+[data-tag="42"] .hero-img {
+  background-image: url("/products/spin-cycle.webp");
+  background-position: 50% 35%;
+}
+[data-tag="43"] .tl-43 {
+  display: contents;
+}
+[data-tag="43"] .hero-img {
+  background-image: url("/products/take-your-chances.webp");
+  background-position: 50% 40%;
+}
+[data-tag="44"] .tl-44 {
+  display: contents;
+}
+[data-tag="44"] .hero-img {
+  background-image: url("/products/built-different.webp");
+  background-position: 50% 45%;
+}
+[data-tag="45"] .tl-45 {
+  display: contents;
+}
+[data-tag="45"] .hero-img {
+  background-image: url("/products/cold-beer-1.webp");
+  background-position: 50% 35%;
+}
+[data-tag="46"] .tl-46 {
+  display: contents;
+}
+[data-tag="46"] .hero-img {
+  background-image: url("/products/eight-ball.webp");
+  background-position: 50% 40%;
+}
+[data-tag="47"] .tl-47 {
+  display: contents;
+}
+[data-tag="47"] .hero-img {
+  background-image: url("/products/good-times-1.webp");
+  background-position: 50% 45%;
+}
+[data-tag="48"] .tl-48 {
+  display: contents;
+}
+[data-tag="48"] .hero-img {
+  background-image: url("/products/hero-good-times.webp");
+  background-position: 50% 35%;
+}
+[data-tag="49"] .tl-49 {
+  display: contents;
+}
+[data-tag="49"] .hero-img {
+  background-image: url("/products/hero-street.webp");
+  background-position: 50% 40%;
+}
+[data-tag="50"] .tl-50 {
+  display: contents;
+}
+[data-tag="50"] .hero-img {
+  background-image: url("/products/love-fast-die-last.webp");
+  background-position: 50% 45%;
+}
+[data-tag="51"] .tl-51 {
+  display: contents;
+}
+[data-tag="51"] .hero-img {
+  background-image: url("/products/midnight-service.webp");
+  background-position: 50% 35%;
+}
+[data-tag="52"] .tl-52 {
+  display: contents;
+}
+[data-tag="52"] .hero-img {
+  background-image: url("/products/not-yours.webp");
+  background-position: 50% 40%;
+}
+[data-tag="53"] .tl-53 {
+  display: contents;
+}
+[data-tag="53"] .hero-img {
+  background-image: url("/products/permanent.webp");
+  background-position: 50% 45%;
+}
 /* No JS: the first pair still renders rather than an empty hero. */
 html:not([data-tag]) .tl-0 {
   display: contents;
@@ -289,3 +633,4 @@ html:not([data-tag]) .hero-img {
   background-image: url("/products/eight-ball.webp");
   background-position: 50% 25%;
 }
+/* @end tagline rotation */

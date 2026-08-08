@@ -62,7 +62,7 @@ export default function RootLayout({
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var n=6,k="sf-tag",v=sessionStorage.getItem(k);if(v===null){v=String(Math.floor(Math.random()*n));sessionStorage.setItem(k,v)}document.documentElement.setAttribute("data-tag",v)}catch(e){document.documentElement.setAttribute("data-tag","0")}})()`,
+            __html: `(function(){try{var n=${TAGLINES.length},k="sf-tag",v=sessionStorage.getItem(k);if(v===null){v=String(Math.floor(Math.random()*n));sessionStorage.setItem(k,v)}document.documentElement.setAttribute("data-tag",v)}catch(e){document.documentElement.setAttribute("data-tag","0")}})()`,
           }}
         />
       </head>

@@ -3,14 +3,22 @@
   "configurations": [
     {
       "name": "storefront",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["next", "dev", "--port", "3200"],
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--port", "3200"],
       "port": 3200
     },
     {
       "name": "studio-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "studio/web", "run", "dev", "--", "--port", "5173"],
+      "runtimeArgs": [
+        "--prefix",
+        "studio/web",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5173"
+      ],
       "port": 5173
     }
   ]

@@ -18,7 +18,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 config({ path: join(__dirname, "..", ".env") });
 
 const connectionString = process.env.SHOP_DATABASE_URL;
-const outFile = join(__dirname, "..", "src", "lib", "products-data.generated.ts");
+const outFile = join(
+  __dirname,
+  "..",
+  "src",
+  "lib",
+  "products-data.generated.ts",
+);
 
 if (!connectionString) {
   console.log(
@@ -27,7 +33,36 @@ if (!connectionString) {
   process.exit(0);
 }
 
+const SCRIPT = "sync-products";
+/**
+ * The guard above catches a missing variable. It does not catch a variable that
+ * is set and unreachable, which is the ordinary case on a dev machine: the URL
+ * is committed in .env and points at 127.0.0.1:55432, an SSH tunnel to the shop
+ * database that is only up when somebody opened it.
+ *
+ * Without this the script hard-fails on ECONNREFUSED and takes `npm run dev`
+ * with it, so the site cannot be run at all -- including to change a line of
+ * static copy that has nothing to do with the database. Unreachable is treated
+ * the same as unconfigured: fall back to the committed snapshot and say so.
+ */
+async function reachable(sql) {
+  try {
+    await sql`SELECT 1`;
+    return true;
+  } catch (error) {
+    console.log(
+      `${SCRIPT}: cannot reach the shop database (${error.code || error.message}) — ` +
+        "using the committed snapshot as-is. Open the SSH tunnel to refresh it.",
+    );
+    return false;
+  }
+}
+
 const sql = postgres(connectionString);
+if (!(await reachable(sql))) {
+  await sql.end({ timeout: 1 });
+  process.exit(0);
+}
 
 const products = await sql`
   SELECT id, slug, name, category, art, price_cents, is_new, blurb, description
