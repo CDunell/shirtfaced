@@ -110,8 +110,8 @@ if [ -d web ]; then
 fi
 
 say "Installing Social publisher timer"
-sudo install -m 0644 "$STUDIO_DIR/deploy/shirtfaced-social-publisher.service" /etc/systemd/system/shirtfaced-social-publisher.service
-sudo install -m 0644 "$STUDIO_DIR/deploy/shirtfaced-social-publisher.timer" /etc/systemd/system/shirtfaced-social-publisher.timer
+sudo install -m 0644 "$ROOT/deploy/shirtfaced-social-publisher.service" /etc/systemd/system/shirtfaced-social-publisher.service
+sudo install -m 0644 "$ROOT/deploy/shirtfaced-social-publisher.timer" /etc/systemd/system/shirtfaced-social-publisher.timer
 sudo systemctl daemon-reload
 sudo systemctl enable --now shirtfaced-social-publisher.timer
 
