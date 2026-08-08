@@ -50,9 +50,18 @@ from app.services.composition_engine import (
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GARMENT_DIR = REPO_ROOT / "assets" / "garments"
 
-# The smallest a printed element can usefully be. Not a judgement about detail
-# -- an eighth of a business card is simply not a place to put a design.
-MIN_PRINT_MM = 20.0
+# The smallest a printed element can usefully be.
+#
+# This is an invented number and should be replaced by one from production. At
+# 20mm it removed every cap from the range for an image and a phrase -- a
+# 116x60mm panel split two ways gives 14mm each -- while cap embroidery
+# routinely runs 10-15mm type, so the engine was refusing a treatment that is
+# ordinary. Ten is closer to what a machine actually does and is still a guess.
+MIN_PRINT_MM = 10.0
+
+
+class NoFormAtScale(Exception):
+    """No print form of this zone's scale role fits it."""
 
 
 @dataclass(frozen=True)
@@ -83,6 +92,12 @@ class Form:
 
 
 FORMS: tuple[Form, ...] = (
+    # Seam to seam. Deliberately larger than the zone, because the zone is the
+    # safe print area and a jumbo print is defined by leaving it -- the
+    # constitution's S4 "approaches seams or uses the garment body as the
+    # graphic field". Without this the largest treatment available was a print
+    # inset inside an inset, and a full-front photograph was not expressible.
+    Form("jumbo", "Jumbo, seam to seam", 1.18, 1.10),
     Form("full", "Full", 0.92, 0.88),
     Form("half", "Half", 0.90, 0.46),
     Form("band", "Band", 0.92, 0.18),
@@ -97,6 +112,14 @@ FORMS_BY_KEY = {form.key: form for form in FORMS}
 # Scale roles, from the constitution's section 7. Assigned by zone rather than
 # by size, because scale there is defined by function first and dimensions
 # second: a chest identifier is one whatever the garment measures.
+# A zone may legitimately carry more than one scale. A full front is a hero
+# print or a seam-to-seam photograph, and which is a design decision rather than
+# a property of the garment -- so both are offered and the owner picks.
+ALSO_AT = {
+    "full_front": "S4",
+    "full_back": "S4",
+}
+
 SCALE_ROLE = {
     "full_front": "S3",
     "full_back": "S3",
@@ -208,20 +231,49 @@ def _footprint(option: Option) -> tuple[float, float]:
     return width, bottom - top
 
 
-def _form_for(option: Option, candidates: tuple[Form, ...]) -> Form:
-    """The container whose proportions match what the corpus arrangement needs.
+# Which forms belong to which scale role. The constitution puts it plainly:
+# scale is defined by function first and dimensions second, so a chest
+# identifier is one whatever the garment measures.
+SCALE_FORMS = {
+    "S0": ("pocket", "small_centred", "band"),
+    "S1": ("small_centred", "half", "band", "pocket"),
+    "S2": ("half", "full", "band", "vertical_left", "vertical_right"),
+    "S3": ("full", "jumbo", "half", "vertical_left", "vertical_right"),
+    "S4": ("jumbo", "full"),
+}
 
-    Taking the first that fits was a default dressed as a decision, and it meant
-    a two-line lockup and a full-bleed hero were printed at identical size. The
-    template already says how much room its arrangement wants -- a band of type
-    occupies a fifth of the height, a lead-and-caption nearly half -- so the
-    form is the container closest to that, which makes the size a consequence of
-    the evidence rather than of list order.
+
+def _form_for(option: Option, scale_role: str, candidates: tuple[Form, ...]) -> Form:
+    """The container for this arrangement at this zone's scale role.
+
+    Two stages, and the order matters. Scale role decides *how much garment* the
+    design occupies -- a chest identifier is small and a hero is not -- and only
+    then does the arrangement's own shape choose between the forms of that size.
+
+    Matching the template footprint directly was the earlier attempt and it
+    ranked `half` above `full` for template 1-3, the commonest arrangement in
+    the corpus: a full block of one mass, 314 designs, came back shrunk to half
+    the zone. The footprint describes the shape of the arrangement, not how
+    large it should be printed, and using it for both conflated the two.
     """
+    allowed = SCALE_FORMS.get(scale_role, ())
+    pool = tuple(f for f in candidates if f.key in allowed)
+    if not pool:
+        # Falling back to every form promoted an S1 chest mark to a seam-to-seam
+        # jumbo, because jumbo happens to be first in the list. A zone that
+        # cannot hold anything at its own scale has no answer, and saying so is
+        # the honest one.
+        raise NoFormAtScale(scale_role)
+
     want_width, want_height = _footprint(option)
+    want_aspect = want_width / max(want_height, 1e-6)
+    # Rank by the role's own order first, and let aspect settle ties within it.
     return min(
-        candidates,
-        key=lambda f: abs(f.width - want_width) + 2.0 * abs(f.height - want_height),
+        pool,
+        key=lambda f: (
+            allowed.index(f.key) if f.key in allowed else len(allowed),
+            abs((f.width / max(f.height, 1e-6)) - want_aspect),
+        ),
     )
 
 
@@ -311,25 +363,35 @@ def build(
                     tradition=tradition,
                 )
             )
-            if any(p.zone_key == zone_key for p in placed):
-                continue
+            roles = [SCALE_ROLE.get(zone.base_key, "S2")]
+            extra = ALSO_AT.get(zone.base_key)
+            if extra:
+                roles.append(extra)
 
-            form = (
-                _form_for(composition.options[0], forms)
-                if composition.composable and composition.options
-                else forms[0]
-            )
-            placed.append(
-                Placed(
-                    view=view,
-                    zone_key=zone_key,
-                    scale_role=SCALE_ROLE.get(zone.base_key, "S2"),
-                    form=form,
-                    zone_width_mm=zone.width,
-                    zone_height_mm=zone.height,
-                    composition=composition,
+            for scale_role in roles:
+                # Keyed on both, because a zone appearing in two surface sets is
+                # the same placement, while the same zone at a hero and a jumbo
+                # scale is two genuinely different proposals.
+                if any(p.zone_key == zone_key and p.scale_role == scale_role for p in placed):
+                    continue
+                if not composition.composable or not composition.options:
+                    form = forms[0]
+                else:
+                    try:
+                        form = _form_for(composition.options[0], scale_role, forms)
+                    except NoFormAtScale:
+                        continue
+                placed.append(
+                    Placed(
+                        view=view,
+                        zone_key=zone_key,
+                        scale_role=scale_role,
+                        form=form,
+                        zone_width_mm=zone.width,
+                        zone_height_mm=zone.height,
+                        composition=composition,
+                    )
                 )
-            )
 
         if not placed:
             garments.append(
