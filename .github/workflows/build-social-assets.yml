@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "scripts/build-social-assets.mjs"
+      - "scripts/prepare-social-brand-sources.mjs"
       - "DEV/logo-lockup.svg"
       - "DEV/shirtfaced.svg"
       - "DEV/smiley.svg"
@@ -23,7 +24,9 @@ jobs:
         with:
           node-version: 20
       - name: Generate assets
-        run: node scripts/build-social-assets.mjs
+        run: |
+          node scripts/prepare-social-brand-sources.mjs
+          node scripts/build-social-assets.mjs
       - name: Commit generated assets
         run: |
           if [ -z "$(git status --porcelain -- public/social-assets)" ]; then
