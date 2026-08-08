@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="640mm" height="520mm" viewBox="0 0 640 520">
+  <!--
+    Shirtfaced — garment_crop_back.svg
+    Adult Medium crop top base — BACK
+    Flat measurements used:
+      - Canvas: 640 × 520 mm (shorter body)
+      - Chest (flat width between side seams): 510 mm, centred
+        Left side seam x=65, right side seam x=575
+      - Shoulder width: ~420 mm
+      - Shoulder slope: ~18°
+      - Neck opening width: 180 mm
+      - Collar rib depth: ~20 mm
+      - Armpit y≈260
+      - Body length (HPS to hem): ~480 mm (cropped)
+  -->
+
+  <!-- Garment outline (back) — crop -->
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.5"
+        d="M 230,40
+           C 255,26 290,20 320,20
+           C 350,20 385,26 410,40
+           L 445,53
+           C 505,80 560,125 595,170
+           L 610,220
+           L 548,245
+           L 575,262
+           L 575,500
+           L 65,500
+           L 65,262
+           L 92,245
+           L 30,220
+           L 45,170
+           C 80,125 135,80 195,53
+           Z"/>
+
+  <!-- Outer back neck / collar -->
+  <path id="garment-collar"
+        fill="#e8e8e8"
+        stroke="#222"
+        stroke-width="1.1"
+        d="M 230,40
+           C 255,26 290,20 320,20
+           C 350,20 385,26 410,40
+           L 405,60
+           C 380,48 350,42 320,42
+           C 290,42 260,48 235,60
+           Z"/>
+
+  <!-- Seams -->
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.8"
+        stroke-dasharray="4 3"
+        d="M 195,53 L 165,78
+           M 445,53 L 475,78
+           M 65,262 L 65,500
+           M 575,262 L 575,500
+           M 92,245 L 65,262
+           M 548,245 L 575,262"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-full_back"
+        fill="#4a90e2"
+        fill-opacity="0.18"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 167.5,100
+           L 472.5,100
+           L 472.5,420
+           L 167.5,420
+           Z"/>
+
+  <path id="zone-upper_back_yoke"
+        fill="#e67e22"
+        fill-opacity="0.20"
+        stroke="#d35400"
+        stroke-width="1"
+        d="M 200,90
+           L 440,90
+           L 440,200
+           L 200,200
+           Z"/>
+
+  <path id="zone-centre_back"
+        fill="#e74c3c"
+        fill-opacity="0.22"
+        stroke="#c0392b"
+        stroke-width="1"
+        d="M 220,130
+           L 420,130
+           L 420,320
+           L 220,320
+           Z"/>
+
+</svg>

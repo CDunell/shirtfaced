@@ -138,13 +138,34 @@ ADULT_PLACEMENTS: tuple[Placement, ...] = (
         key="upper_back_yoke",
         label="Upper back yoke",
         panel="back",
-        max_width_mm=inches(3),
-        max_height_mm=inches(1.5),
-        typical_width_mm=inches(2.5),
-        typical_height_mm=inches(1),
+        max_width_mm=inches(12),
+        max_height_mm=inches(4),
+        typical_width_mm=inches(10),
+        typical_height_mm=inches(3),
         offset_from_mm=inches(1),
         offset_to_mm=inches(2),
         offset_reference="back_collar_seam",
+        note=(
+            "A band across the shoulders, not a strip under the collar. It was "
+            "3x1.5in here, which is what outer_back_neck already is, so one name "
+            "covered two placements and every garment file drew the wider one."
+        ),
+    ),
+    Placement(
+        key="centre_back",
+        label="Centre back",
+        panel="back",
+        max_width_mm=inches(8),
+        max_height_mm=inches(10),
+        typical_width_mm=inches(7),
+        typical_height_mm=inches(8),
+        offset_from_mm=inches(4),
+        offset_to_mm=inches(7),
+        offset_reference="back_collar",
+        note=(
+            "Smaller than a full back and set lower than the yoke. Common on "
+            "cropped and sleeveless cuts, where a full back would run off the hem."
+        ),
     ),
     Placement(
         key="short_sleeve",

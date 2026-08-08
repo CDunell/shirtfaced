@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="260mm" height="220mm" viewBox="0 0 260 220">
+  <!--
+    Shirtfaced — garment_cap_trucker_back.svg
+    Trucker / mesh-back cap — BACK
+    Flat measurements used:
+      - Canvas: 260 × 220 mm
+      - Crown width: ~190 mm
+      - Mesh rear panels indicated
+      - Plastic snap adjustment at lower back
+      - zone-cap_back ≤70×40 mm (above snaps, on mesh area)
+      - zone-cap_side_left/right ≤65×40 mm
+  -->
+
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.4"
+        d="M 35,112
+           C 35,48 85,12 130,12
+           C 175,12 225,48 225,112
+           L 238,128
+           C 248,142 250,162 242,178
+           L 222,192
+           L 38,192
+           L 18,178
+           C 10,162 12,142 22,128
+           Z"/>
+
+  <!-- Mesh panel indication (rear) -->
+  <path id="garment-mesh"
+        fill="none"
+        stroke="#bbb"
+        stroke-width="0.6"
+        d="M 55,80 L 205,80
+           M 50,100 L 210,100
+           M 48,120 L 212,120
+           M 50,140 L 210,140
+           M 55,160 L 205,160
+           M 70,70 L 70,170
+           M 100,55 L 100,170
+           M 130,50 L 130,170
+           M 160,55 L 160,170
+           M 190,70 L 190,170"/>
+
+  <!-- Snap adjustment strap -->
+  <path id="garment-strap"
+        fill="#e0e0e0"
+        stroke="#222"
+        stroke-width="1.1"
+        d="M 65,170
+           L 65,200
+           L 195,200
+           L 195,170
+           Z"/>
+
+  <circle cx="85" cy="185" r="4" fill="none" stroke="#222" stroke-width="1"/>
+  <circle cx="105" cy="185" r="4" fill="none" stroke="#222" stroke-width="1"/>
+  <circle cx="155" cy="185" r="4" fill="none" stroke="#222" stroke-width="1"/>
+  <circle cx="175" cy="185" r="4" fill="none" stroke="#222" stroke-width="1"/>
+
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.7"
+        stroke-dasharray="3 2"
+        d="M 130,12 L 130,170
+           M 90,28 L 85,165
+           M 170,28 L 175,165"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <path id="zone-cap_back"
+        fill="#e67e22"
+        fill-opacity="0.22"
+        stroke="#d35400"
+        stroke-width="1"
+        d="M 80,45
+           L 180,45
+           L 183,110
+           L 77,110
+           Z"/>
+
+  <path id="zone-cap_side_left"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 40,115
+           L 75,105
+           L 78,145
+           L 42,150
+           Z"/>
+
+  <path id="zone-cap_side_right"
+        fill="#9b59b6"
+        fill-opacity="0.18"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 185,105
+           L 220,115
+           L 218,150
+           L 182,145
+           Z"/>
+
+</svg>
