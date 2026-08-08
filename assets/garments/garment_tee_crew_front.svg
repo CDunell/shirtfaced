@@ -1,0 +1,133 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="640mm" height="760mm" viewBox="0 0 640 760">
+  <!--
+    Shirtfaced — garment_tee_crew_front.svg
+    Adult Medium base (corrected v8)
+    Flat measurements used:
+      - Canvas: 640 × 760 mm
+      - Chest (flat width between side seams): 510 mm, centred
+        Left side seam x=65, right side seam x=575
+      - Shoulder width: ~410 mm
+      - Neck opening width: 180 mm
+      - Armpit y≈278
+      - Sleeve with proper hem + armpit notch (the V that cuts back in)
+      - Body length ≈ 730 mm
+    Zones sized to production maxima (full front 305×400, sleeves ≤76×76).
+  -->
+
+  <!-- Garment outline (front)
+       Required left-half sequence (mirrored on right):
+         neck → shoulder → sleeve top (out & down) →
+         sleeve hem outer → sleeve hem inner → ARMPIT (back IN) →
+         side seam → hem
+  -->
+  <path id="garment-outline"
+        fill="#f4f4f4"
+        stroke="#222"
+        stroke-width="1.5"
+        d="M 230,30
+           C 255,12 290,4 320,4
+           C 350,4 385,12 410,30
+           L 450,48
+           C 510,85 565,140 600,185
+           L 615,235
+           L 552,262
+           L 575,278
+           L 575,740
+           L 65,740
+           L 65,278
+           L 88,262
+           L 25,235
+           L 40,185
+           C 75,140 130,85 190,48
+           Z"/>
+
+  <!-- Collar (crew rib) -->
+  <path id="garment-collar"
+        fill="#e8e8e8"
+        stroke="#222"
+        stroke-width="1.2"
+        d="M 230,32
+           C 255,14 290,6 320,6
+           C 350,6 385,14 410,32
+           L 405,58
+           C 380,45 350,38 320,38
+           C 290,38 260,45 235,58
+           Z"/>
+
+  <!-- Seams -->
+  <path id="garment-seams"
+        fill="none"
+        stroke="#999"
+        stroke-width="0.8"
+        stroke-dasharray="4 3"
+        d="M 190,48 L 160,75
+           M 450,48 L 480,75
+           M 65,278 L 65,740
+           M 575,278 L 575,740
+           M 88,262 L 65,278
+           M 552,262 L 575,278"/>
+
+  <!-- ===================== PRINT ZONES ===================== -->
+
+  <!-- zone-full_front : 305 × 400 mm, top y=110, centred on 640 -->
+  <path id="zone-full_front"
+        fill="#4a90e2"
+        fill-opacity="0.18"
+        stroke="#2c6cb0"
+        stroke-width="1"
+        d="M 167.5,110
+           L 472.5,110
+           L 472.5,510
+           L 167.5,510
+           Z"/>
+
+  <!-- zone-centre_chest -->
+  <path id="zone-centre_chest"
+        fill="#e74c3c"
+        fill-opacity="0.22"
+        stroke="#c0392b"
+        stroke-width="1"
+        d="M 220,140
+           L 420,140
+           L 420,380
+           L 220,380
+           Z"/>
+
+  <!-- zone-left_chest : wearer's left = viewer's right -->
+  <path id="zone-left_chest"
+        fill="#27ae60"
+        fill-opacity="0.25"
+        stroke="#1e8449"
+        stroke-width="1"
+        d="M 385,125
+           L 475,125
+           L 475,215
+           L 385,215
+           Z"/>
+
+  <!-- zone-short_sleeve_left ≤76×76, on the sleeve -->
+  <path id="zone-short_sleeve_left"
+        fill="#9b59b6"
+        fill-opacity="0.20"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 35,155
+           L 95,110
+           L 108,128
+           L 52,180
+           Z"/>
+
+  <!-- zone-short_sleeve_right ≤76×76, on the sleeve -->
+  <path id="zone-short_sleeve_right"
+        fill="#9b59b6"
+        fill-opacity="0.20"
+        stroke="#7d3c98"
+        stroke-width="1"
+        d="M 605,155
+           L 545,110
+           L 532,128
+           L 588,180
+           Z"/>
+
+</svg>
