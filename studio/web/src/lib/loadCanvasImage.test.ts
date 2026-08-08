@@ -42,9 +42,7 @@ describe("loadCanvasImage", () => {
 
   it("fetches stored WebP bytes before decoding for canvas use", async () => {
     const blob = new Blob(["webp-bytes"], { type: "image/webp" });
-    const fetchMock = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(responseWithBlob(blob));
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(responseWithBlob(blob));
     vi.stubGlobal("Image", FakeImage);
     const create = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:studio-photo");
     const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
