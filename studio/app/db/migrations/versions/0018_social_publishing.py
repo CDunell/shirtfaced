@@ -19,14 +19,32 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 social_post_state = postgresql.ENUM(
-    "review_required", "approved", "rejected", "queued", "live", name="social_post_state"
+    "review_required",
+    "approved",
+    "rejected",
+    "queued",
+    "live",
+    name="social_post_state",
+    create_type=False,
 )
 publication_state = postgresql.ENUM(
-    "queued", "scheduled", "held", "publishing", "published", "failed", "cancelled",
+    "queued",
+    "scheduled",
+    "held",
+    "publishing",
+    "published",
+    "failed",
+    "cancelled",
     name="publication_state",
+    create_type=False,
 )
 social_channel = postgresql.ENUM(
-    "instagram_feed", "instagram_story", "instagram_reel", "tiktok", name="social_channel"
+    "instagram_feed",
+    "instagram_story",
+    "instagram_reel",
+    "tiktok",
+    name="social_channel",
+    create_type=False,
 )
 
 
@@ -47,12 +65,18 @@ def upgrade() -> None:
         sa.Column("state", social_post_state, server_default="review_required", nullable=False),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("rejected_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["source_photo_id"], ["photos.id"], ondelete="RESTRICT"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_social_posts_state_created_at", "social_posts", ["state", sa.text("created_at DESC")])
+    op.create_index(
+        "ix_social_posts_state_created_at", "social_posts", ["state", sa.text("created_at DESC")]
+    )
 
     op.create_table(
         "social_derivatives",
@@ -67,7 +91,9 @@ def upgrade() -> None:
         sa.Column("sha256", sa.String(length=64), nullable=False),
         sa.Column("byte_size", sa.Integer(), nullable=False),
         sa.Column("filename", sa.String(length=240), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["social_post_id"], ["social_posts.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("relative_path"),
@@ -82,8 +108,12 @@ def upgrade() -> None:
         sa.Column("minimum_spacing_minutes", sa.Integer(), server_default="1440", nullable=False),
         sa.Column("preferred_hour_local", sa.Integer(), server_default="19", nullable=False),
         sa.Column("active", sa.Boolean(), server_default=sa.text("true"), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("name"),
     )
@@ -95,7 +125,12 @@ def upgrade() -> None:
         sa.Column("derivative_id", sa.UUID(), nullable=False),
         sa.Column("channel", social_channel, nullable=False),
         sa.Column("scheduled_at", sa.DateTime(timezone=True), nullable=True),
-        sa.Column("scheduled_timezone", sa.String(length=80), server_default="Australia/Brisbane", nullable=False),
+        sa.Column(
+            "scheduled_timezone",
+            sa.String(length=80),
+            server_default="Australia/Brisbane",
+            nullable=False,
+        ),
         sa.Column("recommended_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("cadence_policy_id", sa.UUID(), nullable=True),
         sa.Column("locked", sa.Boolean(), server_default=sa.text("false"), nullable=False),
@@ -104,16 +139,24 @@ def upgrade() -> None:
         sa.Column("published_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("failure_reason", sa.Text(), nullable=True),
         sa.Column("retry_count", sa.Integer(), server_default="0", nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.ForeignKeyConstraint(["cadence_policy_id"], ["cadence_policies.id"], ondelete="SET NULL"),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.ForeignKeyConstraint(
+            ["cadence_policy_id"], ["cadence_policies.id"], ondelete="SET NULL"
+        ),
         sa.ForeignKeyConstraint(["derivative_id"], ["social_derivatives.id"], ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["social_post_id"], ["social_posts.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("external_post_id"),
     )
     op.create_index("ix_publication_jobs_post_id", "publication_jobs", ["social_post_id"])
-    op.create_index("ix_publication_jobs_state_scheduled_at", "publication_jobs", ["state", "scheduled_at"])
+    op.create_index(
+        "ix_publication_jobs_state_scheduled_at", "publication_jobs", ["state", "scheduled_at"]
+    )
 
     op.execute(
         "INSERT INTO cadence_policies "

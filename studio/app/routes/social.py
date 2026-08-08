@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import uuid
-from typing import Annotated, Any
+from typing import Annotated
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
@@ -166,9 +166,15 @@ def _load_post(post_id: uuid.UUID, session: Session) -> SocialPost:
 
 
 def _default_policy(session: Session) -> CadencePolicy:
-    policy = session.execute(
-        select(CadencePolicy).where(CadencePolicy.active.is_(True)).order_by(CadencePolicy.created_at)
-    ).scalars().first()
+    policy = (
+        session.execute(
+            select(CadencePolicy)
+            .where(CadencePolicy.active.is_(True))
+            .order_by(CadencePolicy.created_at)
+        )
+        .scalars()
+        .first()
+    )
     if policy is None:
         policy = CadencePolicy(
             name="Default social cadence",
@@ -198,9 +204,7 @@ def _recommended_time(session: Session, policy: CadencePolicy, timezone: str) ->
     spacing = dt.timedelta(minutes=policy.minimum_spacing_minutes)
     floor = max(now, (latest + spacing) if latest else now)
     local = floor.astimezone(zone)
-    candidate = local.replace(
-        hour=policy.preferred_hour_local, minute=0, second=0, microsecond=0
-    )
+    candidate = local.replace(hour=policy.preferred_hour_local, minute=0, second=0, microsecond=0)
     if candidate < local:
         candidate += dt.timedelta(days=1)
     return candidate.astimezone(dt.UTC)
@@ -223,9 +227,13 @@ async def create_post(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such source photo.")
 
     try:
-        metadata = [DerivativeInput.model_validate(item) for item in json.loads(derivative_metadata)]
+        metadata = [
+            DerivativeInput.model_validate(item) for item in json.loads(derivative_metadata)
+        ]
     except (ValueError, TypeError) as error:
-        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Invalid derivative metadata.") from error
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY, "Invalid derivative metadata."
+        ) from error
     if len(metadata) != len(files) or not metadata:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -320,7 +328,9 @@ def queue_post(post_id: uuid.UUID, body: QueueInput, session: SessionDependency)
     recommended = _recommended_time(session, policy, body.timezone)
     scheduled = body.scheduled_at or recommended
     locked = body.scheduled_at is not None
-    existing = {job.derivative_id: job for job in post.jobs if job.state != PublicationState.CANCELLED}
+    existing = {
+        job.derivative_id: job for job in post.jobs if job.state != PublicationState.CANCELLED
+    }
 
     for derivative in post.derivatives:
         if derivative.id in existing:
@@ -346,26 +356,38 @@ def queue_post(post_id: uuid.UUID, body: QueueInput, session: SessionDependency)
 
 @router.get("/queue", response_model=list[JobView])
 def list_queue(session: SessionDependency) -> list[JobView]:
-    jobs = session.execute(
-        select(PublicationJob)
-        .where(PublicationJob.state.in_([
-            PublicationState.QUEUED,
-            PublicationState.SCHEDULED,
-            PublicationState.HELD,
-            PublicationState.FAILED,
-        ]))
-        .order_by(PublicationJob.scheduled_at, PublicationJob.created_at)
-    ).scalars().all()
+    jobs = (
+        session.execute(
+            select(PublicationJob)
+            .where(
+                PublicationJob.state.in_(
+                    [
+                        PublicationState.QUEUED,
+                        PublicationState.SCHEDULED,
+                        PublicationState.HELD,
+                        PublicationState.FAILED,
+                    ]
+                )
+            )
+            .order_by(PublicationJob.scheduled_at, PublicationJob.created_at)
+        )
+        .scalars()
+        .all()
+    )
     return [_job_view(job) for job in jobs]
 
 
 @router.get("/live", response_model=list[JobView])
 def list_live(session: SessionDependency) -> list[JobView]:
-    jobs = session.execute(
-        select(PublicationJob)
-        .where(PublicationJob.state == PublicationState.PUBLISHED)
-        .order_by(desc(PublicationJob.published_at))
-    ).scalars().all()
+    jobs = (
+        session.execute(
+            select(PublicationJob)
+            .where(PublicationJob.state == PublicationState.PUBLISHED)
+            .order_by(desc(PublicationJob.published_at))
+        )
+        .scalars()
+        .all()
+    )
     return [_job_view(job) for job in jobs]
 
 
@@ -435,7 +457,9 @@ def fake_publish_now(job_id: uuid.UUID, session: SessionDependency) -> JobView:
     job.published_at = dt.datetime.now(dt.UTC)
     job.failure_reason = None
     job.state = PublicationState.PUBLISHED
-    remaining = [item for item in post.jobs if item.id != job.id and item.state != PublicationState.PUBLISHED]
+    remaining = [
+        item for item in post.jobs if item.id != job.id and item.state != PublicationState.PUBLISHED
+    ]
     if not remaining:
         post.state = SocialPostState.LIVE
     session.commit()

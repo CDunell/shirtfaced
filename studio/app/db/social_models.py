@@ -121,7 +121,9 @@ class CadencePolicy(Base, TimestampMixin):
     minimum_spacing_minutes: Mapped[int] = mapped_column(
         Integer, nullable=False, server_default=text("1440")
     )
-    preferred_hour_local: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("19"))
+    preferred_hour_local: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default=text("19")
+    )
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
 
 
@@ -144,7 +146,11 @@ class PublicationJob(Base, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("social_derivatives.id", ondelete="RESTRICT"), nullable=False
     )
     channel: Mapped[SocialChannel] = mapped_column(
-        _enum(SocialChannel, "social_channel",), nullable=False
+        _enum(
+            SocialChannel,
+            "social_channel",
+        ),
+        nullable=False,
     )
     scheduled_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     scheduled_timezone: Mapped[str] = mapped_column(
