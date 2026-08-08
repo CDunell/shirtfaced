@@ -73,6 +73,16 @@
     "source": "commissioned",
     "watermark": "supplier mark in the lower-right corner; crop or clean before release"
   },
+  "illustration_part_banner_blank_0003": {
+    "subtype": "banner_blank_0003",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_banner_blank_clean_0001": {
     "subtype": "banner_blank",
     "style_tags": [
@@ -109,13 +119,12 @@
   "illustration_part_candle_0001": {
     "subtype": "candle",
     "style_tags": [
-      "tattoo",
-      "occult"
+      "90s",
+      "traditional"
     ],
     "ink_min": 1,
     "ink_max": 2,
-    "source": "commissioned",
-    "source_id": "3s2J0"
+    "source": "commissioned"
   },
   "illustration_part_coiled_snake_0001": {
     "subtype": "coiled_snake",
@@ -191,6 +200,16 @@
     "ink_max": 2,
     "source": "commissioned"
   },
+  "illustration_part_dagger_rose_wrapped_0001": {
+    "subtype": "dagger_rose_wrapped",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "illustration_part_dagger_roses_banner_0001": {
     "subtype": "dagger_roses_banner",
     "style_tags": [
@@ -226,6 +245,16 @@
   },
   "illustration_part_gas_bottle_0001": {
     "subtype": "gas_bottle",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_hammer_wrench_0001": {
+    "subtype": "hammer_wrench",
     "style_tags": [
       "90s",
       "traditional"
@@ -602,13 +631,12 @@
   "illustration_part_swallow_0001": {
     "subtype": "swallow",
     "style_tags": [
-      "tattoo",
+      "90s",
       "traditional"
     ],
     "ink_min": 1,
     "ink_max": 2,
-    "source": "commissioned",
-    "source_id": "xxQHg"
+    "source": "commissioned"
   },
   "illustration_part_tape_measure_0001": {
     "subtype": "tape_measure",
@@ -633,6 +661,16 @@
   },
   "illustration_part_traffic_cone_0001": {
     "subtype": "traffic_cone",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_trestle_0001": {
+    "subtype": "trestle",
     "style_tags": [
       "90s",
       "traditional"
@@ -675,6 +713,16 @@
   },
   "illustration_part_wolf_0003_0001": {
     "subtype": "wolf_0003",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "illustration_part_wolf_full_0001": {
+    "subtype": "wolf_full_0001",
     "style_tags": [
       "90s",
       "traditional"

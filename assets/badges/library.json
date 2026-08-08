@@ -30,6 +30,16 @@
     "ink_max": 2,
     "source": "commissioned"
   },
+  "badge_empty_circle_merrow_0003": {
+    "subtype": "empty_circle_merrow_0003",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "badge_empty_circle_simple_0001": {
     "subtype": "empty_circle_simple",
     "style_tags": [
@@ -43,6 +53,16 @@
     "subtype": "empty_diamond",
     "style_tags": [
       "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "badge_empty_diamond_0002": {
+    "subtype": "empty_diamond_0002",
+    "style_tags": [
+      "90s",
+      "traditional"
     ],
     "ink_min": 1,
     "ink_max": 2,
@@ -91,6 +111,16 @@
     "subtype": "empty_shield",
     "style_tags": [
       "archive"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
+  "badge_empty_shield_simple_0001": {
+    "subtype": "empty_shield_simple",
+    "style_tags": [
+      "90s",
+      "traditional"
     ],
     "ink_min": 1,
     "ink_max": 2,

@@ -94,6 +94,16 @@
     "ink_max": 2,
     "source": "commissioned"
   },
+  "pattern_meander_border_0001": {
+    "subtype": "meander_border",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "pattern_ornate_frame_0001": {
     "subtype": "ornate_frame",
     "style_tags": [
@@ -114,6 +124,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "pattern_rope_border_0002": {
+    "subtype": "rope_border_0002",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "pattern_rose_border_0001": {
     "subtype": "rose_border",

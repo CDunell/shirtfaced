@@ -10,6 +10,16 @@
     "source": "commissioned",
     "source_id": "RKPmQ"
   },
+  "print_effect_cracked_plastisol_0002": {
+    "subtype": "cracked_plastisol_0002",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
+  },
   "print_effect_discharge_bleed_0001": {
     "subtype": "discharge_bleed",
     "style_tags": [
@@ -59,6 +69,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "watermark": "supplier mark in the lower-right corner; crop or clean before release"
+  },
+  "print_effect_photocopy_0002": {
+    "subtype": "photocopy_0002",
+    "style_tags": [
+      "90s",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned"
   },
   "print_effect_photocopy_degradation_0001": {
     "subtype": "photocopy_degradation",
