@@ -33,7 +33,11 @@ const CORPUS = process.argv.includes("--flat")
 const CHROME = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const PORT = 9491;
 
-const PRODUCTS_PER_BRAND = 18;
+// 18 is a polite sample of one brand's catalogue. A marketplace is not a brand
+// -- it is the control population the brand corpus gets checked against, and a
+// control of 18 checks nothing -- so `--limit` raises it there.
+const limitArg = process.argv.indexOf("--limit");
+const PRODUCTS_PER_BRAND = limitArg > -1 ? Number(process.argv[limitArg + 1]) : 18;
 const IMAGES_PER_PRODUCT = 2;
 // Long enough for a client-rendered grid to settle, including lazy images.
 const RENDER_WAIT_MS = 9000;
@@ -81,20 +85,52 @@ const MAJORS = {
  * which is why MAJORS discovers listings from each site's own navigation; a
  * marketplace search URL is a stable interface and does not need finding.
  */
+/**
+ * What to sample, and why these words.
+ *
+ * Queries about the kind of garment and the kind of treatment, never about
+ * subject matter -- subject is the one thing this corpus must not teach us
+ * (POSITIONING.md). Breadth matters more than depth: a run that repeats three
+ * queries re-scrapes the same tiles and dedupes every one of them away, which
+ * is what "nothing new (18 already held)" meant.
+ */
+const FLAT_QUERIES = [
+  "graphic", "typography", "vintage", "minimal", "retro",
+  "lettering", "monogram", "collegiate", "workwear", "band",
+];
+
+const MARKETPLACE_PAGES = 3;
+
+/** Every query crossed with every page, in the shape each site wants. */
+function listings(build) {
+  const out = [];
+  for (const query of FLAT_QUERIES) {
+    for (let page = 1; page <= MARKETPLACE_PAGES; page++) out.push(build(query, page));
+  }
+  return out;
+}
+
+/**
+ * TeePublic is deliberately absent.
+ *
+ * It collected 17 designs earlier and now answers a headless browser with a
+ * Cloudflare interstitial -- "Performing security verification". That is the
+ * site declining, and working around it is not on the table. The 17 already
+ * held stay; nothing here goes back for more.
+ *
+ *   teepublic: ["TeePublic", "flat_artwork",
+ *     listings((q, p) => `https://www.teepublic.com/t-shirts?query=${q}&page=${p}`)],
+ */
 const MARKETPLACES = {
-  teepublic: ["TeePublic", "flat_artwork", [
-    "https://www.teepublic.com/t-shirts?query=graphic",
-    "https://www.teepublic.com/t-shirts?query=vintage",
-    "https://www.teepublic.com/t-shirts?query=typography",
-  ]],
-  threadless: ["Threadless", "flat_artwork", [
-    "https://www.threadless.com/search?q=graphic",
-    "https://www.threadless.com/search?q=typography",
-  ]],
-  redbubble: ["Redbubble", "flat_artwork", [
-    "https://www.redbubble.com/shop/graphic+t-shirts",
-    "https://www.redbubble.com/shop/typography+t-shirts",
-  ]],
+  threadless: ["Threadless", "flat_artwork",
+    listings((q, p) => `https://www.threadless.com/search?q=${q}&page=${p}`)],
+  // Not `flat_artwork`: the render fits every design into a fixed square, so
+  // its geometry describes Redbubble's layout rather than the artwork's. The
+  // tradition carries that distinction into the mine, where compare_corpora.py
+  // uses it to keep normalised sources out of the geometry table -- a comment
+  // warning about it was not enough, they were still being averaged in.
+  redbubble: ["Redbubble", "flat_artwork_normalised",
+    listings((q, p) => `https://www.redbubble.com/shop?query=${q}&iaCode=u-tees&page=${p}`)],
 };
 
 /**
@@ -109,7 +145,87 @@ const MARKETPLACES = {
  * The watermarked variant carries a `wmk` token; the same URL without it is
  * clean. 630 is the ceiling and 1200 refuses either way.
  */
+/**
+ * Threadless builds its thumbnail from ops encoded as base64 JSON in `d`:
+ *
+ *   [["trim"], ["resize",[344,424]], ["canvas_centered",[400,480,"#121212"]],
+ *    ["encode",["webp",65]]]
+ *
+ * Two things there are fatal to measuring layout. It arrives at 313x375, and
+ * `canvas_centered` pastes the design onto a dark field of the grid's choosing
+ * -- so a miner reading that file measures Threadless's padding, not the
+ * design. The parameter is ours to rewrite: asking for trim and resize alone
+ * returns the artwork at its own bounds, 1050x1200, no canvas. Confirmed
+ * against the CDN.
+ *
+ * Trim is deliberately NOT requested, and the first pass got this wrong.
+ *
+ * Trimming crops to the design's own bounding box, so a single-element design
+ * then fills its field by construction -- the comparison came back with a flat
+ * height of 0.801 against the brand corpus's 0.281 and that difference measured
+ * nothing at all, because the two numbers had different denominators. The brand
+ * figure is a share of the garment's print area. To answer the same question,
+ * the flat figure has to be a share of the artwork's own canvas, which for a
+ * print-on-demand upload *is* the print area.
+ */
+function threadlessFullSize(url) {
+  const parsed = new URL(url);
+  const encoded = parsed.searchParams.get("d");
+  if (!encoded) return url;
+  try {
+    const ops = JSON.parse(Buffer.from(encoded, "base64").toString("utf8"));
+    // Only rewrite a pipeline shaped the way we understand. If Threadless
+    // changes it, leave the URL alone rather than request something invalid.
+    if (!Array.isArray(ops?.ops)) return url;
+  } catch {
+    return url;
+  }
+  const wanted = {
+    ops: [["resize", [1200, 1200], {}], ["encode", ["png", 95], {}]],
+    force: false,
+    only_meta: false,
+  };
+  parsed.searchParams.set("d", Buffer.from(JSON.stringify(wanted)).toString("base64"));
+  return parsed.toString();
+}
+
+/**
+ * Redbubble's grid tile is a photograph, not artwork.
+ *
+ * This one nearly got past. The tiles arrive 600x600 on a white field, 146 of
+ * them, perfectly uniform -- and every one is a cropped torso shot of a model
+ * wearing the tee. Mining those as the flat-artwork control would have checked
+ * the brand corpus against a second helping of itself and reported the
+ * agreement as proof. Only looking at them caught it.
+ *
+ * The render is chosen by tokens in the last path segment:
+ *
+ *   ssrco,classic_tee,mens_02,fafafa:ca443f4786,front,product_square,x600.jpg
+ *
+ * `flat,...,f-pad,...` returns the artwork alone on near-white at 1000x1000.
+ * The sticker render (`st,...-pad,...`) also isolates it but draws a die-cut
+ * halo around the design, which would read as a stroke -- so, flat.
+ *
+ * The pad colour is not ours to choose: f8f8f8 serves, 808080 and bfbfbf both
+ * 400. So white artwork lands on near-white and disappears -- 5.5% of the
+ * Redbubble sample measures as blank and is refused. That is a property of the
+ * CDN rather than something to engineer around, and it is a loss of light
+ * designs specifically. Threadless loses none, because its transparent PNGs are
+ * read through their alpha channel instead.
+ */
+function redbubbleFullSize(url) {
+  const cut = url.lastIndexOf("/");
+  if (cut < 0) return url;
+  const segment = url.slice(cut + 1);
+  // Only rewrite the product-render token we recognise. Anything else is left
+  // alone rather than turned into a guess.
+  if (!segment.startsWith("ssrco,")) return url;
+  return `${url.slice(0, cut)}/flat,1000x1000,075,f-pad,1000x1000,f8f8f8.jpg`;
+}
+
 function fullSize(url) {
+  if (url.includes("redbubble.net")) return redbubbleFullSize(url);
+  if (url.includes("cdn-images.threadless.com")) return threadlessFullSize(url);
   if (!url.includes("images.teepublic.com")) return url;
   return url.replace(/s_313/, "s_630").replace(/,wmk,/, ",").replace(/\.webp/, ".jpg");
 }
@@ -147,6 +263,11 @@ async function openTab() {
   await new Promise((r) => socket.addEventListener("open", r));
   await send("Page.enable");
   await send("Emulation.setDeviceMetricsOverride", { width: 1500, height: 1400, deviceScaleFactor: 1, mobile: false });
+  // USER_AGENT was applied to the image fetch and never to the page, so every
+  // listing was rendered announcing HeadlessChrome. Threadless and Redbubble
+  // answer that with a shell -- the collector reported "no product tiles
+  // rendered" while the same URL in a normal browser laid out 49 of them.
+  await send("Network.setUserAgentOverride", { userAgent: USER_AGENT });
   return tab.id;
 }
 
@@ -269,12 +390,56 @@ async function fetchImage(url) {
     const response = await fetch(url, {
       headers: { "User-Agent": USER_AGENT, Referer: new URL(url).origin + "/" },
     });
-    if (!response.ok) return null;
-    const buffer = Buffer.from(await response.arrayBuffer());
-    return buffer.byteLength >= 4000 ? buffer : null;
+    if (response.ok) {
+      const buffer = Buffer.from(await response.arrayBuffer());
+      if (buffer.byteLength >= 4000) return buffer;
+    }
   } catch {
-    return null;
+    // fall through to the browser
   }
+
+  // Some CDNs answer neither: no CORS header for the page, 403 for the script.
+  // Threadless is one -- 149 designs were located and one downloaded. What it
+  // does answer is the browser, so let the browser make the request and read
+  // the bytes back off the wire rather than out of the page.
+  return browserFetch(url);
+}
+
+/**
+ * Fetch by navigating to the asset and reading the response body over CDP.
+ *
+ * The bytes never pass through page script, so a missing CORS header is
+ * irrelevant, and the request carries the browser's own headers and cookies,
+ * so a CDN that 403s a scripted client serves it normally.
+ */
+async function browserFetch(url) {
+  const wanted = new Promise((resolve) => {
+    const listener = (event) => {
+      const message = JSON.parse(event.data);
+      if (message.method === "Network.responseReceived" && message.params?.response?.url === url) {
+        socket.removeEventListener("message", listener);
+        resolve(message.params.requestId);
+      }
+    };
+    socket.addEventListener("message", listener);
+    setTimeout(() => { socket.removeEventListener("message", listener); resolve(null) }, 20000);
+  });
+
+  await send("Network.enable");
+  await send("Page.navigate", { url });
+  const requestId = await wanted;
+  if (!requestId) return null;
+
+  // The body is only retrievable once the transfer has finished.
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const body = await send("Network.getResponseBody", { requestId });
+    if (body?.body) {
+      const buffer = Buffer.from(body.body, body.base64Encoded ? "base64" : "utf8");
+      return buffer.byteLength >= 4000 ? buffer : null;
+    }
+    await sleep(300);
+  }
+  return null;
 }
 
 const slugify = (text) =>

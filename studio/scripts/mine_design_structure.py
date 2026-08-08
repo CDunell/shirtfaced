@@ -250,6 +250,46 @@ def _bands(mask: np.ndarray) -> list[dict[str, float]]:
     return bands
 
 
+# Render tokens that mean "a garment, worn or laid out" rather than artwork.
+#
+# Redbubble's grid serves `ssrco,classic_tee,mens_02,...` -- a cropped torso
+# shot of a model. 146 of them arrived uniform, 600x600, on a clean white field,
+# and passed every check `_analyse_flat` makes, because a studio background is
+# exactly the plain border it looks for. Mining them as the flat-artwork control
+# would have checked the brand corpus against a second helping of itself.
+#
+# No pixel test caught it: solidity, ink coverage and edge contact all overlap
+# between the two populations, and a threshold drawn through that overlap would
+# throw away real artwork to look rigorous. What is reliable is that the URL
+# says so -- the request names the render, so the collector already knows.
+GARMENT_RENDERS = ("ssrco,", "classic_tee", "_tee,", "hoodie,", "sweatshirt,", "mens_", "womens_")
+
+
+def _is_flat_render(product_dir: Path) -> bool:
+    """Whether this product's images were served as artwork, not as a garment.
+
+    Unknown provenance passes. This refuses what is positively identified as a
+    garment render, and does not presume to judge a source it has not met --
+    the alternative silently empties the corpus the first time a marketplace
+    changes its URLs.
+    """
+    provenance = product_dir / "provenance.json"
+    if not provenance.is_file():
+        return True
+    try:
+        records = json.loads(provenance.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return True
+    if isinstance(records, dict):
+        records = [records]
+    for record in records:
+        url = str(record.get("source_url", ""))
+        segment = url.rsplit("/", 1)[-1]
+        if any(token in segment for token in GARMENT_RENDERS):
+            return False
+    return True
+
+
 def _analyse_flat(path: Path) -> list[dict[str, float]] | None:
     """Bands from flat artwork, where the design is the whole image.
 
@@ -259,9 +299,26 @@ def _analyse_flat(path: Path) -> list[dict[str, float]] | None:
     approximate through a collar, a fold and a shadow.
     """
     try:
-        image = (
-            Image.open(path).convert("RGB").resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.LANCZOS)
-        )
+        opened = Image.open(path)
+        opened.load()
+    except Exception:
+        return None
+
+    # Where the artwork carries alpha, alpha *is* the design's extent -- there is
+    # nothing to infer and no threshold to pick. Threadless serves 59 of its 149
+    # as transparent PNGs, and `convert("RGB")` composites those onto black, so a
+    # design drawn in black would merge into its own background and disappear.
+    if opened.mode in ("RGBA", "LA") or "transparency" in opened.info:
+        alpha = opened.convert("RGBA").getchannel("A")
+        alpha = alpha.resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.LANCZOS)
+        alpha_mask = np.asarray(alpha, dtype=np.float32) > 128
+        # A fully opaque file says only that nothing was cut out; fall through
+        # and read it as a flat field like any other.
+        if 0.004 < alpha_mask.mean() < 0.98:
+            return _bands(alpha_mask)
+
+    try:
+        image = opened.convert("RGB").resize((ANALYSIS_SIZE, ANALYSIS_SIZE), Image.LANCZOS)
     except Exception:
         return None
     pixels = np.asarray(image, dtype=np.float32)
@@ -365,6 +422,7 @@ def main(argv: list[str]) -> int:
 
     records: list[dict[str, Any]] = []
     seen = 0
+    refused_garment_render = 0
     for brand_dir in sorted(root.iterdir()):
         brand_file = brand_dir / "brand.json"
         if not brand_file.is_file():
@@ -381,6 +439,9 @@ def main(argv: list[str]) -> int:
             product = json.loads(product_file.read_text(encoding="utf-8"))
             images = product.get("images") or []
             if not images:
+                continue
+            if args.flat and not _is_flat_render(product_dir):
+                refused_garment_render += 1
                 continue
             # Every frame that can be measured, not just the first.
             #
@@ -495,6 +556,11 @@ def main(argv: list[str]) -> int:
     raw_path.write_text(json.dumps(records), encoding="utf-8")
 
     print(f"\n{len(records)} designs\n")
+    if refused_garment_render:
+        # Said out loud rather than dropped quietly: a control corpus that has
+        # silently discarded a third of its sources is not the control anyone
+        # thinks they are reading.
+        print(f"refused {refused_garment_render} products whose URL names a garment render\n")
     print("elements per design:", report["element_count_distribution"])
     print("\ncommonest compositions:")
     for shape, n in list(report["shapes_overall"].items())[:6]:
