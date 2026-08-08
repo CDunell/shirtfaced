@@ -12,6 +12,12 @@ import { IconArrowRight } from "@/components/Icons";
    side of the promise, not the customer's risk. */
 const TRUST = [home.trust1, home.trust2, home.trust3];
 
+/* Keep marquee velocity roughly constant as the tagline library grows. A fixed
+   duration made 54 items race past nearly nine times faster than the original
+   six. Seven seconds per item keeps the strip readable without turning it into
+   a static footer. */
+const MARQUEE_SECONDS = Math.max(48, TAGLINES.length * 7);
+
 /* Photography carries these, not colour. Accents stay reserved for the things
    that actually need emphasis: primary CTA, active nav, NEW, cart count. */
 const COLLECTIONS = [
@@ -118,10 +124,7 @@ export default function Home() {
 
       {/* ---------------- Promo ---------------- */}
       <section className="mx-auto mt-12 max-w-6xl px-4 sm:px-6">
-        <Link
-          href="/shop"
-          className="press relative block overflow-hidden rounded-[20px]"
-        >
+        <Link href="/shop" className="press relative block overflow-hidden rounded-[20px]">
           {/* eslint-disable-next-line @next/next/no-img-element -- static export, no loader */}
           <img
             src="/products/send-it-1.webp"
@@ -207,10 +210,13 @@ export default function Home() {
       </section>
 
       {/* ---------------- Brand line ----------------
-          Cycles all six rather than repeating one — same build, and it shows
-          the whole rotation to anyone who scrolls. */}
+          Duration scales with the number of taglines so growing the library does
+          not turn the marquee into a high-speed eye test. */}
       <section className="mt-12 overflow-hidden bg-ink py-5">
-        <div className="marquee-track flex w-max">
+        <div
+          className="marquee-track flex w-max"
+          style={{ animationDuration: `${MARQUEE_SECONDS}s` }}
+        >
           {[0, 1].map((dup) => (
             <span key={dup} className="flex shrink-0" aria-hidden={dup === 1}>
               {TAGLINES.map((t) => (
