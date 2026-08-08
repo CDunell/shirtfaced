@@ -1,5 +1,5 @@
 name: Fix Social mobile image once
-# one-shot mobile WebP/canvas repair
+# corrected one-shot mobile WebP/canvas repair
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Patch Social source loader
         run: |
           python - <<'PY'
@@ -29,14 +29,14 @@ jobs:
           if '../lib/loadCanvasImage' not in s:
               s = s.replace(old_import, new_import)
           old_fn = '''function loadImage(url: string): Promise<HTMLImageElement> {\n  return new Promise((resolve, reject) => {\n    const image = new Image();\n    image.onload = () => resolve(image);\n    image.onerror = () => reject(new Error("The source image could not be loaded."));\n    image.src = url;\n  });\n}\n\n'''
-          if old_fn not in s:
-              raise SystemExit('old loadImage helper not found')
-          s = s.replace(old_fn, '')
+          if old_fn in s:
+              s = s.replace(old_fn, '')
           s = s.replace('const source = await loadImage(photo.url);', 'const source = await loadCanvasImage(photo.url);')
-          marker = 'function cover(\n'
-          direct_loader = '''function loadOverlayImage(url: string): Promise<HTMLImageElement> {\n  return new Promise((resolve, reject) => {\n    const image = new Image();\n    image.onload = () => resolve(image);\n    image.onerror = () => reject(new Error("A Shirtfaced overlay could not be loaded."));\n    image.src = url;\n  });\n}\n\n'''
-          pos = s.index(marker)
-          s = s[:pos] + direct_loader + s[pos:]
+          if 'function loadOverlayImage(' not in s:
+              marker = 'function cover(\n'
+              direct_loader = '''function loadOverlayImage(url: string): Promise<HTMLImageElement> {\n  return new Promise((resolve, reject) => {\n    const image = new Image();\n    image.onload = () => resolve(image);\n    image.onerror = () => reject(new Error("A Shirtfaced overlay could not be loaded."));\n    image.src = url;\n  });\n}\n\n'''
+              pos = s.index(marker)
+              s = s[:pos] + direct_loader + s[pos:]
           s = s.replace('ctx.drawImage(await loadImage(overlay), 0, 0, spec.width, spec.height);', 'ctx.drawImage(await loadOverlayImage(overlay), 0, 0, spec.width, spec.height);')
           p.write_text(s)
           PY
@@ -47,16 +47,28 @@ jobs:
           import { loadCanvasImage } from "./loadCanvasImage";
 
           class FakeImage {
-            src = "";
-            complete = true;
+            private _src = "";
             naturalWidth = 1200;
             onload: (() => void) | null = null;
             onerror: (() => void) | null = null;
-            decode = vi.fn(async () => undefined);
+
+            get src(): string {
+              return this._src;
+            }
+
+            set src(value: string) {
+              this._src = value;
+              queueMicrotask(() => {
+                this.onload?.();
+              });
+            }
           }
 
           describe("loadCanvasImage", () => {
-            afterEach(() => vi.restoreAllMocks());
+            afterEach(() => {
+              vi.unstubAllGlobals();
+              vi.restoreAllMocks();
+            });
 
             it("fetches stored WebP bytes before decoding for canvas use", async () => {
               const blob = new Blob(["webp-bytes"], { type: "image/webp" });
