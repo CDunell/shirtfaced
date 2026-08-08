@@ -111,6 +111,11 @@ def _sync_archive() -> int:
     # Named rather than counted. An element held but unusable is work already
     # done that nobody can reach, and it should be visible on every run rather
     # than waiting for someone to think of querying for it.
+    standing_in = [element for element in authored.ALL if element.provisional]
+    if standing_in:
+        print(f"  {len(standing_in)} element(s) standing in for better artwork:")
+        for element in standing_in:
+            print(f"    {element.id}: {element.provisional.strip()}")
     for key, source, status in unverified:
         print(f"  {status}: {key} (from {source or 'no source recorded'})")
     return EXIT_OK

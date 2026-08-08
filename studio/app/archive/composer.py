@@ -376,10 +376,33 @@ class ArchiveComposer:
                 for option in options
             )
             if not matched:
-                gaps.append(
-                    "no element in the archive carries "
-                    f"{', '.join(brief.style_tags)}; ranking ignored style"
-                )
+                in_archive = {
+                    tag
+                    for element in self.elements
+                    for tag in element.style_tags
+                    if tag in brief.style_tags
+                }
+                if in_archive:
+                    gaps.append(
+                        f"{', '.join(sorted(in_archive))} exists in the archive but not on "
+                        "anything that survived the gates for this brief, so style did "
+                        "not rank the options"
+                    )
+                else:
+                    gaps.append(
+                        f"nothing in the archive carries {', '.join(brief.style_tags)}; "
+                        "ranking ignored style"
+                    )
+        offered = [_element_by_id(self.elements, option.element_id) for option in options[:limit]]
+        standing_in = [
+            element.id for element in offered if element is not None and element.provisional
+        ]
+        if standing_in:
+            gaps.append(
+                "standing in for better artwork: "
+                + ", ".join(standing_in)
+                + " -- see each element's note for what it is waiting for"
+            )
         if brief.treatment == "embroidered":
             gaps.append(
                 "embroidery is not simulated -- these are the placement and "
@@ -396,6 +419,13 @@ class ArchiveComposer:
     def record_decision(self, element_id: str, approved: bool) -> None:
         """Feed a decision back. This is what moves confidence."""
         self.approvals.record(element_id, approved)
+
+
+def _element_by_id(elements: tuple[Element, ...], key: str) -> Element | None:
+    for element in elements:
+        if element.id == key:
+            return element
+    return None
 
 
 # Brand inks, most dominant first. The garment colour is chosen alongside and is

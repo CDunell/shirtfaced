@@ -46,6 +46,7 @@ def _frame(
     style_tags: tuple[str, ...] = (),
     treatments: tuple[str, ...] = ("clean", "distressed"),
     exclusions: tuple[str, ...] = (),
+    provisional: str = "",
     **parameters: float,
 ) -> Element:
     return Element(
@@ -61,6 +62,7 @@ def _frame(
         style_tags=style_tags,
         compatible_treatments=treatments,
         exclusions=exclusions,
+        provisional=provisional,
         recipe=recipe,
         parameters=parameters,
     )
@@ -348,7 +350,271 @@ ORNAMENTS: tuple[Element, ...] = (
 )
 
 
-ALL: tuple[Element, ...] = FRAMES + BADGES + TYPE_LAYOUTS + SYMBOLS + ORNAMENTS
+# --- The second wave: shapes that say something before a word is added.
+#
+# The first set were the plain forms a design can always fall back on. These
+# carry a register of their own, which is what makes a composition read as a
+# workshop badge or a surf club or a joke about a bottle. Some are local,
+# because the brand is Australian and a southern cross needs no gloss here. ---
+
+SHAPED_FRAMES: tuple[Element, ...] = (
+    _frame(
+        "frame_ribbon_0001",
+        "swallowtail_banner",
+        "frame.ribbon",
+        symmetry="vertical",
+        style_tags=("award", "vintage", "collegiate"),
+        complexity=0.20,
+        tail=0.22,
+        aspect=3.2,
+    ),
+    _frame(
+        "frame_diamond_0001",
+        "diamond",
+        "frame.diamond",
+        symmetry="radial",
+        style_tags=("utilitarian", "modern"),
+        complexity=0.08,
+    ),
+    _frame(
+        "frame_hexagon_0001",
+        "hexagon",
+        "frame.polygon",
+        symmetry="radial",
+        style_tags=("utilitarian", "modern", "workwear"),
+        complexity=0.10,
+        sides=6,
+    ),
+    _frame(
+        "frame_octagon_0001",
+        "octagon",
+        "frame.polygon",
+        symmetry="radial",
+        style_tags=("utilitarian", "signage"),
+        complexity=0.12,
+        sides=8,
+    ),
+    _frame(
+        "frame_gear_0001",
+        "cog",
+        "frame.gear",
+        symmetry="radial",
+        style_tags=("workwear", "trade", "industrial"),
+        complexity=0.30,
+        teeth=12,
+    ),
+    _frame(
+        "frame_rope_0001",
+        "rope_roundel",
+        "frame.rope_roundel",
+        symmetry="radial",
+        style_tags=("nautical", "club", "vintage"),
+        complexity=0.28,
+    ),
+)
+
+
+SHAPED_SYMBOLS: tuple[Element, ...] = (
+    _frame(
+        "symbol_southern_cross_0001",
+        "southern_cross",
+        "symbol.southern_cross",
+        symmetry="none",
+        style_tags=("australian", "classic"),
+        complexity=0.30,
+    ),
+    _frame(
+        "symbol_wings_0001",
+        "swept_wings",
+        "symbol.wings",
+        symmetry="vertical",
+        style_tags=("speed", "club", "vintage"),
+        complexity=0.22,
+        provisional=(
+            "Reads as a bat or a moustache rather than feathers. The "
+            "sweep of a wing is not something a formula gets right; wants "
+            "drawing by hand, or sourcing as artwork. "
+        ),
+    ),
+    _frame(
+        "symbol_anchor_0001",
+        "anchor",
+        "symbol.anchor",
+        symmetry="vertical",
+        style_tags=("nautical", "vintage", "workwear"),
+        complexity=0.20,
+    ),
+    _frame(
+        "symbol_flame_0001",
+        "flame",
+        "symbol.flame",
+        symmetry="vertical",
+        style_tags=("speed", "hot-rod", "energy"),
+        complexity=0.16,
+        provisional=(
+            "Reads as a pear. A flame needs an asymmetric flicker, which "
+            "three attempts at bezier control points did not produce. "
+        ),
+    ),
+    _frame(
+        "symbol_wave_0001",
+        "breaking_wave",
+        "symbol.wave",
+        symmetry="none",
+        style_tags=("surf", "australian", "coastal"),
+        complexity=0.18,
+        provisional=("The curl is roughly right and the face is not. Wants a drawn version. "),
+    ),
+    _frame(
+        "symbol_mountains_0001",
+        "range",
+        "symbol.mountains",
+        symmetry="none",
+        style_tags=("outdoor", "hiking"),
+        complexity=0.14,
+        peaks=3,
+        provisional=(
+            "Three even spikes rather than a range. Wants uneven peaks and some sense of depth. "
+        ),
+    ),
+    _frame(
+        "symbol_sun_0001",
+        "rayed_sun",
+        "symbol.sun",
+        symmetry="radial",
+        style_tags=("vintage", "coastal", "energy"),
+        complexity=0.26,
+        rays=12,
+    ),
+    _frame(
+        "symbol_droplet_0001",
+        "droplet",
+        "symbol.droplet",
+        symmetry="vertical",
+        style_tags=("utilitarian", "modern"),
+        complexity=0.10,
+    ),
+    _frame(
+        "symbol_crown_0001",
+        "crown",
+        "symbol.crown",
+        symmetry="vertical",
+        style_tags=("classic", "novelty"),
+        complexity=0.14,
+        points=3,
+    ),
+    _frame(
+        "symbol_heart_0001",
+        "heart",
+        "symbol.heart",
+        symmetry="vertical",
+        style_tags=("classic", "novelty"),
+        complexity=0.12,
+    ),
+    _frame(
+        "symbol_stubby_0001",
+        "stubby_bottle",
+        "symbol.stubby",
+        symmetry="vertical",
+        style_tags=("australian", "pub", "novelty"),
+        complexity=0.18,
+        aspect=0.52,
+    ),
+    _frame(
+        "symbol_tinnie_0001",
+        "can",
+        "symbol.tinnie",
+        symmetry="vertical",
+        style_tags=("australian", "pub", "novelty"),
+        complexity=0.12,
+        aspect=0.60,
+    ),
+    _frame(
+        "symbol_boomerang_0001",
+        "boomerang",
+        "symbol.boomerang",
+        symmetry="none",
+        style_tags=("australian", "classic"),
+        complexity=0.16,
+    ),
+    _frame(
+        "symbol_thong_0001",
+        "thong",
+        "symbol.thong",
+        symmetry="vertical",
+        style_tags=("australian", "coastal", "novelty"),
+        complexity=0.20,
+        aspect=0.58,
+        provisional=(
+            "Reads as a rugby ball. Both the sole and the toe post need drawing properly. "
+        ),
+    ),
+    _frame(
+        "symbol_spanner_0001",
+        "spanner",
+        "symbol.spanner",
+        symmetry="vertical",
+        style_tags=("workwear", "trade", "industrial"),
+        complexity=0.16,
+        aspect=0.54,
+    ),
+    _frame(
+        "symbol_palm_0001",
+        "palm",
+        "symbol.palm",
+        symmetry="none",
+        style_tags=("coastal", "holiday", "vintage"),
+        complexity=0.28,
+        provisional=(
+            "Fronds are radial spokes rather than drooping leaves. "
+            "Passable at a small size, wrong at a large one. "
+        ),
+    ),
+    _frame(
+        "symbol_sparkle_0001",
+        "glint",
+        "symbol.sparkle",
+        symmetry="radial",
+        style_tags=("modern", "novelty"),
+        complexity=0.08,
+    ),
+)
+
+
+SHAPED_ORNAMENTS: tuple[Element, ...] = (
+    _frame(
+        "ornament_zigzag_0001",
+        "jagged_rule",
+        "ornament.zigzag",
+        symmetry="horizontal",
+        style_tags=("vintage", "knitwear"),
+        complexity=0.14,
+        teeth=6,
+        aspect=7.0,
+    ),
+    _frame(
+        "ornament_dots_0001",
+        "dot_row",
+        "ornament.dots_row",
+        symmetry="horizontal",
+        style_tags=("utilitarian", "modern"),
+        complexity=0.06,
+        count=5,
+        aspect=9.0,
+    ),
+)
+
+
+ALL: tuple[Element, ...] = (
+    FRAMES
+    + BADGES
+    + TYPE_LAYOUTS
+    + SYMBOLS
+    + ORNAMENTS
+    + SHAPED_FRAMES
+    + SHAPED_SYMBOLS
+    + SHAPED_ORNAMENTS
+)
 
 BY_ID: dict[str, Element] = {element.id: element for element in ALL}
 

@@ -188,7 +188,70 @@ def _frame_path(element: Element, width: float, height: float) -> str:
         return geometry.bracket(width, height)
     if recipe == "type_layout.plain":
         return ""
+
+    # The second wave of shapes. The family stays in the prefix -- a ribbon is
+    # a frame and a boomerang is a symbol -- and the suffix does the dispatch,
+    # so nothing has to know which wave a shape came from.
+    if "." in recipe:
+        return _shape_path(recipe.split(".", 1)[1], parameters, width, height)
+
     raise RefusedToRender("UNKNOWN_RECIPE", recipe)
+
+
+def _shape_path(name: str, parameters: dict[str, float], width: float, height: float) -> str:
+    """Dispatch to the shapes that carry their own attitude."""
+    from app.archive import shapes
+
+    square = min(width, height)
+    if name == "ribbon":
+        return shapes.ribbon(width, height, tail=parameters.get("tail", 0.22))
+    if name == "diamond":
+        return shapes.diamond(width, height)
+    if name == "polygon":
+        return shapes.polygon(square, sides=int(parameters.get("sides", 6)))
+    if name == "gear":
+        return shapes.gear(square, teeth=int(parameters.get("teeth", 12)))
+    if name == "rope_roundel":
+        return shapes.rope_roundel(square)
+    if name == "southern_cross":
+        return shapes.southern_cross(width, height)
+    if name == "wings":
+        return shapes.wings(width, height)
+    if name == "anchor":
+        return shapes.anchor(width, height)
+    if name == "flame":
+        return shapes.flame(width, height)
+    if name == "wave":
+        return shapes.wave(width, height)
+    if name == "mountains":
+        return shapes.mountains(width, height, peaks=int(parameters.get("peaks", 3)))
+    if name == "sun":
+        return shapes.sun(square, rays=int(parameters.get("rays", 12)))
+    if name == "droplet":
+        return shapes.droplet(width, height)
+    if name == "crown":
+        return shapes.crown(width, height, points=int(parameters.get("points", 3)))
+    if name == "heart":
+        return shapes.heart(width, height)
+    if name == "stubby":
+        return shapes.stubby(width, height)
+    if name == "tinnie":
+        return shapes.tinnie(width, height)
+    if name == "boomerang":
+        return shapes.boomerang(width, height)
+    if name == "thong":
+        return shapes.thong(width, height)
+    if name == "spanner":
+        return shapes.spanner(width, height)
+    if name == "palm":
+        return shapes.palm(width, height)
+    if name == "sparkle":
+        return shapes.sparkle(square)
+    if name == "zigzag":
+        return shapes.zigzag(width, height, teeth=int(parameters.get("teeth", 6)))
+    if name == "dots_row":
+        return shapes.dots_row(width, height, count=int(parameters.get("count", 5)))
+    raise RefusedToRender("UNKNOWN_RECIPE", name)
 
 
 def box_for(element: Element, longest_mm: float = 180.0) -> tuple[float, float]:

@@ -162,3 +162,31 @@ def test_every_grammar_reads_as_something_a_person_would_say() -> None:
     """A suggestion that cannot explain itself is not a suggestion."""
     for grammar in GRAMMARS:
         assert len(grammar.reads_as.split()) >= 4
+
+
+# --- Placeholders stay visible ----------------------------------------------
+
+
+def test_a_provisional_element_says_what_it_is_waiting_for() -> None:
+    """A placeholder without a brief is just a bad shape nobody remembers to fix."""
+    for element in authored.ALL:
+        if element.provisional:
+            assert len(element.provisional.split()) >= 8, element.id
+
+
+def test_provisional_elements_are_still_usable() -> None:
+    """They stand in until something replaces them. Removing one takes the gap
+    out of the system along with the shape, and then nothing reports it."""
+    standing_in = [element for element in authored.ALL if element.provisional]
+    assert standing_in
+    for element in standing_in:
+        assert element.licence.usable, element.id
+
+
+def test_the_archive_reports_how_much_of_it_is_standing_in() -> None:
+    """So the number has to fall deliberately rather than be forgotten."""
+    standing_in = [element for element in authored.ALL if element.provisional]
+    assert len(standing_in) <= 10, (
+        f"{len(standing_in)} elements are placeholders. If this has grown, "
+        "placeholders are being added faster than they are being replaced."
+    )

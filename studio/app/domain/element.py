@@ -119,6 +119,16 @@ class Element:
     # What this element refuses. Cheaper and more honest than enumerating what
     # it permits, and it is what makes the grammar tractable.
     exclusions: tuple[str, ...] = ()
+    # Why this element is standing in for something better, if it is.
+    # Empty means it is finished work.
+    #
+    # A placeholder is kept rather than removed, because removing it takes
+    # the gap out of the system as well as the shape: nothing then reports
+    # the absence, and the next design of the whole thing quietly leaves
+    # that category out. A shape that says what is wrong with it and what
+    # it is waiting for keeps the hole visible until it is filled.
+    provisional: str = ""
+
     # Authored elements name a recipe; ingested ones carry their own path data.
     # Exactly one of the two, which the database enforces as a constraint.
     recipe: str = ""
