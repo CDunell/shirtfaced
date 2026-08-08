@@ -53,6 +53,18 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
 
+      # Social assets are generated at repository level because the storefront and
+      # Studio share the same brand source. Studio is deployed as a standalone tree,
+      # so copy those generated files into its own public directory explicitly.
+      - name: Sync Social assets into Studio
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'mkdir -p /home/ubuntu/shirtfaced-studio/public/social-assets'
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            public/social-assets/ \
+            ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/public/social-assets/
+
       - name: Bootstrap Studio
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
