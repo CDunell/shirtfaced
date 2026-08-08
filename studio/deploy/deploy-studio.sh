@@ -88,24 +88,25 @@ done
 
 say "Building the interface"
 if [ -d web ]; then
-  ( cd web && npm install --silent && npm run build --silent )
-
-  # SocialBench source names the canonical SVG overlays. Production swaps those
-  # references to the rasterized PNG twins before the bundle is served. This keeps
-  # source/editing assets vector while making canvas composition deterministic on
-  # Android/WebView. A unique query string also prevents stale image-cache reuse.
+  # Build the production bundle against PNG overlays directly. Rewriting the
+  # minified bundle after Vite builds is brittle because generated JS may contain
+  # SVG strings unrelated to the runtime overlay lookup. The checkout is replaced
+  # by rsync on every deploy, so this production-only source rewrite is disposable.
   SOCIAL_ASSET_VERSION=$(date +%s)
-  find web/dist -type f -name '*.js' -print0 | xargs -0 sed -i \
-    -E "s#(/social-assets/v3/[^\"']+)\.svg#\1.png?v=${SOCIAL_ASSET_VERSION}#g"
+  sed -i -E \
+    "s#(/social-assets/v3/[^\"'\x60]+)\.svg#\1.png?v=${SOCIAL_ASSET_VERSION}#g" \
+    web/src/components/SocialBench.tsx
 
-  if grep -R -E -q "/social-assets/v3/[^\"']+\.svg" web/dist; then
-    echo "Built Studio still contains a Social SVG runtime reference." >&2
+  if grep -E -q "/social-assets/v3/[^\"'\x60]+\.svg" web/src/components/SocialBench.tsx; then
+    echo "SocialBench still contains a Social SVG runtime reference before build." >&2
     exit 1
   fi
-  if ! grep -R -E -q "/social-assets/v3/[^\"']+\.png\?v=" web/dist; then
-    echo "Built Studio contains no versioned Social PNG runtime references." >&2
+  if ! grep -E -q "/social-assets/v3/.*\.png\?v=" web/src/components/SocialBench.tsx; then
+    echo "SocialBench contains no versioned Social PNG runtime references before build." >&2
     exit 1
   fi
+
+  ( cd web && npm install --silent && npm run build --silent )
 fi
 
 say "Restarting"
