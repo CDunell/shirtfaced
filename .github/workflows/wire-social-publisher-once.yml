@@ -1,0 +1,55 @@
+name: Wire Social publisher once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/wire-social-publisher-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        working-directory: studio
+        run: pip install -e ".[dev]"
+      - name: Wire adapter and due-job hook
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('studio/app/routes/social.py')
+          s = p.read_text()
+          old = 'from app.adapters.asset_store import AssetStoreError, FilesystemAssetStore\n'
+          new = old + 'from app.adapters.social_publisher import FakeSocialPublisher, SocialPublisher\n'
+          if 'app.adapters.social_publisher' not in s:
+              s = s.replace(old, new)
+          marker = 'OUTPUT_CHANNELS: dict[str, SocialChannel] = {\n'
+          if 'DEFAULT_PUBLISHER = FakeSocialPublisher()' not in s:
+              insert = 'DEFAULT_PUBLISHER: SocialPublisher = FakeSocialPublisher()\n\n'
+              pos = s.index(marker)
+              s = s[:pos] + insert + s[pos:]
+          old_body = '''@router.post("/jobs/{job_id}/publish-now", response_model=JobView)\ndef fake_publish_now(job_id: uuid.UUID, session: SessionDependency) -> JobView:\n    """Publish through the deterministic fake adapter; safe to call twice."""\n    job = session.get(PublicationJob, job_id)\n    if job is None:\n        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such publication job.")\n    if job.state == PublicationState.CANCELLED:\n        raise HTTPException(status.HTTP_409_CONFLICT, "Cancelled jobs cannot publish.")\n    if job.state == PublicationState.PUBLISHED:\n        return _job_view(job)\n\n    post = _load_post(job.social_post_id, session)\n    if post.approved_at is None:\n        raise HTTPException(status.HTTP_409_CONFLICT, "The social package is not approved.")\n\n    job.state = PublicationState.PUBLISHING\n    session.flush()\n    job.external_post_id = f"fake:{job.channel.value}:{job.id}"\n    job.published_at = dt.datetime.now(dt.UTC)\n    job.failure_reason = None\n    job.state = PublicationState.PUBLISHED\n    remaining = [\n        item for item in post.jobs if item.id != job.id and item.state != PublicationState.PUBLISHED\n    ]\n    if not remaining:\n        post.state = SocialPostState.LIVE\n    session.commit()\n    return _job_view(job)\n'''
+          new_body = '''def _publish_job(\n    job: PublicationJob, session: Session, publisher: SocialPublisher = DEFAULT_PUBLISHER\n) -> JobView:\n    """Execute one approved job through a replaceable platform adapter."""\n    if job.state == PublicationState.CANCELLED:\n        raise HTTPException(status.HTTP_409_CONFLICT, "Cancelled jobs cannot publish.")\n    if job.state == PublicationState.PUBLISHED:\n        return _job_view(job)\n    post = _load_post(job.social_post_id, session)\n    if post.approved_at is None:\n        raise HTTPException(status.HTTP_409_CONFLICT, "The social package is not approved.")\n    job.state = PublicationState.PUBLISHING\n    session.flush()\n    try:\n        result = publisher.publish(job)\n    except Exception as error:\n        job.state = PublicationState.FAILED\n        job.failure_reason = str(error)\n        job.retry_count += 1\n        session.commit()\n        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "Publisher failed.") from error\n    job.external_post_id = result.external_post_id\n    job.published_at = dt.datetime.now(dt.UTC)\n    job.failure_reason = None\n    job.state = PublicationState.PUBLISHED\n    remaining = [\n        item\n        for item in post.jobs\n        if item.id != job.id\n        and item.state not in {PublicationState.PUBLISHED, PublicationState.CANCELLED}\n    ]\n    if not remaining:\n        post.state = SocialPostState.LIVE\n    session.commit()\n    return _job_view(job)\n\n\n@router.post("/jobs/{job_id}/publish-now", response_model=JobView)\ndef fake_publish_now(job_id: uuid.UUID, session: SessionDependency) -> JobView:\n    """Execute one job through the configured publisher; safe to call twice."""\n    job = session.get(PublicationJob, job_id)\n    if job is None:\n        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such publication job.")\n    return _publish_job(job, session)\n\n\n@router.post("/queue/run-due", response_model=list[JobView])\ndef run_due_jobs(session: SessionDependency) -> list[JobView]:\n    """Execution hook for cron/worker infrastructure; publish all due unlocked jobs."""\n    now = dt.datetime.now(dt.UTC)\n    jobs = (\n        session.execute(\n            select(PublicationJob)\n            .where(PublicationJob.state == PublicationState.SCHEDULED)\n            .where(PublicationJob.scheduled_at.is_not(None))\n            .where(PublicationJob.scheduled_at <= now)\n            .order_by(PublicationJob.scheduled_at, PublicationJob.created_at)\n        )\n        .scalars()\n        .all()\n    )\n    return [_publish_job(job, session) for job in jobs]\n'''
+          if old_body not in s:
+              raise SystemExit('publish body not found')
+          p.write_text(s.replace(old_body, new_body))
+          PY
+      - name: Validate and commit
+        run: |
+          cd studio
+          ruff format app/routes/social.py app/adapters/social_publisher.py
+          ruff check app/routes/social.py app/adapters/social_publisher.py
+          mypy app
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/app/routes/social.py studio/app/adapters/social_publisher.py
+          git commit -m "feat: execute Social jobs through publisher adapter"
+          git push
