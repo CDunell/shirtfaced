@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
 from app.archive.features import element_feature
@@ -259,6 +259,25 @@ class ElementRepository:
         )
         return to_domain(row) if row else None
 
+    def _extension_schema(self) -> str:
+        """Where pgvector lives.
+
+        Its operators are schema-qualified like its type. The integration tests
+        pin search_path to their own schema, so an unqualified `<=>` does not
+        resolve -- "operator does not exist: public.vector <=> unknown" -- even
+        though the extension is installed and the column is a vector.
+        """
+        found = self.session.execute(
+            text(
+                "SELECT n.nspname FROM pg_extension e "
+                "JOIN pg_namespace n ON n.oid = e.extnamespace "
+                "WHERE e.extname = 'vector'"
+            )
+        ).scalar()
+        if not found:
+            raise RuntimeError("the pgvector extension is not enabled on this database")
+        return str(found)
+
     def similar_to(self, element_key: str, limit: int = 5) -> list[tuple[Element, float]]:
         """Nearest neighbours by cosine distance, computed in the database.
 
@@ -272,18 +291,32 @@ class ElementRepository:
         if subject is None or subject.feature is None:
             return []
 
-        distance = ArchiveElement.feature.cosine_distance(subject.feature)
+        schema = self._extension_schema()
+        # The operator and the cast are both qualified. Without the cast the
+        # parameter arrives as `unknown` and no operator matches it, which reads
+        # as a missing extension when the extension is fine.
+        vector = "[" + ",".join(str(float(value)) for value in subject.feature) + "]"
         rows = self.session.execute(
-            select(ArchiveElement, distance.label("distance"))
-            .where(
-                ArchiveElement.element_key != element_key,
-                ArchiveElement.feature.is_not(None),
-                ArchiveElement.licence_status == LicenceStatus.VERIFIED,
-            )
-            .order_by(distance)
-            .limit(limit)
+            text(
+                f"SELECT element_key, feature OPERATOR({schema}.<=>) "
+                f"CAST(:vector AS {schema}.vector) AS distance "
+                "FROM archive_elements "
+                "WHERE element_key <> :key "
+                "AND feature IS NOT NULL "
+                "AND licence_status = 'verified' "
+                "ORDER BY distance LIMIT :limit"
+            ),
+            {"vector": vector, "key": element_key, "limit": limit},
         ).all()
-        return [(to_domain(row), float(value)) for row, value in rows]
+
+        found: list[tuple[Element, float]] = []
+        for key, distance in rows:
+            row = self.session.scalar(
+                select(ArchiveElement).where(ArchiveElement.element_key == key)
+            )
+            if row is not None:
+                found.append((to_domain(row), float(distance)))
+        return found
 
     def unverified(self) -> list[tuple[str, str, str]]:
         """Elements held but not usable, as (key, source, status).
