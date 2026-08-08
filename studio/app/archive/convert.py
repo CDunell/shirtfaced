@@ -445,9 +445,7 @@ def outline_stroke(path_data: str, width: float) -> str:
         if not left or not right:
             continue
         ring = left + right
-        pieces.append(
-            "M " + " L ".join(f"{num(x)} {num(y)}" for x, y in ring) + " Z"
-        )
+        pieces.append("M " + " L ".join(f"{num(x)} {num(y)}" for x, y in ring) + " Z")
     return " ".join(pieces)
 
 

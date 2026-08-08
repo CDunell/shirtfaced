@@ -5,10 +5,17 @@ tables describe worlds, shots and the photographs made from them; these describe
 the parts a design is assembled from and the rules for using them.
 
 The archive's premise is that geometry is stored apart from aesthetics and that
-finished artwork is a disposable output. So nothing here stores a design. An
-authored element stores a recipe name and its parameters; an ingested one stores
-path data and a licence trail; a render stores the tuple that produced it, so
-the artwork can be thrown away and rebuilt.
+finished artwork is a disposable output. An authored element stores a recipe
+name and its parameters; an ingested one stores path data and a licence trail; a
+render stores the tuple that produced it, so the artwork can be thrown away and
+rebuilt.
+
+``ComposedDesign`` follows the same rule and is the reason this file now stores
+something that looks like a design. It keeps the *brief* -- seed, garment,
+placement, words, palette -- because that is what regenerates the artwork. The
+SVG alongside it is a convenience, not the record. Until this existed the
+composer could only be run from a Python prompt: nothing could be stored, so
+nothing could reach ``awaiting_decision``, so nothing could be approved.
 """
 
 from __future__ import annotations
@@ -38,11 +45,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base, TimestampMixin
 from app.db.models import SHA256_HEX_LENGTH, _enum
-from app.domain.enums import ElementFamily, LicenceStatus
+from app.domain.enums import AttemptState, ElementFamily, LicenceStatus
 
 __all__ = [
     "ELEMENT_FEATURE_DIMENSIONS",
     "ArchiveElement",
+    "ComposedDesign",
     "ElementRender",
 ]
 
@@ -230,3 +238,80 @@ class ElementRender(Base):
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
+
+
+class ComposedDesign(Base, TimestampMixin):
+    """One design the composer produced, and everything needed to rebuild it.
+
+    A stored design is not an approved design. It arrives at
+    ``awaiting_decision`` and stays there until a person settles it, which is
+    the same rule the photography pipeline follows and the reason that state
+    exists in the data rather than only in someone's head.
+
+    The brief columns are the record. Given the same seed, garment, placement,
+    words and palette the composer must produce the same bytes, so
+    ``content_hash`` is both a cache key and a standing assertion that
+    determinism survives a restart -- not merely that it holds within one
+    process, which is all an in-memory test can show.
+    """
+
+    __tablename__ = "composed_designs"
+    __table_args__ = (
+        # The same brief composed twice is the same design. Re-running a seed
+        # should find the existing row rather than fill the table with
+        # duplicates that a reviewer then has to tell apart.
+        UniqueConstraint("content_hash", name="uq_composed_designs_content_hash"),
+        Index("ix_composed_designs_state", "state"),
+        # Partial: the review queue only ever asks for the undecided ones, and
+        # that set stays small while the decided set grows without bound.
+        Index(
+            "ix_composed_designs_awaiting",
+            "created_at",
+            postgresql_where=text("state = 'awaiting_decision'"),
+        ),
+        CheckConstraint("seed >= 0", name="seed_not_negative"),
+        # A design that has been settled must say who settled it. Without this
+        # an approval is an assertion nobody signed.
+        CheckConstraint(
+            "state NOT IN ('approved', 'rejected') OR decided_by <> ''",
+            name="decision_has_an_author",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+
+    # --- The brief: everything the composer was given. -----------------------
+    seed: Mapped[int] = mapped_column(Integer, nullable=False)
+    garment_key: Mapped[str] = mapped_column(String(80), nullable=False)
+    placement_key: Mapped[str] = mapped_column(String(40), nullable=False)
+    fit: Mapped[str] = mapped_column(String(20), nullable=False, server_default="adult")
+    # The owner's words. Never invented here, and never edited: the engine
+    # decides how supplied text is set, not what it says.
+    content: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    palette: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    treatment: Mapped[str] = mapped_column(String(20), nullable=False, server_default="clean")
+
+    # --- What came back. -----------------------------------------------------
+    grammar_key: Mapped[str] = mapped_column(String(40), nullable=False)
+    # role -> element key. Which parts of the archive this design is made of,
+    # so an element can be traced to everything it appears in.
+    parts: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    width_mm: Mapped[float] = mapped_column(Float, nullable=False)
+    height_mm: Mapped[float] = mapped_column(Float, nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(SHA256_HEX_LENGTH), nullable=False)
+    svg: Mapped[str] = mapped_column(Text, nullable=False)
+    # Which assembler produced it. Attributing new output to an old row is how a
+    # reprint quietly stops matching the sample that was approved.
+    assembler_version: Mapped[str] = mapped_column(String(40), nullable=False)
+
+    # --- The decision. -------------------------------------------------------
+    state: Mapped[str] = mapped_column(
+        _enum(AttemptState, "attempt_state"),
+        nullable=False,
+        server_default=AttemptState.AWAITING_DECISION.value,
+    )
+    decided_by: Mapped[str] = mapped_column(String(120), nullable=False, server_default="")
+    decided_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    decision_note: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
