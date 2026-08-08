@@ -9,7 +9,7 @@ import { LINE_THREE, TAGLINES } from "@/lib/taglines";
 /* Reference form from docs/foundations/BRAND_VOICE.md §3 — the first pair in
    the rotation, not a hand-typed line. Pulling it from the same source the
    hero reads from is the fix for the two disagreeing with each other. */
-const REFERENCE_LINE = `${TAGLINES[0].beatOne}, ${TAGLINES[0].beatTwo}, ${LINE_THREE}.`;
+const REFERENCE_LINE = `${TAGLINES[0].beatOne} ${TAGLINES[0].beatTwo} ${LINE_THREE}`;
 
 const anton = Anton({
   variable: "--font-anton",

@@ -52,10 +52,10 @@ export default function Home() {
                   {TAGLINES.map((t, i) => (
                     <span key={t.beatOne} className={`tl tl-${i}`}>
                       <span className="block" style={{ fontSize: `${t.sizeOne}cqw` }}>
-                        {t.beatOne},
+                        {t.beatOne}
                       </span>
                       <span className="block" style={{ fontSize: `${t.sizeTwo}cqw` }}>
-                        {t.beatTwo},
+                        {t.beatTwo}
                       </span>
                     </span>
                   ))}
@@ -65,7 +65,7 @@ export default function Home() {
                     className="block text-lime lowercase"
                     style={{ fontSize: `${LINE_THREE_SIZE}cqw` }}
                   >
-                    {LINE_THREE}.
+                    {LINE_THREE}
                   </span>
                 </h1>
               </div>
@@ -218,7 +218,7 @@ export default function Home() {
                   key={t.beatOne}
                   className="display px-5 text-[26px] whitespace-nowrap text-paper"
                 >
-                  {t.beatOne}, {t.beatTwo}, <span className="text-lime lowercase">{LINE_THREE}.</span>
+                  {t.beatOne} {t.beatTwo} <span className="text-lime lowercase">{LINE_THREE}</span>
                 </span>
               ))}
             </span>
