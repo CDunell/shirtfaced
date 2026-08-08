@@ -101,9 +101,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # BaseUI 18 requires Node 24+. Keep CI on the same supported runtime rather
+      # than accepting engine warnings and testing an environment production does
+      # not claim to support.
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: npm
           cache-dependency-path: studio/web/package-lock.json
 
