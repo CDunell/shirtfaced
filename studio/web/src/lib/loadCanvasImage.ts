@@ -1,9 +1,8 @@
-/** Load a Studio image for canvas use without relying on direct URL decoding.
+/** Load a Studio image for canvas use without relying on direct API URL decoding.
  *
- * Some mobile browsers can display a WebP in an <img> element but fail when a
- * second HTMLImageElement is created directly from the protected API URL. Fetching
- * the exact bytes first and decoding an object URL makes the canvas path use the
- * same-origin fetch stack and gives us a useful HTTP failure before decode.
+ * Some mobile browsers can display a stored WebP in a normal <img> yet fail when
+ * Social Studio creates a second HTMLImageElement directly from the API URL for
+ * canvas work. Fetching the bytes first and decoding an object URL avoids that path.
  */
 export async function loadCanvasImage(url: string): Promise<HTMLImageElement> {
   let response: Response;
@@ -23,24 +22,12 @@ export async function loadCanvasImage(url: string): Promise<HTMLImageElement> {
   const objectUrl = URL.createObjectURL(blob);
   try {
     const image = new Image();
-    image.src = objectUrl;
-
-    if (typeof image.decode === "function") {
-      try {
-        await image.decode();
-        return image;
-      } catch {
-        // Some mobile WebViews expose decode() but still need load/error events.
-      }
-    }
-
-    if (image.complete && image.naturalWidth > 0) return image;
-
-    await new Promise<void>((resolve, reject) => {
-      image.onload = () => resolve();
+    const loaded = new Promise<HTMLImageElement>((resolve, reject) => {
+      image.onload = () => resolve(image);
       image.onerror = () => reject(new Error("The source image bytes could not be decoded."));
     });
-    return image;
+    image.src = objectUrl;
+    return await loaded;
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
