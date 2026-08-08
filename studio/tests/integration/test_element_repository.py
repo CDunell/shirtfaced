@@ -1,10 +1,15 @@
-"""The archive in Postgres: the licence gate, and similarity as a query.
+"""The archive in Postgres: record integrity, and similarity as a query.
 
-Two things can only be tested against a real database. The licence gate is a
-check constraint, so its enforcement is the database's, not Python's -- and it
-is the one that survives a bulk import written in a hurry. And similarity runs
-as a pgvector query, so "does it return sensible neighbours" is a question about
-SQL rather than about a list comprehension.
+Two things can only be tested against a real database.
+
+A check constraint keeps the provenance record honest -- an element marked
+verified must actually carry terms, a source and a date, so "verified" cannot
+mean "somebody ticked a box". It constrains what the record may claim; it does
+not stop anything being designed with. Rights are reviewed once, before
+release.
+
+And similarity runs as a pgvector query, so "does it return sensible
+neighbours" is a question about SQL rather than about a list comprehension.
 """
 
 from __future__ import annotations
@@ -81,7 +86,7 @@ def test_a_round_tripped_element_still_renders_identically(session: Session) -> 
         assert direct.content_hash == from_database.content_hash, element.id
 
 
-# --- The licence gate, enforced by the database ------------------------------
+# --- Record integrity, enforced by the database ------------------------------
 
 
 def test_the_database_refuses_a_verified_licence_with_no_source(session: Session) -> None:
@@ -119,8 +124,9 @@ def test_the_database_refuses_a_verified_licence_with_no_date(session: Session) 
         session.flush()
 
 
-def test_an_unverified_element_is_stored_but_never_usable(session: Session) -> None:
-    """Losing a find wastes the work; printing it is the thing that must not happen."""
+def test_an_element_whose_terms_are_unknown_is_still_reachable(session: Session) -> None:
+    """Unknown terms are a worklist item for the release review, not a block.
+    Designing with something and selling it are different acts."""
     repository = ElementRepository(session)
     element = replace(
         authored.element("frame_rect_0001"),
@@ -130,12 +136,13 @@ def test_an_unverified_element_is_stored_but_never_usable(session: Session) -> N
     repository.upsert(element)
     session.flush()
 
-    assert repository.get("ingested_unchecked_0001") is not None
-    assert "ingested_unchecked_0001" not in {found.id for found in repository.usable()}
+    assert "ingested_unchecked_0001" in {found.id for found in repository.usable()}
     assert ("ingested_unchecked_0001", "internet-archive", "unverified") in repository.unverified()
 
 
-def test_a_refused_licence_is_kept_so_it_is_not_re_found(session: Session) -> None:
+def test_terms_that_forbid_sale_are_recorded_against_the_element(session: Session) -> None:
+    """Recorded so the pre-release review reads it off a line instead of
+    working it out again. The element stays available to design with."""
     repository = ElementRepository(session)
     element = replace(
         authored.element("frame_rect_0001"),
@@ -144,13 +151,16 @@ def test_a_refused_licence_is_kept_so_it_is_not_re_found(session: Session) -> No
             status=LicenceStatus.REFUSED,
             terms="CC BY-NC",
             source="internet-archive",
-            note="Non-commercial only; unusable on goods that are sold.",
+            note="Non-commercial only. Flag before release.",
         ),
     )
     repository.upsert(element)
     session.flush()
-    assert repository.get("ingested_refused_0001") is not None
-    assert "ingested_refused_0001" not in {found.id for found in repository.usable()}
+
+    stored = repository.get("ingested_refused_0001")
+    assert stored is not None
+    assert stored.licence.terms == "CC BY-NC"
+    assert "Flag before release" in stored.licence.note
 
 
 def test_the_licence_audit_is_one_query(session: Session) -> None:
@@ -167,9 +177,12 @@ def test_the_licence_audit_is_one_query(session: Session) -> None:
     audit = repository.licence_audit()
     assert audit["verified"] == len(authored.ALL)
     assert audit["unverified"] == 1
+    # The audit is the release review's worklist, not a gate: everything in it
+    # is reachable by the composer regardless of status.
+    assert len(repository.usable()) == len(authored.ALL) + 1
 
 
-def test_the_helper_builds_a_licence_that_passes_the_gate(session: Session) -> None:
+def test_the_helper_builds_a_complete_provenance_record(session: Session) -> None:
     repository = ElementRepository(session)
     element = replace(
         authored.element("symbol_star_0001"),
@@ -210,7 +223,10 @@ def test_neighbours_come_back_nearest_first(session: Session) -> None:
     assert distances == sorted(distances)
 
 
-def test_similarity_never_offers_an_unusable_element(session: Session) -> None:
+def test_similarity_searches_the_whole_archive(session: Session) -> None:
+    """Neighbours are for finding what else is like this. Hiding an element
+    because nobody has looked up its terms hides it from the search that would
+    have found it useful."""
     repository = ElementRepository(session)
     repository.sync(authored.ALL)
     repository.upsert(
@@ -222,7 +238,7 @@ def test_similarity_never_offers_an_unusable_element(session: Session) -> None:
     )
     session.flush()
     keys = {element.id for element, _ in repository.similar_to("symbol_star_0002", limit=25)}
-    assert "ingested_unchecked_star" not in keys
+    assert "ingested_unchecked_star" in keys
 
 
 def test_the_vector_index_exists_and_is_hnsw(session: Session) -> None:
