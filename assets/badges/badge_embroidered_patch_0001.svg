@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" width="180" height="180">
+  <circle cx="90" cy="90" r="82" fill="none" stroke="#222" stroke-width="8"/>
+  <circle cx="90" cy="90" r="70" fill="none" stroke="#222" stroke-width="2"/>
+  <!-- merrowed edge suggestion via dashed outer -->
+  <circle cx="90" cy="90" r="86" fill="none" stroke="#222" stroke-width="2" stroke-dasharray="3 4"/>
+  <text x="90" y="98" text-anchor="middle" font-family="sans-serif" font-size="28" font-weight="800" fill="#222">SF</text>
+</svg>

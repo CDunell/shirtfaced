@@ -1,0 +1,46 @@
+{
+  "badge_embroidered_patch_0001": {
+    "subtype": "embroidered_patch",
+    "style_tags": [
+      "label",
+      "apparel"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Carries <text> for its content; the words should be a slot the engine fills, not baked artwork."
+  },
+  "badge_flag_label_0001": {
+    "subtype": "flag_label",
+    "style_tags": [
+      "label",
+      "apparel"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Carries <text> for its content; the words should be a slot the engine fills, not baked artwork."
+  },
+  "badge_hem_tab_0001": {
+    "subtype": "hem_tab",
+    "style_tags": [
+      "label",
+      "apparel"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Carries <text> for its content; the words should be a slot the engine fills, not baked artwork."
+  },
+  "badge_woven_label_0001": {
+    "subtype": "woven_label",
+    "style_tags": [
+      "label",
+      "apparel"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "provisional": "Carries <text> for its content; the words should be a slot the engine fills, not baked artwork."
+  }
+}

@@ -1,4 +1,15 @@
 {
+  "illustration_part_all_seeing_eye_0001": {
+    "subtype": "all_seeing_eye",
+    "style_tags": [
+      "occult",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "8QXhh"
+  },
   "illustration_part_camp_chair_0001": {
     "subtype": "camp_chair",
     "style_tags": [
@@ -9,6 +20,17 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "vn4aU"
+  },
+  "illustration_part_candle_0001": {
+    "subtype": "candle",
+    "style_tags": [
+      "tattoo",
+      "occult"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "3s2J0"
   },
   "illustration_part_corrugated_iron_0001": {
     "subtype": "corrugated_iron",
@@ -21,6 +43,17 @@
     "source": "commissioned",
     "source_id": "1qBEy"
   },
+  "illustration_part_corrugated_sheet_0001": {
+    "subtype": "corrugated_sheet",
+    "style_tags": [
+      "object",
+      "workwear"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "8RGxM"
+  },
   "illustration_part_cup_0001": {
     "subtype": "cup",
     "style_tags": [
@@ -30,6 +63,17 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "N0Hgb"
+  },
+  "illustration_part_dagger_roses_banner_0001": {
+    "subtype": "dagger_roses_banner",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Almmw"
   },
   "illustration_part_eagle_0001": {
     "subtype": "eagle",
@@ -53,6 +97,28 @@
     "source": "commissioned",
     "source_id": "BGTfT"
   },
+  "illustration_part_jetty_0001": {
+    "subtype": "jetty",
+    "style_tags": [
+      "object",
+      "coast"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "hCHTi"
+  },
+  "illustration_part_laurel_wreath_0001": {
+    "subtype": "laurel_wreath",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "XwjJQ"
+  },
   "illustration_part_lightning_0001": {
     "subtype": "lightning",
     "style_tags": [
@@ -74,6 +140,49 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "Tsxso"
+  },
+  "illustration_part_moon_phases_0001": {
+    "subtype": "moon_phases",
+    "style_tags": [
+      "occult"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "cbMQp"
+  },
+  "illustration_part_panther_0001": {
+    "subtype": "panther",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "yhWdf"
+  },
+  "illustration_part_reaper_0001": {
+    "subtype": "reaper",
+    "style_tags": [
+      "occult",
+      "horror"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "nZpod"
+  },
+  "illustration_part_rose_cross_0001": {
+    "subtype": "rose_cross",
+    "style_tags": [
+      "occult",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "zP2LH"
   },
   "illustration_part_rose_dagger_0001": {
     "subtype": "rose_dagger",
@@ -130,6 +239,17 @@
     "source": "commissioned",
     "source_id": "xxQHg"
   },
+  "illustration_part_thorn_branch_0001": {
+    "subtype": "thorn_branch",
+    "style_tags": [
+      "tattoo",
+      "occult"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "Q98W6"
+  },
   "illustration_part_winged_hourglass_0001": {
     "subtype": "winged_hourglass",
     "style_tags": [
@@ -140,6 +260,17 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "Z5TA0"
+  },
+  "illustration_part_wolf_0001": {
+    "subtype": "wolf",
+    "style_tags": [
+      "tattoo",
+      "traditional"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "elIU2"
   },
   "illustration_part_work_boot_0001": {
     "subtype": "work_boot",

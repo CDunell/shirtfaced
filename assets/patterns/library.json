@@ -21,6 +21,39 @@
     "source": "commissioned",
     "source_id": "Hbsn1"
   },
+  "pattern_chain_repeat_0001": {
+    "subtype": "chain_repeat",
+    "style_tags": [
+      "geometric",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "kbL5h"
+  },
+  "pattern_diamond_mesh_0001": {
+    "subtype": "diamond_mesh",
+    "style_tags": [
+      "geometric",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "St9Hv"
+  },
+  "pattern_floral_repeat_0001": {
+    "subtype": "floral_repeat",
+    "style_tags": [
+      "floral",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "sfEKy"
+  },
   "pattern_gingham_0001": {
     "subtype": "gingham",
     "style_tags": [
@@ -42,5 +75,49 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "LX0V0"
+  },
+  "pattern_tapa_geometric_0001": {
+    "subtype": "tapa_geometric",
+    "style_tags": [
+      "geometric",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "8mm5f"
+  },
+  "pattern_tartan_0001": {
+    "subtype": "tartan",
+    "style_tags": [
+      "classic",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "q4Gk5"
+  },
+  "pattern_ticking_stripe_0001": {
+    "subtype": "ticking_stripe",
+    "style_tags": [
+      "classic",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "9cRAs"
+  },
+  "pattern_topographic_0001": {
+    "subtype": "topographic",
+    "style_tags": [
+      "contour",
+      "repeat"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "C7GTE"
   }
 }

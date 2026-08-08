@@ -1,4 +1,14 @@
 {
+  "texture_brush_stroke_0001": {
+    "subtype": "brush_stroke",
+    "style_tags": [
+      "distressed"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "64UlN"
+  },
   "texture_cracked_plastisol_0001": {
     "subtype": "cracked_plastisol",
     "style_tags": [
@@ -9,6 +19,16 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "gvadp"
+  },
+  "texture_fine_grain_0001": {
+    "subtype": "fine_grain",
+    "style_tags": [
+      "paper"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "mzadN"
   },
   "texture_grunge_block_0001": {
     "subtype": "grunge_block",
@@ -30,6 +50,16 @@
     "source": "commissioned",
     "source_id": "SO7yU"
   },
+  "texture_grunge_smear_0001": {
+    "subtype": "grunge_smear",
+    "style_tags": [
+      "distressed"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "QzFNp"
+  },
   "texture_ink_loss_0001": {
     "subtype": "ink_loss",
     "style_tags": [
@@ -41,6 +71,16 @@
     "source": "commissioned",
     "source_id": "0GjWY"
   },
+  "texture_paper_grain_0001": {
+    "subtype": "paper_grain",
+    "style_tags": [
+      "paper"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "pdmcg"
+  },
   "texture_spray_stipple_0001": {
     "subtype": "spray_stipple",
     "style_tags": [
@@ -50,6 +90,17 @@
     "ink_max": 2,
     "source": "commissioned",
     "source_id": "prCgB"
+  },
+  "texture_torn_edge_0001": {
+    "subtype": "torn_edge",
+    "style_tags": [
+      "distressed",
+      "paper"
+    ],
+    "ink_min": 1,
+    "ink_max": 2,
+    "source": "commissioned",
+    "source_id": "6H3PQ"
   },
   "texture_wash_0001": {
     "subtype": "wash",

@@ -222,6 +222,10 @@ def print_effects() -> tuple[Element, ...]:
     return load_raster_folder(LIBRARY / "print_effects", "print_effect")
 
 
+def badges() -> tuple[Element, ...]:
+    return load_folder(LIBRARY / "badges", "badge")
+
+
 def flash() -> tuple[Element, ...]:
     """Tattoo and occult flash, which arrives raster and is vectorised later."""
     return load_raster_folder(LIBRARY / "flash", "illustration_part")
@@ -238,4 +242,5 @@ def all_drawn() -> tuple[Element, ...]:
         + patterns()
         + print_effects()
         + flash()
+        + badges()
     )
