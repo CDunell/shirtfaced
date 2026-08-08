@@ -274,6 +274,80 @@ def divider(width: float, height: float, taper: float = 0.5) -> str:
     )
 
 
+def diamond_rule(width: float, height: float, bar: float = 0.34) -> str:
+    """A rule closed at each end by a diamond.
+
+    One outline rather than a bar plus two lozenges, because three subpaths at
+    the same fill would need winding rules to stay separate and would break
+    apart the moment anything scaled them independently.
+    """
+    middle = height / 2
+    thin = height * bar / 2
+    point = height * 0.9
+    return _path(
+        [
+            _move(point, middle - thin),
+            _line(width - point, middle - thin),
+            _line(width - point / 2, 0),
+            _line(width, middle),
+            _line(width - point / 2, height),
+            _line(width - point, middle + thin),
+            _line(point, middle + thin),
+            _line(point / 2, height),
+            _line(0, middle),
+            _line(point / 2, 0),
+            "Z",
+        ]
+    )
+
+
+def double_rule(width: float, height: float, heavy: float = 0.42) -> str:
+    """Two rules of unequal weight, the heavier above.
+
+    Equal weights read as a mistake -- the eye looks for which one is the rule
+    and which is the echo. The gap carries the same weight as the thin line, so
+    the group holds together as one object at distance.
+    """
+    thick = height * heavy
+    thin = height * (1.0 - heavy) / 2
+    lower = height - thin
+    return _path(
+        [
+            _move(0, 0),
+            _line(width, 0),
+            _line(width, thick),
+            _line(0, thick),
+            "Z",
+            _move(0, lower),
+            _line(width, lower),
+            _line(width, height),
+            _line(0, height),
+            "Z",
+        ]
+    )
+
+
+def label_bar(width: float, height: float, chamfer: float = 0.34) -> str:
+    """A filled bar with cut corners, for a short line of type in knockout.
+
+    The chamfer is what separates it from a plain rectangle at a glance, and it
+    is proportional to the height rather than the width so a long label and a
+    short one keep the same end.
+    """
+    cut = height * chamfer
+    return _path(
+        [
+            _move(cut, 0),
+            _line(width - cut, 0),
+            _line(width, height / 2),
+            _line(width - cut, height),
+            _line(cut, height),
+            _line(0, height / 2),
+            "Z",
+        ]
+    )
+
+
 def corner_mark(size: float, weight: float = 0.18) -> str:
     """An L for a corner. Four of these frame a composition without a box."""
     t = size * weight

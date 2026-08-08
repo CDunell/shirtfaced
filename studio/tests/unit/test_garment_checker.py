@@ -50,6 +50,33 @@ def test_an_arc_bulges_off_its_chord() -> None:
     assert max(abs(p[1] - 50) for p in points) > 10, "arc drawn as a straight line"
 
 
+def test_two_arcs_make_a_circle_not_a_lens() -> None:
+    """The sweep flag has to flip the bulge, or every circle is a rugby ball.
+
+    A circle is normally drawn as two semicircles that must curve opposite
+    ways. Ignoring the flag bulged both the same way, which is how a supplied
+    ute's wheels came to look as though they had merged into the body.
+    """
+    import math
+
+    points = check_garment._flatten("M 0 10 A 10 10 0 1 1 20 10 A 10 10 0 1 1 0 10 Z")[0]
+    centre_x = sum(p[0] for p in points) / len(points)
+    centre_y = sum(p[1] for p in points) / len(points)
+    radii = [math.hypot(x - centre_x, y - centre_y) for x, y in points]
+
+    assert min(radii) > 9.0, "circle collapsed towards its chord"
+    assert max(radii) < 11.0, "circle bulged past its radius"
+
+
+def test_an_arc_honours_its_sweep_direction() -> None:
+    """The same endpoints with opposite sweeps must curve opposite ways."""
+    one = check_garment._flatten("M 0 50 A 50 50 0 0 1 100 50 Z")[0]
+    other = check_garment._flatten("M 0 50 A 50 50 0 0 0 100 50 Z")[0]
+
+    assert min(p[1] for p in one) < 50, "sweep 1 did not curve upwards"
+    assert max(p[1] for p in other) > 50, "sweep 0 did not curve downwards"
+
+
 def test_a_straight_path_stays_straight() -> None:
     """The subdivision must not invent curvature where there is none."""
     points = check_garment._flatten("M 0 0 L 100 0 L 100 100 L 0 100 Z")[0]

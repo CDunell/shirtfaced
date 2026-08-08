@@ -244,29 +244,74 @@ def _quadratic(p0, c, p2, steps: int = 14) -> list[tuple[float, float]]:
     return out
 
 
-def _elliptical(start, radius_x, radius_y, end, steps: int = 16) -> list[tuple[float, float]]:
-    """Good enough for looking at: a half-ellipse bulging off the chord.
+def _elliptical(
+    start,
+    radius_x,
+    radius_y,
+    rotation,
+    large_arc,
+    sweep,
+    end,
+    steps: int = 24,
+) -> list[tuple[float, float]]:
+    """The SVG spec's endpoint-to-centre arc conversion.
 
-    Not the SVG spec's parameterisation. This tool exists to show whether a
-    shape looks right, and a curve drawn as a straight line -- which is what
-    this did before -- makes every dome read as a triangle.
+    The previous version bulged off the chord in one fixed direction and
+    ignored the sweep flag entirely, so the standard two-arc circle -- two
+    semicircles that must bulge opposite ways -- came out as a lens. Every
+    circle in the archive rendered as a rugby ball and the wheels on a
+    supplied ute looked like they had merged into the body.
+
+    This tool decides whether files get sent back, so it does the real
+    conversion rather than something that looks close on the easy cases.
     """
     import math
 
-    dx, dy = end[0] - start[0], end[1] - start[1]
-    length = math.hypot(dx, dy) or 1.0
-    normal = (-dy / length, dx / length)
-    bulge = max(radius_x, radius_y) * 0.55
+    rx, ry = abs(radius_x), abs(radius_y)
+    if rx == 0 or ry == 0 or start == end:
+        return [end]
+
+    phi = math.radians(rotation)
+    cos_phi, sin_phi = math.cos(phi), math.sin(phi)
+
+    dx2 = (start[0] - end[0]) / 2.0
+    dy2 = (start[1] - end[1]) / 2.0
+    x1 = cos_phi * dx2 + sin_phi * dy2
+    y1 = -sin_phi * dx2 + cos_phi * dy2
+
+    # Radii too small to span the chord get scaled up, per the spec, rather
+    # than producing a negative under the root below.
+    lam = (x1 * x1) / (rx * rx) + (y1 * y1) / (ry * ry)
+    if lam > 1:
+        scale = math.sqrt(lam)
+        rx *= scale
+        ry *= scale
+
+    numerator = rx * rx * ry * ry - rx * rx * y1 * y1 - ry * ry * x1 * x1
+    denominator = rx * rx * y1 * y1 + ry * ry * x1 * x1
+    factor = math.sqrt(max(numerator / denominator, 0.0))
+    if large_arc == sweep:
+        factor = -factor
+    cx1 = factor * rx * y1 / ry
+    cy1 = -factor * ry * x1 / rx
+
+    cx = cos_phi * cx1 - sin_phi * cy1 + (start[0] + end[0]) / 2.0
+    cy = sin_phi * cx1 + cos_phi * cy1 + (start[1] + end[1]) / 2.0
+
+    theta = math.atan2((y1 - cy1) / ry, (x1 - cx1) / rx)
+    theta_end = math.atan2((-y1 - cy1) / ry, (-x1 - cx1) / rx)
+    delta = theta_end - theta
+    if sweep and delta < 0:
+        delta += 2 * math.pi
+    elif not sweep and delta > 0:
+        delta -= 2 * math.pi
+
     out = []
     for step in range(1, steps + 1):
-        t = step / steps
-        arc = math.sin(math.pi * t) * bulge
-        out.append(
-            (
-                start[0] + dx * t + normal[0] * arc,
-                start[1] + dy * t + normal[1] * arc,
-            )
-        )
+        angle = theta + delta * step / steps
+        px = rx * math.cos(angle)
+        py = ry * math.sin(angle)
+        out.append((cos_phi * px - sin_phi * py + cx, sin_phi * px + cos_phi * py + cy))
     return out
 
 
@@ -304,7 +349,9 @@ def _flatten(path_data: str) -> list[list[tuple[float, float]]]:
         elif token == "A":
             end = (float(tokens[index + 6]), float(tokens[index + 7]))
             radius_x, radius_y = float(tokens[index + 1]), float(tokens[index + 2])
-            current.extend(_elliptical(point, radius_x, radius_y, end))
+            rotation = float(tokens[index + 3])
+            large_arc, sweep = int(float(tokens[index + 4])), int(float(tokens[index + 5]))
+            current.extend(_elliptical(point, radius_x, radius_y, rotation, large_arc, sweep, end))
             point = end
             index += 8
         elif token == "Q":

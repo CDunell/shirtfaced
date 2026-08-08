@@ -183,6 +183,12 @@ def _frame_path(element: Element, width: float, height: float) -> str:
         return geometry.chevron(width, height)
     if recipe == "ornament.divider":
         return geometry.divider(width, height)
+    if recipe == "ornament.diamond_rule":
+        return geometry.diamond_rule(width, height)
+    if recipe == "ornament.double_rule":
+        return geometry.double_rule(width, height)
+    if recipe == "ornament.label_bar":
+        return geometry.label_bar(width, height)
     if recipe == "ornament.corner":
         return geometry.corner_mark(min(width, height))
     if recipe == "ornament.bracket":
