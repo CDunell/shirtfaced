@@ -15,13 +15,16 @@ import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseu
 import { ApiError, fetchPhotos, uploadPhoto, type Photo } from "../api/client";
 import { loadCanvasImage } from "../lib/loadCanvasImage";
 import {
+  approveSocialDerivative,
   approveSocialPost,
+  cancelSocialJob,
   fetchSocialLive,
   fetchSocialPosts,
   fetchSocialQueue,
   holdSocialJob,
   publishSocialJobNow,
   queueSocialPost,
+  rejectSocialDerivative,
   rejectSocialPost,
   saveSocialPost,
   scheduleSocialJob,
@@ -174,6 +177,14 @@ function localDate(value: string | null): string {
   return new Date(value).toLocaleString();
 }
 
+function reviewTag(state: string): React.JSX.Element {
+  return (
+    <Tag closeable={false} kind={state === "approved" ? TAG_KIND.positive : TAG_KIND.neutral}>
+      {state.replace("_", " ")}
+    </Tag>
+  );
+}
+
 export function SocialBench(): React.JSX.Element {
   const [css, theme] = useStyletron();
   const [view, setView] = useState<SocialView>("create");
@@ -230,16 +241,10 @@ export function SocialBench(): React.JSX.Element {
           const first = found[0];
           if (first) setPhotoValue([{ id: first.id, label: first.label }]);
         })
-        .catch((cause: unknown) => {
-          setError(describe(cause));
-        });
-      void refreshPublishing().catch((cause: unknown) => {
-        setError(describe(cause));
-      });
+        .catch((cause: unknown) => setError(describe(cause)));
+      void refreshPublishing().catch((cause: unknown) => setError(describe(cause)));
     }, 0);
-    return () => {
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [refreshPhotos, refreshPublishing]);
 
   const go = useCallback(async () => {
@@ -299,6 +304,7 @@ export function SocialBench(): React.JSX.Element {
       });
       setSavedId(saved.id);
       await refreshPublishing();
+      setView("approval");
     } catch (cause) {
       setError(describe(cause));
     } finally {
@@ -349,8 +355,7 @@ export function SocialBench(): React.JSX.Element {
       {view === "create" ? (
         <>
           <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
-            Pick the asset. Pick the outputs. GO makes the package; Save for review makes it
-            durable.
+            Pick the asset. Pick the outputs. GO makes the package; Save for review freezes the exact files.
           </ParagraphSmall>
           <div
             className={css({
@@ -413,14 +418,7 @@ export function SocialBench(): React.JSX.Element {
                   />
                 ) : null}
                 {photo ? (
-                  <div
-                    className={css({
-                      display: "flex",
-                      gap: "6px",
-                      flexWrap: "wrap",
-                      marginTop: "8px",
-                    })}
-                  >
+                  <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px" })}>
                     <Tag closeable={false} kind={TAG_KIND.neutral}>
                       {String(photo.width)}×{String(photo.height)}
                     </Tag>
@@ -469,8 +467,8 @@ export function SocialBench(): React.JSX.Element {
                   ))}
                 </div>
                 <FormControl
-                  label="Caption"
-                  caption="Optional now; Marketing Engine/copy generation can plug in later."
+                  label="Publishing caption"
+                  caption="Sent with the post. It is not burned into the image/video."
                 >
                   <textarea
                     value={caption}
@@ -492,9 +490,7 @@ export function SocialBench(): React.JSX.Element {
                   disabled={!photo || selectedOutputs.size === 0}
                   isLoading={busy}
                   onClick={() => void go()}
-                  overrides={{
-                    BaseButton: { style: { width: "100%", minHeight: "52px", fontWeight: 700 } },
-                  }}
+                  overrides={{ BaseButton: { style: { width: "100%", minHeight: "52px", fontWeight: 700 } } }}
                 >
                   GO
                 </Button>
@@ -503,56 +499,28 @@ export function SocialBench(): React.JSX.Element {
           </div>
           {exports.length > 0 ? (
             <div className={css({ marginTop: "22px" })}>
-              <div
-                className={css({
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "10px",
-                  flexWrap: "wrap",
-                })}
-              >
+              <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px", flexWrap: "wrap" })}>
                 <div>
                   <HeadingSmall marginBottom={0}>Ready</HeadingSmall>
-                  <ParagraphXSmall marginTop={0}>
-                    {resolvedTheme ? `Resolved ${resolvedTheme}.` : ""}
-                  </ParagraphXSmall>
+                  <ParagraphXSmall marginTop={0}>{resolvedTheme ? `Resolved ${resolvedTheme}.` : ""}</ParagraphXSmall>
                 </div>
-                <Button
-                  disabled={Boolean(savedId)}
-                  isLoading={busy}
-                  onClick={() => void saveForReview()}
-                >
+                <Button disabled={Boolean(savedId)} isLoading={busy} onClick={() => void saveForReview()}>
                   {savedId ? "Saved for review" : "Save for review"}
                 </Button>
               </div>
-              <div
-                className={css({
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
-                  gap: "12px",
-                  marginTop: "10px",
-                })}
-              >
+              <div className={css({ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))", gap: "12px", marginTop: "10px" })}>
                 {exports.map((item) => (
                   <Card key={item.key}>
                     <StyledBody>
                       <img
                         src={item.url}
                         alt={item.label}
-                        className={css({
-                          width: "100%",
-                          aspectRatio: `${String(item.width)} / ${String(item.height)}`,
-                          objectFit: "cover",
-                          borderRadius: "10px",
-                        })}
+                        className={css({ width: "100%", aspectRatio: `${String(item.width)} / ${String(item.height)}`, objectFit: "cover", borderRadius: "10px" })}
                       />
                       <LabelSmall>{item.label}</LabelSmall>
                       <ParagraphXSmall>{item.filename}</ParagraphXSmall>
                       <a href={item.url} download={item.filename}>
-                        <Button size={SIZE.mini} kind={BUTTON_KIND.secondary}>
-                          Download
-                        </Button>
+                        <Button size={SIZE.mini} kind={BUTTON_KIND.secondary}>Download</Button>
                       </a>
                     </StyledBody>
                   </Card>
@@ -571,71 +539,48 @@ export function SocialBench(): React.JSX.Element {
             approval.map((post) => (
               <Card key={post.id}>
                 <StyledBody>
-                  <div
-                    className={css({
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: "12px",
-                      flexWrap: "wrap",
-                    })}
-                  >
+                  <div className={css({ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", alignItems: "flex-start" })}>
                     <div>
                       <LabelSmall>{post.source_label}</LabelSmall>
-                      <ParagraphXSmall marginTop={0}>
-                        {post.theme} · {post.branding} · {post.state}
-                      </ParagraphXSmall>
+                      <ParagraphXSmall marginTop={0}>{post.theme} · {post.branding} · {post.state}</ParagraphXSmall>
                     </div>
                     <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
                       {post.state === "review_required" ? (
                         <>
-                          <Button
-                            size={SIZE.compact}
-                            disabled={busy}
-                            onClick={() => void act(() => approveSocialPost(post.id))}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size={SIZE.compact}
-                            kind={BUTTON_KIND.secondary}
-                            disabled={busy}
-                            onClick={() => void act(() => rejectSocialPost(post.id))}
-                          >
-                            Reject
-                          </Button>
+                          <Button size={SIZE.compact} disabled={busy} onClick={() => void act(() => approveSocialPost(post.id))}>Approve all</Button>
+                          <Button size={SIZE.compact} kind={BUTTON_KIND.secondary} disabled={busy} onClick={() => void act(() => rejectSocialPost(post.id))}>Reject all</Button>
                         </>
                       ) : (
-                        <Button
-                          size={SIZE.compact}
-                          disabled={busy}
-                          onClick={() => void act(() => queueSocialPost(post.id))}
-                        >
-                          Queue recommended
-                        </Button>
+                        <Button size={SIZE.compact} disabled={busy} onClick={() => void act(() => queueSocialPost(post.id))}>Queue approved outputs</Button>
                       )}
                     </div>
                   </div>
-                  {post.caption ? <ParagraphSmall>{post.caption}</ParagraphSmall> : null}
-                  <div
-                    className={css({
-                      display: "flex",
-                      gap: "8px",
-                      overflowX: "auto",
-                      marginTop: "8px",
-                    })}
-                  >
+                  {post.caption ? (
+                    <div className={css({ marginTop: "8px" })}>
+                      <LabelSmall>Publishing caption</LabelSmall>
+                      <ParagraphSmall marginTop={0}>{post.caption}</ParagraphSmall>
+                    </div>
+                  ) : null}
+                  <div className={css({ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "10px", marginTop: "12px" })}>
                     {post.derivatives.map((item) => (
-                      <img
-                        key={item.id}
-                        src={item.url}
-                        alt={item.output_key}
-                        className={css({
-                          width: "120px",
-                          height: "150px",
-                          objectFit: "cover",
-                          borderRadius: "8px",
-                        })}
-                      />
+                      <div key={item.id} className={css({ border: `1px solid ${theme.colors.borderOpaque}`, borderRadius: "12px", padding: "8px" })}>
+                        <img
+                          src={item.url}
+                          alt={item.output_key}
+                          className={css({ width: "100%", aspectRatio: `${String(item.width)} / ${String(item.height)}`, objectFit: "cover", borderRadius: "8px" })}
+                        />
+                        <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", marginTop: "8px", flexWrap: "wrap" })}>
+                          <LabelSmall>{item.output_key}</LabelSmall>
+                          {reviewTag(item.review_state)}
+                        </div>
+                        <ParagraphXSmall marginTop={theme.sizing.scale100}>{item.filename}</ParagraphXSmall>
+                        {item.review_state === "review_required" ? (
+                          <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+                            <Button size={SIZE.mini} disabled={busy} onClick={() => void act(() => approveSocialDerivative(item.id))}>Approve</Button>
+                            <Button size={SIZE.mini} kind={BUTTON_KIND.secondary} disabled={busy} onClick={() => void act(() => rejectSocialDerivative(item.id))}>Reject</Button>
+                          </div>
+                        ) : null}
+                      </div>
                     ))}
                   </div>
                 </StyledBody>
@@ -653,34 +598,27 @@ export function SocialBench(): React.JSX.Element {
             queue.map((job) => (
               <Card key={job.id}>
                 <StyledBody>
-                  <LabelSmall>{job.channel}</LabelSmall>
-                  <ParagraphXSmall>
-                    {job.state} · {localDate(job.scheduled_at)} ·{" "}
-                    {job.locked ? "locked" : "recommended"}
-                  </ParagraphXSmall>
-                  <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+                  <div className={css({ display: "grid", gridTemplateColumns: "96px 1fr", gap: "12px", "@media screen and (max-width: 520px)": { gridTemplateColumns: "72px 1fr" } })}>
+                    <img src={job.derivative_url} alt={job.output_key} className={css({ width: "100%", aspectRatio: "4 / 5", objectFit: "cover", borderRadius: "8px" })} />
+                    <div>
+                      <LabelSmall>{job.source_label}</LabelSmall>
+                      <ParagraphXSmall marginTop={0}>{job.channel} · {job.output_key}</ParagraphXSmall>
+                      <ParagraphXSmall>{job.state} · {localDate(job.scheduled_at)} · {job.locked ? "manual" : "recommended"}</ParagraphXSmall>
+                      {job.caption ? <ParagraphXSmall>{job.caption}</ParagraphXSmall> : null}
+                    </div>
+                  </div>
+                  <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "10px" })}>
                     <input
                       type="datetime-local"
                       aria-label="Schedule time"
                       onChange={(event) => {
                         const value = event.target.value;
-                        if (value)
-                          void act(() => scheduleSocialJob(job.id, new Date(value).toISOString()));
+                        if (value) void act(() => scheduleSocialJob(job.id, new Date(value).toISOString()));
                       }}
                     />
-                    <Button
-                      size={SIZE.mini}
-                      onClick={() => void act(() => publishSocialJobNow(job.id))}
-                    >
-                      Fake publish now
-                    </Button>
-                    <Button
-                      size={SIZE.mini}
-                      kind={BUTTON_KIND.secondary}
-                      onClick={() => void act(() => holdSocialJob(job.id))}
-                    >
-                      Hold
-                    </Button>
+                    <Button size={SIZE.mini} onClick={() => void act(() => publishSocialJobNow(job.id))}>Fake publish now</Button>
+                    <Button size={SIZE.mini} kind={BUTTON_KIND.secondary} onClick={() => void act(() => holdSocialJob(job.id))}>Hold</Button>
+                    <Button size={SIZE.mini} kind={BUTTON_KIND.secondary} onClick={() => void act(() => cancelSocialJob(job.id))}>Remove</Button>
                   </div>
                 </StyledBody>
               </Card>
@@ -697,9 +635,15 @@ export function SocialBench(): React.JSX.Element {
             live.map((job) => (
               <Card key={job.id}>
                 <StyledBody>
-                  <LabelSmall>{job.channel}</LabelSmall>
-                  <ParagraphXSmall>{localDate(job.published_at)}</ParagraphXSmall>
-                  <ParagraphXSmall>{job.external_post_id}</ParagraphXSmall>
+                  <div className={css({ display: "grid", gridTemplateColumns: "96px 1fr", gap: "12px" })}>
+                    <img src={job.derivative_url} alt={job.output_key} className={css({ width: "100%", aspectRatio: "4 / 5", objectFit: "cover", borderRadius: "8px" })} />
+                    <div>
+                      <LabelSmall>{job.source_label}</LabelSmall>
+                      <ParagraphXSmall marginTop={0}>{job.channel} · {job.output_key}</ParagraphXSmall>
+                      <ParagraphXSmall>{localDate(job.published_at)}</ParagraphXSmall>
+                      <ParagraphXSmall>{job.external_post_id}</ParagraphXSmall>
+                    </div>
+                  </div>
                 </StyledBody>
               </Card>
             ))
