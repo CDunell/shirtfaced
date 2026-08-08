@@ -252,6 +252,27 @@ def assemble(
 
         box_width = width_mm * part.width
         box_height = height_mm * part.height
+
+        # Raster elements -- textures, halftones, scanned flash -- carry no path
+        # data at all. They were ingested and then unreachable: 145 of 226
+        # elements had neither geometry nor a recipe, so the assembler skipped
+        # every one of them. Drawn as an image reference rather than converted,
+        # because tracing a scan of a wolf's head produces a worse wolf.
+        if not element.geometry and not element.recipe and element.source_file:
+            drawn.append(
+                (
+                    part.layer,
+                    order,
+                    f'<g transform="translate({num(width_mm * part.left)} '
+                    f'{num(height_mm * part.top)})">'
+                    f'<image href="/{element.source_file.replace(chr(92), "/")}" '
+                    f'width="{num(box_width)}" height="{num(box_height)}" '
+                    f'preserveAspectRatio="xMidYMid meet"/></g>',
+                )
+            )
+            chosen[part.role] = element.id
+            continue
+
         path = _frame_path(element, box_width, box_height)
         if not path:
             continue
