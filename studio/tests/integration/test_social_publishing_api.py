@@ -171,6 +171,7 @@ def test_only_approved_derivatives_enter_the_publication_queue(
         "approved",
         "rejected",
     ]
+    assert reviewed["derivatives"][1]["rejection_reason"] == "Wrong crop"
 
     queued = client.post(
         f"/api/social/posts/{package['id']}/queue",
