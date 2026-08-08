@@ -19,6 +19,21 @@ class FakeImage {
   }
 }
 
+function responseWithBlob(blob: Blob): Response {
+  return {
+    ok: true,
+    status: 200,
+    blob: vi.fn(async () => blob),
+  } as unknown as Response;
+}
+
+function failedResponse(status: number): Response {
+  return {
+    ok: false,
+    status,
+  } as Response;
+}
+
 describe("loadCanvasImage", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -29,9 +44,7 @@ describe("loadCanvasImage", () => {
     const blob = new Blob(["webp-bytes"], { type: "image/webp" });
     const fetchMock = vi
       .spyOn(globalThis, "fetch")
-      .mockResolvedValue(
-        new Response(blob, { status: 200, headers: { "Content-Type": "image/webp" } }),
-      );
+      .mockResolvedValue(responseWithBlob(blob));
     vi.stubGlobal("Image", FakeImage);
     const create = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:studio-photo");
     const revoke = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => undefined);
@@ -48,7 +61,7 @@ describe("loadCanvasImage", () => {
   });
 
   it("reports an HTTP failure before attempting image decode", async () => {
-    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("missing", { status: 404 }));
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(failedResponse(404));
     await expect(loadCanvasImage("/api/photos/missing/image")).rejects.toThrow("(404)");
   });
 });
