@@ -26,7 +26,10 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.drop_constraint("ck_archive_elements_recipe_xor_geometry", "archive_elements", type_="check")
+    # Short name. The metadata convention is ck_%(table_name)s_%(constraint_name)s
+    # and alembic applies it here too, so passing an already-qualified name gets
+    # it prefixed a second time -- the same trap 0015 exists to clean up after.
+    op.drop_constraint("recipe_xor_geometry", "archive_elements", type_="check")
     op.create_check_constraint(
         "recipe_or_geometry_not_both",
         "archive_elements",
@@ -35,9 +38,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_constraint(
-        "ck_archive_elements_recipe_or_geometry_not_both", "archive_elements", type_="check"
-    )
+    op.drop_constraint("recipe_or_geometry_not_both", "archive_elements", type_="check")
     op.create_check_constraint(
         "recipe_xor_geometry",
         "archive_elements",
