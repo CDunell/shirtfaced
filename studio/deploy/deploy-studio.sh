@@ -83,6 +83,39 @@ say "Syncing the element archive"
 # licence-verified, since an unusable element is work nobody can reach.
 ./.venv/bin/python -m app.cli sync-archive
 
+say "Checking Social render assets"
+# These are the exact files SocialBench can request today. A deploy with any of
+# them missing would leave GO half-working, so stop before restarting production.
+SOCIAL_ROOT="$ROOT/public/social-assets/v3"
+required_social_assets=(
+  light-corner-mark-4x5.svg
+  dark-corner-mark-4x5.svg
+  adaptive-corner-mark-4x5.svg
+  light-feed-4x5.svg
+  dark-feed-4x5.svg
+  adaptive-feed-badge-4x5.svg
+  light-title-bug-9x16.svg
+  dark-title-bug-9x16.svg
+  light-reel-9x16.svg
+  dark-reel-9x16.svg
+  adaptive-reel-badge-9x16.svg
+)
+for asset in "${required_social_assets[@]}"; do
+  if [ ! -s "$SOCIAL_ROOT/$asset" ]; then
+    echo "Missing Social render asset: $SOCIAL_ROOT/$asset" >&2
+    exit 1
+  fi
+done
+./.venv/bin/python - <<'PY'
+from pathlib import Path
+from xml.etree import ElementTree
+
+root = Path("public/social-assets/v3")
+for path in root.glob("*.svg"):
+    ElementTree.parse(path)
+print("Social render assets present and valid SVG XML.")
+PY
+
 say "Building the interface"
 if [ -d web ]; then
   ( cd web && npm install --silent && npm run build --silent )
