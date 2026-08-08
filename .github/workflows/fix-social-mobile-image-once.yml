@@ -1,4 +1,5 @@
 name: Fix Social mobile image once
+# one-shot mobile WebP/canvas repair
 
 on:
   push:
@@ -32,7 +33,6 @@ jobs:
               raise SystemExit('old loadImage helper not found')
           s = s.replace(old_fn, '')
           s = s.replace('const source = await loadImage(photo.url);', 'const source = await loadCanvasImage(photo.url);')
-          # Overlay SVGs are static public assets and should keep the simple direct loader.
           marker = 'function cover(\n'
           direct_loader = '''function loadOverlayImage(url: string): Promise<HTMLImageElement> {\n  return new Promise((resolve, reject) => {\n    const image = new Image();\n    image.onload = () => resolve(image);\n    image.onerror = () => reject(new Error("A Shirtfaced overlay could not be loaded."));\n    image.src = url;\n  });\n}\n\n'''
           pos = s.index(marker)
