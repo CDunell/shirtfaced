@@ -61,6 +61,7 @@ jobs:
       # browser-specific rasterisation path.
       - name: Build Social assets
         run: |
+          node scripts/prepare-social-brand-sources.mjs
           node scripts/build-social-assets.mjs
           test -s public/social-assets/v3/light-feed-4x5.svg
           test -s public/social-assets/v3/dark-feed-4x5.svg
