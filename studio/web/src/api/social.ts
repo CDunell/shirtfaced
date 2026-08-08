@@ -2,13 +2,7 @@ import { ApiError } from "./client";
 
 export type SocialPostState = "review_required" | "approved" | "rejected" | "queued" | "live";
 export type PublicationState =
-  | "queued"
-  | "scheduled"
-  | "held"
-  | "publishing"
-  | "published"
-  | "failed"
-  | "cancelled";
+  "queued" | "scheduled" | "held" | "publishing" | "published" | "failed" | "cancelled";
 
 export interface SocialDerivative {
   id: string;
@@ -63,7 +57,10 @@ export interface LocalSocialDerivative {
 }
 
 async function fail(response: Response): Promise<never> {
-  const body = (await response.clone().json().catch(() => null)) as { detail?: unknown } | null;
+  const body = (await response
+    .clone()
+    .json()
+    .catch(() => null)) as { detail?: unknown } | null;
   const detail = typeof body?.detail === "string" ? body.detail : null;
   throw new ApiError(
     response.status,
@@ -103,7 +100,8 @@ export async function saveSocialPost(input: {
       })),
     ),
   );
-  for (const derivative of input.derivatives) body.append("files", derivative.blob, derivative.filename);
+  for (const derivative of input.derivatives)
+    body.append("files", derivative.blob, derivative.filename);
   return await json<SocialPost>("/api/social/posts", { method: "POST", body });
 }
 
