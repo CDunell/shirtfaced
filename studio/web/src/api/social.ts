@@ -3,13 +3,7 @@ import { ApiError } from "./client";
 export type SocialPostState = "review_required" | "approved" | "rejected" | "queued" | "live";
 export type SocialDerivativeReviewState = "review_required" | "approved" | "rejected";
 export type PublicationState =
-  | "queued"
-  | "scheduled"
-  | "held"
-  | "publishing"
-  | "published"
-  | "failed"
-  | "cancelled";
+  "queued" | "scheduled" | "held" | "publishing" | "published" | "failed" | "cancelled";
 
 export interface SocialDerivative {
   id: string;

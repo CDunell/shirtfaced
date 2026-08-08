@@ -273,7 +273,9 @@ async def create_post(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such source photo.")
 
     try:
-        metadata = [DerivativeInput.model_validate(item) for item in json.loads(derivative_metadata)]
+        metadata = [
+            DerivativeInput.model_validate(item) for item in json.loads(derivative_metadata)
+        ]
     except (ValueError, TypeError) as error:
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_ENTITY, "Invalid derivative metadata."
