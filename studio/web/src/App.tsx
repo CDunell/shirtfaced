@@ -92,13 +92,22 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
             <span className={css({ color: theme.colors.contentTertiary })}>/ studio</span>
           </span>
 
-          <nav className={css({ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" })}>
+          <nav
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              flexWrap: "wrap",
+            })}
+          >
             {VIEWS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 aria-current={view === item.id ? "page" : undefined}
-                onClick={() => setView(item.id)}
+                onClick={() => {
+                  setView(item.id);
+                }}
                 className={`press ${navItem(view === item.id)}`}
               >
                 {item.label}
@@ -155,7 +164,9 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <SocialBench />
         ) : (
           <>
-            <h1 className={`display ${css({ fontSize: "40px", margin: "0 0 8px" })}`}>Dashboard</h1>
+            <h1 className={`display ${css({ fontSize: "40px", margin: "0 0 8px" })}`}>
+              Dashboard
+            </h1>
             <ParagraphMedium color={theme.colors.contentSecondary} marginTop={0}>
               A private production tool for building coherent Shirtfaced photographic worlds.
             </ParagraphMedium>
