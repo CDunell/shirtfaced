@@ -56,7 +56,17 @@ def _base_zone(key: str) -> str:
     return key
 
 
-STRUCTURE_IDS = {"garment-outline", "garment-collar", "garment-seams"}
+STRUCTURE_IDS = {
+    "garment-outline",
+    "garment-collar",
+    "garment-seams",
+    # Headwear parts. A brim, a peak and a knitted cuff are structure, not
+    # print zones, and reporting them as unknown ids is noise.
+    "garment-brim",
+    "garment-peak",
+    "garment-cuff",
+    "garment-crown",
+}
 
 # How far a zone may exceed the engine's maximum before it is reported. Two
 # millimetres is drawing slop; twenty is a different zone.

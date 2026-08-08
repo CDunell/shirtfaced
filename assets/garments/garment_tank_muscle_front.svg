@@ -2,72 +2,65 @@
      width="640mm" height="760mm" viewBox="0 0 640 760">
   <!--
     Shirtfaced — garment_tank_muscle_front.svg
-    Adult Medium muscle/tank base
+    Adult Medium muscle/tank base (redrawn)
     Flat measurements used:
       - Canvas: 640 × 760 mm
       - Chest (flat width between side seams): 510 mm, centred
         Left side seam x=65, right side seam x=575
-      - Wide armhole (muscle cut)
-      - Shoulder strap width: ~40–50 mm
-      - Neck opening width: 200 mm
-      - Armhole depth: deeper, ~320 mm
-      - Body length (HPS to hem): ~720 mm
+      - Shoulder strap width: ~45 mm
+      - Neck opening width: ~190 mm
+      - Armhole depth: ~320 mm (deep concave cut into body)
+      - Body length (HPS to hem): ~730 mm
   -->
 
-  <!-- Garment outline (front) — muscle tank, deep armholes -->
+  <!-- Garment outline (front) — proper muscle tank
+       Sequence (left half, mirrored):
+         neck edge → strap outer → strap runs down →
+         deep concave ARMHOLE curve out to underarm →
+         side seam → hem
+  -->
   <path id="garment-outline"
         fill="#f4f4f4"
         stroke="#222"
         stroke-width="1.5"
-        d="M 220,35
-           C 250,18 290,12 320,12
-           C 350,12 390,18 420,35
-           L 440,55
-           C 460,90 480,150 490,220
-           L 500,300
-           L 505,380
-           L 500,450
-           L 490,520
-           L 475,580
-           L 455,640
-           L 430,700
-           L 400,735
-           L 240,735
-           L 210,700
-           L 185,640
-           L 165,580
-           L 150,520
-           L 140,450
-           L 135,380
-           L 140,300
-           L 150,220
-           C 160,150 180,90 200,55
+        d="M 245,25
+           C 275,12 305,8 320,8
+           C 335,8 365,12 395,25
+           L 435,20
+           L 445,110
+           C 460,180 500,250 530,310
+           C 555,360 570,400 575,450
+           L 575,740
+           L 65,740
+           L 65,450
+           C 70,400 85,360 110,310
+           C 140,250 180,180 195,110
+           L 205,20
            Z"/>
 
-  <!-- Collar / binding around neck and armholes would be complex; simple neck ring -->
+  <!-- Collar / neck binding -->
   <path id="garment-collar"
         fill="#e8e8e8"
         stroke="#222"
         stroke-width="1.1"
-        d="M 220,35
-           C 250,18 290,12 320,12
-           C 350,12 390,18 420,35
-           L 415,55
-           C 385,40 355,34 320,34
-           C 285,34 255,40 225,55
+        d="M 245,25
+           C 275,12 305,8 320,8
+           C 335,8 365,12 395,25
+           L 390,45
+           C 360,34 340,30 320,30
+           C 300,30 280,34 250,45
            Z"/>
 
-  <!-- Seams / armhole indication -->
+  <!-- Seams / strap & armhole indication -->
   <path id="garment-seams"
         fill="none"
         stroke="#999"
         stroke-width="0.8"
         stroke-dasharray="4 3"
-        d="M 200,55 L 150,220
-           M 440,55 L 490,220
-           M 65,0
-           M 150,300 L 150,735
-           M 490,300 L 490,735"/>
+        d="M 205,20 L 195,110
+           M 435,20 L 445,110
+           M 65,450 L 65,740
+           M 575,450 L 575,740"/>
 
   <!-- ===================== PRINT ZONES ===================== -->
 
@@ -76,10 +69,10 @@
         fill-opacity="0.18"
         stroke="#2c6cb0"
         stroke-width="1"
-        d="M 175,120
-           L 465,120
-           L 465,520
-           L 175,520
+        d="M 175,140
+           L 465,140
+           L 465,530
+           L 175,530
            Z"/>
 
   <path id="zone-centre_chest"
@@ -87,10 +80,10 @@
         fill-opacity="0.22"
         stroke="#c0392b"
         stroke-width="1"
-        d="M 220,150
-           L 420,150
-           L 420,390
-           L 220,390
+        d="M 220,160
+           L 420,160
+           L 420,400
+           L 220,400
            Z"/>
 
   <path id="zone-left_chest"
@@ -98,10 +91,10 @@
         fill-opacity="0.25"
         stroke="#1e8449"
         stroke-width="1"
-        d="M 370,130
-           L 460,130
-           L 460,220
-           L 370,220
+        d="M 370,145
+           L 460,145
+           L 460,235
+           L 370,235
            Z"/>
 
 </svg>

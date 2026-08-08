@@ -26,12 +26,15 @@ sit in the wrong place.
 | `garment_tee_oversized_front.svg` | good |
 | `garment_tee_oversized_back.svg` | good |
 | `garment_crop_front.svg` | good |
-| `garment_tank_muscle_front.svg` | **needs redraw** — reads as a lozenge. No armholes cut into the body and no shoulder straps, although its own comment declares both. |
+| `garment_tank_muscle_front.svg` | good — redrawn with a proper deep armhole |
+| `garment_tee_crew_back.svg` | good |
 
 ## Missing
 
-`garment_tee_crew_back.svg`, and the whole headwear set: caps (dad, trucker,
-snapback), bucket hat, beanie.
+The headwear set. Caps, bucket hat and beanie were drawn once and sent back:
+the crowns came out as triangles rather than domes, they were drawn at roughly
+1.7x life size, `zone-cap_side` held both sides in one path, and none carried
+`zone-cap_back`.
 
 ## Zones larger than the defaults
 
