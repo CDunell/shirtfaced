@@ -157,8 +157,15 @@ def assemble(
     width_mm: float,
     height_mm: float,
     treatment: str = "clean",
+    wear: Element | None = None,
+    wear_strength: float = 0.55,
 ) -> AssembledDesign:
-    """Build one design from a grammar. Same inputs, same bytes."""
+    """Build one design from a grammar. Same inputs, same bytes.
+
+    ``wear`` is a texture or print effect laid over the finished design rather
+    than composed into it. It is not a part and no grammar asks for one: cracked
+    plastisol does not sit beside the mark, it happens to it.
+    """
     generator = rng_for(seed, grammar.key, "assemble")
     # From the box actually being drawn into, not from the table.
     allowed = density_budget_for(width_mm)
@@ -315,6 +322,26 @@ def assemble(
         generator = rng_for(seed, grammar.key, "distress")
         for mark in geometry.distress(width_mm, height_mm, generator):
             canvas.path(mark, fill=palette.garment)
+
+    if wear is not None and wear.source_file:
+        # A texture or print effect worn over the finished design.
+        #
+        # These were the largest stranded group in the archive: no grammar asks
+        # for a texture because a texture is not a part. Cracked plastisol does
+        # not sit beside the mark, it happens *to* it, and a role in a grammar
+        # cannot express that.
+        #
+        # Drawn in the garment colour rather than as a mask, because a mask
+        # needs the texture inverted and every renderer between here and a
+        # separator disagrees about how. Painting the wear in the colour of the
+        # cloth is what an eroded print actually looks like, and it survives
+        # being flattened.
+        canvas.add(
+            f'<image href="/{wear.source_file.replace(chr(92), "/")}" '
+            f'x="0" y="0" width="{num(width_mm)}" height="{num(height_mm)}" '
+            f'preserveAspectRatio="none" style="mix-blend-mode:screen" '
+            f'opacity="{num(wear_strength)}"/>'
+        )
 
     svg = canvas.to_svg()
     return AssembledDesign(
