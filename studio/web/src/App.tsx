@@ -96,7 +96,9 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
                 key={item.id}
                 type="button"
                 aria-current={view === item.id ? "page" : undefined}
-                onClick={() => setView(item.id)}
+                onClick={() => {
+                  setView(item.id);
+                }}
                 className={`press ${navItem(view === item.id)}`}
               >
                 {item.label}
