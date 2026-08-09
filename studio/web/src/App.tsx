@@ -168,9 +168,7 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <EmailBench />
         ) : (
           <>
-            <h1 className={`display ${css({ fontSize: "40px", margin: "0 0 8px" })}`}>
-              Dashboard
-            </h1>
+            <h1 className={`display ${css({ fontSize: "40px", margin: "0 0 8px" })}`}>Dashboard</h1>
             <ParagraphMedium color={theme.colors.contentSecondary} marginTop={0}>
               A private production tool for building coherent Shirtfaced photographic worlds.
             </ParagraphMedium>

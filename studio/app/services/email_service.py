@@ -167,6 +167,8 @@ def eligibility(session: Session, contact: EmailContact, purpose: EmailPurpose) 
 
 
 def build_adapter(settings: Settings) -> EmailAdapter:
+    if not settings.email_delivery_enabled:
+        return DisabledEmailAdapter()
     if settings.email_adapter_mode == "local":
         if not settings.debug:
             raise EmailDeliveryError("Local email adapter is only allowed with DEBUG=true.")

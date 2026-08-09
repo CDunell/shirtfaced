@@ -31,8 +31,9 @@ export function EmailBench(): React.JSX.Element {
       .then(([templateItems, plan]) => {
         setTemplates(templateItems);
         setDnsPlan(plan);
-        if (templateItems.length > 0) {
-          setTemplateKey(templateItems[0].key);
+        const firstTemplate = templateItems[0];
+        if (firstTemplate) {
+          setTemplateKey(firstTemplate.key);
         }
       })
       .catch((reason: unknown) => {
@@ -131,7 +132,9 @@ export function EmailBench(): React.JSX.Element {
                 label: `${item.name} / ${item.purpose}`,
               }))}
               value={
-                templateKey ? [{ id: templateKey, label: selectedTemplate?.name ?? templateKey }] : []
+                templateKey
+                  ? [{ id: templateKey, label: selectedTemplate?.name ?? templateKey }]
+                  : []
               }
               onChange={({ value }) => {
                 setTemplateKey(String(value[0]?.id ?? ""));
