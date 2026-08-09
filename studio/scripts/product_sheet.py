@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+"""Contact sheets for the visual pass, one cell per product.
+
+The unit is the product, not the frame. 40,070 frames across the two corpora
+represent 11,206 products -- 3.6 frames each, all of one design seen front,
+back, flat and on a model. A design earns one description; its other frames say
+which zones are used and are consulted rather than each earning a paragraph.
+
+Two things this fixes.
+
+Nine per sheet at 2000x2000, which is 640px per product. That was measured, not
+guessed: at 250px construction values came out wrong (a crest recorded as a
+circular badge, a distressed print recorded as flat) and no text was legible; at
+356px type and zone survived but text did not; at 640px text is legible at S2
+and above. An earlier six-up was built at 1500x1000 and gave 500px, so it was
+paying for six cells and getting less than nine.
+
+And the frame is chosen by the store's own shot_hint -- flat, then detail, then
+close-up, then front -- which has been recorded in every provenance file since
+collection and went unread for months.
+
+    python scripts/product_sheet.py 1
+    python scripts/product_sheet.py --count
+
+Writes var/preview/psheet/sheet-NNNN.png and .json. Deterministic ordering, so
+sheet 400 holds the same products on every run and a row traces back to a cell.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+from PIL import Image, ImageDraw
+
+ROOT = Path(__file__).resolve().parent.parent
+CORPORA = {
+    "brand": ROOT / "var" / "design_corpus",
+    "flat": ROOT / "var" / "design_corpus_flat",
+}
+OUT = ROOT / "var" / "preview" / "psheet"
+
+PER_SHEET = 9
+COLS = 3
+CELL = 666
+
+# The store's own labels, best first. A print crop beats a torso crop beats a
+# whole body; where nothing is labelled the first frame is used.
+HINT_RANK = {
+    "flat": 0,
+    "detail": 1,
+    "close-up": 2,
+    "front": 3,
+    "back": 5,
+    "worn": 6,
+    "full-body": 7,
+}
+
+
+def _hints(product_dir: Path) -> dict[str, str]:
+    provenance = product_dir / "provenance.json"
+    if not provenance.is_file():
+        return {}
+    try:
+        records = json.loads(provenance.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    out: dict[str, str] = {}
+    for record in records:
+        stem = str(record.get("provenance_id", "")).rsplit("/", 1)[-1]
+        hint = str(record.get("shot_hint", ""))
+        for suffix in (".jpg", ".png", ".webp", ".jpeg"):
+            out[f"{stem}{suffix}"] = hint
+    return out
+
+
+def catalogue() -> list[dict[str, Any]]:
+    """Every product, with its frames ranked by how well they show the design."""
+    rows: list[dict[str, Any]] = []
+    for corpus, root in CORPORA.items():
+        if not root.is_dir():
+            continue
+        for brand_dir in sorted(root.iterdir()):
+            brand_file = brand_dir / "brand.json"
+            if not brand_file.is_file():
+                continue
+            try:
+                brand = json.loads(brand_file.read_text(encoding="utf-8-sig"))
+            except (OSError, json.JSONDecodeError):
+                continue
+            products = brand_dir / "products"
+            if not products.is_dir():
+                continue
+            for product_dir in sorted(products.iterdir()):
+                product_file = product_dir / "product.json"
+                if not product_file.is_file():
+                    continue
+                try:
+                    product = json.loads(product_file.read_text(encoding="utf-8-sig"))
+                except (OSError, json.JSONDecodeError):
+                    continue
+                images = product.get("images") or []
+                if not images:
+                    continue
+                hints = _hints(product_dir)
+                ranked = sorted(images, key=lambda n: (HINT_RANK.get(hints.get(n, ""), 4), n))
+                rows.append(
+                    {
+                        "corpus": corpus,
+                        "brand": brand_dir.name,
+                        "product": product_dir.name,
+                        "name": product.get("name", ""),
+                        "tradition": brand.get("design_tradition", ""),
+                        "category": product.get("category", ""),
+                        "price": str(product.get("price", "")),
+                        "source_url": product.get("source_url", ""),
+                        # Every frame, best first. The sheet shows the first;
+                        # the rest are there to be opened when one is not enough.
+                        "frames": [str((product_dir / n).relative_to(root.parent)) for n in ranked],
+                        "hints": [hints.get(n, "") for n in ranked],
+                    }
+                )
+    return rows
+
+
+def build(sheet_no: int, per_sheet: int) -> dict[str, Any] | None:
+    rows = catalogue()
+    start = (sheet_no - 1) * per_sheet
+    if start >= len(rows):
+        return None
+    chunk = rows[start : start + per_sheet]
+
+    grid_rows = (len(chunk) + COLS - 1) // COLS
+    sheet = Image.new("RGB", (COLS * CELL, grid_rows * CELL), (255, 255, 255))
+    draw = ImageDraw.Draw(sheet)
+
+    for index, row in enumerate(chunk):
+        path = ROOT / "var" / row["frames"][0]
+        try:
+            image = Image.open(path)
+            image.load()
+        except Exception:
+            continue
+        if image.mode in ("RGBA", "LA") or "transparency" in image.info:
+            flat = Image.new("RGBA", image.size, (255, 255, 255, 255))
+            flat.alpha_composite(image.convert("RGBA"))
+            image = flat
+        image = image.convert("RGB")
+        image.thumbnail((CELL - 26, CELL - 26), Image.LANCZOS)
+        x = (index % COLS) * CELL
+        y = (index // COLS) * CELL
+        sheet.paste(
+            image, (x + (CELL - image.width) // 2, y + 24 + (CELL - 24 - image.height) // 2)
+        )
+        draw.rectangle([x, y, x + CELL - 1, y + CELL - 1], outline=(215, 215, 215))
+        draw.rectangle([x, y, x + 46, y + 22], fill=(20, 20, 20))
+        draw.text((x + 16, y + 6), str(start + index + 1), fill=(255, 255, 255))
+        row["cell"] = start + index + 1
+
+    OUT.mkdir(parents=True, exist_ok=True)
+    stem = f"sheet-{sheet_no:04d}"
+    sheet.save(OUT / f"{stem}.png")
+    (OUT / f"{stem}.json").write_text(json.dumps(chunk, indent=1), encoding="utf-8")
+    return {
+        "sheet": sheet_no,
+        "of": (len(rows) + per_sheet - 1) // per_sheet,
+        "products": len(chunk),
+        "px_each": CELL - 26,
+    }
+
+
+def main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("sheet", type=int, nargs="?", default=1)
+    parser.add_argument("--per-sheet", type=int, default=PER_SHEET)
+    parser.add_argument("--count", action="store_true")
+    args = parser.parse_args(argv[1:])
+
+    if args.count:
+        rows = catalogue()
+        frames = sum(len(r["frames"]) for r in rows)
+        labelled = sum(1 for r in rows if r["hints"] and r["hints"][0])
+        print(f"{len(rows)} products, {frames} frames")
+        print(f"{labelled} products have a labelled best frame")
+        print(f"{(len(rows) + args.per_sheet - 1) // args.per_sheet} sheets at {args.per_sheet}-up")
+        return 0
+
+    built = build(args.sheet, args.per_sheet)
+    if built is None:
+        print("past the end", file=sys.stderr)
+        return 1
+    print(json.dumps(built))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))
