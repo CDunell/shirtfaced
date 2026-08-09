@@ -113,9 +113,7 @@ class EmailSuppression(Base):
     """Durable delivery block created by consent, deliverability or owner action."""
 
     __tablename__ = "email_suppressions"
-    __table_args__ = (
-        Index("ix_email_suppressions_contact_scope", "contact_id", "scope"),
-    )
+    __table_args__ = (Index("ix_email_suppressions_contact_scope", "contact_id", "scope"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
