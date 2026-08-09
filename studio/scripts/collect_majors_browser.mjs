@@ -101,6 +101,40 @@ const FLAT_QUERIES = [
 
 const MARKETPLACE_PAGES = 3;
 
+/**
+ * Cotton Bureau's catalogue, faceted by category and paged.
+ *
+ * The shop runs Algolia InstantSearch: `hierarchicalMenu[categories__lvl0][0]`
+ * picks the category and `page` walks it. Verified rather than assumed -- pages
+ * 1 and 4 return different products, 92 tiles each.
+ *
+ * Depth is set by what the fold masks need. The mockups are rendered from a
+ * fixed set of garment blanks -- eight distinct silhouettes in the first 76
+ * shirts -- and each blank creases in the same places every time. Subtracting
+ * that requires stacking many designs on the *same* blank in the *same* colour,
+ * because a crease that is obvious on grey barely registers on black. Roughly
+ * ten per silhouette-and-colour group is the floor; at eight silhouettes and
+ * half a dozen colours that is ~500 shirts, so this collects about double.
+ *
+ * The non-apparel categories are small and come along for the range: hats 625,
+ * drinkware 432, phone cases 388, totes 48. Apparel alone lists 315,779, so
+ * paging is the only limit that matters.
+ */
+function cottonBureauListings() {
+  const out = [];
+  const facet = (category) =>
+    `hierarchicalMenu%5Bcategories__lvl0%5D%5B0%5D=${encodeURIComponent(category)}`;
+  for (let page = 1; page <= 26; page++) {
+    out.push(`https://cottonbureau.com/shop?${facet("Apparel")}&page=${page}`);
+  }
+  for (const category of ["Hats", "Drinkware", "Totes", "Phone Cases"]) {
+    for (let page = 1; page <= 3; page++) {
+      out.push(`https://cottonbureau.com/shop?${facet(category)}&page=${page}`);
+    }
+  }
+  return out;
+}
+
 /** Every query crossed with every page, in the shape each site wants. */
 function listings(build) {
   const out = [];
@@ -156,11 +190,7 @@ const MARKETPLACES = {
    *
    * `default=1` renders the whole garment, `detail=1` crops to the print.
    */
-  cottonbureau: ["Cotton Bureau", "garment_mockup", [
-    "https://cottonbureau.com/shop",
-    "https://cottonbureau.com/shop?menu%5Bproduct__collections__names%5D=Our%20Favorites",
-    "https://cottonbureau.com/shop?menu%5Bproduct__collections__names%5D=Featured%20Partners",
-  ]],
+  cottonbureau: ["Cotton Bureau", "garment_mockup", cottonBureauListings()],
 
   // Listing URLs read off each site's own navigation, never invented. Four were
   // guessed from memory earlier in this session and all four 404'd, which is why
