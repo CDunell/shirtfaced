@@ -43,16 +43,39 @@ from app.db.observation_models import (
 # Fields copied straight across. Anything not here stays in `raw`, so a schema
 # that gains a field later does not lose the rows written before it existed.
 SCALARS = (
-    "corpus", "brand_slug", "product_slug", "product_name", "tradition",
-    "category", "price", "source_url", "presentation", "garment",
-    "garment_colour", "backdrop", "description", "text_content",
-    "subject_primary", "property_name", "construction", "integration",
-    "type_case", "print_effect", "stroke", "detail_density", "confidence",
-    "notes", "described_by",
+    "corpus",
+    "brand_slug",
+    "product_slug",
+    "product_name",
+    "tradition",
+    "category",
+    "price",
+    "source_url",
+    "presentation",
+    "garment",
+    "garment_colour",
+    "backdrop",
+    "description",
+    "text_content",
+    "subject_primary",
+    "property_name",
+    "construction",
+    "integration",
+    "type_case",
+    "print_effect",
+    "stroke",
+    "detail_density",
+    "confidence",
+    "notes",
+    "described_by",
 )
 ARRAYS = (
-    "subject_terms", "element_shapes", "type_styles", "type_effects",
-    "palette_terms", "bare_zones",
+    "subject_terms",
+    "element_shapes",
+    "type_styles",
+    "type_effects",
+    "palette_terms",
+    "bare_zones",
 )
 BOOLS = ("depicts_people", "references_property")
 

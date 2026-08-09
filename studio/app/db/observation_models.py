@@ -51,9 +51,20 @@ from app.db.base import Base, TimestampMixin
 # Zone names come from design_range.py's SCALE_ROLE table rather than a parallel
 # vocabulary invented here, so a description joins onto the engine's own terms.
 ZONES = (
-    "full_front", "full_back", "centre_chest", "centre_back", "left_chest",
-    "upper_back_yoke", "outer_back_neck", "inner_neck_label", "short_sleeve",
-    "long_sleeve", "pocket", "cap_front", "cap_side", "cap_back",
+    "full_front",
+    "full_back",
+    "centre_chest",
+    "centre_back",
+    "left_chest",
+    "upper_back_yoke",
+    "outer_back_neck",
+    "inner_neck_label",
+    "short_sleeve",
+    "long_sleeve",
+    "pocket",
+    "cap_front",
+    "cap_side",
+    "cap_back",
 )
 
 ZONE_STATES = ("bare", "image_only", "text_only", "image_and_text")

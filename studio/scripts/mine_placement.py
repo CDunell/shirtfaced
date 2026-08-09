@@ -294,10 +294,7 @@ def main(argv: list[str]) -> int:
         for field in ("top", "height", "width", "centre_x", "coverage"):
             values = sorted(r[field] for r in rows)
             median = values[len(values) // 2]
-            print(
-                f"    {field:<9} median {median:.3f}   "
-                f"range {values[0]:.3f} to {values[-1]:.3f}"
-            )
+            print(f"    {field:<9} median {median:.3f}   range {values[0]:.3f} to {values[-1]:.3f}")
         for name, count in Counter(r["placement"] for r in rows).most_common():
             print(f"      {count:>3}  {name}")
         print()

@@ -205,8 +205,7 @@ def derive(records: list[dict[str, Any]], min_evidence: int) -> dict[str, Any]:
                     # corpus agrees on tightly is worth more than one averaged
                     # out of scatter.
                     "spread": {
-                        axis: round(float(members[:, i].std()), 4)
-                        for i, axis in enumerate(AXES)
+                        axis: round(float(members[:, i].std()), 4) for i, axis in enumerate(AXES)
                     },
                 }
             )
@@ -240,21 +239,15 @@ def main(argv: list[str]) -> int:
     records = json.loads(PLACEMENT_PATH.read_text(encoding="utf-8"))
 
     result = derive(records, args.min_evidence)
-    total_clean = sum(
-        v.get("clean_placements", 0) for v in result.values() if isinstance(v, dict)
-    )
+    total_clean = sum(v.get("clean_placements", 0) for v in result.values() if isinstance(v, dict))
     print(f"\n{len(records)} placements, {total_clean} clean enough to derive from\n")
 
     for category, block in result.items():
         if block["status"] != "measured":
-            print(
-                f"{category:<12} {block['status']} "
-                f"({block.get('clean_placements', 0)} clean)"
-            )
+            print(f"{category:<12} {block['status']} ({block.get('clean_placements', 0)} clean)")
             continue
         print(
-            f"{category}  ({block['clean_placements']} clean, "
-            f"{block['unclustered']} unclustered)"
+            f"{category}  ({block['clean_placements']} clean, {block['unclustered']} unclustered)"
         )
         for form in block["forms"]:
             print(
