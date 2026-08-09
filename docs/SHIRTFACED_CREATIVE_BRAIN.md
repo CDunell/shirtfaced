@@ -19,6 +19,10 @@ We can use photography, illustration, typography, brand-only graphics, deadpan c
 
 **Style is not the identity. Judgement is.**
 
+**Different styles are allowed. Different personalities aren't.**
+
+**Random incongruity isn't shirtfaced. Human truth + disproportion is.**
+
 ---
 
 ## 2. The central creative rule
@@ -310,31 +314,133 @@ A successful distressed graphic does not make distressing part of the constituti
 
 Do not confuse a hit with a formula.
 
+**Different styles are allowed. Different personalities aren't.**
+
+The brand can wear a thousand visual costumes. The bastard underneath must remain the same.
+
 ---
 
-## 14. The concept engine
+## 14. Concept, treatment, personality
+
+Every design should be understood as three separate layers:
+
+### Concept
+
+The human truth, behaviour, relationship, social observation, stupidity or contradiction.
+
+This is the reason the design exists.
+
+A concept is not "Dutch master painting", "Japanese boxing poster", "1960s fashion illustration" or "heritage crest". Those are treatments.
+
+### Treatment
+
+The visual language used to disproportionately elevate, undermine or reframe the concept.
+
+Treatment can change every fucking shirt.
+
+Photography. Illustration. Heraldry. Editorial typography. Old sporting graphics. Fine art. Cheap flash. Embroidery. Screen print. Tonal minimalism. Loud poster work. Whatever serves the concept.
+
+Treatment is allowed to be promiscuous.
+
+It does not get to supply the personality.
+
+### Personality
+
+Always shirtfaced.
+
+Personality does not move when the medium, era, reference or composition changes.
+
+The treatment amplifies the concept. The personality determines whether the result belongs here at all.
+
+**Concept → Treatment → Personality.**
+
+Concept is the human truth.  
+Treatment is how we fuck with its importance.  
+Personality is shirtfaced and does not move.
+
+---
+
+## 15. Human truth + disproportion
+
+**Random incongruity isn't shirtfaced. Human truth + disproportion is.**
+
+Putting two unrelated things together can make an arresting image. That does not make it a shirtfaced idea.
+
+The absurdity should have a recognisable human behaviour underneath it.
+
+The old lady at the bus stop works because calling an entirely ordinary old lady **LOOSE UNIT** is affectionate social mischief.
+
+The old bloke at lawn bowls works because **ABSOLUTE WEAPON** elevates ordinary competence into ludicrous mythology.
+
+The nun bombing into the pool works because everybody understands the prohibition before she hits the water: **you can't do that**. Her commitment supplies the human truth. The visual disproportion does the rest.
+
+The afterparty still life works because everybody recognises the pathetic archaeological site left behind the next morning. Rendering it with museum-level importance disproportionately elevates something mundane and familiar.
+
+Surrealism alone is not enough. Weird alone is not enough. Unexpected alone is not enough.
+
+Find the behaviour first.
+
+---
+
+## 16. The COSTUME TEST
+
+shirtfaced can borrow almost any visual language.
+
+Before approving it, remove the styling mentally.
+
+If the underlying observation, behaviour, relationship or stupidity still feels shirtfaced, proceed.
+
+If the entire appeal disappears when you remove "Japanese boxing poster", "Dutch master", "1960s fashion illustration", "heritage crest", "punk typography" or whatever treatment we are using, **we have designed a style, not a shirtfaced idea.**
+
+The treatment amplifies the idea.  
+It never supplies the personality.
+
+**Different styles. Same bastard underneath.**
+
+### Failure calibration — WORLD CHAMPION
+
+An ordinary bloke exhausted on the edge of a bed, fighting to remove one impossibly stubborn boot as though he has survived twelve rounds: the underlying behaviour survives the test. That is a shirtfaced concept.
+
+Rendering it as a fake Japanese boxing poster introduced borrowed personality. Remove that borrowed identity and keep the heroic disproportion. The concept survives; the costume gets killed.
+
+### Failure calibration — BEAUTIFUL FORM
+
+An elegant woman with a laundry basket on her head is not automatically shirtfaced. Without a recognisable behaviour underneath it, it is merely surreal fashion art.
+
+Give the absurdity a human truth: she refuses to make two trips; both hands are occupied; she improvises and carries the washing with ridiculous dignity. Now there is behaviour underneath the image.
+
+The fashion illustration can then elevate that behaviour. It is the treatment, not the idea.
+
+---
+
+## 17. The concept engine
 
 The design archive and deterministic design engine will eventually operate over tens of thousands of garment/design references from hundreds of brands.
 
 That means concepts should increasingly be separable into elements rather than welded to one arbitrary placement:
 
 - subject
+- human truth / behaviour / observation
 - image/artwork
 - phrase/observation
 - brand mark
+- treatment / visual language
 - typography treatment
 - composition relationship
 - colour logic
 - print treatment
 - garment/application constraints
+- personality conformance
 
 Placement should ultimately be selected because it is the best fit for the concept and garment, informed by the design archive — not because every idea was born as a centred back print.
 
-Concept first. Elements second. Placement as a decision.
+Concept first. Treatment second. Placement as a decision. Personality as the conformance layer.
+
+The engine may recombine concepts and treatments. It must not recombine personalities.
 
 ---
 
-## 15. What to reject aggressively
+## 18. What to reject aggressively
 
 Reject work that is:
 
@@ -344,7 +450,9 @@ Reject work that is:
 - safe streetwear imitation
 - generic punk/grunge pasted over weak thinking
 - Australiana shorthand
+- random incongruity without human truth
 - random vintage imagery with a random swear word
+- borrowed visual language that supplies the entire personality
 - faux-scientific or technical drawing language used because it looks designed
 - diagrams, ID plates, botanical plates or engineering drawings without a genuinely exceptional reason
 - mascot thinking disconnected from the actual shirtfaced world
@@ -356,7 +464,7 @@ The scientific/technical drawing lane has been explicitly rejected. Do not drift
 
 ---
 
-## 16. Quality language
+## 19. Quality language
 
 There are effectively three outcomes during concept development:
 
@@ -378,7 +486,7 @@ If the reaction is merely "okay", "I guess" or technically defensible silence, t
 
 ---
 
-## 17. How to work with the creative director
+## 20. How to work with the creative director
 
 Do the work rather than narrating what you could do.
 
@@ -398,7 +506,7 @@ The target is not agreement. The target is the **fuck yes**.
 
 ---
 
-## 18. Vocabulary / live fragments
+## 21. Vocabulary / live fragments
 
 These are useful pieces of the world, not a compulsory slogan list:
 
@@ -423,26 +531,29 @@ Do not force these into designs merely because they are approved language.
 
 ---
 
-## 19. Before approving a concept
+## 22. Before approving a concept
 
 Ask:
 
-1. Is the idea doing the work, or is the treatment hiding a weak idea?
-2. Did we explain something that was funnier unexplained?
-3. Would the wearer enjoy knowing something the audience might miss?
-4. Is the humour delivered straight enough?
-5. Does this feel like shirtfaced without needing the wordmark?
-6. Is it Australian through lived reality rather than iconography?
-7. Have we accidentally made novelty merch?
-8. Are we repeating a treatment because it worked last time?
-9. Is there one unnecessary element we can remove?
-10. Is the reaction **fuck yes** or merely **yeah, I guess**?
+1. What is the human truth, behaviour, relationship, social observation, stupidity or contradiction underneath this?
+2. If I mentally remove the treatment, does the concept still feel shirtfaced?
+3. Is the idea doing the work, or is the treatment supplying the personality?
+4. Is this human truth + disproportion, or merely random incongruity?
+5. Did we explain something that was funnier unexplained?
+6. Would the wearer enjoy knowing something the audience might miss?
+7. Is the humour delivered straight enough?
+8. Does this feel like shirtfaced without needing the wordmark?
+9. Is it Australian through lived reality rather than iconography?
+10. Have we accidentally made novelty merch?
+11. Are we repeating a treatment because it worked last time?
+12. Is there one unnecessary element we can remove?
+13. Is the reaction **fuck yes** or merely **yeah, I guess**?
 
 If it is "yeah, I guess", keep working.
 
 ---
 
-## 20. START HERE — NEXT CHAT / NEXT CREATIVE SESSION
+## 23. START HERE — NEXT CHAT / NEXT CREATIVE SESSION
 
 You are not here to protect the shirtfaced brand from bad ideas.
 
@@ -454,11 +565,21 @@ Don't make Australian novelty merch.
 
 Don't explain jokes.
 
+Don't mistake random incongruity for a shirtfaced concept.
+
+Don't let borrowed visual language supply the personality.
+
 Don't repeat yesterday's successful treatment because it worked yesterday.
 
-Change subject. Change medium. Change decade. Change composition. Change volume.
+**Different styles are allowed. Different personalities aren't.**
 
-Keep the judgement.
+**Random incongruity isn't shirtfaced. Human truth + disproportion is.**
+
+Change subject. Change medium. Change decade. Change composition. Change volume. Change treatment.
+
+Keep the judgement. Keep the personality.
+
+Run the COSTUME TEST.
 
 When in doubt, ask:
 
@@ -470,10 +591,10 @@ Now make something shirtfaced.
 
 ---
 
-## 21. Recommended new-chat instruction
+## 24. Recommended new-chat instruction
 
 Paste this and nothing more unless a specific task needs additional context:
 
-> Read the shirtfaced repo, especially `docs/SHIRTFACED_CREATIVE_BRAIN.md`. Treat it as the source of truth for creative judgement. We're continuing the creative development. Don't recap it to me. Pick up the current task and go.
+> Read the shirtfaced repo, especially `docs/SHIRTFACED_CREATIVE_BRAIN.md`. Treat it as the source of truth for creative judgement. We're continuing the creative development. Don't recap it to me. Before rendering, separate concept from treatment, run the COSTUME TEST, and keep the personality shirtfaced regardless of visual style. Pick up the current task and go.
 
 This document should evolve when repeated creative work reveals a genuine new principle. Do not bloat it with every passing preference or individual concept. Preserve the rules that explain **why** something is shirtfaced.
