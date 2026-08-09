@@ -74,6 +74,44 @@ ZONES = (
 # design, and they are not the same thing at all.
 ZONE_STATES = ("active graphic zone", "permanent identity zone", "intentional negative space")
 
+# Treatment lanes, from SHIRTFACED_CREATIVE_BRAIN.md §11.
+#
+# Recorded alongside the Constitution's archetypes because the two answer
+# different questions and the creative side thinks in these terms. §8 says what
+# a design *is* structurally -- emblem, typographic hero, all-over field. This
+# says how it was *handled*, which is what a brief actually asks for: a tiny
+# incidental mark, a caption over photography, type embedded in the composition.
+#
+# The brain doc is explicit that no single lane is the identity and the stable
+# is, so these exist to retrieve precedent by, never to rank or to average.
+TREATMENT_LANES = (
+    "smiley alone",
+    "lowercase wordmark alone",
+    "wordmark and smiley lockup",
+    "stacked lockup",
+    "horizontal lockup",
+    "outline type",
+    "tonal grey on black",
+    "tiny chest or incidental mark",
+    "oversized back statement",
+    "integrated type crossing imagery",
+    "caption beneath photography",
+    "caption above photography",
+    "type embedded inside the composition",
+    "small observation against a large image",
+    "loud phrase with minimal imagery",
+    "image only",
+    "text only",
+    "image and text",
+    "illustration",
+    "straight photography",
+    "distressed treatment",
+    "clean treatment",
+    "collegiate treatment",
+    "restrained premium",
+    "loud club or team adjacent",
+)
+
 # The content is simply what is on it.
 ZONE_CONTENT = ("bare", "image_only", "text_only", "image_and_text")
 
@@ -134,6 +172,9 @@ class DesignObservation(Base, TimestampMixin):
     # Constitution §8 graphic archetype and §6 layout archetype. `construction`
     # was an invented parallel vocabulary and is gone.
     graphic_archetype: Mapped[str] = mapped_column(String(48), default="")
+    # Free array rather than one value: a design can be tonal grey-on-black and
+    # a tiny incidental mark at once.
+    treatment_lanes: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     layout_archetype: Mapped[str] = mapped_column(String(16), default="")
     integration: Mapped[str] = mapped_column(String(32), default="")
     element_shapes: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)

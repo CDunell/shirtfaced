@@ -36,6 +36,9 @@ from typing import Any
 
 from PIL import Image, ImageDraw
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from app.services.garment_frame import locate_garment
+
 ROOT = Path(__file__).resolve().parent.parent
 CORPORA = {
     "brand": ROOT / "var" / "design_corpus",
@@ -48,7 +51,17 @@ COLS = 3
 CELL = 666
 
 # The store's own labels, best first. A print crop beats a torso crop beats a
-# whole body; where nothing is labelled the first frame is used.
+# whole body.
+#
+# Only 1,675 of 11,206 products carry a label, so for 85% of the corpus the
+# fallback decides which frame gets read -- and the fallback was filename order.
+# That is how a rash guard was described from its back, recorded as blank, and
+# had to be corrected when its front turned up two frames later.
+#
+# `subject_area` is the fix and costs nothing new: locate_garment already
+# computes how much of a frame the garment fills, and the frame filling most of
+# the picture is the closest look at the print. The same signal the structure
+# miner uses.
 HINT_RANK = {
     "flat": 0,
     "detail": 1,
@@ -75,6 +88,19 @@ def _hints(product_dir: Path) -> dict[str, str]:
         for suffix in (".jpg", ".png", ".webp", ".jpeg"):
             out[f"{stem}{suffix}"] = hint
     return out
+
+
+_AREA_CACHE: dict[Path, float] = {}
+
+
+def _subject_area(path: Path) -> float:
+    """How much of the frame the garment fills. Cached -- this is the slow part."""
+    if path not in _AREA_CACHE:
+        try:
+            _AREA_CACHE[path] = float(locate_garment(path).subject_area)
+        except Exception:
+            _AREA_CACHE[path] = 0.0
+    return _AREA_CACHE[path]
 
 
 def catalogue() -> list[dict[str, Any]]:
@@ -106,7 +132,14 @@ def catalogue() -> list[dict[str, Any]]:
                 if not images:
                     continue
                 hints = _hints(product_dir)
-                ranked = sorted(images, key=lambda n: (HINT_RANK.get(hints.get(n, ""), 4), n))
+                ranked = sorted(
+                    images,
+                    key=lambda n: (
+                        HINT_RANK.get(hints.get(n, ""), 4),
+                        -_subject_area(product_dir / n),
+                        n,
+                    ),
+                )
                 rows.append(
                     {
                         "corpus": corpus,

@@ -34,6 +34,7 @@ from sqlalchemy.orm import Session
 
 from app.db.observation_models import (
     FILLS,
+    TREATMENT_LANES,
     ZONE_CONTENT,
     ZONE_STATES,
     ZONES,
@@ -78,6 +79,7 @@ ARRAYS = (
     "type_effects",
     "palette_terms",
     "bare_zones",
+    "treatment_lanes",
 )
 BOOLS = ("depicts_people", "references_property")
 
@@ -138,6 +140,9 @@ def _normalise(row: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, str]
     for zone in fields["bare_zones"]:
         if zone not in ZONES:
             problems.append(f"unknown bare zone: {zone}")
+    for lane in fields["treatment_lanes"]:
+        if lane not in TREATMENT_LANES:
+            problems.append(f"unknown treatment lane: {lane}")
 
     zones: list[dict[str, str]] = []
     for entry in row.get("zones") or []:
