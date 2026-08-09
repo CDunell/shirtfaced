@@ -1,8 +1,5 @@
 /**
  * Application shell.
- *
- * The navigation and page frame every later screen sits inside: the dashboard, the
- * world page, the generation review and the history list.
  */
 
 import { useState } from "react";
@@ -11,6 +8,7 @@ import { ParagraphMedium } from "baseui/typography";
 
 import { ComposeBench } from "./components/ComposeBench";
 import { DesignBench } from "./components/DesignBench";
+import { EmailBench } from "./components/EmailBench";
 import { PrintBench } from "./components/PrintBench";
 import { PromptWorkbench } from "./components/PromptWorkbench";
 import { ServiceStatus } from "./components/ServiceStatus";
@@ -23,7 +21,7 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 
-type View = "prompts" | "print" | "compose" | "design" | "social" | "dashboard";
+type View = "prompts" | "print" | "compose" | "design" | "social" | "email" | "dashboard";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "prompts", label: "Prompts" },
@@ -31,12 +29,12 @@ const VIEWS: { id: View; label: string }[] = [
   { id: "compose", label: "Compose" },
   { id: "design", label: "Design" },
   { id: "social", label: "Social" },
+  { id: "email", label: "Email" },
   { id: "dashboard", label: "Dashboard" },
 ];
 
 export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   const [css, theme] = useStyletron();
-  // Prompts first: generation happens elsewhere, so this is the screen that gets used.
   const [view, setView] = useState<View>("prompts");
 
   const navItem = (active: boolean) =>
@@ -92,22 +90,13 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
             <span className={css({ color: theme.colors.contentTertiary })}>/ studio</span>
           </span>
 
-          <nav
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "4px",
-              flexWrap: "wrap",
-            })}
-          >
+          <nav className={css({ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" })}>
             {VIEWS.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 aria-current={view === item.id ? "page" : undefined}
-                onClick={() => {
-                  setView(item.id);
-                }}
+                onClick={() => setView(item.id)}
                 className={`press ${navItem(view === item.id)}`}
               >
                 {item.label}
@@ -162,15 +151,15 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <DesignBench />
         ) : view === "social" ? (
           <SocialBench />
+        ) : view === "email" ? (
+          <EmailBench />
         ) : (
           <>
             <h1 className={`display ${css({ fontSize: "40px", margin: "0 0 8px" })}`}>Dashboard</h1>
             <ParagraphMedium color={theme.colors.contentSecondary} marginTop={0}>
               A private production tool for building coherent Shirtfaced photographic worlds.
             </ParagraphMedium>
-
             <WorldPage />
-
             <div className={css({ marginTop: theme.sizing.scale900, maxWidth: "420px" })}>
               <ServiceStatus />
             </div>
