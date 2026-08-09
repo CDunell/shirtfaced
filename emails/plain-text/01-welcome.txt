@@ -1,0 +1,8 @@
+SHIRTFACED — YOU’RE IN.
+
+New drops, questionable decisions and the occasional email worth opening. That’s the deal.
+
+See what’s going on: {{ primary_url }}
+
+Good mates, great times, shirtfaced.
+Unsubscribe: {{ unsubscribe_url }}

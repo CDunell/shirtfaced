@@ -1,0 +1,12 @@
+SHIRTFACED — GOOD CALL.
+
+We’ve got your order. The warehouse has been informed. Nobody panic.
+
+Order: {{ order_number }}
+Placed: {{ order_date }}
+Total: {{ order_total }}
+Ship to: {{ shipping_name }}, {{ shipping_address }}
+
+View order: {{ order_status_url }}
+
+Good mates, great times, shirtfaced.

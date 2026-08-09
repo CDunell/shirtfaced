@@ -1,0 +1,9 @@
+SHIRTFACED — IT’S MOVING.
+
+Your gear is out the door and heading your way. Refreshing the tracking page every 90 seconds will not make it faster.
+
+Carrier: {{ carrier_name }}
+Tracking: {{ tracking_number }}
+ETA: {{ estimated_delivery }}
+
+Track it: {{ tracking_url }}
