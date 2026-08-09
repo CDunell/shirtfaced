@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import sys
 import time
@@ -43,7 +44,13 @@ USER_AGENT = (
 # No cap by default. An earlier value of 18 truncated 165 of 187 brands, which
 # is most of the catalogue thrown away on a number nobody chose for a reason.
 # --limit is still there for a quick run.
-PRODUCTS_PER_BRAND = 0
+#
+# Overridable from the environment so a targeted re-collection can be bounded
+# without editing the owner's default. 165 of 187 brands sit at exactly 18
+# products on disk -- the cap was lifted here and the corpus was never gathered
+# again, so most of it is still truncated to a number the comment above already
+# calls arbitrary.
+PRODUCTS_PER_BRAND = int(os.environ.get("PRODUCTS_PER_BRAND", "0"))
 
 # Images per product. Two was too few: brands commonly ship a close-up of the
 # garment alongside a full-body shot of a model wearing it, and it is the close-up

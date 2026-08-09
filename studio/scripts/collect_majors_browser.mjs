@@ -111,12 +111,18 @@ function listings(build) {
 }
 
 /**
- * TeePublic is deliberately absent.
+ * TeePublic is rested, not written off.
  *
- * It collected 17 designs earlier and now answers a headless browser with a
- * Cloudflare interstitial -- "Performing security verification". That is the
- * site declining, and working around it is not on the table. The 17 already
- * held stay; nothing here goes back for more.
+ * It served 17 designs without complaint. It was then given thirty listing URLs
+ * and run three times inside an hour with no gap between requests, and it began
+ * answering with a Cloudflare interstitial. That was recorded here as "the site
+ * declining" -- which was wrong, and the wrong kind of wrong: the challenge was
+ * this script's own doing, and a working source was struck off on the strength
+ * of self-inflicted damage.
+ *
+ * With HOST_GAP_MS and the challenge check in place the polite version has not
+ * been tried. Uncomment it after a decent interval, run it on its own, and let
+ * scrapeListing stop on the first sign of an interstitial.
  *
  *   teepublic: ["TeePublic", "flat_artwork",
  *     listings((q, p) => `https://www.teepublic.com/t-shirts?query=${q}&page=${p}`)],
@@ -131,6 +137,56 @@ const MARKETPLACES = {
   // warning about it was not enough, they were still being averaged in.
   redbubble: ["Redbubble", "flat_artwork_normalised",
     listings((q, p) => `https://www.redbubble.com/shop?query=${q}&iaCode=u-tees&page=${p}`)],
+
+  /**
+   * Cotton Bureau answers a question none of the others can.
+   *
+   * Its tiles are not artwork and not photographs: they are 2048x2048 garment
+   * mockups on a transparent background, the design sitting at its true
+   * position and scale, with the garment's own silhouette in the alpha channel.
+   * No model, no room, no fold to mistake for ink, and nothing to infer -- alpha
+   * gives the garment exactly, where locate_garment has to estimate it.
+   *
+   * That matters because every template mined so far is centred, centre_x 0.49
+   * to 0.51. The corpus knows composition *within* a print area and nothing
+   * about where the print sits on the garment, which is the question the engine
+   * actually has to answer. The first mockup opened here was a left-pocket
+   * print. The register is closer too: curated and designer-led rather than
+   * open marketplace.
+   *
+   * `default=1` renders the whole garment, `detail=1` crops to the print.
+   */
+  cottonbureau: ["Cotton Bureau", "garment_mockup", [
+    "https://cottonbureau.com/shop",
+    "https://cottonbureau.com/shop?menu%5Bproduct__collections__names%5D=Our%20Favorites",
+    "https://cottonbureau.com/shop?menu%5Bproduct__collections__names%5D=Featured%20Partners",
+  ]],
+
+  // Listing URLs read off each site's own navigation, never invented. Four were
+  // guessed from memory earlier in this session and all four 404'd, which is why
+  // probe_listing.mjs now reports a site's nav alongside its tiles.
+  //
+  // These were briefly written off as "the wrong register" on the strength of a
+  // remark about three bad finds. That was a constraint derived rather than
+  // given, which is the one thing CLAUDE.md says never to do: everything gets
+  // ingested and the owner curates. A detail crop still carries composition
+  // even when its geometry cannot be compared, and the tradition tag already
+  // keeps the two apart downstream.
+  qwertee: ["Qwertee", "flat_artwork_normalised", [
+    "https://www.qwertee.com/shop/tees",
+    "https://www.qwertee.com/shop/sweaters",
+    "https://www.qwertee.com/shop/pullovers",
+  ]],
+  riptapparel: ["RIPT Apparel", "flat_artwork_normalised", [
+    "https://riptapparel.com/retro-graphic-tees/",
+    "https://riptapparel.com/funny-graphic-tees/",
+    "https://riptapparel.com/fantasy-graphic-tees/",
+    "https://riptapparel.com/horror-graphic-tees/",
+  ]],
+  theyetee: ["The Yetee", "flat_artwork_normalised", [
+    "https://theyetee.com/collections/all",
+    "https://theyetee.com/collections/daily-tees",
+  ]],
 };
 
 /**
@@ -223,7 +279,78 @@ function redbubbleFullSize(url) {
   return `${url.slice(0, cut)}/flat,1000x1000,075,f-pad,1000x1000,f8f8f8.jpg`;
 }
 
+/**
+ * Cotton Bureau's grid mixes `detail=1` crops with `default=1` whole garments.
+ *
+ * Placement is the reason this source is here, so ask for the garment every
+ * time rather than taking whichever variant the grid happened to lay out. The
+ * `q=1` token downsizes; without it the render arrives at 2048.
+ */
+function cottonBureauFullSize(url) {
+  const parsed = new URL(url);
+  // Tiles come keyed by either `pid` or `vid` -- guarding on `pid` alone left
+  // 47 of 64 untouched at 512px, which the size histogram showed and the
+  // product count did not.
+  if (!parsed.searchParams.has("pid") && !parsed.searchParams.has("vid")) return url;
+  parsed.searchParams.delete("q");
+  parsed.searchParams.delete("detail");
+  // `w` caps the render. It was visible in the probe output and read past.
+  parsed.searchParams.delete("w");
+  parsed.searchParams.set("default", "1");
+  return parsed.toString();
+}
+
+/**
+ * What Cotton Bureau is selling, taken from its own product URL.
+ *
+ * `/p/CODE/shirt/slug`, `/p/CODE/hat/slug`, `/p/CODE/phonecase/slug`. The shop
+ * mixes apparel with cases, mugs, totes and a foam finger, and a phone case
+ * carries no placement lesson for a garment. Recorded rather than filtered --
+ * the cap and the tote are both real garment types the range engine has to
+ * lay out, and which of them to use is a decision for the mine, not the
+ * collector.
+ */
+function cottonBureauCategory(href) {
+  const match = /\/p\/[^/]+\/([^/]+)\//.exec(href || "");
+  return match ? match[1] : "";
+}
+
+/**
+ * Qwertee names the render and the size in the filename.
+ *
+ * `-zoom-255x306` is the design cropped to itself; every other token --
+ * `-mens-`, `-sweater-`, `-pulloverhoodie-` -- is a photograph of a model
+ * wearing it. Zoom is the one worth having, and 450x540 is its ceiling: 800x960
+ * and 1000x1200 both 404.
+ *
+ * Matching only a named list of tokens left 35 of 119 unconverted, and every one
+ * of those was a model shot that would have entered the flat corpus as artwork.
+ * So: rewrite whatever token is there rather than the ones thought of in
+ * advance. The size histogram is what exposed it -- 35 files still at 255x306
+ * when the rest had moved to 450x540.
+ */
+function qwerteeFullSize(url) {
+  return url.replace(/-[a-z]+-\d+x\d+\.(webp|jpe?g|png)$/i, "-zoom-450x540.webp");
+}
+
+/**
+ * RIPT serves WordPress derivatives; the original is the same path without the
+ * size suffix, which takes 300x300 up to 800x800.
+ *
+ * Every RIPT image also carries a RIPTAPPAREL.COM watermark bar across the
+ * bottom -- measured at exactly 0.9833 of the height on all eight sampled,
+ * including light-background designs, so it is the watermark and not artwork.
+ * The miner has to drop that band or it counts as an element in every single
+ * RIPT design.
+ */
+function riptFullSize(url) {
+  return url.replace(/-\d+x\d+(\.(?:jpe?g|png|webp))$/i, "$1");
+}
+
 function fullSize(url) {
+  if (url.includes("cdn.qwertee.com")) return qwerteeFullSize(url);
+  if (url.includes("riptapparel.com/wp-content")) return riptFullSize(url);
+  if (url.includes("cottonbureau.com/mockup")) return cottonBureauFullSize(url);
   if (url.includes("redbubble.net")) return redbubbleFullSize(url);
   if (url.includes("cdn-images.threadless.com")) return threadlessFullSize(url);
   if (!url.includes("images.teepublic.com")) return url;
@@ -282,12 +409,24 @@ async function openTab() {
 const EXTRACT = `(() => {
   const out = [];
   const seen = new Set();
+  // Counted so a failure can say which one it was. "no product tiles rendered"
+  // was reported for a page carrying 92 of them -- the filter had binned every
+  // one, and the message blamed the site. A run that discards everything and a
+  // page that contains nothing need to be told apart.
+  let large = 0;
   for (const img of document.querySelectorAll('img')) {
     const src = img.currentSrc || img.src || '';
     if (!/^https?:/.test(src)) continue;
-    if (!/\\.(jpe?g|png|webp)/i.test(src) && !/image|media|asset|product/i.test(src)) continue;
+    // No URL-shape test. Requiring a file extension or one of four keywords
+    // silently dropped every Cotton Bureau tile -- they are served from
+    // /mockup?pid=... and match none of it, so 92 product images were discarded
+    // before anything measured them and the run reported "no product tiles
+    // rendered". A large image sitting inside a link with alt text is a product
+    // tile whatever its URL looks like; the junk filter below is what excludes
+    // furniture, and it reads the same URL without depending on its shape.
     const box = img.getBoundingClientRect();
     if (box.width < 150 || box.height < 150) continue;
+    large++;
     if (/logo|icon|sprite|badge|flag|payment|placeholder/i.test(src)) continue;
     const link = img.closest('a[href]');
     const href = link ? link.href : '';
@@ -299,7 +438,7 @@ const EXTRACT = `(() => {
     seen.add(key);
     out.push({ name, href, src });
   }
-  return out;
+  return { tiles: out, large };
 })()`;
 
 /**
@@ -349,16 +488,73 @@ async function discoverListings(homepage) {
   return [];
 }
 
+/**
+ * How hard we are allowed to lean on one host, and how we back off when told.
+ *
+ * TeePublic served 17 designs happily. It was then given thirty listing URLs
+ * and run three times inside an hour with no gap between requests, and it
+ * started answering with a bot challenge. That challenge was written up here as
+ * "the site declining" -- it was nothing of the sort, it was this script being
+ * rude, and a working source was struck off on the strength of damage it had
+ * caused itself.
+ *
+ * So: a real gap between listing pages, and a hard stop the moment a host shows
+ * an interstitial rather than pushing through it. Backing off is the correct
+ * response to being challenged. Getting around it is not.
+ */
+const HOST_GAP_MS = 6000;
+const CHALLENGE_MARKERS = [
+  "just a moment",
+  "security verification",
+  "checking your browser",
+  "verify you are human",
+  "access denied",
+  "unusual traffic",
+];
+
+const challenged = new Set();
+
+async function isChallenged(url) {
+  const result = await send("Runtime.evaluate", {
+    returnByValue: true,
+    expression:
+      "((document.title || '') + ' ' + (document.body ? document.body.innerText.slice(0, 400) : ''))" +
+      ".toLowerCase()",
+  });
+  const text = String(result.result?.value ?? "");
+  const hit = CHALLENGE_MARKERS.find((marker) => text.includes(marker));
+  if (!hit) return null;
+  challenged.add(new URL(url).host);
+  return hit;
+}
+
 async function scrapeListing(url) {
+  const host = new URL(url).host;
+  if (challenged.has(host)) return [];
+
   await send("Page.navigate", { url });
   await sleep(RENDER_WAIT_MS);
+
+  const challenge = await isChallenged(url);
+  if (challenge) {
+    console.log(`    ${host} is challenging us ("${challenge}") — stopping on this host`);
+    return [];
+  }
+
   // Scroll to trigger lazy loading, then let the images arrive.
   for (let i = 0; i < 4; i++) {
     await send("Runtime.evaluate", { expression: `window.scrollBy(0, window.innerHeight * 1.2)` });
     await sleep(1400);
   }
   const result = await send("Runtime.evaluate", { returnByValue: true, expression: EXTRACT });
-  return result.result?.value ?? [];
+  const found = result.result?.value ?? { tiles: [], large: 0 };
+  if (!found.tiles.length && found.large) {
+    console.log(`    ${found.large} large images on ${url.slice(0, 60)} — all filtered out`);
+  }
+  // A gap before the next page of the same catalogue. Sampling is the point;
+  // there is no version of this worth being rude for.
+  await sleep(HOST_GAP_MS);
+  return found.tiles;
 }
 
 /** Fetch bytes inside the page context, so cookies and headers match the session. */
@@ -521,7 +717,8 @@ async function collectBrand(slug, [name, tradition, homepage], listingUrls = nul
       join(productDir, "product.json"),
       JSON.stringify(
         { product_id: `${slug}/${handle}`, brand_slug: slug, name: item.name,
-          source_url: item.href || listings[0], category: "unknown", price: "",
+          source_url: item.href || listings[0],
+          category: cottonBureauCategory(item.href) || "unknown", price: "",
           description: "", images: saved,
           acquired_at: new Date().toISOString().replace(/\.\d+Z$/, "Z") },
         null, 2,

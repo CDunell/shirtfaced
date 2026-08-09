@@ -62,6 +62,18 @@ for (const url of process.argv.slice(2)) {
                  linked: !!i.closest('a[href]') };
       });
       const big = measured.filter(m => m.w >= 150 && m.h >= 150);
+      // The site's own names for its garment pages. Four listing URLs were
+      // invented from memory once and every one 404'd, so the probe now reports
+      // where the catalogue actually lives instead of leaving it to be guessed.
+      const seen = new Set();
+      const nav = [];
+      for (const a of document.querySelectorAll('a[href]')) {
+        const href = a.href || '';
+        if (!/collections|\\/shop|t-?shirt|\\btees?\\b|hoodie|catalog|products/i.test(href)) continue;
+        if (seen.has(href)) continue;
+        seen.add(href);
+        nav.push({ text: (a.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 24), href });
+      }
       return {
         landed: location.href,
         title: document.title.slice(0, 80),
@@ -69,7 +81,7 @@ for (const url of process.argv.slice(2)) {
         imgs: imgs.length,
         big: big.length,
         bigSample: big.slice(0, 3),
-        anySample: measured.filter(m => m.w > 0).slice(0, 6),
+        nav: nav.slice(0, 10),
       };
     })()`,
   });

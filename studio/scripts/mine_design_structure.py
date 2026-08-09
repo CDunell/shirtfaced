@@ -290,6 +290,25 @@ def _is_flat_render(product_dir: Path) -> bool:
     return True
 
 
+# Sources that brand every image, and how much of the bottom that costs.
+#
+# RIPT prints RIPTAPPAREL.COM across the foot of every tile. It is a full-width
+# bar of ink in a fixed place, so without this it becomes an element in every
+# RIPT design and adds one to the element count of the whole source. Measured at
+# 0.9833 of the height on all eight sampled -- including light-background designs,
+# which is what rules out its being artwork -- and trimmed a little further to
+# clear the antialiasing.
+WATERMARK_FOOT = {"riptapparel": 0.975}
+
+
+def _watermark_foot(path: Path) -> float:
+    """Share of the image height to drop, for sources that brand their tiles."""
+    for source, keep in WATERMARK_FOOT.items():
+        if source in path.parts:
+            return keep
+    return 1.0
+
+
 def _analyse_flat(path: Path) -> list[dict[str, float]] | None:
     """Bands from flat artwork, where the design is the whole image.
 
@@ -303,6 +322,10 @@ def _analyse_flat(path: Path) -> list[dict[str, float]] | None:
         opened.load()
     except Exception:
         return None
+
+    keep = _watermark_foot(path)
+    if keep < 1.0:
+        opened = opened.crop((0, 0, opened.width, int(opened.height * keep)))
 
     # Where the artwork carries alpha, alpha *is* the design's extent -- there is
     # nothing to infer and no threshold to pick. Threadless serves 59 of its 149
