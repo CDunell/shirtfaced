@@ -18,8 +18,8 @@ from app.adapters.email_delivery import (
 from app.config import Settings
 from app.db.email_models import (
     ConsentState,
-    EmailContact,
     EmailConsentEvent,
+    EmailContact,
     EmailMessage,
     EmailMessageState,
     EmailPurpose,
@@ -83,18 +83,27 @@ def render_template(template: EmailTemplate, recipient_name: str = "mate") -> tu
     safe_name = html.escape(recipient_name.strip() or "mate")
     html_body = (
         "<!doctype html><html><body style=\"margin:0;background:#f4f4f1;color:#111;"
-        "font-family:Arial,sans-serif\"><main style=\"max-width:640px;margin:0 auto;padding:48px 24px\">"
+        "font-family:Arial,sans-serif\"><main style=\"max-width:640px;margin:0 auto;"
+        "padding:48px 24px\">"
         "<div style=\"font-size:28px;font-weight:800;margin-bottom:48px\">shirtfaced</div>"
         f"<p>Hey {safe_name},</p><h1>{html.escape(template.heading)}</h1>"
         f"<p>{html.escape(template.body)}</p>"
         "<hr style=\"margin:48px 0;border:0;border-top:1px solid #ccc\">"
-        "<p style=\"font-size:12px;color:#666\">SHIRTFACED / AUSTRALIA</p></main></body></html>"
+        "<p style=\"font-size:12px;color:#666\">SHIRTFACED / AUSTRALIA</p>"
+        "</main></body></html>"
     )
-    text_body = f"Hey {recipient_name.strip() or 'mate'},\n\n{template.heading}\n\n{template.body}\n\nSHIRTFACED / AUSTRALIA"
+    text_body = (
+        f"Hey {recipient_name.strip() or 'mate'},\n\n{template.heading}\n\n"
+        f"{template.body}\n\nSHIRTFACED / AUSTRALIA"
+    )
     return html_body, text_body
 
 
-def get_or_create_contact(session: Session, email: str, display_name: str | None = None) -> EmailContact:
+def get_or_create_contact(
+    session: Session,
+    email: str,
+    display_name: str | None = None,
+) -> EmailContact:
     normalised = normalise_email(email)
     contact = session.scalar(select(EmailContact).where(EmailContact.email == normalised))
     if contact is not None:
@@ -208,9 +217,11 @@ def deliver_message(session: Session, settings: Settings, message: EmailMessage)
         receipt = adapter.send(
             EmailPayload(
                 to_email=message.recipient_email,
-                from_email=settings.email_from_transactional
-                if message.purpose is EmailPurpose.TRANSACTIONAL
-                else settings.email_from_marketing,
+                from_email=(
+                    settings.email_from_transactional
+                    if message.purpose is EmailPurpose.TRANSACTIONAL
+                    else settings.email_from_marketing
+                ),
                 reply_to=settings.email_reply_to,
                 subject=message.subject,
                 html_body=message.html_body,
