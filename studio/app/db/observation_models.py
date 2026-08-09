@@ -67,7 +67,15 @@ ZONES = (
     "cap_back",
 )
 
-ZONE_STATES = ("bare", "image_only", "text_only", "image_and_text")
+# Two different facts, and an earlier version had them fighting over one column.
+#
+# The state is the Constitution's §5 decision about what the zone is *for*: a
+# blank chest chosen deliberately and a neck label are both unprinted by the
+# design, and they are not the same thing at all.
+ZONE_STATES = ("active graphic zone", "permanent identity zone", "intentional negative space")
+
+# The content is simply what is on it.
+ZONE_CONTENT = ("bare", "image_only", "text_only", "image_and_text")
 
 FILLS = ("trace", "quarter", "half", "most", "full", "bleeds")
 
@@ -123,7 +131,10 @@ class DesignObservation(Base, TimestampMixin):
     references_property: Mapped[bool] = mapped_column(Boolean, default=False)
     property_name: Mapped[str] = mapped_column(Text, default="")
 
-    construction: Mapped[str] = mapped_column(String(32), default="")
+    # Constitution §8 graphic archetype and §6 layout archetype. `construction`
+    # was an invented parallel vocabulary and is gone.
+    graphic_archetype: Mapped[str] = mapped_column(String(48), default="")
+    layout_archetype: Mapped[str] = mapped_column(String(16), default="")
     integration: Mapped[str] = mapped_column(String(32), default="")
     element_shapes: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
 
@@ -180,8 +191,21 @@ class ObservationZone(Base):
             name="zone_known",
         ),
         CheckConstraint(
-            "state IN ('bare','image_only','text_only','image_and_text')",
+            "state IN ('active graphic zone','permanent identity zone',"
+            "'intentional negative space')",
             name="zone_state_known",
+        ),
+        CheckConstraint(
+            "content IN ('bare','image_only','text_only','image_and_text')",
+            name="zone_content_known",
+        ),
+        CheckConstraint(
+            "scale_role = '' OR scale_role IN ('S0','S1','S2','S3','S4')",
+            name="scale_role_known",
+        ),
+        CheckConstraint(
+            "hierarchy = '' OR hierarchy IN ('H1','H2','H3')",
+            name="hierarchy_known",
         ),
         CheckConstraint(
             "fill IN ('trace','quarter','half','most','full','bleeds')",
@@ -195,8 +219,11 @@ class ObservationZone(Base):
         UUID(as_uuid=True), ForeignKey("design_observations.id", ondelete="CASCADE"), nullable=False
     )
     zone: Mapped[str] = mapped_column(String(32), nullable=False)
-    state: Mapped[str] = mapped_column(String(16), nullable=False)
+    state: Mapped[str] = mapped_column(String(32), nullable=False)
+    content: Mapped[str] = mapped_column(String(16), nullable=False)
     fill: Mapped[str] = mapped_column(String(16), nullable=False)
+    scale_role: Mapped[str] = mapped_column(String(4), default="")
+    hierarchy: Mapped[str] = mapped_column(String(4), default="")
     description: Mapped[str] = mapped_column(Text, default="")
 
     observation: Mapped[DesignObservation] = relationship(back_populates="zones")

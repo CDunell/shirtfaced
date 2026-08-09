@@ -34,6 +34,7 @@ from sqlalchemy.orm import Session
 
 from app.db.observation_models import (
     FILLS,
+    ZONE_CONTENT,
     ZONE_STATES,
     ZONES,
     DesignObservation,
@@ -141,21 +142,36 @@ def _normalise(row: dict[str, Any]) -> tuple[dict[str, Any], list[dict[str, str]
     for entry in row.get("zones") or []:
         zone = str(entry.get("zone", ""))
         state = str(entry.get("state", ""))
+        content = str(entry.get("content", ""))
         fill = str(entry.get("fill", ""))
+        scale_role = str(entry.get("scale_role") or "")
+        hierarchy = str(entry.get("hierarchy") or "")
         if zone not in ZONES:
             problems.append(f"unknown zone: {zone}")
             continue
         if state not in ZONE_STATES:
             problems.append(f"unknown zone state: {state}")
             continue
+        if content not in ZONE_CONTENT:
+            problems.append(f"unknown zone content: {content}")
+            continue
         if fill not in FILLS:
             problems.append(f"unknown fill: {fill}")
+            continue
+        if scale_role not in ("", "S0", "S1", "S2", "S3", "S4"):
+            problems.append(f"unknown scale role: {scale_role}")
+            continue
+        if hierarchy not in ("", "H1", "H2", "H3"):
+            problems.append(f"unknown hierarchy: {hierarchy}")
             continue
         zones.append(
             {
                 "zone": zone,
                 "state": state,
+                "content": content,
                 "fill": fill,
+                "scale_role": scale_role,
+                "hierarchy": hierarchy,
                 "description": entry.get("description", ""),
             }
         )
