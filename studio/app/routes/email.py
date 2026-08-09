@@ -2,18 +2,17 @@
 
 from __future__ import annotations
 
+import json
 import uuid
-from pathlib import Path
 from typing import Annotated
 
-import yaml
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.config import PROJECT_ROOT, Settings, get_settings
-from app.db.email_models import ConsentState, EmailContact, EmailMessage
+from app.db.email_models import ConsentState, EmailMessage
 from app.db.session import get_db_session
 from app.services.email_service import (
     TEMPLATES,
@@ -28,14 +27,24 @@ SessionDependency = Annotated[Session, Depends(get_db_session)]
 SettingsDependency = Annotated[Settings, Depends(get_settings)]
 
 
-class PreviewInput(BaseModel):
-    email: EmailStr
+class EmailInput(BaseModel):
+    email: str = Field(min_length=3, max_length=320)
+
+    @field_validator("email")
+    @classmethod
+    def _email_shape(cls, value: str) -> str:
+        clean = value.strip().lower()
+        if clean.count("@") != 1 or "." not in clean.rsplit("@", 1)[1]:
+            raise ValueError("Enter a valid email address.")
+        return clean
+
+
+class PreviewInput(EmailInput):
     display_name: str = Field(default="mate", max_length=200)
     template_key: str
 
 
-class ConsentInput(BaseModel):
-    email: EmailStr
+class ConsentInput(EmailInput):
     subscribed: bool
     source: str = Field(default="studio", max_length=120)
 
@@ -91,10 +100,10 @@ def templates() -> list[dict[str, str]]:
 
 @router.get("/dns-plan")
 def dns_plan() -> dict[str, object]:
-    path = PROJECT_ROOT / "email" / "dns-plan.yaml"
+    path = PROJECT_ROOT / "email" / "dns-plan.json"
     if not path.is_file():
         raise HTTPException(status_code=500, detail="Email DNS plan is missing.")
-    value = yaml.safe_load(path.read_text(encoding="utf-8"))
+    value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise HTTPException(status_code=500, detail="Email DNS plan is invalid.")
     return value
@@ -102,7 +111,7 @@ def dns_plan() -> dict[str, object]:
 
 @router.post("/consent")
 def consent(payload: ConsentInput, session: SessionDependency) -> dict[str, str]:
-    contact = get_or_create_contact(session, str(payload.email))
+    contact = get_or_create_contact(session, payload.email)
     state = ConsentState.SUBSCRIBED if payload.subscribed else ConsentState.UNSUBSCRIBED
     record_marketing_consent(session, contact, state, payload.source)
     session.commit()
@@ -114,7 +123,7 @@ def preview(payload: PreviewInput, session: SessionDependency) -> MessageView:
     try:
         message, allowed, reason = create_preview_message(
             session,
-            email=str(payload.email),
+            email=payload.email,
             display_name=payload.display_name,
             template_key=payload.template_key,
         )
