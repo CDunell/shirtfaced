@@ -62,7 +62,9 @@ class EmailContact(Base, TimestampMixin):
     customer_ref: Mapped[str | None] = mapped_column(String(200), index=True)
 
     consent_events: Mapped[list[EmailConsentEvent]] = relationship(
-        back_populates="contact", cascade="all, delete-orphan", order_by="EmailConsentEvent.occurred_at"
+        back_populates="contact",
+        cascade="all, delete-orphan",
+        order_by="EmailConsentEvent.occurred_at",
     )
     suppressions: Mapped[list[EmailSuppression]] = relationship(
         back_populates="contact", cascade="all, delete-orphan"
@@ -75,7 +77,12 @@ class EmailConsentEvent(Base):
 
     __tablename__ = "email_consent_events"
     __table_args__ = (
-        Index("ix_email_consent_contact_purpose_time", "contact_id", "purpose", text("occurred_at DESC")),
+        Index(
+            "ix_email_consent_contact_purpose_time",
+            "contact_id",
+            "purpose",
+            text("occurred_at DESC"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -84,8 +91,12 @@ class EmailConsentEvent(Base):
     contact_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("email_contacts.id", ondelete="CASCADE"), nullable=False
     )
-    purpose: Mapped[EmailPurpose] = mapped_column(_enum(EmailPurpose, "email_purpose"), nullable=False)
-    state: Mapped[ConsentState] = mapped_column(_enum(ConsentState, "email_consent_state"), nullable=False)
+    purpose: Mapped[EmailPurpose] = mapped_column(
+        _enum(EmailPurpose, "email_purpose"), nullable=False
+    )
+    state: Mapped[ConsentState] = mapped_column(
+        _enum(ConsentState, "email_consent_state"), nullable=False
+    )
     source: Mapped[str] = mapped_column(String(120), nullable=False)
     source_detail: Mapped[str | None] = mapped_column(String(500))
     occurred_at: Mapped[dt.datetime] = mapped_column(
@@ -143,7 +154,9 @@ class EmailMessage(Base, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("email_contacts.id", ondelete="SET NULL")
     )
     recipient_email: Mapped[str] = mapped_column(String(320), nullable=False)
-    purpose: Mapped[EmailPurpose] = mapped_column(_enum(EmailPurpose, "email_purpose"), nullable=False)
+    purpose: Mapped[EmailPurpose] = mapped_column(
+        _enum(EmailPurpose, "email_purpose"), nullable=False
+    )
     template_key: Mapped[str] = mapped_column(String(160), nullable=False)
     subject: Mapped[str] = mapped_column(String(500), nullable=False)
     html_body: Mapped[str] = mapped_column(Text, nullable=False)
