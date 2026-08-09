@@ -22,6 +22,7 @@ from app.routes import (
     assets,
     compose,
     design,
+    email,
     health,
     printing,
     social,
@@ -46,10 +47,10 @@ class RequireAdminSession(BaseHTTPMiddleware):
         if request.url.path in UNAUTHENTICATED_PATHS:
             return await call_next(request)
 
-        email = verify_session_token(
+        email_address = verify_session_token(
             request.cookies.get(SESSION_COOKIE), self._settings.session_secret
         )
-        if email:
+        if email_address:
             return await call_next(request)
 
         if request.url.path.startswith("/api/"):
@@ -58,14 +59,6 @@ class RequireAdminSession(BaseHTTPMiddleware):
 
 
 def _social_assets_root() -> Path | None:
-    """Return the Social template directory for either production or monorepo dev.
-
-    Production deploys Studio as its own tree, so the templates live at
-    ``studio/public/social-assets``. Local development still has the repository-level
-    generated directory. Keeping both locations explicit avoids depending on the
-    production folder happening to share a parent with the storefront checkout.
-    """
-
     candidates = (
         PROJECT_ROOT / "public" / "social-assets",
         PROJECT_ROOT.parent / "public" / "social-assets",
@@ -102,10 +95,8 @@ def create_app() -> FastAPI:
     application.include_router(archive_files.router)
     application.include_router(design_range.router)
     application.include_router(social.router)
+    application.include_router(email.router)
 
-    # Social templates are generated from the repository's real wordmark/smiley.
-    # Deployment copies the exact generated files into Studio's own public tree so
-    # this service never depends on a sibling storefront checkout existing.
     social_assets = _social_assets_root()
     if social_assets is not None:
         application.mount(
