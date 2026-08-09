@@ -34,7 +34,7 @@ export interface DnsPlan {
 async function checked<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as { detail?: string } | null;
-    throw new Error(body?.detail ?? `Request failed (${response.status})`);
+    throw new Error(body?.detail ?? `Request failed (${String(response.status)})`);
   }
   return (await response.json()) as T;
 }
