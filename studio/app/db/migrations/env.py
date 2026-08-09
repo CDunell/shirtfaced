@@ -12,7 +12,7 @@ from logging.config import fileConfig
 from alembic import context
 
 from app.config import get_settings
-from app.db import archive_models, models, social_models  # noqa: F401  # table registration
+from app.db import archive_models, email_models, models, social_models  # noqa: F401
 from app.db.base import Base
 from app.db.session import build_migration_engine
 
