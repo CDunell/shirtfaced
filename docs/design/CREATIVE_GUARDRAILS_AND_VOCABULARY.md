@@ -39,6 +39,16 @@ The idea should feel like shirtfaced before the wordmark is added.
 
 The brand is not trying to manufacture an edgy character. The strongest source material comes from observed behaviour, relationships, rituals, contradictions and moments that already contain the worldview.
 
+### Restraint rule
+
+**We don't explain.**
+
+The audience gets to do some work. If the design states the action, the emotion, the relationship and why it is funny, it has probably killed the thing that made the concept interesting.
+
+A strong concept may be expressed with no words at all. When language is used, it should add tension, contradiction, rhythm, authorship or a second reading — not provide an instruction manual for the joke.
+
+A useful warning sign is needing to explain why a concept is shirtfaced after the artwork is complete.
+
 ---
 
 ## 2. Hard outside, marshmallow inside
@@ -64,6 +74,10 @@ The toughest person in the room is not necessarily the person acting tough.
 Authority can be quiet. Love can have more power than swagger. A small person can completely disarm a much larger smartarse without saying a word.
 
 This is useful territory for both character writing and visual concepts because it reverses expected power without humiliating either person.
+
+### Rejected shortcut: henpecked-partner humour
+
+Do not reduce loving relational power to tired `I'm scared of my wife/girlfriend` comedy. That misses the point. Being disarmed by someone you adore is not humiliation and should not be written as one partner dominating a pathetic other.
 
 ---
 
@@ -151,6 +165,23 @@ Absurdity should therefore usually come from breaking an expectation with convic
 Half-hearted absurdity is weak. Once the stupid idea is accepted, the character, composition and art direction should commit to it as if it were completely reasonable.
 
 The visual should not wink at the audience to explain that it knows it is funny.
+
+### Protect exceptional concepts from becoming formulas
+
+**Extract principles from great ideas. Don't extract recipes.**
+
+The nun bombing the pool teaches commitment, agency, dignity, broken expectation and gleeful defiance. It does **not** establish a reusable formula of `unexpected respectable person does naughty thing`.
+
+Some concepts are powerful because the exact collision is singular. Repeating the surface recipe cheapens the original and teaches the engine the wrong lesson.
+
+When analysing an approved concept, separate:
+
+- **transferable principle** — may inform future concepts;
+- **subject-specific magic** — belongs to this concept;
+- **execution evidence** — may inform treatment and placement;
+- **surface recipe** — must not be automatically reproduced.
+
+The nun remains the canonical pool-bomb concept. Do not manufacture substitutes merely to fill the same conceptual slot.
 
 ---
 
@@ -242,7 +273,7 @@ The strongest shirtfaced humour often lets the subject win.
 
 ---
 
-## 10. Retired visual lane
+## 10. Retired visual and conceptual lanes
 
 Scientific/specimen plates, engineering diagrams, technical drawings, blueprints, exploded views, numbered callouts, pseudo-academic charts and fake technical documentation are not a core shirtfaced design lane.
 
@@ -250,9 +281,18 @@ They may be revisited only if a future concept is exceptional enough to justify 
 
 Likewise, generic streetwear aesthetics do not become shirtfaced merely because a wordmark or swear is added.
 
+Rejected conceptual shortcuts include:
+
+- henpecked-partner clichés;
+- explaining loyalty in inspirational copy instead of showing it;
+- repeating an approved concept by swapping in a new subject;
+- using profanity as a substitute for an idea;
+- making identity itself the punchline;
+- random absurdity with no internal logic.
+
 ---
 
-## 11. Garment test
+## 11. Garment and concept tests
 
 Every concept must answer:
 
@@ -260,19 +300,25 @@ Every concept must answer:
 
 A design must succeed as a desirable product before the joke, story or brand context is applied.
 
-A second test is required:
+A second test:
 
 **Would this still feel like shirtfaced if the wordmark were removed?**
 
-If the answer is no, the concept or execution is relying on branding to manufacture authorship.
-
-A third test:
+A third:
 
 **Would this idea still be interesting if the profanity were removed?**
 
 A fourth:
 
 **Is the design showing the worldview, or merely printing a sentence that describes it?**
+
+A fifth:
+
+**Have we left anything for the audience to discover?**
+
+A sixth:
+
+**Are we transferring the principle from a successful concept, or copying its recipe?**
 
 ---
 
@@ -323,18 +369,6 @@ One word. No apostrophe. No comma. Lowercase when used in normal brand styling.
 
 It works because crushing the sentence together turns it from dialogue into a verdict.
 
-Potential uses:
-
-- tiny chest;
-- huge back;
-- cap embroidery;
-- hoodie sleeve;
-- neck-label easter egg;
-- tonal premium version;
-- giant condensed type;
-- understated country-club treatment;
-- `shirtfaced / itsbullshitmate`.
-
 Treat it as a recurring phrase/device rather than a one-off gag.
 
 ### what the ever loving fuck
@@ -361,7 +395,7 @@ A tonal reference for self-deprecation without self-pity. Potential customer-fac
 
 ---
 
-## 15. Emerging shirtfaced test — v2
+## 15. Emerging shirtfaced test — v3
 
 A concept is moving toward shirtfaced when several of these are true:
 
@@ -385,6 +419,10 @@ A concept is moving toward shirtfaced when several of these are true:
 18. The execution commits completely once the premise is accepted.
 19. A competitor's logo could not be substituted without something essential feeling wrong.
 20. It feels observed, lived or recognised rather than focus-grouped into existence.
+21. The audience is trusted to discover part of the meaning without explanatory copy.
+22. The concept is not merely a surface variation of a previous winner.
+23. A relationship is not reduced to a familiar comedy stereotype when the real emotional mechanism is richer.
+24. Analysis of a successful idea distinguishes transferable principle from subject-specific magic.
 
 ---
 
@@ -430,6 +468,10 @@ The large reference corpus will create powerful evidence about composition, plac
 
 The engine should optimise **expression of a shirtfaced concept**, not generate a concept by averaging what other brands have done.
 
+### 16.9 Principle versus recipe representation
+
+The future engine needs a way to store why a concept succeeded without making the original subject/action combination a reusable template. Approved concepts should eventually carry separate fields for transferable mechanism, protected/specific elements, execution evidence and prohibited naive variations.
+
 ---
 
 ## 17. Final creative rule
@@ -437,6 +479,8 @@ The engine should optimise **expression of a shirtfaced concept**, not generate 
 A technically excellent design that could have come from any competent streetwear brand is a failure.
 
 A funny idea that nobody wants to wear is also a failure.
+
+An idea that explains itself to death is a failure even when the underlying concept is good.
 
 The target is both:
 
