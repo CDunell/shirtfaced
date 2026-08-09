@@ -82,14 +82,14 @@ def _unknown(key: str) -> EmailTemplate:
 def render_template(template: EmailTemplate, recipient_name: str = "mate") -> tuple[str, str]:
     safe_name = html.escape(recipient_name.strip() or "mate")
     html_body = (
-        "<!doctype html><html><body style=\"margin:0;background:#f4f4f1;color:#111;"
-        "font-family:Arial,sans-serif\"><main style=\"max-width:640px;margin:0 auto;"
-        "padding:48px 24px\">"
-        "<div style=\"font-size:28px;font-weight:800;margin-bottom:48px\">shirtfaced</div>"
+        '<!doctype html><html><body style="margin:0;background:#f4f4f1;color:#111;'
+        'font-family:Arial,sans-serif"><main style="max-width:640px;margin:0 auto;'
+        'padding:48px 24px">'
+        '<div style="font-size:28px;font-weight:800;margin-bottom:48px">shirtfaced</div>'
         f"<p>Hey {safe_name},</p><h1>{html.escape(template.heading)}</h1>"
         f"<p>{html.escape(template.body)}</p>"
-        "<hr style=\"margin:48px 0;border:0;border-top:1px solid #ccc\">"
-        "<p style=\"font-size:12px;color:#666\">SHIRTFACED / AUSTRALIA</p>"
+        '<hr style="margin:48px 0;border:0;border-top:1px solid #ccc">'
+        '<p style="font-size:12px;color:#666">SHIRTFACED / AUSTRALIA</p>'
         "</main></body></html>"
     )
     text_body = (
