@@ -18,16 +18,11 @@ from typing import Literal
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# The project root is the directory containing ``pyproject.toml``.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
 class AssetStoreKind(StrEnum):
-    """Supported asset store back ends.
-
-    Only ``filesystem`` is implemented in Version 1. Oracle Object Storage is
-    introduced later behind the same ``AssetStore`` interface.
-    """
+    """Supported asset store back ends."""
 
     FILESYSTEM = "filesystem"
 
@@ -45,29 +40,16 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
-    # --- OpenAI -----------------------------------------------------------------
-    # Model names deliberately have no defaults. Guessing a model name can cause
-    # unexpected cost, so the services that need one fail loudly when it is unset.
     openai_api_key: SecretStr | None = None
     openai_text_model: str = ""
     openai_review_model: str = ""
     openai_image_model: str = ""
-    # The cheap model for iteration. Deliberately unset: per ADR-014, gpt-image-1-mini
-    # returns evenly spaced group portraits with every face lit and turned to the lens,
-    # from prompts that explicitly ask for nobody posing, cropped edges and foreground
-    # obstruction. A cheap model earns its place by matching the seeded reference set.
-    # Unset means drafting refuses rather than silently running at full price.
     openai_image_draft_model: str = ""
     openai_image_size: str = "1536x1024"
     openai_image_quality: str = "high"
-    # How many reference images accompany each generation. Every one is uploaded and
-    # billed as image input, so this is a cost dial as well as a fidelity one. Zero
-    # disables references entirely and falls back to text-only generation.
     reference_image_limit: int = Field(default=4, ge=0, le=16)
     openai_timeout_seconds: float = Field(default=180.0, gt=0)
 
-    # --- PostgreSQL -------------------------------------------------------------
-    # No default: the database must always be chosen explicitly.
     database_url: str
     db_pool_size: int = Field(default=5, ge=1)
     db_max_overflow: int = Field(default=10, ge=0)
@@ -75,45 +57,34 @@ class Settings(BaseSettings):
     db_pool_recycle_seconds: int = Field(default=1800, ge=-1)
     db_sslmode: SslMode = "require"
 
-    # --- Storage ----------------------------------------------------------------
     worlds_root: Path = PROJECT_ROOT / "worlds"
     assets_root: Path = PROJECT_ROOT / "var" / "assets"
     asset_store: AssetStoreKind = AssetStoreKind.FILESYSTEM
 
-    # --- References -------------------------------------------------------------
-    # How many reference frames the planner sees. The owner asked for 12 to 20;
-    # pinned frames sit outside this cap and never age out.
     reference_active_limit: int = Field(default=16, ge=1, le=100)
 
-    # --- Social publishing ------------------------------------------------------
-    # Scheduled delivery is intentionally inert until an account adapter is connected.
     social_publishing_enabled: bool = False
     social_publisher_mode: Literal["disabled", "fake", "platform"] = "disabled"
     social_max_attempts: int = Field(default=5, ge=1, le=20)
     social_retry_base_seconds: int = Field(default=60, ge=5, le=86400)
 
-    # --- Interface --------------------------------------------------------------
-    # Built Base Web assets. In development the Vite dev server serves these instead
-    # and proxies the API, so this directory may not exist.
+    # Email delivery starts inert. Local delivery is only accepted in debug mode;
+    # production remains disabled until a real provider adapter is deliberately chosen.
+    email_delivery_enabled: bool = False
+    email_adapter_mode: Literal["disabled", "local", "provider"] = "disabled"
+    email_from_transactional: str = "orders@mail.shirtfaced.wtf"
+    email_from_marketing: str = "hello@news.shirtfaced.wtf"
+    email_reply_to: str = "hello@shirtfaced.wtf"
+    email_preview_root: Path = PROJECT_ROOT / "var" / "email-previews"
+
     web_dist_root: Path = PROJECT_ROOT / "web" / "dist"
 
-    # --- Application ------------------------------------------------------------
     git_enabled: bool = True
-    # Bind to localhost by default; deployments put a reverse proxy in front and
-    # override this with the interface the proxy can reach.
     app_host: str = "127.0.0.1"
     app_port: int = Field(default=8000, ge=1, le=65535)
     debug: bool = False
 
-    # --- Authentication ---------------------------------------------------------
-    # Studio has no login of its own. Admin already has one, and its session
-    # cookie is signed with this secret; sharing the value lets Studio verify a
-    # session admin issued. Being logged into admin is being logged into Studio.
-    #
-    # Empty locally, where Studio is only reachable from the machine it runs on.
-    # Set on any deployment, because this API spends money.
     session_secret: str = ""
-    # Where an unauthenticated browser is sent. Admin's login returns it here.
     login_url: str = "https://admin.shirtfaced.wtf/login"
 
     @property
@@ -134,17 +105,18 @@ class Settings(BaseSettings):
 
     @property
     def worlds_root_resolved(self) -> Path:
-        """Absolute worlds directory, resolved against the project root."""
         return self._resolve(self.worlds_root)
 
     @property
     def assets_root_resolved(self) -> Path:
-        """Absolute assets directory, resolved against the project root."""
         return self._resolve(self.assets_root)
 
     @property
+    def email_preview_root_resolved(self) -> Path:
+        return self._resolve(self.email_preview_root)
+
+    @property
     def web_dist_root_resolved(self) -> Path:
-        """Absolute built-interface directory, resolved against the project root."""
         return self._resolve(self.web_dist_root)
 
     @staticmethod
@@ -155,4 +127,4 @@ class Settings(BaseSettings):
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:
     """Return the process-wide settings, reading the environment once."""
-    return Settings()  # values come from the environment
+    return Settings()
