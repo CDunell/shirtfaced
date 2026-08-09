@@ -94,6 +94,73 @@ def _name(centre: dict[str, float]) -> str:
     return f"chest hit{side}"
 
 
+# The forms design_range.py offers, and where each number came from.
+#
+# These are the owner's range: front image full, half, strip, vertical strip
+# left or right, left pocket, small centred, and the same again for a phrase.
+# The corpus does not get a vote on whether they exist -- it is evidence about
+# geometry, not direction, and reading its medians as an instruction is the same
+# category error as reading "Australian" as an instruction to draw kangaroos.
+#
+# What the corpus can do is replace the geometry. Every number below was
+# invented, and the first measurement says one of them is wrong by a factor of
+# three: `full` was written as 0.92 of the garment's width, and 322 clean shirt
+# placements put the commonest chest form at 0.33.
+OWNER_FORMS: dict[str, dict[str, float]] = {
+    "jumbo": {"width": 1.18, "height": 1.10, "centre_x": 0.50},
+    "full": {"width": 0.92, "height": 0.88, "centre_x": 0.50},
+    "half": {"width": 0.90, "height": 0.46, "centre_x": 0.50},
+    "band": {"width": 0.92, "height": 0.18, "centre_x": 0.50},
+    "vertical_left": {"width": 0.30, "height": 0.86, "centre_x": 0.24},
+    "vertical_right": {"width": 0.30, "height": 0.86, "centre_x": 0.76},
+    "small_centred": {"width": 0.34, "height": 0.26, "centre_x": 0.50},
+    "pocket": {"width": 0.24, "height": 0.22, "centre_x": 0.28},
+}
+
+# How close a measured form has to sit to an owner form to be called support for
+# it. Generous on purpose: the question is whether the corpus has anything to
+# say about this form at all, not whether it agrees to three decimals.
+SUPPORT_DISTANCE = 0.15
+
+
+def _owner_form_support(forms: list[dict[str, Any]]) -> dict[str, Any]:
+    """For each form in the owner's range, the nearest thing the corpus measured.
+
+    A form with no measured neighbour is not thereby wrong -- it is unevidenced,
+    which is a different thing and has to be said differently. Cotton Bureau
+    prints centred chest graphics almost exclusively; that is a fact about
+    Cotton Bureau, and deleting `pocket` on the strength of it would be the
+    corpus setting direction.
+    """
+    out: dict[str, Any] = {}
+    for name, owner in OWNER_FORMS.items():
+        best = None
+        best_distance = None
+        for measured in forms:
+            distance = max(abs(measured[axis] - owner[axis]) for axis in ("width", "height"))
+            distance = max(distance, abs(measured["centre_x"] - owner["centre_x"]))
+            if best_distance is None or distance < best_distance:
+                best, best_distance = measured, distance
+        if best is None:
+            out[name] = {"source": "owner_set", "measured_support": None}
+            continue
+        supported = best_distance <= SUPPORT_DISTANCE
+        out[name] = {
+            "source": "measured" if supported else "owner_set",
+            "owner": owner,
+            "nearest_measured": {
+                "name": best["name"],
+                "designs": best["designs"],
+                "width": best["width"],
+                "height": best["height"],
+                "centre_x": best["centre_x"],
+            },
+            "distance": round(float(best_distance), 4),
+            "measured_support": supported,
+        }
+    return out
+
+
 def derive(records: list[dict[str, Any]], min_evidence: int) -> dict[str, Any]:
     by_category: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for record in records:
@@ -154,6 +221,7 @@ def derive(records: list[dict[str, Any]], min_evidence: int) -> dict[str, Any]:
             # called a form are not represented below.
             "unclustered": len(rows) - covered,
             "forms": forms,
+            "owner_range": _owner_form_support(forms),
         }
     return out
 
