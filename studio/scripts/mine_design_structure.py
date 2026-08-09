@@ -95,7 +95,7 @@ def _hinted_frames(product_dir: Path, images: list[str]) -> list[str]:
     if not provenance.is_file():
         return []
     try:
-        records = json.loads(provenance.read_text(encoding="utf-8"))
+        records = json.loads(provenance.read_text(encoding="utf-8-sig"))
     except (OSError, json.JSONDecodeError):
         return []
 
@@ -277,7 +277,7 @@ def _is_flat_render(product_dir: Path) -> bool:
     if not provenance.is_file():
         return True
     try:
-        records = json.loads(provenance.read_text(encoding="utf-8"))
+        records = json.loads(provenance.read_text(encoding="utf-8-sig"))
     except (json.JSONDecodeError, OSError):
         return True
     if isinstance(records, dict):
@@ -450,7 +450,7 @@ def main(argv: list[str]) -> int:
         brand_file = brand_dir / "brand.json"
         if not brand_file.is_file():
             continue
-        brand = json.loads(brand_file.read_text(encoding="utf-8"))
+        brand = json.loads(brand_file.read_text(encoding="utf-8-sig"))
         tradition = brand.get("design_tradition", "unknown")
         products = brand_dir / "products"
         if not products.is_dir():
@@ -459,7 +459,7 @@ def main(argv: list[str]) -> int:
             product_file = product_dir / "product.json"
             if not product_file.is_file():
                 continue
-            product = json.loads(product_file.read_text(encoding="utf-8"))
+            product = json.loads(product_file.read_text(encoding="utf-8-sig"))
             images = product.get("images") or []
             if not images:
                 continue

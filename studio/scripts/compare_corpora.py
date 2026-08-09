@@ -62,7 +62,7 @@ def _load(name: str) -> dict[str, Any] | None:
     path = CORPUS / name
     if not path.exists():
         return None
-    return json.loads(path.read_text(encoding="utf-8"))
+    return json.loads(path.read_text(encoding="utf-8-sig"))
 
 
 def _shares(shapes: dict[str, int]) -> dict[str, float]:
