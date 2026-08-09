@@ -1,5 +1,8 @@
 /**
  * Application shell.
+ *
+ * The navigation and page frame every later screen sits inside: the dashboard, the
+ * world page, the generation review and the history list.
  */
 
 import { useState } from "react";
@@ -35,6 +38,7 @@ const VIEWS: { id: View; label: string }[] = [
 
 export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   const [css, theme] = useStyletron();
+  // Prompts first: generation happens elsewhere, so this is the screen that gets used.
   const [view, setView] = useState<View>("prompts");
 
   const navItem = (active: boolean) =>
@@ -90,7 +94,14 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
             <span className={css({ color: theme.colors.contentTertiary })}>/ studio</span>
           </span>
 
-          <nav className={css({ display: "flex", alignItems: "center", gap: "4px", flexWrap: "wrap" })}>
+          <nav
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              flexWrap: "wrap",
+            })}
+          >
             {VIEWS.map((item) => (
               <button
                 key={item.id}
@@ -157,11 +168,15 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <EmailBench />
         ) : (
           <>
-            <h1 className={`display ${css({ fontSize: "40px", margin: "0 0 8px" })}`}>Dashboard</h1>
+            <h1 className={`display ${css({ fontSize: "40px", margin: "0 0 8px" })}`}>
+              Dashboard
+            </h1>
             <ParagraphMedium color={theme.colors.contentSecondary} marginTop={0}>
               A private production tool for building coherent Shirtfaced photographic worlds.
             </ParagraphMedium>
+
             <WorldPage />
+
             <div className={css({ marginTop: theme.sizing.scale900, maxWidth: "420px" })}>
               <ServiceStatus />
             </div>
