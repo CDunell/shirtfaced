@@ -20,18 +20,25 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    email_purpose = sa.Enum("transactional", "marketing", name="email_purpose")
-    consent_state = sa.Enum("subscribed", "unsubscribed", name="email_consent_state")
-    suppression_scope = sa.Enum("global", "marketing", name="email_suppression_scope")
-    suppression_reason = sa.Enum(
+    email_purpose = postgresql.ENUM(
+        "transactional", "marketing", name="email_purpose", create_type=False
+    )
+    consent_state = postgresql.ENUM(
+        "subscribed", "unsubscribed", name="email_consent_state", create_type=False
+    )
+    suppression_scope = postgresql.ENUM(
+        "global", "marketing", name="email_suppression_scope", create_type=False
+    )
+    suppression_reason = postgresql.ENUM(
         "unsubscribe",
         "hard_bounce",
         "complaint",
         "manual",
         "legal",
         name="email_suppression_reason",
+        create_type=False,
     )
-    message_state = sa.Enum(
+    message_state = postgresql.ENUM(
         "preview",
         "queued",
         "sending",
@@ -39,12 +46,16 @@ def upgrade() -> None:
         "failed",
         "blocked",
         name="email_message_state",
+        create_type=False,
     )
-    email_purpose.create(op.get_bind(), checkfirst=True)
-    consent_state.create(op.get_bind(), checkfirst=True)
-    suppression_scope.create(op.get_bind(), checkfirst=True)
-    suppression_reason.create(op.get_bind(), checkfirst=True)
-    message_state.create(op.get_bind(), checkfirst=True)
+    for enum_type in (
+        email_purpose,
+        consent_state,
+        suppression_scope,
+        suppression_reason,
+        message_state,
+    ):
+        enum_type.create(op.get_bind(), checkfirst=True)
 
     op.create_table(
         "email_contacts",
@@ -203,4 +214,4 @@ def downgrade() -> None:
         "email_consent_state",
         "email_purpose",
     ):
-        sa.Enum(name=name).drop(op.get_bind(), checkfirst=True)
+        postgresql.ENUM(name=name).drop(op.get_bind(), checkfirst=True)
