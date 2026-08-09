@@ -234,9 +234,10 @@ def main(argv: list[str]) -> int:
     if args.dry_run:
         counts = ingest(None, rows, dry_run=True)  # type: ignore[arg-type]
     else:
-        from app.db.session import engine  # imported late so --dry-run needs no database
+        # Imported late so --dry-run needs no database at all.
+        from app.db.session import get_engine
 
-        with Session(engine) as session:
+        with Session(get_engine()) as session:
             counts = ingest(session, rows, dry_run=False)
 
     print(
