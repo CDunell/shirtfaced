@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "root_domain": "shirtfaced.wtf",
+  "transactional_domain": "mail.shirtfaced.wtf",
+  "marketing_domain": "news.shirtfaced.wtf",
+  "tracking_domain": "links.shirtfaced.wtf",
+  "status": "planned",
+  "records": {
+    "spf_transactional": {"status": "provider_required", "value": null},
+    "spf_marketing": {"status": "provider_required", "value": null},
+    "dkim_transactional": {"status": "provider_required", "value": null},
+    "dkim_marketing": {"status": "provider_required", "value": null},
+    "return_path": {"status": "provider_required", "value": null},
+    "tracking_cname": {"status": "provider_required", "value": null},
+    "dmarc": {
+      "status": "planned",
+      "host": "_dmarc.shirtfaced.wtf",
+      "proposed_value": "v=DMARC1; p=none; rua=mailto:dmarc@shirtfaced.wtf; adkim=s; aspf=s; pct=100"
+    }
+  },
+  "mailboxes": [
+    "postmaster@shirtfaced.wtf",
+    "abuse@shirtfaced.wtf",
+    "dmarc@shirtfaced.wtf",
+    "hello@shirtfaced.wtf"
+  ]
+}
