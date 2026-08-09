@@ -21,7 +21,7 @@ from app.services.composition_engine import (
     Element,
 )
 
-TEMPLATES = Path(__file__).resolve().parents[2] / "var" / "design_corpus" / "design_templates.json"
+TEMPLATES = Path(__file__).resolve().parents[1] / "fixtures" / "design_templates.json"
 
 BRIEF = Brief(
     elements=(Element(kind="image", content="photo"), Element(kind="text", content="SHIRTFACED")),

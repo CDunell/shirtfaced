@@ -26,6 +26,7 @@ BRIEF = {
         {"kind": "text", "content": "SHIRTFACED"},
     ]
 }
+TEMPLATES = Path(__file__).resolve().parents[1] / "fixtures" / "design_templates.json"
 
 
 @pytest.fixture
@@ -44,9 +45,7 @@ def client(tmp_path: Path) -> TestClient:
     # so patching the name had no effect and these tests wrote into the real
     # approvals store -- training the engine on decisions nobody made, which is
     # the exact fault the docstring above warns about.
-    app.dependency_overrides[range_route.get_engine] = lambda: CompositionEngine(
-        range_route.TEMPLATES, store
-    )
+    app.dependency_overrides[range_route.get_engine] = lambda: CompositionEngine(TEMPLATES, store)
     return TestClient(app)
 
 
