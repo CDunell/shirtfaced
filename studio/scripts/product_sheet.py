@@ -20,10 +20,18 @@ close-up, then front -- which has been recorded in every provenance file since
 collection and went unread for months.
 
     python scripts/product_sheet.py 1
+    python scripts/product_sheet.py 1 --through 40
     python scripts/product_sheet.py --count
 
 Writes var/preview/psheet/sheet-NNNN.png and .json. Deterministic ordering, so
 sheet 400 holds the same products on every run and a row traces back to a cell.
+
+Ranking a frame means locating the garment in it, measured at 50ms, and there
+are 40,070 of them -- 34 minutes to walk the corpus. That ran on every
+invocation, because the area cache lived in memory and died with the process, so
+building forty sheets one at a time cost twenty-two hours of re-deciding facts
+that had not changed. The ranking is now written to catalogue.json and read back;
+`--rebuild` is how it gets redone after the corpus grows.
 """
 
 from __future__ import annotations
@@ -45,6 +53,7 @@ CORPORA = {
     "flat": ROOT / "var" / "design_corpus_flat",
 }
 OUT = ROOT / "var" / "preview" / "psheet"
+CATALOGUE = OUT / "catalogue.json"
 
 PER_SHEET = 9
 COLS = 3
@@ -103,8 +112,18 @@ def _subject_area(path: Path) -> float:
     return _AREA_CACHE[path]
 
 
-def catalogue() -> list[dict[str, Any]]:
-    """Every product, with its frames ranked by how well they show the design."""
+def catalogue(rebuild: bool = False) -> list[dict[str, Any]]:
+    """Every product, frames ranked. Read from disk unless asked to rebuild."""
+    if not rebuild and CATALOGUE.is_file():
+        try:
+            return json.loads(CATALOGUE.read_text(encoding="utf-8-sig"))
+        except (OSError, json.JSONDecodeError):
+            pass  # Corrupt or half-written: fall through and earn it again.
+    return _walk()
+
+
+def _walk() -> list[dict[str, Any]]:
+    """The 34-minute pass. Called once, then cached."""
     rows: list[dict[str, Any]] = []
     for corpus, root in CORPORA.items():
         if not root.is_dir():
@@ -152,15 +171,20 @@ def catalogue() -> list[dict[str, Any]]:
                         "source_url": product.get("source_url", ""),
                         # Every frame, best first. The sheet shows the first;
                         # the rest are there to be opened when one is not enough.
-                        "frames": [str((product_dir / n).relative_to(root.parent)) for n in ranked],
+                        # Forward slashes always. These get copied straight into
+                        # a row's `image` field, and a describer on Windows would
+                        # otherwise paste backslashes into a path the rest of the
+                        # pipeline writes with slashes.
+                        "frames": [
+                            (product_dir / n).relative_to(root.parent).as_posix() for n in ranked
+                        ],
                         "hints": [hints.get(n, "") for n in ranked],
                     }
                 )
     return rows
 
 
-def build(sheet_no: int, per_sheet: int) -> dict[str, Any] | None:
-    rows = catalogue()
+def build(sheet_no: int, per_sheet: int, rows: list[dict[str, Any]]) -> dict[str, Any] | None:
     start = (sheet_no - 1) * per_sheet
     if start >= len(rows):
         return None
@@ -210,10 +234,22 @@ def main(argv: list[str]) -> int:
     parser.add_argument("sheet", type=int, nargs="?", default=1)
     parser.add_argument("--per-sheet", type=int, default=PER_SHEET)
     parser.add_argument("--count", action="store_true")
+    parser.add_argument("--through", type=int, default=0, help="build a range, one catalogue read")
+    parser.add_argument(
+        "--rebuild", action="store_true", help="re-rank frames after the corpus grows"
+    )
     args = parser.parse_args(argv[1:])
 
-    if args.count:
+    if args.rebuild or not CATALOGUE.is_file():
+        print("ranking every frame -- about 34 minutes, then cached...", file=sys.stderr)
+        rows = _walk()
+        OUT.mkdir(parents=True, exist_ok=True)
+        CATALOGUE.write_text(json.dumps(rows), encoding="utf-8")
+        print(f"wrote {CATALOGUE}", file=sys.stderr)
+    else:
         rows = catalogue()
+
+    if args.count:
         frames = sum(len(r["frames"]) for r in rows)
         labelled = sum(1 for r in rows if r["hints"] and r["hints"][0])
         print(f"{len(rows)} products, {frames} frames")
@@ -221,11 +257,12 @@ def main(argv: list[str]) -> int:
         print(f"{(len(rows) + args.per_sheet - 1) // args.per_sheet} sheets at {args.per_sheet}-up")
         return 0
 
-    built = build(args.sheet, args.per_sheet)
-    if built is None:
-        print("past the end", file=sys.stderr)
-        return 1
-    print(json.dumps(built))
+    for sheet_no in range(args.sheet, max(args.through, args.sheet) + 1):
+        built = build(sheet_no, args.per_sheet, rows)
+        if built is None:
+            print("past the end", file=sys.stderr)
+            return 1 if sheet_no == args.sheet else 0
+        print(json.dumps(built), flush=True)
     return 0
 
 

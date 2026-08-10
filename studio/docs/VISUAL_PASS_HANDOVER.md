@@ -63,6 +63,19 @@ This matters more than it sounds. A rash guard was described from its back,
 recorded as having no graphic, and had to be corrected when its front turned up
 two frames later carrying a chest wordmark.
 
+"Best" is only as good as its evidence. 1,675 of 11,206 products carry the
+store's own `shot_hint`; for the other 85% the ranking falls back to how much of
+the frame the garment fills, which is a proxy for the closest look at the print
+and is not the same thing. A tight crop of a cap's interior sweatband fills its
+frame more completely than a photograph of the cap front does, so it wins. Sheet
+300, cell 2700 is exactly that: a care label ranked first for a trucker cap whose
+design is on another frame.
+
+So when the top frame is a label, a sweatband, a hem, a folded stack or a fabric
+close-up, that is the ranking failing rather than a product without a design.
+Open the rest before recording anything, and never record a bare zone from a
+frame that was never showing the design in the first place.
+
 > **A single frame can say what is on its own zones. It can say nothing about
 > the product.** `graphic_archetype` and `layout_archetype` are product-level.
 
@@ -282,20 +295,31 @@ none of it is in the repository and none of it is on the server.
 ```
 brief          C:\shirtfaced\studio\docs\VISUAL_PASS_HANDOVER.md
 sheet builder  C:\shirtfaced\studio\scripts\product_sheet.py
-sheets out     C:\shirtfaced\studioar\preview\psheetcorpus         C:\shirtfaced\studioar\design_corpus               C:\shirtfaced\studioar\design_corpus_flat```
+sheets out     C:\shirtfaced\studio\var\preview\psheet
+corpus         C:\shirtfaced\studio\var\design_corpus
+               C:\shirtfaced\studio\var\design_corpus_flat
+```
 
 Sheets are not pre-built. Generate them; the ordering is deterministic, so
 sheet 400 always holds the same nine products.
 
 ```
 cd C:\shirtfaced\studio
-python scripts/product_sheet.py 1        # sheet-0001.png + sheet-0001.json
-python scripts/product_sheet.py --count  # 11,206 products, 1,246 sheets
+python scripts/product_sheet.py 1 --through 40   # sheet-0001..0040, png + json
+python scripts/product_sheet.py --count          # 11,206 products, 1,246 sheets
 ```
 
-`--count` and the first build take a few minutes: ranking frames calls
-locate_garment on each one. The cache is per process, so building many sheets in
-one loop is far faster than one invocation each.
+Choosing which frame best shows a design means locating the garment in it, and at
+50ms across 40,070 frames that is a 34-minute walk. It is done once and written
+to `psheet/catalogue.json`; every build after that reads it and is immediate.
+
+If a run starts by printing `ranking every frame`, the cache is missing and it is
+earning it -- let it finish rather than killing it, or the next invocation starts
+over from nothing. `--rebuild` forces the walk, and is only right after the
+corpus has grown.
+
+Build a range with `--through`. Looping the command once per sheet paid the 34
+minutes every time, which is where twenty-two hours would have gone.
 
 ## The database is on the server, the corpus is not
 
@@ -305,11 +329,13 @@ Dry runs work locally -- they are pure validation and never open a connection:
 python scripts/ingest_observations.py <your-rows-dir> --dry-run
 ```
 
-The real write happens on the Oracle box, so rows have to be copied there first:
+The real write happens on the Oracle box, so rows have to be copied there first.
+The key is at the repository root, not under `studio/` -- running these after
+`cd studio` with a relative path will fail:
 
 ```
-scp -i .secrets/oracle.key -r <your-rows-dir> ubuntu@161.33.31.74:/tmp/
-ssh -i .secrets/oracle.key ubuntu@161.33.31.74   "cd /home/ubuntu/shirtfaced-studio && set -a && . ./.env && set +a &&    ./.venv/bin/python scripts/ingest_observations.py /tmp/<your-rows-dir>/"
+scp -i C:\shirtfaced\.secrets\oracle.key -r <your-rows-dir> ubuntu@161.33.31.74:/tmp/
+ssh -i C:\shirtfaced\.secrets\oracle.key ubuntu@161.33.31.74 "cd /home/ubuntu/shirtfaced-studio && set -a && . ./.env && set +a && ./.venv/bin/python scripts/ingest_observations.py /tmp/<your-rows-dir>/"
 ```
 
 Set `described_by` to your own model id. The upsert key is
