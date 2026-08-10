@@ -50,10 +50,10 @@ Choose independently across the axes below. Do not inherit choices from the prev
 Check the result against the Creative Brain, brand identity, actual shirtfaced assets, lowercase wordmark rule, colour discipline and garment-quality expectations.
 
 5. BATCH DIVERSITY CHECK.
-Before rendering, compare all concepts in the batch. If several share the same architecture, composition, medium or joke mechanism, reroll the overlapping treatments.
+Before rendering, compare all concepts in the batch. If several share the same architecture, composition, medium, model casting, environmental mood or joke mechanism, reroll the overlapping treatments.
 
 6. CURATE AFTER EXPLORATION.
-Repetition becomes valid once a treatment or concept has been deliberately selected for a curated range. Exploration comes first.
+Repetition becomes valid once a treatment or concept has been deliberately selected for a range. Exploration comes first.
 
 ## Independent variation axes
 
@@ -93,6 +93,8 @@ The concept should be allowed to land on whichever product makes it hit hardest.
 - cap/hat side
 - cap/hat rear
 - brim / underbrim where credible
+
+A "pocket" placement means the left/right chest zone only. It does NOT imply a physical pocket. shirtfaced does not sell pocket tees.
 
 ### Scale
 - tiny
@@ -158,7 +160,7 @@ The image should normally carry most of the visual weight when imagery is used.
 Do not explain an image with a caption that merely translates what is already visible.
 
 ### Brand hit
-Use actual shirtfaced identity assets.
+Use actual shirtfaced identity assets and the established shirtfaced type system. Typeface and identity primitives are constraints on execution mechanics, not constraints on ideas.
 
 `shirtfaced` is always lowercase.
 
@@ -196,6 +198,36 @@ shirtfaced may borrow almost any visual language provided the Costume Test survi
 
 The borrowed style is a costume, never the personality.
 
+## Aesthetic diversity — MINDFUL, NOT A PIVOT
+
+shirtfaced does not have one photographic mood, one casting profile, one nightlife setting or one visual texture.
+
+Night, tattoos, hard flash, gritty venues, grunge, black garments and edgy-looking models are all valid ingredients. They are not the default recipe and they are not the brand identity.
+
+Do not react to temporary overuse by banning them or pivoting away from them. Simply stop allowing recent outputs to skew the next output unconsciously.
+
+Across exploratory work, stay mindful of variation in:
+- day / night / dawn / daylight / interiors / exteriors
+- clean / polished / documentary / rough / elegant / stupid / sincere
+- quiet / loud
+- young / older
+- tattooed / untattooed
+- men / women / mixed groups
+- different bodies, faces, hair, personal styles and energies
+- solo / pair / group
+- urban / suburban / domestic / roadside / venue / ordinary everyday environments
+- photography / illustration / typography / image-only / mixed media
+
+This is NOT a quota system and NOT a demand that every board demonstrate diversity like a corporate casting sheet. It is an anti-convergence check.
+
+People belong naturally inside the same shirtfaced world. Women are not a separate aesthetic lane, and should not be handled through pink-it-and-shrink-it styling, gender clichés or a special "women's collection" personality. Crops and tanks can be worn by whoever makes the garment and concept work. The worldview remains identical.
+
+The correct question is not "does this look different enough?" It is:
+
+> Are we choosing this because it makes this particular idea hit, or because the last five things happened to look like this?
+
+If the answer is the latter, reroll the treatment, casting or environment — not the idea.
+
 ## Batch anti-convergence rules
 
 During exploratory development:
@@ -209,8 +241,11 @@ During exploratory development:
 - Do not let every garment show both front and back.
 - Do not let presentation-board consistency force garment-design consistency.
 - Do not mistake visual coherence for sameness.
+- Do not let repeated nightlife, tattoos, grit, grunge or "edgy" casting quietly become the house style.
+- Do not overcorrect by excluding those ingredients. They remain available whenever the idea calls for them.
+- Check model/casting repetition just as seriously as graphic-treatment repetition.
 
-A batch should feel like different shirtfaced ideas made by the same bastard, not one layout populated eight times.
+A batch should feel like different shirtfaced ideas made by the same bastard, not one layout, mood or casting recipe populated eight times.
 
 ## Pre-render reference requirement
 
@@ -219,9 +254,10 @@ Before EVERY garment-development turn:
 1. Reference this file.
 2. Reference `docs/SHIRTFACED_CREATIVE_BRAIN.md`.
 3. Use the supporting concept/treatment/brand docs as source material where relevant.
-4. Check recent outputs for accidental repetition.
+4. Check recent outputs for accidental repetition in subject, treatment, casting, setting and mood.
 5. Select concept first, then treatment.
 6. Randomise product form as well as treatment.
 7. Run the batch diversity check before rendering.
+8. Ask whether any repeated aesthetic choice is serving the idea or merely inheriting momentum from recent outputs.
 
-If the next output looks structurally predictable from the previous output, the system has failed and must be rerolled before presentation.
+If the next output looks structurally or aesthetically predictable from the previous output, the system has failed and must be rerolled before presentation.
