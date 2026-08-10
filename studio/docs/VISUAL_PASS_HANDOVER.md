@@ -274,8 +274,47 @@ states, unknown fills, unknown lanes, unknown scale roles or hierarchies, and
 was right to — they had been classified against the Constitution while the table
 still held an invented vocabulary.
 
-The database lives on the Oracle box; the ingest runs there, not on a
-workstation.
+## Where everything actually is
+
+The corpus is 13GB and lives only on the workstation. `var/` is gitignored, so
+none of it is in the repository and none of it is on the server.
+
+```
+brief          C:\shirtfaced\studio\docs\VISUAL_PASS_HANDOVER.md
+sheet builder  C:\shirtfaced\studio\scripts\product_sheet.py
+sheets out     C:\shirtfaced\studioar\preview\psheetcorpus         C:\shirtfaced\studioar\design_corpus               C:\shirtfaced\studioar\design_corpus_flat```
+
+Sheets are not pre-built. Generate them; the ordering is deterministic, so
+sheet 400 always holds the same nine products.
+
+```
+cd C:\shirtfaced\studio
+python scripts/product_sheet.py 1        # sheet-0001.png + sheet-0001.json
+python scripts/product_sheet.py --count  # 11,206 products, 1,246 sheets
+```
+
+`--count` and the first build take a few minutes: ranking frames calls
+locate_garment on each one. The cache is per process, so building many sheets in
+one loop is far faster than one invocation each.
+
+## The database is on the server, the corpus is not
+
+Dry runs work locally -- they are pure validation and never open a connection:
+
+```
+python scripts/ingest_observations.py <your-rows-dir> --dry-run
+```
+
+The real write happens on the Oracle box, so rows have to be copied there first:
+
+```
+scp -i .secrets/oracle.key -r <your-rows-dir> ubuntu@161.33.31.74:/tmp/
+ssh -i .secrets/oracle.key ubuntu@161.33.31.74   "cd /home/ubuntu/shirtfaced-studio && set -a && . ./.env && set +a &&    ./.venv/bin/python scripts/ingest_observations.py /tmp/<your-rows-dir>/"
+```
+
+Set `described_by` to your own model id. The upsert key is
+`(image_path, described_by)`, so your rows sit beside anyone else's rather than
+overwriting them -- which is the whole reason two describers can run at once.
 
 ---
 
