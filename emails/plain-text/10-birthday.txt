@@ -1,0 +1,15 @@
+SHIRTFACED
+
+HAPPY BIRTHDAY.
+IT'S YOUR DAY.
+
+Here's 15% on us.
+Use code: BDAY15
+
+TREAT YOURSELF → {{ primary_url }}
+
+---
+REAL MATES. GREAT TIMES. SHIRTFACED.
+shirtfaced.wtf
+
+Unsubscribe: {{ unsubscribe_url }}

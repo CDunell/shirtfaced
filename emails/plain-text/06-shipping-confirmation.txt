@@ -1,0 +1,17 @@
+SHIRTFACED
+
+IT'S ON THE WAY.
+Let's go.
+
+Order #{{ order_number }}
+Tracking: {{ tracking_number }}
+Carrier: {{ carrier_name }}
+Est. delivery: {{ estimated_delivery }}
+
+TRACK PACKAGE → {{ tracking_url }}
+
+---
+REAL MATES. GREAT TIMES. SHIRTFACED.
+shirtfaced.wtf
+
+Unsubscribe: {{ unsubscribe_url }}

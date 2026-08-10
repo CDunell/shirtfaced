@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>Order Confirmed.</title>
+  <style>
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+    img { border: 0; height: auto; display: block; }
+    body { margin: 0 !important; padding: 0 !important; background-color: #0a0a0a; }
+    a { text-decoration: none; }
+    .display { font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', 'Arial Black', Arial, sans-serif; font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; }
+    .body-text { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; color: #111; }
+    .small { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #333; }
+    @media only screen and (max-width: 620px) {
+      .shell { width: 100% !important; }
+      .pad { padding-left: 20px !important; padding-right: 20px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;">You're locked in. Order confirmed.</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0a0a;">
+    <tr><td align="center">
+      <table role="presentation" class="shell" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#F5F0E6;">
+        
+        <tr>
+          <td style="background:#000;padding:18px 24px;">
+            <span class="display" style="font-size:28px;color:#fff;">shirtfaced</span>
+            <span style="display:inline-block;width:26px;height:26px;background:#C8FF1A;border-radius:50%;margin-left:6px;vertical-align:middle;text-align:center;line-height:26px;font-size:14px;">☺</span>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="pad" style="padding:36px 32px 24px;background:#F5F0E6;">
+            <div class="display" style="font-size:42px;color:#000;margin-bottom:6px;">
+              ORDER<br><span style="background:#C8FF1A;padding:0 6px;">CONFIRMED.</span>
+            </div>
+            <div class="body-text" style="font-size:16px;color:#333;margin:16px 0 28px;">
+              You're locked in.
+            </div>
+
+            <!-- Order details -->
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:2px solid #111;background:#fff;margin-bottom:24px;">
+              <tr>
+                <td style="padding:16px;border-bottom:1px solid #eee;" class="body-text">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="font-size:13px;font-weight:bold;">ORDER #{{ order_number }}</td>
+                      <td align="right" style="font-size:13px;">{{ order_date }}</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:16px;">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td width="80">
+                        <img src="https://placehold.co/70x80/111/C8FF1A?text=TEE" width="70" alt="OG Tee">
+                      </td>
+                      <td class="body-text" style="padding-left:12px;">
+                        <div style="font-weight:bold;font-size:14px;">OG TEE – BLACK</div>
+                        <div class="small">Large · Qty: 1</div>
+                        <div style="font-weight:bold;margin-top:4px;">$39.99</div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:12px 16px;border-top:1px solid #eee;" class="body-text">
+                  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="font-size:13px;">Subtotal</td>
+                      <td align="right" style="font-size:13px;">$39.99</td>
+                    </tr>
+                    <tr>
+                      <td style="font-size:13px;padding-top:4px;">Shipping</td>
+                      <td align="right" style="font-size:13px;padding-top:4px;">$6.99</td>
+                    </tr>
+                    <tr>
+                      <td style="font-size:15px;font-weight:bold;padding-top:8px;">Total</td>
+                      <td align="right" style="font-size:15px;font-weight:bold;padding-top:8px;">$46.98</td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+
+            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td style="background:#C8FF1A;">
+                  <a href="{{ order_status_url }}" style="display:inline-block;padding:14px 28px;font-family:Impact,'Arial Black',Arial,sans-serif;font-size:15px;color:#000;text-transform:uppercase;letter-spacing:1px;">VIEW ORDER →</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td style="background:#000;padding:22px;text-align:center;">
+            <div style="font-family:Arial,sans-serif;font-size:13px;color:#C8FF1A;font-weight:bold;">SHIRTFACED.WTF</div>
+            <div class="small" style="color:#777;font-size:11px;margin-top:4px;"><a href="{{ unsubscribe_url }}" style="color:#777;text-decoration:underline;">UNSUBSCRIBE</a></div>
+            <div class="display" style="font-size:11px;color:#C8FF1A;margin-top:12px;">GOOD MATES, GREAT TIMES, SHIRTFACED.</div>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>

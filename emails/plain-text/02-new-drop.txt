@@ -1,8 +1,0 @@
-SHIRTFACED — JUST LANDED.
-
-Fresh gear. Limited run. No six-week TED Talk about the inspiration.
-
-Shop the drop: {{ primary_url }}
-
-Good mates, great times, shirtfaced.
-Unsubscribe: {{ unsubscribe_url }}

@@ -1,0 +1,14 @@
+SHIRTFACED
+
+LEFT SOMETHING BEHIND?
+Your cart is waiting.
+
+Hesitation is the only thing that sells out.
+
+RETURN TO CART → {{ primary_url }}
+
+---
+REAL MATES. GREAT TIMES. SHIRTFACED.
+shirtfaced.wtf
+
+Unsubscribe: {{ unsubscribe_url }}

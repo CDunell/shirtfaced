@@ -1,0 +1,16 @@
+SHIRTFACED
+
+BACK IN STOCK
+YOU ASKED. WE DELIVERED.
+
+the og tee is back.
+all sizes are back.
+grab it before it's gone again.
+
+SHOP NOW → {{ primary_url }}
+
+---
+REAL MATES. GREAT TIMES. SHIRTFACED.
+shirtfaced.wtf
+
+Unsubscribe: {{ unsubscribe_url }}

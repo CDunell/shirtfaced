@@ -1,12 +1,179 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="x-apple-disable-message-reformatting"><title>Welcome to SHIRTFACED.</title><style>
-body{margin:0!important;padding:0!important;background:#111111;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;}
-table{border-spacing:0;border-collapse:collapse;mso-table-lspace:0pt;mso-table-rspace:0pt;}
-td{padding:0;} img{border:0;display:block;line-height:100%;outline:none;text-decoration:none;height:auto;}
-a{text-decoration:none;} .wrap{width:100%;background:#111111;} .shell{width:100%;max-width:640px;margin:0 auto;background:#F3EFE5;}
-.display{font-family:Arial Black,Impact,Arial,sans-serif;font-weight:900;letter-spacing:-1.5px;text-transform:uppercase;}
-.body{font-family:Arial,Helvetica,sans-serif;line-height:1.45;color:#111111;}
-.small{font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.45;color:#111111;}
-.btn{font-family:Arial Black,Impact,Arial,sans-serif;font-weight:900;text-transform:uppercase;display:inline-block;padding:16px 24px;background:#111111;color:#F3EFE5;border:3px solid #111111;}
-.card{background:#FFFDF8;border:3px solid #111111;}
-@media only screen and (max-width:640px){.shell{width:100%!important;}.px{padding-left:20px!important;padding-right:20px!important;}.hero-title{font-size:48px!important;line-height:.9!important;}.masthead{font-size:34px!important;}.stack{display:block!important;width:100%!important;}.center-mob{text-align:center!important;}.hide-mob{display:none!important;}}
-</style><!--[if mso]><style>.display{font-family:Arial,sans-serif!important;font-weight:bold!important;}</style><![endif]--></head><body><div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">Welcome to SHIRTFACED.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div><table role="presentation" class="wrap" width="100%"><tr><td align="center"><table role="presentation" class="shell" width="640"><tr><td style="background:#C8FF1A;padding:18px 24px;border-bottom:4px solid #111111;"><div class="display masthead" style="font-size:42px;line-height:1;color:#111111;">SHIRTFACED</div><div class="small" style="font-weight:bold;margin-top:4px;">shirtfaced.wtf</div></td></tr><tr><td class="px" style="background:#C8FF1A;padding:28px 34px 34px;border-top:4px solid #111111;border-bottom:4px solid #111111;"><div class="small" style="font-weight:bold;text-transform:uppercase;letter-spacing:1px;">WELCOME TO THE MESS</div><div class="display hero-title" style="font-size:64px;line-height:.88;color:#111111;margin-top:8px;">YOU’RE<br>IN.</div><div class="body" style="font-size:17px;max-width:500px;margin-top:18px;">New drops, questionable decisions and the occasional email worth opening. That’s the deal.</div><div style="margin-top:24px;"><a class="btn" href="{{ primary_url }}">SEE WHAT’S GOING ON</a></div></td></tr><tr><td><img src="../assets/hero-01.png" width="640" alt="SHIRTFACED brand artwork" style="width:100%;max-width:640px;"></td></tr><tr><td style="background:#F3EFE5;padding:18px 20px;text-align:center;border-top:3px solid #111111;"><span class="display" style="display:inline-block;background:#FF5F56;border:3px solid #111111;padding:8px 12px;transform:rotate(-1deg);font-size:16px;">NO SPAM. JUST TROUBLE.</span>&nbsp;&nbsp;<span class="display" style="display:inline-block;background:#5D7CFF;border:3px solid #111111;padding:8px 12px;transform:rotate(1deg);font-size:16px;">:)</span></td></tr></td></tr></table></td></tr><tr><td style="background:#111111;padding:22px 24px;text-align:center;"><div class="display" style="font-size:18px;line-height:1.1;color:#F3EFE5;">Good mates, great times, shirtfaced.</div><div class="small" style="color:#BDB8AE;margin-top:10px;">© {{ current_year }} SHIRTFACED · <a href="{{ unsubscribe_url }}" style="color:#BDB8AE;text-decoration:underline;">Unsubscribe</a></div></td></tr></table></body></html>
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
+  <title>Welcome to shirtfaced.</title>
+  <!--[if mso]>
+  <noscript>
+    <xml>
+      <o:OfficeDocumentSettings>
+        <o:PixelsPerInch>96</o:PixelsPerInch>
+      </o:OfficeDocumentSettings>
+    </xml>
+  </noscript>
+  <![endif]-->
+  <style>
+    /* Reset */
+    body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+    table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+    img { -ms-interpolation-mode: bicubic; border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; display: block; }
+    body { margin: 0 !important; padding: 0 !important; width: 100% !important; background-color: #0a0a0a; }
+    a { text-decoration: none; }
+    
+    /* Brand type – condensed impact look */
+    .display {
+      font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', 'Arial Black', Arial, sans-serif;
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      text-transform: uppercase;
+      line-height: 0.9;
+    }
+    .body-text {
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.5;
+      color: #111111;
+    }
+    .small {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #333333;
+    }
+    
+    /* Mobile */
+    @media only screen and (max-width: 620px) {
+      .shell { width: 100% !important; }
+      .stack { display: block !important; width: 100% !important; }
+      .hero-title { font-size: 52px !important; }
+      .pad { padding-left: 20px !important; padding-right: 20px !important; }
+      .hide-mobile { display: none !important; }
+      .center-mobile { text-align: center !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background-color:#0a0a0a;">
+  <!-- Preheader -->
+  <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#0a0a0a; opacity:0;">
+    You're in. Expect new drops, good times and the occasional bad decision.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+  </div>
+
+  <!-- Outer wrapper -->
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#0a0a0a;">
+    <tr>
+      <td align="center" style="padding:0;">
+        
+        <!-- Email shell 600px -->
+        <table role="presentation" class="shell" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px; background-color:#F5F0E6;">
+          
+          <!-- TOP BLACK HEADER -->
+          <tr>
+            <td style="background-color:#000000; padding:18px 24px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="left" valign="middle">
+                    <span class="display" style="font-size:28px; color:#ffffff; letter-spacing:-1px;">shirtfaced</span>
+                    <span style="display:inline-block; width:28px; height:28px; background-color:#C8FF1A; border-radius:50%; margin-left:6px; vertical-align:middle; text-align:center; line-height:28px; font-size:16px;">☺</span>
+                  </td>
+                  <td align="right" valign="middle" class="hide-mobile">
+                    <span style="font-family:Arial,sans-serif; font-size:11px; color:#C8FF1A; letter-spacing:0.5px; text-transform:uppercase; font-weight:bold;">
+                      REAL MATES.<br>GREAT TIMES.<br>SHIRTFACED.
+                    </span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- MAIN CONTENT -->
+          <tr>
+            <td class="pad" style="padding:40px 32px 20px; background-color:#F5F0E6;">
+              <div class="display" style="font-size:18px; color:#111111; margin-bottom:8px; letter-spacing:1px;">welcome to</div>
+              <div class="display hero-title" style="font-size:64px; color:#000000; margin-bottom:6px;">
+                shirtfaced.
+              </div>
+              <!-- lime scribble underline -->
+              <div style="width:180px; height:8px; background-color:#C8FF1A; margin-bottom:28px; transform:rotate(-1deg);"></div>
+              
+              <div class="body-text" style="font-size:18px; color:#111111; margin-bottom:8px;">
+                <strong style="color:#C8FF1A; background:#111; padding:2px 6px;">you're in.</strong>
+              </div>
+              <div class="body-text" style="font-size:16px; color:#222222; max-width:420px; margin-bottom:28px;">
+                expect new drops,<br>
+                good times and<br>
+                the occasional<br>
+                bad decision.
+              </div>
+              
+              <!-- CTA Button -->
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="background-color:#000000; border:3px solid #000000;">
+                    <a href="{{ primary_url }}" target="_blank" style="display:inline-block; padding:14px 28px; font-family:Impact, 'Arial Black', Arial, sans-serif; font-size:16px; font-weight:900; color:#C8FF1A; text-transform:uppercase; letter-spacing:1px; text-decoration:none;">
+                      SHOP THE DROP →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- HERO IMAGE PLACEHOLDER -->
+          <tr>
+            <td style="padding:0 20px 10px;">
+              <!-- Replace with actual lifestyle image: person from behind in shirtfaced tee at night party -->
+              <img src="https://placehold.co/560x420/1a1a1a/C8FF1A?text=SHIRTFACED+HERO" width="560" alt="shirtfaced — real mates, great times" style="width:100%; max-width:560px; height:auto; border:0;">
+            </td>
+          </tr>
+
+          <!-- TORN PAPER EDGE SIMULATION + FOOTER STRIP -->
+          <tr>
+            <td style="background-color:#F5F0E6; padding:0;">
+              <div style="height:12px; background: linear-gradient(to bottom, #F5F0E6 40%, transparent); border-bottom: 2px dashed #ccc;"></div>
+            </td>
+          </tr>
+
+          <!-- BOTTOM BLACK BAR -->
+          <tr>
+            <td style="background-color:#000000; padding:28px 24px 20px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding-bottom:16px;">
+                    <!-- Social icons as text for email safety -->
+                    <a href="https://instagram.com/shirtfaced" style="color:#ffffff; font-size:18px; margin:0 10px; text-decoration:none;">IG</a>
+                    <a href="https://tiktok.com/@shirtfaced" style="color:#ffffff; font-size:18px; margin:0 10px; text-decoration:none;">TT</a>
+                    <a href="https://x.com/shirtfaced" style="color:#ffffff; font-size:18px; margin:0 10px; text-decoration:none;">X</a>
+                    <a href="https://youtube.com/@shirtfaced" style="color:#ffffff; font-size:18px; margin:0 10px; text-decoration:none;">YT</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center">
+                    <div style="font-family:Arial,sans-serif; font-size:13px; color:#C8FF1A; font-weight:bold; margin-bottom:6px;">SHIRTFACED.WTF</div>
+                    <div class="small" style="color:#888888; font-size:11px;">
+                      NO REPLIES TO THIS EMAIL<br>
+                      <a href="{{ unsubscribe_url }}" style="color:#888888; text-decoration:underline;">UNSUBSCRIBE</a>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-top:18px;">
+                    <div style="font-family:Impact,Arial Black,Arial,sans-serif; font-size:12px; color:#C8FF1A; letter-spacing:1px;">
+                      GOOD MATES, GREAT TIMES, SHIRTFACED.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /shell -->
+
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

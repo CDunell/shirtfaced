@@ -1,0 +1,15 @@
+SHIRTFACED
+
+WE MISS YOU.
+Come back. We saved a seat.
+
+10% OFF YOUR NEXT ORDER
+Use code: COMEBACK10
+
+SHOP NOW → {{ primary_url }}
+
+---
+REAL MATES. GREAT TIMES. SHIRTFACED.
+shirtfaced.wtf
+
+Unsubscribe: {{ unsubscribe_url }}
