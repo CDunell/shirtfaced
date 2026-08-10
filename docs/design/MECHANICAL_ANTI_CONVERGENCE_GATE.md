@@ -12,6 +12,41 @@ For every concept assign independently:
 
 Concept selection happens first. If a vector fails, reroll treatment variables only. Never weaken or replace a strong idea merely to manufacture diversity.
 
+## Dominant experiment rule — GARMENT R&D
+Exploratory development is not a search for one shirtfaced look. It is garment R&D inside a fixed shirtfaced personality.
+
+Every exploratory design must have one explicit dominant experiment: the main design question that this garment is testing. Examples include:
+- can this concept survive as a tiny front-only hit?
+- can another concept carry an almost full-garment back image with a blank front?
+- can typography completely replace imagery?
+- can an image work with zero words and zero obvious branding?
+- can front and back tell two different halves of the same idea?
+- can a graphic deliberately exit the garment edge?
+- can embroidery, appliqué or patch construction carry the idea instead of print?
+- can a photographic cutout work without becoming a rectangular band-tee treatment?
+- can an almost blank premium garment hit harder than a dense graphic?
+- can an intentionally dense treatment become controlled visual assault without losing garment credibility?
+
+The dominant experiment must differ from the previous five exploratory designs. Do not merely shuffle secondary attributes while repeating the same underlying design question.
+
+Within a batch, deliberately test meaningful extremes rather than clustering around safe middle values:
+
+`almost blank ↔ visual assault`
+
+`tiny ↔ garment-filling`
+
+`front only ↔ back only ↔ relational front/back`
+
+`image-only ↔ type-only ↔ integrated combination`
+
+`clean ↔ rough`
+
+`photographic ↔ illustrated ↔ constructed/embroidered`
+
+`literal placement ↔ weird-but-wearable placement`
+
+Every exploratory design should teach us something different about design, placement, graphic, text, garment or combination mechanics. Curate the winning patterns only after the experiments exist.
+
 ## Recent-history window
 Compare every proposed treatment against:
 - the immediately previous design;
@@ -30,6 +65,8 @@ A proposed batch does not render if any of these fail:
 5. Attributes heavily used in the previous two batches receive a strong temporary selection penalty.
 6. Attributes barely or never used recently receive a selection boost.
 7. Repeated visual momentum is not evidence of brand fit. `The last one looked good` is never a reason to repeat its mechanics.
+8. The dominant experiment may not repeat any of the previous five exploratory designs.
+9. A batch fails if its designs technically vary attributes but still answer effectively the same design question.
 
 ## Minimum spread for an 8-design exploratory batch
 Unless the user requests a deliberately narrow study, an 8-design batch must contain at least:
@@ -42,7 +79,8 @@ Unless the user requests a deliberately narrow study, an 8-design batch must con
 - 1 design with no photography;
 - 1 design with no large text;
 - 1 design with no acid accent;
-- 1 design where the brand mark is tiny or absent.
+- 1 design where the brand mark is tiny or absent;
+- 6 distinct dominant experiments.
 
 Scale proportionally for smaller/larger batches.
 
@@ -54,13 +92,14 @@ Do not allow `young + tattooed + edgy + night + hard flash` or any other repeate
 Across the rolling history vary naturally across age, gender, body, hair, personal style, tattoo presence/absence, energy, solo/pair/group and ordinary social contexts. This is not a quota and not a pivot. Any individual ingredient remains available whenever it serves the idea.
 
 ## Pre-render matrix
-Before image generation, build the treatment vectors mentally or explicitly and compare them column by column.
+Before image generation, build the treatment vectors and dominant experiments mentally or explicitly and compare them column by column.
 
 If a column reads like:
 - `night / night / night / night / night`
 - `black / black / black / black`
 - `photo + lime / photo + lime / photo + lime`
 - `young tattooed model / young tattooed model / young tattooed model`
+- `large back hero / large back hero / large back hero / large back hero`
 
 then the batch fails before generation.
 
@@ -74,7 +113,7 @@ FIXED:
 - lowercase `shirtfaced`;
 - established Shirtfaced type system;
 - colour discipline;
-- premium streetwear credibility;
+- premium street/beach/skate garment credibility;
 - Costume Test;
 - human truth + disproportion.
 
@@ -101,6 +140,8 @@ FREE:
 `ideas = unrestricted`
 
 `execution variables = randomised`
+
+`dominant experiment = deliberately changed`
 
 `recent repetition = penalised`
 
