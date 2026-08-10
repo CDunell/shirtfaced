@@ -18,7 +18,7 @@ The Creative Brain and supporting brand/design docs define the boundaries. Insid
 
 A successful previous placement creates no precedent for the next design.
 
-Every concept begins with a blank garment.
+Every concept begins with a blank garment or headwear form.
 
 Placement, scale, medium, typography, colour and front/back relationship are selected independently according to what makes THAT idea hit hardest.
 
@@ -57,16 +57,22 @@ Repetition becomes valid once a treatment or concept has been deliberately selec
 
 ## Independent variation axes
 
-### Garment
+### Garment / headwear
+Randomise the product form as a first-class design axis. Do not silently collapse every concept back to a tee.
+
 - tee
 - oversized tee
-- hoodie
 - crop
 - tank
-- other approved garment forms
+- hoodie
+- cap
+- hat
+- other approved garment/headwear forms
 - black
 - white
 - occasional approved garment colour
+
+The concept should be allowed to land on whichever product makes it hit hardest. Headwear is not an afterthought or a reduced tee graphic: cap/hat treatments must be designed for the object using appropriate embroidery, patch, small print, side/rear hit, brim/underbrim or other credible placements.
 
 ### Placement
 - front only
@@ -83,6 +89,10 @@ Repetition becomes valid once a treatment or concept has been deliberately selec
 - deliberately asymmetric
 - one side completely blank
 - connected but non-matching front/back treatments
+- cap/hat front
+- cap/hat side
+- cap/hat rear
+- brim / underbrim where credible
 
 ### Scale
 - tiny
@@ -106,6 +116,7 @@ Repetition becomes valid once a treatment or concept has been deliberately selec
 - halftone
 - embroidery
 - appliqué
+- patch
 - screen-print graphic
 - pure typography
 - mixed media
@@ -175,6 +186,8 @@ Possible relationships:
 - image/type split across garment locations
 - brand hit placed somewhere unexpected but credible
 
+For caps/hats, translate this axis to front/side/rear/brim relationships rather than forcing tee logic onto headwear.
+
 ### Density
 Range freely from almost blank premium garment to complete visual assault. Do not settle into a permanent middle density.
 
@@ -189,6 +202,7 @@ During exploratory development:
 
 - Prefer unused concepts before repeating previously explored ones.
 - Do not repeat a stock phrase simply because it rendered well.
+- Vary product form across tees, crops, tanks, hoodies, caps and hats rather than defaulting to tees.
 - Do not allow two adjacent concepts to use effectively the same composition.
 - Do not let every photographic concept become a framed print.
 - Do not let every design carry an acid accent in the same location.
@@ -207,6 +221,7 @@ Before EVERY garment-development turn:
 3. Use the supporting concept/treatment/brand docs as source material where relevant.
 4. Check recent outputs for accidental repetition.
 5. Select concept first, then treatment.
-6. Run the batch diversity check before rendering.
+6. Randomise product form as well as treatment.
+7. Run the batch diversity check before rendering.
 
 If the next output looks structurally predictable from the previous output, the system has failed and must be rerolled before presentation.
