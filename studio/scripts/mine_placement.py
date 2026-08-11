@@ -45,6 +45,9 @@ import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from corpus_tiers import is_excluded  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 FLAT_ROOT = ROOT / "var" / "design_corpus_flat"
 REPORT_PATH = ROOT / "var" / "design_corpus" / "placement.json"
@@ -241,9 +244,17 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--overlay", type=int, default=0, help="write N annotated images")
     args = parser.parse_args(argv[1:])
 
+    # FLAT_ROOT's garment_mockup brand is Cotton Bureau, on the excluded list
+    # (see corpus_tiers.py) -- a marketplace, not a curated brand. Excluding it
+    # here is expected to leave this script with nothing, not a bug. It cannot
+    # simply be pointed at real brands' photography instead: `_garment_and_print`
+    # locates the garment from the image's own alpha channel, which cutout
+    # mockup renders have and photographed product shots generally do not.
     records: list[dict[str, Any]] = []
     refused = 0
-    for brand_dir in sorted(FLAT_ROOT.iterdir()):
+    for brand_dir in sorted(FLAT_ROOT.iterdir()) if FLAT_ROOT.is_dir() else []:
+        if is_excluded(brand_dir.name):
+            continue
         brand_file = brand_dir / "brand.json"
         if not brand_file.is_file():
             continue

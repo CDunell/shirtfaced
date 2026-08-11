@@ -41,6 +41,9 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from corpus_tiers import is_excluded  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 FLAT_ROOT = ROOT / "var" / "design_corpus_flat"
 REPORT_PATH = ROOT / "var" / "design_corpus" / "arrangement.json"
@@ -221,8 +224,18 @@ def main(argv: list[str]) -> int:
     parser.add_argument("--limit", type=int, default=0)
     args = parser.parse_args(argv[1:])
 
+    # FLAT_ROOT's ARTWORK_TRADITIONS brands are exactly the six excluded
+    # marketplace slugs -- excluding them here is expected to leave this
+    # script with nothing, not a bug to work around. Real brands' photography
+    # isn't cropped to the print box yet (mine_placement.py does that
+    # separately), so mixing it in here would measure garment-outline
+    # symmetry and call it design arrangement -- the exact mistake this
+    # exclusion pass exists to stop making. Report the shortfall rather than
+    # papering over it with data the measurement was never built to read.
     records: list[dict[str, Any]] = []
-    for brand_dir in sorted(FLAT_ROOT.iterdir()):
+    for brand_dir in sorted(FLAT_ROOT.iterdir()) if FLAT_ROOT.is_dir() else []:
+        if is_excluded(brand_dir.name):
+            continue
         brand_file = brand_dir / "brand.json"
         if not brand_file.is_file():
             continue
@@ -261,7 +274,13 @@ def main(argv: list[str]) -> int:
             break
 
     if not records:
-        print(f"No artwork found under {FLAT_ROOT}.", file=sys.stderr)
+        print(
+            f"No artwork found under {FLAT_ROOT} once excluded brands are removed. "
+            "That is the whole of what this script has ever measured -- see "
+            "corpus_tiers.py. It needs real, flat (non-mockup) artwork from "
+            "curated brands before it can produce anything again.",
+            file=sys.stderr,
+        )
         return 1
 
     total = len(records)

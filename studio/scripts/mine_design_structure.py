@@ -38,6 +38,9 @@ from scipy import ndimage
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.services.garment_frame import locate_garment
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from corpus_tiers import is_excluded  # noqa: E402
+
 CORPUS_ROOT = Path(__file__).resolve().parent.parent / "var" / "design_corpus"
 REPORT_PATH = CORPUS_ROOT / "design_structure.json"
 # Per-design records, so templates can be clustered rather than averaged.
@@ -447,6 +450,8 @@ def main(argv: list[str]) -> int:
     seen = 0
     refused_garment_render = 0
     for brand_dir in sorted(root.iterdir()):
+        if is_excluded(brand_dir.name):
+            continue
         brand_file = brand_dir / "brand.json"
         if not brand_file.is_file():
             continue

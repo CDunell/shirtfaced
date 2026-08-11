@@ -42,6 +42,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 from PIL import Image, ImageDraw
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -184,6 +185,41 @@ def _walk() -> list[dict[str, Any]]:
     return rows
 
 
+# Artwork cut for a dark garment is white ink, and compositing it onto white
+# erases it. "Wakeup" on sheet 1245 is literally RGB 255,255,255 at 2% coverage:
+# it rendered as an empty cell, and a describer reading that cell would have
+# recorded a blank product with high confidence -- the one output the brief
+# calls unacceptable, produced by the tool rather than by the describer.
+#
+# The test is the *share* of ink that is near-white, not the mean. Mean fails on
+# mixed artwork: the video-games design sets its headline in white outline over
+# three coloured pixel hearts, and the hearts drag the mean to 178 while 46% of
+# its ink is still invisible on white. Measured across sheet 1245, the share
+# splits 0-0.1% for every design that reads fine on white against 46/82/100% for
+# the three that do not.
+# Cut-out artwork only. A photograph of a white t-shirt is also mostly
+# near-white pixels, and the first version of this put every white garment on
+# Chinatown Market's sheet 203 onto charcoal -- legible, but implying a black
+# garment that was never there. Transparency separates the two cleanly and with
+# room to spare: the photographs on that sheet run 7-17% transparent, the flat
+# artwork on sheet 1245 runs 55-97%.
+CUTOUT_TRANSPARENCY = 0.40
+WHITE_INK = 235.0
+WHITE_INK_SHARE = 0.25
+DARK_GROUND = (34, 34, 34)
+
+
+def _ground_for(image: Image.Image) -> tuple[int, int, int]:
+    """White, unless this is cut-out artwork whose ink would vanish against it."""
+    pixels = np.asarray(image.resize((160, 160), Image.LANCZOS), dtype=np.float32)
+    visible = pixels[..., 3] > 16
+    if not visible.any() or float((~visible).mean()) < CUTOUT_TRANSPARENCY:
+        return (255, 255, 255)
+    luminance = pixels[..., :3][visible].mean(axis=1)
+    share = float((luminance > WHITE_INK).mean())
+    return DARK_GROUND if share > WHITE_INK_SHARE else (255, 255, 255)
+
+
 def build(sheet_no: int, per_sheet: int, rows: list[dict[str, Any]]) -> dict[str, Any] | None:
     start = (sheet_no - 1) * per_sheet
     if start >= len(rows):
@@ -201,14 +237,22 @@ def build(sheet_no: int, per_sheet: int, rows: list[dict[str, Any]]) -> dict[str
             image.load()
         except Exception:
             continue
+        ground = (255, 255, 255)
         if image.mode in ("RGBA", "LA") or "transparency" in image.info:
-            flat = Image.new("RGBA", image.size, (255, 255, 255, 255))
-            flat.alpha_composite(image.convert("RGBA"))
+            image = image.convert("RGBA")
+            ground = _ground_for(image)
+            flat = Image.new("RGBA", image.size, (*ground, 255))
+            flat.alpha_composite(image)
             image = flat
         image = image.convert("RGB")
         image.thumbnail((CELL - 26, CELL - 26), Image.LANCZOS)
         x = (index % COLS) * CELL
         y = (index // COLS) * CELL
+        # Fill the whole cell with the ground so a dark-ground design is not a
+        # small dark island in a white cell, which reads as a photographed
+        # black garment rather than as artwork on a canvas we chose.
+        if ground != (255, 255, 255):
+            draw.rectangle([x, y, x + CELL - 1, y + CELL - 1], fill=ground)
         sheet.paste(
             image, (x + (CELL - image.width) // 2, y + 24 + (CELL - 24 - image.height) // 2)
         )

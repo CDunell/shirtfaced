@@ -35,6 +35,9 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from corpus_tiers import is_excluded  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS_ROOTS = (
     ROOT / "var" / "design_corpus",
@@ -171,6 +174,8 @@ def _collect() -> tuple[dict[str, list[str]], dict[str, str]]:
         if not root.is_dir():
             continue
         for brand_dir in sorted(root.iterdir()):
+            if is_excluded(brand_dir.name):
+                continue
             brand_file = brand_dir / "brand.json"
             if not brand_file.is_file():
                 continue

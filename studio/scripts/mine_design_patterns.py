@@ -43,6 +43,9 @@ from typing import Any
 import numpy as np
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from corpus_tiers import is_excluded  # noqa: E402
+
 CORPUS_ROOT = Path(__file__).resolve().parent.parent / "var" / "design_corpus"
 REPORT_PATH = CORPUS_ROOT / "design_patterns.json"
 
@@ -180,6 +183,8 @@ def main(argv: list[str]) -> int:
     records: list[dict[str, Any]] = []
     seen = 0
     for brand_dir in sorted(CORPUS_ROOT.iterdir()):
+        if is_excluded(brand_dir.name):
+            continue
         brand_file = brand_dir / "brand.json"
         if not brand_file.is_file():
             continue
