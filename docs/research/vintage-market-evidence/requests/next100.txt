@@ -1,4 +1,5 @@
-requested_at=2026-08-13T08:00:00+10:00
+requested_at=2026-08-13T08:12:00+10:00
 target=100
 include_images=true
 manifest_count=true
+attempt=2
