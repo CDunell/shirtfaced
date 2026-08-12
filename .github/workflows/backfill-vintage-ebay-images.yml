@@ -39,6 +39,7 @@ jobs:
           cd /home/ubuntu/vintage-backfill-run
           test -f package.json || npm init -y >/dev/null 2>&1
           npm install --silent playwright@1.55.0
+          sudo npx playwright install-deps chromium
           npx playwright install chromium
           REMOTE
       - name: Collect images through Chromium on Oracle
