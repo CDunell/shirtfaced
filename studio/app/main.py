@@ -27,6 +27,7 @@ from app.routes import (
     health,
     printing,
     social,
+    vintage_evidence,
 )
 from app.routes import range as design_range
 from app.security import SESSION_COOKIE, verify_session_token
@@ -98,6 +99,7 @@ def create_app() -> FastAPI:
     application.include_router(design_range.router)
     application.include_router(social.router)
     application.include_router(email.router)
+    application.include_router(vintage_evidence.router)
 
     social_assets = _social_assets_root()
     if social_assets is not None:
