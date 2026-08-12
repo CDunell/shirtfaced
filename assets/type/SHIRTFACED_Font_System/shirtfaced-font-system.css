@@ -1,0 +1,15 @@
+/* SHIRTFACED font system */
+@font-face { font-family:'Shirtfaced'; src:url('./primary-shirtfaced/Shirtfaced-Regular.woff2') format('woff2'); font-weight:400; font-style:normal; font-display:swap; }
+@import url('./loose-family/web/shirtfaced-loose.css');
+@font-face { font-family:'SHIRTFACED Icons'; src:url('./icons/fonts/SHIRTFACED-Icons.ttf') format('truetype'); font-display:block; }
+:root {
+  --sf-display: 'Shirtfaced', Impact, sans-serif;
+  --sf-relaxed: 'SHIRTFACED Loose', Arial, sans-serif;
+  --sf-utility: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+.sf-display { font-family:var(--sf-display); text-transform:uppercase; letter-spacing:-.02em; line-height:.9; }
+.sf-relaxed { font-family:var(--sf-relaxed); font-variation-settings:'wdth' 100,'wght' 500; line-height:1.05; }
+.sf-relaxed-wide { font-family:var(--sf-relaxed); font-variation-settings:'wdth' 125,'wght' 500; }
+.sf-utility { font-family:var(--sf-utility); }
+.sf-icon { font-family:'SHIRTFACED Icons'; font-style:normal; font-weight:normal; speak:none; }
+
