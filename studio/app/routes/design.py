@@ -1,12 +1,18 @@
-"""Scoring a design image over HTTP.
+"""Measuring a design image over HTTP.
 
-The design engine -- ``design_extraction`` measuring an image, ``design_scoring``
-applying ``DESIGN_REVIEW_SCORECARD.md`` -- had no surface. This is it: upload a
-design, get back the measurements, every gate with its evidence, the weighted
-categories and the band.
+The design engine -- ``design_extraction`` measuring an image into
+``domain.ts``-shaped gate results and score categories. This is the surface
+for it: upload a design, get back the measurements and every gate/category the
+image supports, with evidence.
 
-No database. Scoring a design touches no world, no attempt and no canon, so this
-router depends on nothing but the uploaded bytes.
+No scoring, banding or status decision happens here. Those belong to
+``admin/src/design-system/workflow.ts``'s ``evaluateReview`` /
+``nextStatusForReview`` -- the tested contract this route's payload is shaped
+to feed, not a second implementation of it
+(``studio/docs/DESIGN_ENGINE_ADAPTATION.md`` Section 8).
+
+No database. Measuring a design touches no world, no attempt and no canon, so
+this router depends on nothing but the uploaded bytes.
 """
 
 from __future__ import annotations
@@ -18,9 +24,13 @@ from typing import Any
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
 
-from app.domain.design_review import CATEGORY_LIMITS
-from app.services.design_extraction import extract, load_thresholds, measure
-from app.services.design_scoring import score_design
+from app.services.design_extraction import (
+    CATEGORY_LIMITS,
+    extract,
+    load_thresholds,
+    measure,
+    points_floor,
+)
 
 router = APIRouter(prefix="/api/design", tags=["design"])
 
@@ -32,35 +42,36 @@ ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
 
 class GateView(BaseModel):
-    gate: str
-    status: str
+    id: str
+    label: str
+    result: str
     evidence: str
 
 
 class CategoryView(BaseModel):
-    category: str
-    rating: int
-    points: float
-    max_points: int
-    floor: int
-    below_floor: bool
+    id: str
+    label: str
+    score: float
+    maximum: int
+    minimumRequired: int | None = None
+    notes: str = ""
 
 
 class ScoreResponse(BaseModel):
-    """Everything the reviewer needs to see, in one payload."""
+    """Everything a downstream review needs, in ``domain.ts``'s shape.
 
-    design_id: str
-    design_name: str
+    ``hardGates`` and ``scoreCategories`` match ``hardGateSchema`` /
+    ``scoreCategorySchema`` field-for-field so the caller can hand this
+    straight to ``evaluateReview`` without translation. Gates this module
+    could not test are still present, marked ``not_tested``; categories it
+    could not rate are simply absent, not defaulted to zero.
+    """
+
+    designId: str
+    designName: str
     measurements: dict[str, Any]
-    blocked: bool
-    total_score: float
-    max_total_score: int
-    band: str
-    failed_gates: list[str]
-    untested_gates: list[str]
-    floor_failures: list[str]
-    gates: list[GateView]
-    categories: list[CategoryView]
+    hardGates: list[GateView]
+    scoreCategories: list[CategoryView]
     thresholds: dict[str, Any]
 
 
@@ -70,24 +81,28 @@ def get_thresholds() -> dict[str, Any]:
     return {
         "thresholds": load_thresholds(),
         "categories": {
-            category.value: {"max_points": maximum, "floor": floor}
-            for category, (maximum, floor) in CATEGORY_LIMITS.items()
+            category_id: {
+                "label": label,
+                "maximum": maximum,
+                "minimumRequired": points_floor(category_id),
+            }
+            for category_id, (label, maximum, _rating_floor) in CATEGORY_LIMITS.items()
         },
     }
 
 
-@router.post("/score", response_model=ScoreResponse, summary="Score a design image")
+@router.post("/score", response_model=ScoreResponse, summary="Measure a design image")
 async def score_design_image(
     image: UploadFile = File(..., description="The design, worn or flat"),  # noqa: B008 -- FastAPI declares dependencies this way
     design_name: str = Form(default=""),
 ) -> ScoreResponse:
-    """Measure an uploaded design and score it against the scorecard.
+    """Measure an uploaded design and report the gates/categories it supports.
 
-    The result always blocks: extraction fills the gates a measurement can
-    honestly answer and leaves the rest untested, and an untested gate blocks
-    release exactly as a failed one does. That is the scorecard's own rule --
-    a design is not approved from one image -- so this is a starting point for
-    a human review, never a verdict.
+    Every hard gate this module cannot test comes back ``not_tested``, and an
+    untested gate blocks release exactly as a failed one does under
+    ``workflow.ts``'s ``evaluateReview`` -- that is the scorecard's own rule,
+    a design is not approved from one image. This is a starting point for a
+    human review, never a verdict.
     """
     if image.content_type not in ALLOWED_TYPES:
         raise HTTPException(
@@ -125,35 +140,11 @@ async def score_design_image(
     finally:
         temp_path.unlink(missing_ok=True)
 
-    outcome = score_design(review)
-    evidence = {result.gate: result.evidence for result in review.gate_results}
-    statuses = {result.gate: result.status for result in review.gate_results}
-
     return ScoreResponse(
-        design_id=outcome.design_id,
-        design_name=outcome.design_name,
+        designId=review["designId"],
+        designName=review["designName"],
         measurements=measurements.to_dict(),
-        blocked=outcome.blocked,
-        total_score=outcome.total_score,
-        max_total_score=outcome.max_total_score,
-        band=outcome.band.value,
-        failed_gates=[gate.value for gate in outcome.failed_gates],
-        untested_gates=[gate.value for gate in outcome.untested_gates],
-        floor_failures=[category.value for category in outcome.floor_failures],
-        gates=[
-            GateView(gate=gate.value, status=statuses[gate].value, evidence=evidence[gate])
-            for gate in statuses
-        ],
-        categories=[
-            CategoryView(
-                category=score.category.value,
-                rating=score.rating,
-                points=score.points,
-                max_points=score.max_points,
-                floor=score.floor,
-                below_floor=score.below_floor,
-            )
-            for score in outcome.category_scores
-        ],
+        hardGates=[GateView(**gate) for gate in review["hardGates"]],
+        scoreCategories=[CategoryView(**category) for category in review["scoreCategories"]],
         thresholds=load_thresholds(),
     )

@@ -2,10 +2,10 @@
 
 The system's own audit named this gap: *"Rules are post-hoc, not generative.
 Everything in System B evaluates a design that already exists. There is no design
-generator analogous to prompt_planner.py."* ``design_scoring`` and
-``design_extraction`` are both post-hoc -- they judge finished work. This is the
-other direction: give it a phrase or a graphic, and it returns how that content
-should be presented, with the corpus evidence behind each choice.
+generator analogous to prompt_planner.py."* ``design_extraction`` is post-hoc --
+it measures finished work. This is the other direction: give it a phrase or a
+graphic, and it returns how that content should be presented, with the corpus
+evidence behind each choice.
 
 It prescribes **presentation, never content**. It will not write the joke, invent
 the artwork, or decide whether an idea is any good. It answers the questions the

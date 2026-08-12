@@ -1,22 +1,30 @@
 """Turning a design image into measured parameters and rubric-ready evidence.
 
-The gap this closes: ``design_scoring.py`` scores a filled-in
-:class:`~app.domain.design_review.DesignReviewInput`, and nothing produced one.
-A reviewer filled it by hand.
+The gap this closes: nothing measured a design image into review evidence.
+A reviewer filled a review by hand, or not at all.
 
 This measures what a machine can measure honestly -- print coverage, ink count,
-placement, value polarity, and the scorecard's own T1/T2/T3 visual tests -- and
-converts those into the specific gate results and category ratings the
-measurements actually support. It deliberately stops short of the rest.
+placement, value polarity, and the scorecard's own T1/T2 visual tests -- and
+converts those into the specific hard-gate results and score-category entries
+the measurements actually support. It deliberately stops short of the rest.
 
 **What it will never decide.** Whether a design has one dominant proposition,
 whether the joke lands, whether it belongs in the collection, whether the
 composition is intentional rather than accidental -- those are the scorecard's
 own words for judgement, and no measurement here substitutes for them. Those
-gates come back ``NOT_TESTED``, which blocks release by design
-(``DESIGN_REVIEW_SCORECARD.md`` §2: a design cannot be approved from one
-floating artwork file). A partly-filled review that says so is worth more than
-a fully-filled one that guessed.
+gates come back ``not_tested``, which blocks release exactly as a failed one
+does (``DESIGN_REVIEW_SCORECARD.md`` Section 2: a design cannot be approved
+from one floating artwork file). A partly-filled review that says so is worth
+more than a fully-filled one that guessed.
+
+Output shape matches ``admin/src/design-system/domain.ts``'s ``hardGateSchema``
+/ ``scoreCategorySchema`` -- plain dicts with those exact field names, not a
+parallel Python domain model. Deciding what a set of gates and scores *means*
+(blocked, band, next status) is ``workflow.ts``'s job
+(``evaluateReview`` / ``nextStatusForReview``); a second implementation of that
+decision in Python is exactly the duplication
+``studio/docs/DESIGN_ENGINE_ADAPTATION.md`` Section 8 had to delete once
+already. This module only measures and reports.
 
 Deterministic and offline: same image in, same review out. The corpus mined by
 ``scripts/mine_design_patterns.py`` supplies the thresholds, so "too many inks"
@@ -33,14 +41,70 @@ from typing import Any
 import numpy as np
 from PIL import Image, ImageFilter
 
-from app.domain.design_review import (
-    CategoryRating,
-    DesignReviewInput,
-    GateResult,
-    GateStatus,
-    HardGate,
-    ScoreCategory,
+# The 13 hard-gate ids, verbatim from ``admin/src/design-system/workflow.ts``'s
+# ``HARD_GATE_IDS`` -- that file is the spec (DESIGN_ENGINE_ADAPTATION.md's own
+# rule: "don't let the docs outrank the code"). Labels are this module's own,
+# for human-readable API output; the ids are what a caller should match on.
+HARD_GATE_IDS: tuple[str, ...] = (
+    "product_blank_defined",
+    "collection_role_defined",
+    "dominant_proposition_clear",
+    "thumbnail_hierarchy_survives",
+    "essential_text_legible",
+    "construction_conflicts_resolved",
+    "production_detail_feasible",
+    "identity_geometry_preserved",
+    "logo_removal_recognition_survives",
+    "competitor_substitution_survives",
+    "worn_body_review_completed",
+    "production_files_match_art",
+    "rights_cleared_for_sale",
 )
+
+GATE_LABELS: dict[str, str] = {
+    "product_blank_defined": "Product and blank defined",
+    "collection_role_defined": "Collection role defined",
+    "dominant_proposition_clear": "Dominant proposition is clear",
+    "thumbnail_hierarchy_survives": "Thumbnail hierarchy survives (T1)",
+    "essential_text_legible": "Essential text legible under blur (T2)",
+    "construction_conflicts_resolved": "No construction conflicts",
+    "production_detail_feasible": "Production detail feasible",
+    "identity_geometry_preserved": "Identity geometry preserved",
+    "logo_removal_recognition_survives": "Recognition survives logo removal (T4)",
+    "competitor_substitution_survives": "Resists competitor substitution (T5)",
+    "worn_body_review_completed": "Worn-body review completed",
+    "production_files_match_art": "Production files match approved art",
+    "rights_cleared_for_sale": "Rights cleared for sale",
+}
+
+# The 9 weighted categories, ``DESIGN_REVIEW_SCORECARD.md`` Sections 4 and 6 --
+# id -> (label, maximum points, floor). The floor is stated in the source text
+# as a 0-5 rating ("minimum 3/5"); ``points_floor`` below converts it onto the
+# same points scale as ``score``, which is what ``domain.ts``'s
+# ``scoreCategorySchema`` and ``workflow.ts``'s ``evaluateReview`` actually
+# compare against -- comparing a points score to a raw 0-5 number would defeat
+# every floor check silently. Typography's floor is conditional in the source
+# text ("minimum 3/5 when typography is present"); a typography-free design
+# should not be rated on it at all, not rated 0.
+CATEGORY_LIMITS: dict[str, tuple[str, int, int]] = {
+    "product_fit": ("Product Fit", 10, 3),
+    "dominant_proposition": ("Dominant Proposition", 10, 4),
+    "composition_and_hierarchy": ("Composition and Hierarchy", 15, 4),
+    "distance_and_silhouette": ("Distance and Silhouette", 10, 3),
+    "typography": ("Typography", 10, 3),
+    "brand_recognition": ("Brand Recognition", 15, 3),
+    "collection_contribution": ("Collection Contribution", 10, 3),
+    "production_integrity": ("Production Integrity", 15, 4),
+    "commercial_wearability": ("Commercial Wearability", 5, 3),
+}
+
+
+def points_floor(category_id: str) -> float:
+    """A category's release floor, in the same points-out-of-maximum scale as
+    its ``score`` -- not the 0-5 rating the scorecard states it in."""
+    _label, maximum, rating_floor = CATEGORY_LIMITS[category_id]
+    return round((rating_floor / 5) * maximum, 2)
+
 
 # Corpus-derived thresholds, replaced by mine_design_patterns.py's real output
 # when it is present. These fallbacks are the values that document is expected
@@ -215,101 +279,116 @@ def to_review(
     design_name: str,
     measurements: Measurements,
     thresholds: dict[str, float] | None = None,
-) -> DesignReviewInput:
-    """Convert measurements into the gates and ratings they actually support.
+) -> dict[str, Any]:
+    """Convert measurements into the ``domain.ts``-shaped gates and categories
+    they actually support.
 
-    Everything a measurement cannot speak to is left untested rather than
-    assumed to pass. See this module's docstring.
+    Everything a measurement cannot speak to is left ``not_tested`` rather than
+    assumed to pass, and everything it cannot rate is left out of
+    ``scoreCategories`` entirely rather than defaulted to zero -- a gap is not
+    evidence of absence. Scoring, floors and status are ``workflow.ts``'s job;
+    this returns only what the image supports.
     """
     limits = thresholds or load_thresholds()
-    gates: list[GateResult] = []
-    ratings: list[CategoryRating] = []
+    gates: dict[str, dict[str, str]] = {
+        gate_id: {
+            "id": gate_id,
+            "label": GATE_LABELS[gate_id],
+            "result": "not_tested",
+            "evidence": "",
+        }
+        for gate_id in HARD_GATE_IDS
+    }
 
-    def gate(name: HardGate, status: GateStatus, evidence: str) -> None:
-        gates.append(GateResult(gate=name, status=status, evidence=evidence))
+    def gate(gate_id: str, result: str, evidence: str) -> None:
+        gates[gate_id] = {
+            "id": gate_id,
+            "label": GATE_LABELS[gate_id],
+            "result": result,
+            "evidence": evidence,
+        }
 
-    # HF-05 Distance Failure. The scorecard's own T1/T2 are exactly this test,
-    # and both are measurable.
-    if measurements.thumbnail_survives and measurements.blur_survives:
-        gate(
-            HardGate.DISTANCE_FAILURE,
-            GateStatus.PASS,
-            f"print holds at thumbnail and under blur; coverage {measurements.print_coverage:.1%}",
-        )
-    elif not measurements.has_print:
-        gate(
-            HardGate.DISTANCE_FAILURE,
-            GateStatus.FAIL,
-            "no print detected in the torso region at analysis resolution",
-        )
-    else:
-        failed = [
-            label
-            for label, survived in (
-                ("thumbnail", measurements.thumbnail_survives),
-                ("blur", measurements.blur_survives),
-            )
-            if not survived
-        ]
-        gate(
-            HardGate.DISTANCE_FAILURE,
-            GateStatus.FAIL,
-            f"print does not survive the {' and '.join(failed)} test",
-        )
-
-    # HF-07 Production Failure, on ink count alone. A design inside the corpus's
-    # own p90 is producible by the same means real work is; beyond it, the
-    # method needs justifying rather than assuming.
+    # T1/T2, split across two gates: does the print hold at thumbnail size, and
+    # does essential text/detail survive a blur that removes fine information.
     if not measurements.has_print:
-        gate(HardGate.PRODUCTION_FAILURE, GateStatus.NOT_TESTED, "no print detected to assess")
+        no_print = "no print detected in the torso region at analysis resolution"
+        gate("thumbnail_hierarchy_survives", "fail", no_print)
+        gate("essential_text_legible", "fail", no_print)
+    else:
+        gate(
+            "thumbnail_hierarchy_survives",
+            "pass" if measurements.thumbnail_survives else "fail",
+            f"T1 thumbnail test {'survives' if measurements.thumbnail_survives else 'does not survive'}; "
+            f"coverage {measurements.print_coverage:.1%}",
+        )
+        gate(
+            "essential_text_legible",
+            "pass" if measurements.blur_survives else "fail",
+            f"T2 blur test {'survives' if measurements.blur_survives else 'does not survive'} -- "
+            f"small text and detail {'held' if measurements.blur_survives else 'were lost'}",
+        )
+
+    # production_detail_feasible, on ink count alone. A design inside the
+    # corpus's own p90 is producible by the same means real work is; beyond
+    # it, the method needs justifying rather than assuming. Never marked
+    # ``pass`` -- line weight, gap integrity and registration still need a
+    # human, so the best this module can say is "nothing disqualifying yet".
+    if not measurements.has_print:
+        gate("production_detail_feasible", "not_tested", "no print detected to assess")
     elif measurements.ink_colours <= limits["ink_colours_p90"]:
         gate(
-            HardGate.PRODUCTION_FAILURE,
-            GateStatus.NOT_TESTED,
+            "production_detail_feasible",
+            "not_tested",
             f"{measurements.ink_colours} significant ink colours, within the corpus p90 of "
             f"{limits['ink_colours_p90']:.0f} -- but line weight, gap integrity and "
-            "registration cannot be judged from a product photograph",
+            "registration tolerance cannot be judged from a product photograph",
         )
     else:
         gate(
-            HardGate.PRODUCTION_FAILURE,
-            GateStatus.FAIL,
+            "production_detail_feasible",
+            "fail",
             f"{measurements.ink_colours} significant ink colours exceeds the corpus p90 of "
             f"{limits['ink_colours_p90']:.0f}; colour count needs a documented reason",
         )
 
-    # Everything else needs a human, a brief, or the range. Saying so is the point.
-    for name, why in (
+    # Everything else needs a human, a brief, or evidence this module cannot see.
+    for gate_id, why in (
+        ("product_blank_defined", "blank, fit and production method are not in the image"),
         (
-            HardGate.NO_CLEAR_PRODUCT_DEFINITION,
-            "blank, fit and production method are not in the image",
-        ),
-        (
-            HardGate.NO_COLLECTION_ROLE,
+            "collection_role_defined",
             "collection role is a brief decision, not a property of the artwork",
         ),
+        ("dominant_proposition_clear", "requires reading the design's idea, not its parameters"),
         (
-            HardGate.NO_DOMINANT_PROPOSITION,
-            "requires reading the design's idea, not its parameters",
-        ),
-        (HardGate.HIERARCHY_COLLAPSE, "requires judging which element is meant to lead"),
-        (
-            HardGate.GARMENT_CONFLICT,
+            "construction_conflicts_resolved",
             "seam and construction interaction needs the flat artwork and the blank",
         ),
-        (HardGate.IDENTITY_SUBSTITUTION, "requires knowing the permanent identity assets"),
-        (HardGate.WEAK_WITHOUT_THE_LOGO, "requires isolating the logo from the artwork"),
-        (HardGate.COLLECTION_REDUNDANCY, "requires the rest of the proposed range"),
         (
-            HardGate.MOCK_UP_ONLY_SUCCESS,
-            "requires comparing the flat artwork against the styled shot",
+            "identity_geometry_preserved",
+            "requires the permanent identity asset's reference geometry",
         ),
         (
-            HardGate.UNRESOLVED_RIGHTS_RISK,
+            "logo_removal_recognition_survives",
+            "requires isolating the logo from the artwork (T4)",
+        ),
+        (
+            "competitor_substitution_survives",
+            "requires knowing the permanent identity assets (T5)",
+        ),
+        (
+            "worn_body_review_completed",
+            "requires a worn-body photograph review, not a flat product image",
+        ),
+        (
+            "production_files_match_art",
+            "requires comparing production files against the approved artwork",
+        ),
+        (
+            "rights_cleared_for_sale",
             "provenance of artwork and references is not visible in the image",
         ),
     ):
-        gate(name, GateStatus.NOT_TESTED, why)
+        gate(gate_id, "not_tested", why)
 
     # Distance and Silhouette is the one category the visual tests genuinely
     # measure: three tests, three of five points, plus one for surviving all.
@@ -321,28 +400,32 @@ def to_review(
         )
     )
     rating = min(5, survived + (1 if survived == 3 else 0)) if measurements.has_print else 0
-    ratings.append(
-        CategoryRating(
-            category=ScoreCategory.DISTANCE_AND_SILHOUETTE,
-            rating=rating,
-            evidence=(
+    label, maximum, _rating_floor = CATEGORY_LIMITS["distance_and_silhouette"]
+    score_categories = [
+        {
+            "id": "distance_and_silhouette",
+            "label": label,
+            "score": round((rating / 5) * maximum, 2),
+            "maximum": maximum,
+            "minimumRequired": points_floor("distance_and_silhouette"),
+            "notes": (
                 f"thumbnail {'pass' if measurements.thumbnail_survives else 'fail'}, "
                 f"blur {'pass' if measurements.blur_survives else 'fail'}, "
                 f"greyscale {'pass' if measurements.greyscale_survives else 'fail'}; "
                 f"coverage {measurements.print_coverage:.1%}, "
                 f"{'light on dark' if measurements.light_on_dark else 'dark on light'}"
             ),
-        )
-    )
+        }
+    ]
 
-    return DesignReviewInput(
-        design_id=design_id,
-        design_name=design_name,
-        gate_results=gates,
-        category_ratings=ratings,
-    )
+    return {
+        "designId": design_id,
+        "designName": design_name,
+        "hardGates": [gates[gate_id] for gate_id in HARD_GATE_IDS],
+        "scoreCategories": score_categories,
+    }
 
 
-def extract(design_id: str, design_name: str, image_path: Path) -> DesignReviewInput:
-    """Measure an image and return the review those measurements support."""
+def extract(design_id: str, design_name: str, image_path: Path) -> dict[str, Any]:
+    """Measure an image and return the domain.ts-shaped review those measurements support."""
     return to_review(design_id, design_name, measure(image_path))

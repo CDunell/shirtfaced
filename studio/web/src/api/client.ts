@@ -604,40 +604,39 @@ export async function printPhoto(photoId: string, design: string): Promise<Blob>
   return await response.blob();
 }
 
-/** One hard gate's outcome, with the evidence the extractor decided it on. */
+/** One hard gate's outcome, with the evidence the extractor decided it on.
+ * Shape matches ``admin/src/design-system/domain.ts``'s ``hardGateSchema``. */
 export interface DesignGate {
-  gate: string;
-  status: "pass" | "fail" | "not_tested";
+  id: string;
+  label: string;
+  result: "pass" | "fail" | "not_tested";
   evidence: string;
 }
 
-/** One weighted category's computed points. */
+/** One weighted category's computed points -- only present when measured.
+ * Shape matches ``domain.ts``'s ``scoreCategorySchema``: ``score`` and
+ * ``minimumRequired`` are both points out of ``maximum``, not a 0-5 rating. */
 export interface DesignCategory {
-  category: string;
-  rating: number;
-  points: number;
-  max_points: number;
-  floor: number;
-  below_floor: boolean;
+  id: string;
+  label: string;
+  score: number;
+  maximum: number;
+  minimumRequired?: number;
+  notes: string;
 }
 
 export interface DesignScore {
-  design_id: string;
-  design_name: string;
+  designId: string;
+  designName: string;
   measurements: Record<string, unknown>;
-  blocked: boolean;
-  total_score: number;
-  max_total_score: number;
-  band: string;
-  failed_gates: string[];
-  untested_gates: string[];
-  floor_failures: string[];
-  gates: DesignGate[];
-  categories: DesignCategory[];
+  hardGates: DesignGate[];
+  scoreCategories: DesignCategory[];
   thresholds: Record<string, number>;
 }
 
-/** Measure a design image and score it against DESIGN_REVIEW_SCORECARD.md. */
+/** Measure a design image against DESIGN_REVIEW_SCORECARD.md. Scoring,
+ * banding and status are ``workflow.ts``'s ``evaluateReview`` /
+ * ``nextStatusForReview`` -- this reports only what the image supports. */
 export async function scoreDesign(file: File, designName?: string): Promise<DesignScore> {
   const body = new FormData();
   body.append("image", file);
@@ -647,6 +646,21 @@ export async function scoreDesign(file: File, designName?: string): Promise<Desi
     throw await failure(response);
   }
   return (await response.json()) as DesignScore;
+}
+
+/** The full 9-category universe and corpus-derived thresholds, for reading a
+ * score in context -- e.g. how many of all possible categories were rated. */
+export interface DesignThresholds {
+  thresholds: Record<string, number>;
+  categories: Record<string, { label: string; maximum: number; minimumRequired?: number }>;
+}
+
+export async function getDesignThresholds(): Promise<DesignThresholds> {
+  const response = await fetch("/api/design/thresholds");
+  if (!response.ok) {
+    throw await failure(response);
+  }
+  return (await response.json()) as DesignThresholds;
 }
 
 // --- Composing designs from the archive -------------------------------------

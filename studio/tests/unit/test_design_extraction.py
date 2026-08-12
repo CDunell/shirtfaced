@@ -10,9 +10,7 @@ from __future__ import annotations
 
 from PIL import Image, ImageDraw
 
-from app.domain.design_review import GateStatus, HardGate, ScoreCategory
-from app.services.design_extraction import extract, measure, to_review
-from app.services.design_scoring import score_design
+from app.services.design_extraction import HARD_GATE_IDS, extract, measure, points_floor, to_review
 
 
 def _garment(tmp_path, print_box=None, ink=(240, 240, 240), colours=1):  # type: ignore[no-untyped-def]
@@ -76,43 +74,44 @@ def test_gates_needing_judgement_are_never_marked_passed(tmp_path) -> None:  # t
     design through the one filter meant to stop it.
     """
     review = extract("d1", "Test", _garment(tmp_path, print_box=[210, 230, 390, 430]))
-    by_gate = {g.gate: g.status for g in review.gate_results}
+    by_gate = {g["id"]: g["result"] for g in review["hardGates"]}
 
-    for gate in (
-        HardGate.NO_DOMINANT_PROPOSITION,
-        HardGate.HIERARCHY_COLLAPSE,
-        HardGate.NO_COLLECTION_ROLE,
-        HardGate.COLLECTION_REDUNDANCY,
-        HardGate.IDENTITY_SUBSTITUTION,
-        HardGate.WEAK_WITHOUT_THE_LOGO,
-        HardGate.MOCK_UP_ONLY_SUCCESS,
-        HardGate.UNRESOLVED_RIGHTS_RISK,
-        HardGate.NO_CLEAR_PRODUCT_DEFINITION,
-        HardGate.GARMENT_CONFLICT,
+    for gate_id in (
+        "dominant_proposition_clear",
+        "collection_role_defined",
+        "identity_geometry_preserved",
+        "logo_removal_recognition_survives",
+        "competitor_substitution_survives",
+        "worn_body_review_completed",
+        "rights_cleared_for_sale",
+        "product_blank_defined",
+        "construction_conflicts_resolved",
+        "production_files_match_art",
     ):
-        assert by_gate[gate] is GateStatus.NOT_TESTED, f"{gate} was claimed without evidence"
+        assert by_gate[gate_id] == "not_tested", f"{gate_id} was claimed without evidence"
 
 
 def test_every_gate_result_carries_evidence(tmp_path) -> None:  # type: ignore[no-untyped-def]
     review = extract("d1", "Test", _garment(tmp_path, print_box=[210, 230, 390, 430]))
 
-    assert len(review.gate_results) == len(HardGate)
-    for result in review.gate_results:
-        assert result.evidence.strip()
+    assert len(review["hardGates"]) == len(HARD_GATE_IDS)
+    for result in review["hardGates"]:
+        assert result["evidence"].strip()
 
 
-def test_an_extracted_review_always_blocks(tmp_path) -> None:  # type: ignore[no-untyped-def]
-    """Extraction alone can never approve a design.
+def test_an_extracted_review_always_leaves_gates_untested(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """Extraction alone can never fully clear a design.
 
-    DESIGN_REVIEW_SCORECARD.md §2: a design cannot be approved from one floating
-    artwork file. Untested gates block exactly as failed ones do, so the
-    extractor's output is a starting point for a human, not a verdict.
+    DESIGN_REVIEW_SCORECARD.md Section 2: a design cannot be approved from one
+    floating artwork file. ``workflow.ts``'s ``evaluateReview`` treats an
+    untested gate exactly as a failed one, so leaving these ``not_tested`` is
+    what keeps the extractor's output a starting point for a human, not a
+    verdict.
     """
     review = extract("d1", "Test", _garment(tmp_path, print_box=[210, 230, 390, 430]))
-    outcome = score_design(review)
+    untested = [g for g in review["hardGates"] if g["result"] == "not_tested"]
 
-    assert outcome.blocked is True
-    assert outcome.untested_gates
+    assert untested
 
 
 def test_too_many_inks_fails_production(tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -128,17 +127,33 @@ def test_too_many_inks_fails_production(tmp_path) -> None:  # type: ignore[no-un
         m,
         thresholds={"ink_colours_p90": 1, "print_coverage_p10": 0.02, "print_coverage_p90": 0.35},
     )
-    by_gate = {g.gate: g.status for g in review.gate_results}
+    by_gate = {g["id"]: g["result"] for g in review["hardGates"]}
 
     assert m.ink_colours >= 2
-    assert by_gate[HardGate.PRODUCTION_FAILURE] is GateStatus.FAIL
+    assert by_gate["production_detail_feasible"] == "fail"
 
 
 def test_distance_category_is_rated_from_the_visual_tests(tmp_path) -> None:  # type: ignore[no-untyped-def]
     review = extract("d1", "Test", _garment(tmp_path, print_box=[200, 220, 400, 440]))
-    rating = next(
-        r for r in review.category_ratings if r.category is ScoreCategory.DISTANCE_AND_SILHOUETTE
-    )
+    rating = next(c for c in review["scoreCategories"] if c["id"] == "distance_and_silhouette")
 
-    assert rating.rating >= 4
-    assert "thumbnail" in rating.evidence
+    assert rating["score"] >= 8  # 4/5 of 10 points
+    assert "thumbnail" in rating["notes"]
+
+
+def test_minimum_required_is_on_the_points_scale_not_the_five_point_rating(tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """A real bug this pins: ``domain.ts``'s ``scoreCategorySchema`` compares
+    ``score`` and ``minimumRequired`` directly, both in points out of
+    ``maximum``. Emitting the scorecard's raw 0-5 floor (e.g. 3) as
+    ``minimumRequired`` against a points ``score`` (e.g. 8/10) would make the
+    floor comparison ``8 < 3`` -- never true, silently defeating every floor
+    check downstream in ``workflow.ts``'s ``evaluateReview``.
+    """
+    # Distance and Silhouette: maximum 10, scorecard floor 3/5 -> 6 points.
+    assert points_floor("distance_and_silhouette") == 6.0
+
+    review = extract("d1", "Test", _garment(tmp_path, print_box=[200, 220, 400, 440]))
+    rating = next(c for c in review["scoreCategories"] if c["id"] == "distance_and_silhouette")
+
+    assert rating["minimumRequired"] == 6.0
+    assert rating["score"] > rating["minimumRequired"]
