@@ -23,7 +23,6 @@ from app.routes import (
     compose,
     concepts,
     design,
-    design_advisor,
     email,
     health,
     printing,
@@ -93,7 +92,6 @@ def create_app() -> FastAPI:
     application.include_router(printing.router)
     application.include_router(assets.router)
     application.include_router(design.router)
-    application.include_router(design_advisor.router)
     application.include_router(compose.router)
     application.include_router(concepts.router)
     application.include_router(archive_files.router)
