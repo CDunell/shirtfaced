@@ -1,0 +1,66 @@
+name: Collect next 100 vintage eBay references
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/research/vintage-market-evidence/requests/next100.txt'
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Collect 100 new verified sold listings
+        run: node scripts/collect-vintage-ebay-next100.mjs
+      - name: Collect listing images with provenance
+        env:
+          VINTAGE_IMAGE_ROOT: ${{ runner.temp }}/vintage-ebay-images
+        run: node scripts/backfill-vintage-ebay-images.mjs
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Persist private research cache
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'mkdir -p /home/ubuntu/shirtfaced-research/vintage-ebay-images'
+          rsync -az \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            "${{ runner.temp }}/vintage-ebay-images/" \
+            ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-research/vintage-ebay-images/
+      - name: Manifest count
+        run: |
+          echo 'LOCAL MANIFEST:'
+          cat "${{ runner.temp }}/vintage-ebay-images/manifest.json"
+          echo 'REMOTE COUNTS:'
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'python3 - <<"PY"
+import json, os
+root="/home/ubuntu/shirtfaced-research/vintage-ebay-images"
+manifest=os.path.join(root,"manifest.json")
+if os.path.exists(manifest):
+    data=json.load(open(manifest))
+    print(json.dumps(data, indent=2))
+files=0
+for _,_,names in os.walk(root):
+    files += sum(1 for n in names if n.lower().endswith((".jpg",".jpeg",".png",".webp")))
+print(json.dumps({"image_files_on_disk":files}))
+PY'
+      - name: Commit batch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/research/vintage-market-evidence/batches/ebay-sold-next100-2026-08-13.jsonl
+          git commit -m 'add next 100 vintage eBay sold references'
+          git pull --rebase origin main
+          git push
