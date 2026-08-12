@@ -300,8 +300,9 @@ corpus         C:\shirtfaced\studio\var\design_corpus
                C:\shirtfaced\studio\var\design_corpus_flat
 ```
 
-Sheets are not pre-built. Generate them; the ordering is deterministic, so
-sheet 400 always holds the same nine products.
+**Sheets 1–600 are already built and waiting** — that is your range. The
+ordering is deterministic, so sheet 400 always holds the same nine products on
+every run and a row traces back to a cell. Build more only if you pass 600.
 
 ```
 cd C:\shirtfaced\studio
