@@ -11,14 +11,14 @@ rows for ``var/design_corpus_market``. Output is a ranked structural report with
 traceable listing evidence and no generated concepts.
 
     python scripts/score_market_intelligence.py var/market-pass/
-    python scripts/score_market_intelligence.py rows.json --output var/design_corpus_market/report.json
+    python scripts/score_market_intelligence.py rows.json \
+        --output var/design_corpus_market/report.json
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import math
 import statistics
 import sys
 from collections import defaultdict
@@ -114,7 +114,10 @@ def _cohort_scores(products: Iterable[dict[str, Any]]) -> dict[str, dict[float, 
     return out
 
 
-def _demand(product: dict[str, Any], cohort: dict[str, dict[float, float]]) -> tuple[float, list[str]]:
+def _demand(
+    product: dict[str, Any],
+    cohort: dict[str, dict[float, float]],
+) -> tuple[float, list[str]]:
     signal = product.get("commercial_signals") or {}
     # Relative within the collected cohort. Missing signals do not become zero;
     # the remaining weights renormalise so absence is not fabricated weakness.
@@ -133,10 +136,15 @@ def _demand(product: dict[str, Any], cohort: dict[str, dict[float, float]]) -> t
 
 
 def _fingerprint(row: dict[str, Any]) -> tuple[str, ...]:
-    parts = [str(row.get(field, "") or "unknown").strip().lower() for field in FINGERPRINT_FIELDS]
+    parts = [
+        str(row.get(field, "") or "unknown").strip().lower()
+        for field in FINGERPRINT_FIELDS
+    ]
     for field in FINGERPRINT_ARRAYS:
         values = row.get(field) or []
-        normalised = sorted(str(value).strip().lower() for value in values if str(value).strip())
+        normalised = sorted(
+            str(value).strip().lower() for value in values if str(value).strip()
+        )
         parts.append("+".join(normalised) or "none")
     return tuple(parts)
 
@@ -175,21 +183,30 @@ def build_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
         confidence = evidence_count / (evidence_count + 10)
         groups.append(
             {
-                "fingerprint": dict(zip((*FINGERPRINT_FIELDS, *FINGERPRINT_ARRAYS), fingerprint)),
+                "fingerprint": dict(
+                    zip((*FINGERPRINT_FIELDS, *FINGERPRINT_ARRAYS), fingerprint)
+                ),
                 "evidence_count": evidence_count,
                 "market_demand": round(median_demand, 4),
                 "confidence": round(confidence, 4),
                 "signal_strength": round(median_demand * confidence, 4),
-                "evidence": sorted(evidence, key=lambda item: item["demand"], reverse=True)[:12],
+                "evidence": sorted(
+                    evidence,
+                    key=lambda item: item["demand"],
+                    reverse=True,
+                )[:12],
             }
         )
 
-    groups.sort(key=lambda group: (group["signal_strength"], group["evidence_count"]), reverse=True)
+    groups.sort(
+        key=lambda group: (group["signal_strength"], group["evidence_count"]),
+        reverse=True,
+    )
     return {
         "purpose": "market demand evidence for structural design treatments",
         "creative_boundary": (
-            "May inform register/layout/treatment ranking. Must not supply phrases, jokes, depicted "
-            "subjects or creative direction. Human design approval remains mandatory."
+            "May inform register/layout/treatment ranking. Must not supply phrases, jokes, "
+            "depicted subjects or creative direction. Human design approval remains mandatory."
         ),
         "observations_received": len(rows),
         "observations_matched": sum(group["evidence_count"] for group in groups),
