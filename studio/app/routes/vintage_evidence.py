@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Private browser for the vintage marketplace evidence cache."""
 
 from __future__ import annotations
