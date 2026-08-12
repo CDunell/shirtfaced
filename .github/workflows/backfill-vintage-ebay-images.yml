@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'scripts/backfill-vintage-ebay-images.mjs'
+      - 'scripts/backfill-vintage-ebay-images-browser.mjs'
       - 'docs/research/vintage-market-evidence/**/*.jsonl'
       - 'docs/research/vintage-market-evidence/*.jsonl'
       - '.github/workflows/backfill-vintage-ebay-images.yml'
@@ -22,24 +22,34 @@ jobs:
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
-      - name: Stage collector and evidence on Oracle
+      - name: Stage browser collector and evidence on Oracle
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'rm -rf /home/ubuntu/vintage-backfill-run && mkdir -p /home/ubuntu/vintage-backfill-run/docs/research/vintage-market-evidence /home/ubuntu/vintage-backfill-run/scripts'
           rsync -az -e "ssh -i ~/.ssh/deploy_key" \
-            scripts/backfill-vintage-ebay-images.mjs \
+            scripts/backfill-vintage-ebay-images-browser.mjs \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/vintage-backfill-run/scripts/
           rsync -az -e "ssh -i ~/.ssh/deploy_key" \
             docs/research/vintage-market-evidence/ \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/vintage-backfill-run/docs/research/vintage-market-evidence/
-      - name: Collect images on Oracle
+      - name: Install browser runtime on Oracle
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/vintage-backfill-run
+          test -f package.json || npm init -y >/dev/null 2>&1
+          npm install --silent playwright@1.55.0
+          npx playwright install chromium
+          REMOTE
+      - name: Collect images through Chromium on Oracle
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
           set -euo pipefail
           cd /home/ubuntu/vintage-backfill-run
           mkdir -p /home/ubuntu/shirtfaced-research/vintage-ebay-images
           VINTAGE_IMAGE_ROOT=/home/ubuntu/shirtfaced-research/vintage-ebay-images \
-            node scripts/backfill-vintage-ebay-images.mjs
+          VINTAGE_MAX_IMAGES=12 \
+            node scripts/backfill-vintage-ebay-images-browser.mjs
           REMOTE
       - name: Manifest count
         run: |
