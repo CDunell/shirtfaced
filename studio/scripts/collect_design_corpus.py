@@ -456,6 +456,29 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     # than vintage-reseller so nothing downstream reads a 2026 reprint as evidence
     # about 1994. Thin, and kept for band-merch breadth rather than era evidence.
     "rockstar-merch": ("Rockstar Merch AU", "https://au.rockstar-merch.com", "licensed-reprint"),
+    # 1,500+ pieces and still paginating at the default six pages. Dates its
+    # stock in the title the way Wyco does.
+    "rokit": ("Rokit Vintage", "https://au.rokit.co.uk", "vintage-reseller"),
+    "love-bubble": ("Love Bubble Co", "https://lovebubbleco.com.au", "vintage-reseller"),
+    # 1,499 of 1,500 products are tees, every one dated in the title. The
+    # cleanest source in this list: nothing to filter, nothing to infer.
+    "sell-merchandise": ("Sell Merchandise", "https://sellmerchandise.shop", "vintage-reseller"),
+}
+
+# brand slug -> Shopify collection handle, where the shop has already curated the
+# thing worth collecting. Verified 2026-08-13: every one of these serves
+# /collections/<handle>/products.json.
+#
+# The store-wide crawl is what you do when nobody has done the sorting. Where a
+# shop keeps a "vintage band tees" collection, a person who handles this stock
+# daily has already decided what belongs in it, and that judgement is worth more
+# than a type-pattern guessing from a title.
+BRAND_COLLECTIONS: dict[str, str] = {
+    "sell-merchandise": "vintage-band-tees",
+    "vintage-sole": "band-t-shirts",
+    "love-bubble": "vintage-band-t-shirts",
+    "rokit": "vintage-band-tees",
+    "retrostar": "vintage-band-t-shirts",
 }
 
 
@@ -496,6 +519,12 @@ def _design_key(handle: str) -> str:
 
 def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[str, Any]:
     """Collect one brand. Returns a result row; never raises on network failure."""
+    # Shopify serves products.json per collection as well as per store, and a
+    # reseller's own "vintage band tees" collection is a human's selection of
+    # exactly the thing worth having. Collecting the whole store instead throws
+    # that curation away and pays for handbags and denim to find it again.
+    collection = BRAND_COLLECTIONS.get(slug)
+    base = f"{site_url}/collections/{collection}" if collection else site_url
     # Paginate. One page of 250 is the whole range for a label with one drop a
     # season, but a vintage reseller lists everything they hold in no useful
     # order -- Retrostar's first page is dresses and skirts, and its band tees
@@ -504,7 +533,7 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
     products: list[dict[str, Any]] = []
     try:
         for page in range(1, PRODUCT_PAGES + 1):
-            raw = _fetch(f"{site_url}/products.json?limit=250&page={page}")
+            raw = _fetch(f"{base}/products.json?limit=250&page={page}")
             batch = json.loads(raw).get("products", [])
             if not batch:
                 break
