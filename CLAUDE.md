@@ -100,7 +100,8 @@ doing it.
   subject matter. Read before writing any brief about what artwork should show.
 - **Brand voice:** `docs/foundations/BRAND_VOICE.md` — the word, the tagline grammar,
   Identity vs Storefront voice. Holds consistency while design content changes.
-- **Characters:** `docs/foundations/CHARACTERS.md` — a name list, nothing formed yet.
+- **Characters:** `docs/foundations/CHARACTERS.md` — canon since 10 August 2026: a
+  family with a friend web attached, decided by the owner from their own people.
   Never named in a generation prompt regardless.
 - **Production backlog:** `studio/worlds/world-01/SHOTLIST.md` and `CONTINUITY.md`.
 - **Design constitution:** `docs/research/SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md`.
