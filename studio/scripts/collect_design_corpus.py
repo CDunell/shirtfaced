@@ -30,7 +30,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-CORPUS_ROOT = Path(__file__).resolve().parent.parent / "var" / "design_corpus"
+# Overridable so vintage resellers can be collected into ``var/design_archive/``
+# without landing in the measurement corpus. A reseller is not a brand with
+# creative direction -- ``corpus_tiers.py`` exists because that distinction was
+# missed once already -- and their stock is other people's decades-old work, which
+# would move every layout median it touched.
+CORPUS_ROOT = (
+    Path(__file__).resolve().parent.parent
+    / "var"
+    / os.environ.get("DESIGN_CORPUS_ROOT", "design_corpus")
+)
 
 USER_AGENT = (
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -51,6 +60,11 @@ USER_AGENT = (
 # again, so most of it is still truncated to a number the comment above already
 # calls arbitrary.
 PRODUCTS_PER_BRAND = int(os.environ.get("PRODUCTS_PER_BRAND", "0"))
+
+# Pages of 250 to read from ``products.json``. A brand's whole range fits in one;
+# a vintage reseller holding thousands of one-off pieces does not, and its tees
+# are not on page one.
+PRODUCT_PAGES = int(os.environ.get("PRODUCT_PAGES", "6"))
 
 # Images per product. Two was too few: brands commonly ship a close-up of the
 # garment alongside a full-body shot of a model wearing it, and it is the close-up
@@ -406,6 +420,42 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     "etnies": ("Etnies", "https://www.etnies.com", "major-skate"),
     "emerica": ("Emerica", "https://www.emerica.com", "major-skate"),
     "jack-wolfskin": ("Jack Wolfskin", "https://www.jackwolfskin.com", "major-outdoor"),
+    # --- Vintage resellers. Not brands: no creative direction of their own, and
+    # their stock is other people's work from the 70s through the 90s. They are
+    # here because they are the only Shopify-shaped route to archive *garments* --
+    # dealer-photographed, several angles, era stated in the title -- which is the
+    # one thing an archived 1999 website cannot show.
+    #
+    # Collect these with DESIGN_CORPUS_ROOT=design_archive so they never reach the
+    # measurement corpus. Tradition is tagged honestly so any miner that does see
+    # them knows what they are. ---
+    "vintage-rare-usa": ("Vintage Rare USA", "https://www.vintagerareusa.com", "vintage-reseller"),
+    "reware-vintage": ("Reware Vintage", "https://rewarevintage.com", "vintage-reseller"),
+    "skate-till-death": ("Skate Till Death", "https://www.skatetilldeath.com", "vintage-reseller"),
+    # Dates its stock in the product title -- "1996 ...", "1990s ...", "1969 ..." --
+    # which is the one thing the others leave to a guess.
+    "wyco-vintage": ("Wyco Vintage", "https://www.wycovintage.com", "vintage-reseller"),
+    "wwl-vintage": ("Worldwide Local", "https://wwl-vintage.com", "vintage-reseller"),
+    "rebalance-vintage": ("Rebalance Vintage", "https://rebalancevintage.com", "vintage-reseller"),
+    "barn-owl-vintage": (
+        "The Barn Owl Vintage Goods",
+        "https://barnowlseattle.com",
+        "vintage-reseller",
+    ),
+    "ragstock": ("Ragstock", "https://ragstock.com", "vintage-reseller"),
+    "vintage-wholesale-supply": (
+        "Vintage Wholesale Supply",
+        "https://vintagewholesalesupplyltd.com",
+        "vintage-reseller",
+    ),
+    # Australian, and the reason pagination exists here: page one is dresses.
+    "retrostar": ("Retrostar Vintage", "https://www.retrostar.com.au", "vintage-reseller"),
+    "vintage-sole": ("Vintage Sole", "https://www.vintagesole.com.au", "vintage-reseller"),
+    # Officially licensed current reprints, not archive: Beastie Boys and Sleep
+    # Token as sold today, mostly one image per product. Tagged as licensed rather
+    # than vintage-reseller so nothing downstream reads a 2026 reprint as evidence
+    # about 1994. Thin, and kept for band-merch breadth rather than era evidence.
+    "rockstar-merch": ("Rockstar Merch AU", "https://au.rockstar-merch.com", "licensed-reprint"),
 }
 
 
@@ -446,16 +496,31 @@ def _design_key(handle: str) -> str:
 
 def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[str, Any]:
     """Collect one brand. Returns a result row; never raises on network failure."""
+    # Paginate. One page of 250 is the whole range for a label with one drop a
+    # season, but a vintage reseller lists everything they hold in no useful
+    # order -- Retrostar's first page is dresses and skirts, and its band tees
+    # start several pages in. Reading page one only was collecting whatever the
+    # store happened to list first and calling it the catalogue.
+    products: list[dict[str, Any]] = []
     try:
-        raw = _fetch(f"{site_url}/products.json?limit=250")
-        products = json.loads(raw).get("products", [])
+        for page in range(1, PRODUCT_PAGES + 1):
+            raw = _fetch(f"{site_url}/products.json?limit=250&page={page}")
+            batch = json.loads(raw).get("products", [])
+            if not batch:
+                break
+            products.extend(batch)
+            if len(batch) < 250:
+                break
+            time.sleep(REQUEST_DELAY)
     except (urllib.error.URLError, json.JSONDecodeError, TimeoutError, OSError) as error:
-        return {
-            "brand_slug": slug,
-            "status": "skipped",
-            "reason": f"{type(error).__name__}: {error}",
-        }
-
+        # Partial is still evidence: keep four good pages rather than discard them
+        # because the fifth timed out. Nothing at all is a skip, as before.
+        if not products:
+            return {
+                "brand_slug": slug,
+                "status": "skipped",
+                "reason": f"{type(error).__name__}: {error}",
+            }
     if not products:
         return {"brand_slug": slug, "status": "skipped", "reason": "no products returned"}
 
