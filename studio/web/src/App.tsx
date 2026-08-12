@@ -161,6 +161,32 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
                 {item.label}
               </button>
             ))}
+            {/* The other half of the tool. Admin's nav already links back here. */}
+            <a
+              href="https://admin.shirtfaced.wtf"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => {
+                setMenuOpen(false);
+              }}
+              className={`press ${css({
+                fontSize: "13px",
+                fontWeight: 600,
+                letterSpacing: "0.02em",
+                textTransform: "uppercase",
+                textDecoration: "none",
+                textAlign: "center",
+                borderRadius: "14px",
+                paddingTop: "8px",
+                paddingBottom: "8px",
+                paddingLeft: "12px",
+                paddingRight: "12px",
+                color: theme.colors.contentPrimary,
+                ":hover": { backgroundColor: theme.colors.backgroundSecondary },
+              })}`}
+            >
+              Admin ↗
+            </a>
             <button
               type="button"
               onClick={onToggleTheme}
