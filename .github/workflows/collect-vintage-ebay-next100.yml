@@ -13,40 +13,72 @@ jobs:
   collect:
     runs-on: ubuntu-latest
     timeout-minutes: 55
+    env:
+      REMOTE_RUN_DIR: /home/ubuntu/vintage-next100-${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Collect 100 new verified sold listings
-        run: node scripts/collect-vintage-ebay-next100.mjs
-      - name: Collect listing images with provenance
-        env:
-          VINTAGE_IMAGE_ROOT: ${{ runner.temp }}/vintage-ebay-images
-        run: node scripts/backfill-vintage-ebay-images.mjs
       - name: Set up deploy key
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
-      - name: Persist private research cache
+      - name: Stage browser collector and evidence on Oracle
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'mkdir -p /home/ubuntu/shirtfaced-research/vintage-ebay-images'
-          rsync -az -e "ssh -i ~/.ssh/deploy_key" "${{ runner.temp }}/vintage-ebay-images/" ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-research/vintage-ebay-images/
-      - name: Manifest count
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            "mkdir -p '$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/batches' '$REMOTE_RUN_DIR/scripts'"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            scripts/collect-vintage-ebay-next100-browser.mjs \
+            ubuntu@${{ secrets.ORACLE_HOST }}:"$REMOTE_RUN_DIR/scripts/"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            docs/research/vintage-market-evidence/ \
+            ubuntu@${{ secrets.ORACLE_HOST }}:"$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/"
+      - name: Install Chromium runtime on Oracle
         run: |
-          echo 'LOCAL MANIFEST:'
-          cat "${{ runner.temp }}/vintage-ebay-images/manifest.json"
-          echo 'REMOTE MANIFEST:'
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'cat /home/ubuntu/shirtfaced-research/vintage-ebay-images/manifest.json'
-          echo 'REMOTE IMAGE FILE COUNT:'
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "find /home/ubuntu/shirtfaced-research/vintage-ebay-images -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | wc -l"
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "bash -s" <<REMOTE
+          set -euo pipefail
+          cd "$REMOTE_RUN_DIR"
+          test -f package.json || npm init -y >/dev/null 2>&1
+          npm install --silent playwright@1.55.0
+          sudo npx playwright install-deps chromium >/dev/null
+          npx playwright install chromium >/dev/null
+          REMOTE
+      - name: Start detached collector
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "bash -s" <<REMOTE
+          set -euo pipefail
+          cd "$REMOTE_RUN_DIR"
+          rm -f exit.code collector.log
+          nohup bash -lc '
+            node scripts/collect-vintage-ebay-next100-browser.mjs > collector.log 2>&1
+            echo \$? > exit.code
+          ' >/dev/null 2>&1 < /dev/null &
+          REMOTE
+      - name: Wait for collector
+        run: |
+          for i in $(seq 1 220); do
+            status=$(ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=2 -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+              "if [ -f '$REMOTE_RUN_DIR/exit.code' ]; then cat '$REMOTE_RUN_DIR/exit.code'; else echo RUNNING; fi")
+            if [ "$status" != "RUNNING" ]; then
+              ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "cat '$REMOTE_RUN_DIR/collector.log'"
+              test "$status" = "0"
+              exit
+            fi
+            sleep 12
+          done
+          echo 'collector did not finish before poll limit' >&2
+          exit 1
+      - name: Pull generated batch
+        run: |
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            ubuntu@${{ secrets.ORACLE_HOST }}:"$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/batches/ebay-sold-next100-browser-2026-08-13.jsonl" \
+            docs/research/vintage-market-evidence/batches/
+          test "$(wc -l < docs/research/vintage-market-evidence/batches/ebay-sold-next100-browser-2026-08-13.jsonl)" -eq 100
       - name: Commit batch
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add docs/research/vintage-market-evidence/batches/ebay-sold-next100-2026-08-13.jsonl
-          git commit -m 'add next 100 vintage eBay sold references'
+          git add docs/research/vintage-market-evidence/batches/ebay-sold-next100-browser-2026-08-13.jsonl
+          git commit -m 'add 100 Chromium-verified vintage eBay sold references'
           git pull --rebase origin main
           git push
