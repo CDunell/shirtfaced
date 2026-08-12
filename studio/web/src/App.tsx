@@ -46,6 +46,10 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   const [css, theme] = useStyletron();
   // Prompts first: generation happens elsewhere, so this is the screen that gets used.
   const [view, setView] = useState<View>("prompts");
+  // Mobile only. Eight nav items wrapped across three cramped rows on a phone;
+  // behind a hamburger they become one readable column, and picking a view
+  // closes it again.
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const navItem = (active: boolean) =>
     css({
@@ -100,12 +104,47 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
             <span className={css({ color: theme.colors.contentTertiary })}>/ studio</span>
           </span>
 
+          <button
+            type="button"
+            aria-label="Menu"
+            aria-expanded={menuOpen}
+            onClick={() => {
+              setMenuOpen((open) => !open);
+            }}
+            className={`press ${css({
+              display: "none",
+              "@media screen and (max-width: 760px)": { display: "block" },
+              appearance: "none",
+              cursor: "pointer",
+              fontFamily: "inherit",
+              fontSize: "20px",
+              lineHeight: "1",
+              borderRadius: "14px",
+              border: `1px solid ${theme.colors.borderOpaque}`,
+              backgroundColor: menuOpen ? theme.colors.backgroundSecondary : "transparent",
+              color: theme.colors.contentPrimary,
+              paddingTop: "8px",
+              paddingBottom: "8px",
+              paddingLeft: "12px",
+              paddingRight: "12px",
+            })}`}
+          >
+            ☰
+          </button>
+
           <nav
             className={css({
               display: "flex",
               alignItems: "center",
               gap: "4px",
               flexWrap: "wrap",
+              "@media screen and (max-width: 760px)": {
+                display: menuOpen ? "flex" : "none",
+                flexBasis: "100%",
+                flexDirection: "column",
+                alignItems: "stretch",
+                paddingBottom: "8px",
+              },
             })}
           >
             {VIEWS.map((item) => (
@@ -115,6 +154,7 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
                 aria-current={view === item.id ? "page" : undefined}
                 onClick={() => {
                   setView(item.id);
+                  setMenuOpen(false);
                 }}
                 className={`press ${navItem(view === item.id)}`}
               >

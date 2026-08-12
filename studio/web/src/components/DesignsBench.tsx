@@ -333,6 +333,9 @@ export function DesignsBench(): React.JSX.Element {
           gridTemplateColumns: "minmax(280px, 1fr) minmax(320px, 1.2fr)",
           gap: "16px",
           alignItems: "start",
+          // One column on a phone: the two-column minimums add to ~600px and
+          // push the detail card off the right edge of the screen.
+          "@media screen and (max-width: 760px)": { gridTemplateColumns: "1fr" },
         })}
       >
         <div
@@ -403,113 +406,117 @@ export function DesignsBench(): React.JSX.Element {
           ))}
         </div>
 
-        {selected ? (
-          <Card>
-            <StyledBody>
-              <LabelSmall color={theme.colors.contentSecondary}>
-                #{String(selected.external_number).padStart(3, "0")} · {selected.round_label} ·{" "}
-                {selected.slug}
-              </LabelSmall>
-              <HeadingSmall marginTop="4px" marginBottom="4px">
-                {selected.title}
-              </HeadingSmall>
-              {/* The owner's words, verbatim. The pipeline never edits them. */}
-              <ParagraphSmall marginTop={0}>{selected.concept_text}</ParagraphSmall>
+        {/* Detail first on a phone: tapping a row should surface the lineage
+            where the eye already is, not below a 540px list. */}
+        <div className={css({ "@media screen and (max-width: 760px)": { order: -1 } })}>
+          {selected ? (
+            <Card>
+              <StyledBody>
+                <LabelSmall color={theme.colors.contentSecondary}>
+                  #{String(selected.external_number).padStart(3, "0")} · {selected.round_label} ·{" "}
+                  {selected.slug}
+                </LabelSmall>
+                <HeadingSmall marginTop="4px" marginBottom="4px">
+                  {selected.title}
+                </HeadingSmall>
+                {/* The owner's words, verbatim. The pipeline never edits them. */}
+                <ParagraphSmall marginTop={0}>{selected.concept_text}</ParagraphSmall>
 
-              <div
-                className={css({
-                  display: "flex",
-                  gap: "4px",
-                  flexWrap: "wrap",
-                  marginBottom: theme.sizing.scale300,
-                })}
-              >
-                <Tag closeable={false} kind={statusTagKind(selected.status)}>
-                  {selected.status}
-                </Tag>
-                {selected.retirement ? (
-                  <Tag closeable={false} kind={TAG_KIND.negative}>
-                    {selected.retirement} retirement
+                <div
+                  className={css({
+                    display: "flex",
+                    gap: "4px",
+                    flexWrap: "wrap",
+                    marginBottom: theme.sizing.scale300,
+                  })}
+                >
+                  <Tag closeable={false} kind={statusTagKind(selected.status)}>
+                    {selected.status}
                   </Tag>
+                  {selected.retirement ? (
+                    <Tag closeable={false} kind={TAG_KIND.negative}>
+                      {selected.retirement} retirement
+                    </Tag>
+                  ) : null}
+                  {selected.garments.map((garment) => (
+                    <Tag key={garment} closeable={false} kind={TAG_KIND.neutral}>
+                      {garment}
+                    </Tag>
+                  ))}
+                  {selected.approved_versions > 0 ? (
+                    <Tag closeable={false} kind={TAG_KIND.positive}>
+                      v{selected.approved_versions}
+                    </Tag>
+                  ) : null}
+                </div>
+
+                {selected.salvage ? (
+                  <Notification kind={NOTIFICATION_KIND.warning}>
+                    Held, not retired: {selected.salvage}
+                  </Notification>
                 ) : null}
-                {selected.garments.map((garment) => (
-                  <Tag key={garment} closeable={false} kind={TAG_KIND.neutral}>
-                    {garment}
-                  </Tag>
-                ))}
-                {selected.approved_versions > 0 ? (
-                  <Tag closeable={false} kind={TAG_KIND.positive}>
-                    v{selected.approved_versions}
-                  </Tag>
-                ) : null}
-              </div>
 
-              {selected.salvage ? (
-                <Notification kind={NOTIFICATION_KIND.warning}>
-                  Held, not retired: {selected.salvage}
-                </Notification>
-              ) : null}
-
-              {selected.attempts.length === 0 ? (
-                <ParagraphSmall color={theme.colors.contentSecondary}>
-                  Never attempted.
-                </ParagraphSmall>
-              ) : (
-                selected.attempts.map((attempt) => (
-                  <div
-                    key={attempt.id}
-                    className={css({
-                      borderTop: `1px solid ${theme.colors.borderOpaque}`,
-                      paddingTop: "8px",
-                      marginTop: "8px",
-                    })}
-                  >
-                    {preview(attempt)}
-                    <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-                      <Tag closeable={false} kind={statusTagKind(attempt.state)}>
-                        {attempt.state.replace(/_/g, " ")}
-                      </Tag>
-                      <Tag closeable={false} kind={TAG_KIND.neutral}>
-                        attempt {attempt.attempt_number}
-                      </Tag>
-                      <Tag closeable={false} kind={TAG_KIND.neutral}>
-                        {attempt.method.replace(/_/g, " ")}
-                      </Tag>
-                      {attempt.approved_version !== null ? (
-                        <Tag closeable={false} kind={TAG_KIND.positive}>
-                          v{attempt.approved_version}
+                {selected.attempts.length === 0 ? (
+                  <ParagraphSmall color={theme.colors.contentSecondary}>
+                    Never attempted.
+                  </ParagraphSmall>
+                ) : (
+                  selected.attempts.map((attempt) => (
+                    <div
+                      key={attempt.id}
+                      className={css({
+                        borderTop: `1px solid ${theme.colors.borderOpaque}`,
+                        paddingTop: "8px",
+                        marginTop: "8px",
+                      })}
+                    >
+                      {preview(attempt)}
+                      <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
+                        <Tag closeable={false} kind={statusTagKind(attempt.state)}>
+                          {attempt.state.replace(/_/g, " ")}
                         </Tag>
+                        <Tag closeable={false} kind={TAG_KIND.neutral}>
+                          attempt {attempt.attempt_number}
+                        </Tag>
+                        <Tag closeable={false} kind={TAG_KIND.neutral}>
+                          {attempt.method.replace(/_/g, " ")}
+                        </Tag>
+                        {attempt.approved_version !== null ? (
+                          <Tag closeable={false} kind={TAG_KIND.positive}>
+                            v{attempt.approved_version}
+                          </Tag>
+                        ) : null}
+                      </div>
+                      {attempt.decision ? (
+                        <ParagraphXSmall marginTop="4px" color={theme.colors.contentSecondary}>
+                          {attempt.decision.decision.replace(/_/g, " ")} by {attempt.decision.actor}
+                          {attempt.decision.reason ? ` — ${attempt.decision.reason}` : ""}
+                          {attempt.decision.instruction ? ` — ${attempt.decision.instruction}` : ""}
+                        </ParagraphXSmall>
+                      ) : null}
+                      {attempt.state === "approved" && attempt.approved_version === null ? (
+                        <Button
+                          size={SIZE.mini}
+                          kind={BUTTON_KIND.secondary}
+                          disabled={busy}
+                          onClick={() => {
+                            void onApproveDesign(attempt);
+                          }}
+                        >
+                          Record approved design v{selected.approved_versions + 1}
+                        </Button>
                       ) : null}
                     </div>
-                    {attempt.decision ? (
-                      <ParagraphXSmall marginTop="4px" color={theme.colors.contentSecondary}>
-                        {attempt.decision.decision.replace(/_/g, " ")} by {attempt.decision.actor}
-                        {attempt.decision.reason ? ` — ${attempt.decision.reason}` : ""}
-                        {attempt.decision.instruction ? ` — ${attempt.decision.instruction}` : ""}
-                      </ParagraphXSmall>
-                    ) : null}
-                    {attempt.state === "approved" && attempt.approved_version === null ? (
-                      <Button
-                        size={SIZE.mini}
-                        kind={BUTTON_KIND.secondary}
-                        disabled={busy}
-                        onClick={() => {
-                          void onApproveDesign(attempt);
-                        }}
-                      >
-                        Record approved design v{selected.approved_versions + 1}
-                      </Button>
-                    ) : null}
-                  </div>
-                ))
-              )}
-            </StyledBody>
-          </Card>
-        ) : (
-          <ParagraphSmall color={theme.colors.contentSecondary}>
-            Select a concept to see its lineage.
-          </ParagraphSmall>
-        )}
+                  ))
+                )}
+              </StyledBody>
+            </Card>
+          ) : (
+            <ParagraphSmall color={theme.colors.contentSecondary}>
+              Select a concept to see its lineage.
+            </ParagraphSmall>
+          )}
+        </div>
       </div>
     </>
   );
