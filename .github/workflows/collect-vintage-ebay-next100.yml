@@ -32,30 +32,16 @@ jobs:
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
       - name: Persist private research cache
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
-            'mkdir -p /home/ubuntu/shirtfaced-research/vintage-ebay-images'
-          rsync -az \
-            -e "ssh -i ~/.ssh/deploy_key" \
-            "${{ runner.temp }}/vintage-ebay-images/" \
-            ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-research/vintage-ebay-images/
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'mkdir -p /home/ubuntu/shirtfaced-research/vintage-ebay-images'
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" "${{ runner.temp }}/vintage-ebay-images/" ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-research/vintage-ebay-images/
       - name: Manifest count
         run: |
           echo 'LOCAL MANIFEST:'
           cat "${{ runner.temp }}/vintage-ebay-images/manifest.json"
-          echo 'REMOTE COUNTS:'
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
-            'python3 - <<"PY"
-import json, os
-root="/home/ubuntu/shirtfaced-research/vintage-ebay-images"
-manifest=os.path.join(root,"manifest.json")
-if os.path.exists(manifest):
-    data=json.load(open(manifest))
-    print(json.dumps(data, indent=2))
-files=0
-for _,_,names in os.walk(root):
-    files += sum(1 for n in names if n.lower().endswith((".jpg",".jpeg",".png",".webp")))
-print(json.dumps({"image_files_on_disk":files}))
-PY'
+          echo 'REMOTE MANIFEST:'
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'cat /home/ubuntu/shirtfaced-research/vintage-ebay-images/manifest.json'
+          echo 'REMOTE IMAGE FILE COUNT:'
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "find /home/ubuntu/shirtfaced-research/vintage-ebay-images -type f \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | wc -l"
       - name: Commit batch
         run: |
           git config user.name 'github-actions[bot]'
