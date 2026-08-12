@@ -10,6 +10,8 @@ const LINKS = [
   { href: "/shipping", label: "Shipping", note: "Where and how fast" },
   { href: "/returns", label: "Returns", note: "No drama" },
   { href: "/contact", label: "Contact", note: "Talk to a human" },
+  { href: "/privacy", label: "Privacy", note: "What we collect" },
+  { href: "/terms", label: "Terms", note: "The boring page" },
 ];
 
 export default function MorePage() {
