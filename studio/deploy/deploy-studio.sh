@@ -62,6 +62,16 @@ done
 say "Syncing the element archive"
 ./.venv/bin/python -m app.cli sync-archive
 
+say "Importing design concepts"
+# The concept libraries are synced from the repository's docs/design by CI.
+# Idempotent like import-world: numbers are permanent, wording follows the
+# Markdown, statuses the workflow owns are kept, conflicts are reported.
+if [ -f docs/design/TSHIRT_CONCEPT_LIBRARY.md ]; then
+  ./.venv/bin/python -m app.cli import-design-concepts docs/design/TSHIRT_CONCEPT_LIBRARY.md
+else
+  echo "No concept library synced; skipping."
+fi
+
 say "Checking Social render assets"
 # Production Social rendering uses rasterized PNGs. SVGs remain alongside them as
 # editable/source assets, but GO must not depend on browser SVG rasterisation.

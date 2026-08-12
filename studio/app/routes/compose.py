@@ -16,6 +16,8 @@ is not an approval.
 
 from __future__ import annotations
 
+import dataclasses
+import uuid
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
@@ -23,10 +25,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.adapters.asset_store import FilesystemAssetStore
 from app.archive.palettes import SYSTEMS
-from app.db.archive_models import ComposedDesign
+from app.config import Settings, get_settings
+from app.db.archive_models import ArchiveElement, ComposedDesign
+from app.db.concept_models import DesignConcept
 from app.db.session import get_db_session
-from app.domain.enums import AttemptState
+from app.domain.enums import AttemptState, DesignAssetKind, DesignAttemptMethod
 from app.services.design_composition import (
     CompositionRefused,
     Request,
@@ -35,10 +40,17 @@ from app.services.design_composition import (
     recompose,
     store,
 )
+from app.services.design_pipeline import (
+    ElementUse,
+    create_attempt,
+    record_asset,
+    submit_attempt,
+)
 
 router = APIRouter(prefix="/api/compose", tags=["compose"])
 
 SessionDependency = Annotated[Session, Depends(get_db_session)]
+SettingsDependency = Annotated[Settings, Depends(get_settings)]
 
 
 class BriefIn(BaseModel):
@@ -187,13 +199,23 @@ def compose_brief(brief: BriefIn) -> list[OptionView]:
 def keep_design(
     brief: BriefIn,
     session: SessionDependency,
+    settings: SettingsDependency,
     grammar_key: Annotated[str, Query(description="Which option to keep")],
+    concept_id: Annotated[
+        uuid.UUID | None,
+        Query(description="Keep this design as an attempt on a backlog concept"),
+    ] = None,
 ) -> DesignView:
     """Recompose the brief and keep the named option.
 
     The brief is recomposed rather than the artwork being posted back, so what
     is stored is what this engine produces for these inputs. A client cannot
     hand us artwork and have it recorded as though the archive made it.
+
+    With ``concept_id``, the kept design becomes a design attempt on that
+    concept: the composer is a producer feeding the pipeline, and one call
+    takes a concept to ``awaiting_decision``. The decision then belongs to
+    ``/api/concepts``, not to this router.
     """
     request = brief.to_request()
     try:
@@ -210,7 +232,54 @@ def keep_design(
                 "detail": f"{grammar_key} is not among {[o.grammar_key for o in options]}",
             },
         )
-    return DesignView.of(store(session, request, chosen))
+
+    if concept_id is None:
+        design = store(session, request, chosen)
+        # The dependency closes the session without committing; a kept design
+        # that vanished with the request would make this endpoint a lie.
+        session.commit()
+        return DesignView.of(design)
+
+    concept = session.get(DesignConcept, concept_id)
+    if concept is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="no such concept")
+
+    # role -> element_key, resolved to archive rows so provenance is a join
+    # rather than a JSON scan. A key that no longer resolves is skipped: the
+    # parts blob on the composed row still holds the full record.
+    keys = list(chosen.parts.values())
+    elements_by_key = {
+        element.element_key: element
+        for element in session.execute(
+            select(ArchiveElement).where(ArchiveElement.element_key.in_(keys))
+        ).scalars()
+    }
+    uses = [
+        ElementUse(element_id=elements_by_key[key].id, role=role)
+        for role, key in chosen.parts.items()
+        if key in elements_by_key
+    ]
+
+    attempt = create_attempt(
+        session,
+        concept,
+        DesignAttemptMethod.DETERMINISTIC_COMPOSITION,
+        brief_overrides={"compose_request": dataclasses.asdict(request)},
+        elements=uses,
+    )
+    design = store(session, request, chosen, attempt=attempt)
+    record_asset(
+        session,
+        FilesystemAssetStore(settings.assets_root_resolved),
+        attempt,
+        DesignAssetKind.ARTWORK,
+        "design.svg",
+        design.svg.encode("utf-8"),
+        "image/svg+xml",
+    )
+    submit_attempt(session, attempt)
+    session.commit()
+    return DesignView.of(design)
 
 
 @router.get("/designs", response_model=list[DesignView], summary="Designs, newest first")
@@ -255,10 +324,24 @@ def get_design_svg(design_id: str, session: SessionDependency) -> Response:
 def decide_design(design_id: str, decision: DecisionIn, session: SessionDependency) -> DesignView:
     """The only way out of awaiting_decision, and it needs a person's name."""
     design = _load(session, design_id)
+    if design.design_attempt_id is not None:
+        # One decision surface per design. Deciding here as well would let the
+        # compose bench and the designs bench disagree about the same artwork.
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "reason": "DECIDED_ELSEWHERE",
+                "detail": (
+                    "this design belongs to a design attempt; decide it at "
+                    f"/api/concepts/attempts/{design.design_attempt_id}/decision"
+                ),
+            },
+        )
     try:
         settled = decide(session, design, decision.approved, decision.decided_by, decision.note)
     except CompositionRefused as error:
         raise _refused(error) from error
+    session.commit()
     return DesignView.of(settled)
 
 

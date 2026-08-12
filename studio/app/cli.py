@@ -6,6 +6,7 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli list-worlds
     python -m app.cli validate-world world-01
     python -m app.cli import-world world-01
+    python -m app.cli import-design-concepts ../docs/design/TSHIRT_CONCEPT_LIBRARY.md
     python -m app.cli attempts world-01
     python -m app.cli discard-attempt <id>
     python -m app.cli prompt world-01 [--shot W01-015] [--out prompt.txt]
@@ -79,6 +80,38 @@ def _import_world(slug: str) -> int:
     print(report.summary())
     for conflict in report.status_conflicts:
         print(f"  conflict: {conflict}")
+    return EXIT_OK
+
+
+def _import_design_concepts(path: str) -> int:
+    """Seed or refresh the design backlog from a concept library document.
+
+    Idempotent, like ``import-world``: numbers are matched, wording is updated,
+    statuses the workflow owns are kept, and disagreements are reported rather
+    than resolved. Nothing is ever deleted or renumbered.
+    """
+    from app.services.concept_importer import import_concepts
+    from app.services.concept_loader import load_concept_library
+
+    source = Path(path).resolve()
+    # Recorded repo-relative so the same row reads the same on any host. A
+    # document from outside the repository keeps its given path.
+    repository_root = Path(__file__).resolve().parents[2]
+    try:
+        recorded = source.relative_to(repository_root).as_posix()
+    except ValueError:
+        recorded = Path(path).as_posix()
+    loaded = load_concept_library(source, source_path=recorded)
+
+    with get_session_factory()() as session:
+        report = import_concepts(session, loaded)
+        session.commit()
+
+    print(report.summary())
+    for conflict in report.status_conflicts:
+        print(f"  conflict: {conflict}")
+    for missing in report.missing_from_source:
+        print(f"  missing: {missing}")
     return EXIT_OK
 
 
@@ -240,6 +273,12 @@ def main(argv: Sequence[str] | None = None) -> int:
     importer = subcommands.add_parser("import-world", help="Import a world into PostgreSQL")
     importer.add_argument("slug")
 
+    concepts = subcommands.add_parser(
+        "import-design-concepts",
+        help="Seed or refresh the design backlog from a concept library document",
+    )
+    concepts.add_argument("path", help="Path to the library document")
+
     attempts = subcommands.add_parser("attempts", help="List generation attempts for a world")
     attempts.add_argument("slug")
 
@@ -276,6 +315,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _validate_world(arguments.slug)
         if arguments.command == "import-world":
             return _import_world(arguments.slug)
+        if arguments.command == "import-design-concepts":
+            return _import_design_concepts(arguments.path)
         if arguments.command == "sync-archive":
             return _sync_archive()
         if arguments.command == "prompt":

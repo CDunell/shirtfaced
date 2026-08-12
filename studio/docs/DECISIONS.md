@@ -201,3 +201,55 @@ The practical consequence: there is no cheap iteration loop. Every experiment co
 full frame, which raises the value of the checks that cost nothing — previewing the
 production prompt, confirming a rule reaches the planner, and confirming no canon
 section is truncated — before spending anything.
+
+## ADR-015 — Markdown is the seed, PostgreSQL is the queue
+
+The concept libraries under `docs/design/` are the authored creative source, and
+they stay that way. But a Markdown file cannot remember that #4 has three
+attempts and a rejection, "next" meant whatever the last conversation
+remembered, and a retired entry either lingered ambiguously or was deleted and
+renumbered everything after it. Migration 0026 makes the library the seed of a
+durable backlog — `design_concepts` through `approved_designs` — exactly as
+ADR-004 split `SHOTLIST.md` from `shots`.
+
+The decisions that shaped it:
+
+**`external_number` is permanent identity.** #1 stays #1 forever. A retired
+concept remains a row; a number missing from the source is reported and kept;
+the importer refuses a non-contiguous file rather than guessing. Renumbering is
+how the queue drifted before this existed.
+
+**Conditional retirements become `held`, never `retired`.** The tee library
+retires in three distinct forms: in the title (`RETIRED — TITLE (lane)`), in the
+body (`Retired.`), and conditionally (`Retire … if …` with a salvage clause).
+The first two are decisions the owner made. The third is one the owner has not
+made, and mapping it to `retired` would fabricate a ruling the source does not
+contain. Anchoring is by prefix, never substring — entry 54 describes "three
+retired blokes" and is a live concept.
+
+**`design_attempt_state` is a fresh PostgreSQL type.** Migration 0017 taught
+`composed_designs` to share photography's `attempt_state`, so widening that type
+for designs would silently widen the photography pipeline's vocabulary too.
+`design_decision_kind` is separate from `human_decision_kind` for the same
+reason, even though the values are identical today.
+
+**The importer only writes what the source expresses.** It derives `backlog`,
+`held` and `retired`; every other status belongs to the workflow. On conflict —
+the source changes its mind about a concept the workflow has moved — the
+database wins and the conflict is reported with both sides named, the same rule
+the world importer holds for shots.
+
+**Approval is a versioned milestone, not a state.** A concept can hold
+seventeen attempts; only an `approved_designs` row, pinned by RESTRICT to its
+master asset, lets anything downstream. That is what stops "we made an image"
+being read as "that design is finished".
+
+**Events ride the audit trail.** `design_decision_recorded` and
+`design_approved` are `audit_events` rows. A dedicated outbox table with no
+consumer is speculative; when shop sync is built, `product_links.sync_state` is
+the hook, and Studio never holds a foreign key into the shop's database.
+
+Only the tee library is imported today. The schema carries a `library`
+discriminator and namespaced asset keys (`designs/{library}/{number}/…`) so the
+headwear and brand-garment libraries arrive as a data change, not a schema
+change.

@@ -22,6 +22,7 @@ import type {
   WorldDetail,
   WorldSummary,
 } from "../api/client";
+import type { ConceptDetailView, ConceptView, DesignAttemptView } from "../api/concepts";
 
 export const HEALTH = { status: "ok", version: "0.1.0" };
 
@@ -283,6 +284,58 @@ export function proposalDiff() {
   };
 }
 
+export function conceptView(overrides: Partial<ConceptView> = {}): ConceptView {
+  return {
+    id: "concept-1",
+    library: "tshirt",
+    external_number: 1,
+    slug: "001-absolute-weapon",
+    title: "ABSOLUTE WEAPON",
+    concept_text:
+      "Museum-quality portrait treatment of a pedestal fan. ABSOLUTE WEAPON. No explanation.",
+    status: "backlog",
+    concept_kind: "other",
+    retirement: "",
+    salvage: "",
+    garments: [],
+    round: 1,
+    round_label: "Round 01",
+    priority: 0,
+    tags: [],
+    treatment_lanes: [],
+    notes: "",
+    attempt_count: 0,
+    latest_attempt_state: null,
+    approved_versions: 0,
+    ...overrides,
+  };
+}
+
+export function conceptDetailView(overrides: Partial<ConceptDetailView> = {}): ConceptDetailView {
+  return {
+    ...conceptView(),
+    attempts: [],
+    versions: [],
+    ...overrides,
+  };
+}
+
+export function designAttemptView(overrides: Partial<DesignAttemptView> = {}): DesignAttemptView {
+  return {
+    id: "attempt-1",
+    concept_id: "concept-1",
+    attempt_number: 1,
+    method: "manual_import",
+    state: "awaiting_decision",
+    parent_attempt_id: null,
+    created_at: "2026-08-12T00:00:00Z",
+    assets: [],
+    decision: null,
+    approved_version: null,
+    ...overrides,
+  };
+}
+
 export interface Routes {
   health?: unknown;
   worlds?: unknown;
@@ -303,6 +356,13 @@ export interface Routes {
   generation?: unknown;
   generationStatus?: number;
   generationDetail?: string;
+  concepts?: unknown;
+  conceptDetail?: unknown;
+  conceptNext?: unknown;
+  conceptQueue?: unknown;
+  conceptAction?: unknown;
+  conceptActionStatus?: number;
+  conceptActionDetail?: string;
 }
 
 /** Install a fetch stub answering the endpoints the app uses. */
@@ -313,6 +373,38 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
     }
     if (input === "/api/worlds") {
       return Promise.resolve(new Response(JSON.stringify(routes.worlds ?? [WORLD_SUMMARY])));
+    }
+    // Before the generic /attempts and /decision branches below: concept URLs
+    // share those suffixes, and ordering decides which handler answers.
+    if (input.startsWith("/api/concepts")) {
+      if (input === "/api/concepts/queue") {
+        return Promise.resolve(new Response(JSON.stringify(routes.conceptQueue ?? [])));
+      }
+      if (input === "/api/concepts/next") {
+        if (routes.conceptNext === undefined) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ detail: "no concept is ready" }), { status: 404 }),
+          );
+        }
+        return Promise.resolve(new Response(JSON.stringify(routes.conceptNext)));
+      }
+      if (input.startsWith("/api/concepts/attempts/")) {
+        const actionStatus = routes.conceptActionStatus ?? 200;
+        if (actionStatus >= 400) {
+          return Promise.resolve(
+            new Response(JSON.stringify({ detail: routes.conceptActionDetail ?? "refused" }), {
+              status: actionStatus,
+            }),
+          );
+        }
+        return Promise.resolve(new Response(JSON.stringify(routes.conceptAction ?? {})));
+      }
+      if (input === "/api/concepts" || input.startsWith("/api/concepts?")) {
+        return Promise.resolve(new Response(JSON.stringify(routes.concepts ?? [])));
+      }
+      return Promise.resolve(
+        new Response(JSON.stringify(routes.conceptDetail ?? conceptDetailView())),
+      );
     }
     if (input.endsWith("/attempts")) {
       return Promise.resolve(new Response(JSON.stringify(routes.attempts ?? [])));

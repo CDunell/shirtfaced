@@ -276,6 +276,15 @@ class ComposedDesign(Base, TimestampMixin):
             "state NOT IN ('approved', 'rejected') OR decided_by <> ''",
             name="decision_has_an_author",
         ),
+        # Partial unique: a design attempt owns at most one composed design.
+        # Partial because the column is null for every design composed before
+        # the concept pipeline existed, and those must not collide.
+        Index(
+            "uq_composed_designs_design_attempt_id",
+            "design_attempt_id",
+            unique=True,
+            postgresql_where=text("design_attempt_id IS NOT NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -306,6 +315,15 @@ class ComposedDesign(Base, TimestampMixin):
     # reprint quietly stops matching the sample that was approved.
     assembler_version: Mapped[str] = mapped_column(String(40), nullable=False)
 
+    # --- Lineage. ------------------------------------------------------------
+    # Set when the composition was made for a concept's design attempt. Null for
+    # standalone compositions, which predate the concept pipeline and remain
+    # legitimate; SET NULL so deleting an attempt orphans rather than destroys
+    # the deterministic record.
+    design_attempt_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("design_attempts.id", ondelete="SET NULL")
+    )
+
     # --- The decision. -------------------------------------------------------
     state: Mapped[str] = mapped_column(
         _enum(AttemptState, "attempt_state"),
@@ -315,3 +333,11 @@ class ComposedDesign(Base, TimestampMixin):
     decided_by: Mapped[str] = mapped_column(String(120), nullable=False, server_default="")
     decided_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     decision_note: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+
+
+# At the bottom, for the side effect only: ``ComposedDesign`` carries a foreign
+# key into ``design_attempts``, so whoever imports this module must find that
+# table registered on the metadata. The import lives after the classes so the
+# matching import at the top of ``concept_models`` (which needs
+# ``archive_elements`` for the same reason) never sees this module half-built.
+from app.db import concept_models  # noqa: E402,F401

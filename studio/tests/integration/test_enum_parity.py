@@ -17,6 +17,7 @@ from sqlalchemy import Engine, Enum, text
 
 # Imported for the side effect: the tables register themselves on Base.metadata when
 # the module loads, and without it there is nothing here to compare.
+import app.db.concept_models
 import app.db.models  # noqa: F401
 from app.db.base import Base
 

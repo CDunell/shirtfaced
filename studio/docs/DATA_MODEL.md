@@ -207,3 +207,81 @@ Use advisory locks for the Continue World critical section.
 - Reference images must derive from approved attempts.
 - Canon proposals cannot be applied unless approved.
 - A world cannot have more than one active generation attempt.
+
+## Design concept pipeline (migration 0026)
+
+This document describes the photography pipeline and had fallen behind the
+schema; the element archive, composed designs, observations, social and email
+tables (migrations 0014–0025) live in their model modules under `app/db/` and
+are not repeated here. The design concept pipeline is recorded because it is
+the second full production line, not a satellite table.
+
+### DesignConcept
+
+- `id`
+- `library` — `tshirt | headwear | brand_garment`; numbering is only unique within a library
+- `external_number` — permanent identity; #1 stays #1, retired entries keep their numbers
+- `slug` — `001-she-ll-be-right`; carries the number because titles repeat
+- `title`, `concept_text` — authored, verbatim, updated on re-import
+- `retirement` — `'' | hard | unconditional | conditional`, how the source wrote it
+- `garments`, `round`, `round_label`, `source_path`, `source_line`, `source_document_hash`, `parsed_json`
+- `status`, `concept_kind`, `priority`, `tags`, `treatment_lanes`, `preferred_execution`, `integral_text`, `constraints`, `notes` — workflow-owned; the importer never touches them
+- `created_at`, `updated_at`
+
+Allowed status:
+
+- `backlog`
+- `ready`
+- `exploring`
+- `approved`
+- `rejected`
+- `held` — a conditional retirement or a deliberate pause; a decision not yet made
+- `retired`
+- `superseded`
+
+### DesignAttempt
+
+- `id`, `concept_id`, `parent_attempt_id`, `attempt_number` (unique per concept)
+- `method` — `image_generation | deterministic_composition | manual_import | hybrid`
+- `state` — `planned → generating → generated → awaiting_decision → approved | rejected | variation_requested | failed`; its own PostgreSQL type, deliberately not photography's `attempt_state`
+- `brief_snapshot` — the concept as it stood when the attempt started
+- `production_prompt`, `model`, `model_settings`, `reference_inputs`, `execution_rules`, `source_concept_hash`
+- `failure_code`, `failure_message`, `notes`, timestamps
+
+### DesignAsset
+
+- `id`, `design_attempt_id`, `kind` (`artwork | preview | print_master | separation | source | mockup`)
+- `relative_path` (under `ASSETS_ROOT`, key shape `designs/{library}/{number}/attempts/{attempt_id}/{name}`), `sha256`, `mime_type`, `width`, `height`, `byte_size`, `created_at`
+- Immutable; unique on `(design_attempt_id, relative_path)`.
+
+### DesignDecision
+
+- `id`, `design_attempt_id` (unique — exactly one), `decision`, `reason`, `note`, `instruction`, `actor`, `idempotency_key`, `created_at`
+- Immutable, and `actor` must be non-empty: an approval nobody signed is not an approval.
+
+Allowed decision:
+
+- `approved`
+- `rejected`
+- `variation_requested`
+
+### ApprovedDesign
+
+- `id`, `concept_id`, `design_attempt_id` (unique), `master_asset_id` (RESTRICT — the milestone keeps its bytes), `version` (unique per concept), `approved_by`, `approved_at`, `superseded_at`, `production_spec`
+- The frozen production milestone. Only these rows may reach anything downstream.
+
+### DesignAttemptElement
+
+- `id`, `design_attempt_id`, `element_id` (RESTRICT), `role` (unique per attempt), `render_id`, `settings`, `created_at`
+- Normalises `composed_designs.parts` so element provenance is a join, not a JSON scan.
+
+### ProductLink
+
+- `id`, `approved_design_id`, `external_system` (default `shirtfaced_shop`), `external_product_id`, `external_slug`, `sync_state`, `last_synced_at`, `metadata_json`, timestamps
+- A soft reference. Studio and the shop are separate databases by decision, so this is an identifier and a sync state, never a foreign key.
+
+### Additional integrity rules
+
+- `composed_designs.design_attempt_id` (nullable, partial unique) links a deterministic composition to at most one attempt; the attempt's decision settles both rows.
+- Import never deletes or renumbers a concept; a number missing from the source is reported and kept.
+- The importer only writes `backlog`, `held` and `retired`; every other status belongs to the workflow and wins on conflict, with the conflict reported.

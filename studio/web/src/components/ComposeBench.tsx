@@ -37,6 +37,7 @@ import {
   type Reproducibility,
   type StoredDesign,
 } from "../api/client";
+import { fitToCard } from "./svg";
 
 function describe(cause: unknown): string {
   if (cause instanceof ApiError) return cause.message;
@@ -103,26 +104,6 @@ const INITIAL: Draft = {
   secondary: "",
   garmentColour: "#101010",
 };
-
-/**
- * Make a composed SVG fit its card.
- *
- * The artwork is emitted at real print size -- width="200mm" -- because that is
- * what a separator and an RIP want, and measuring in millimetres is the point of
- * the engine. A browser honours those units literally, so a 200mm design lays
- * out around 756 pixels wide and overflows a preview card, showing a black
- * corner instead of the artwork.
- *
- * Only the two dimension attributes are dropped. The viewBox stays, so the
- * drawing scales rather than being cropped, and the stored artwork is untouched.
- */
-function fitToCard(svg: string): string {
-  return svg.replace(
-    /<svg([^>]*)>/,
-    (_match, attributes: string) =>
-      `<svg${attributes.replace(/ (?:width|height)="[^"]*"/g, "")} style="width:100%;height:auto;max-height:200px">`,
-  );
-}
 
 function briefOf(draft: Draft) {
   return {

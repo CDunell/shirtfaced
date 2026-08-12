@@ -148,3 +148,13 @@ class FilesystemAssetStore:
 def attempt_key(world_slug: str, attempt_id: str, name: str) -> str:
     """The key for one of an attempt's files."""
     return validate_key(f"worlds/{world_slug}/attempts/{attempt_id}/{name}")
+
+
+def design_attempt_key(library: str, concept_number: int, attempt_id: str, name: str) -> str:
+    """The key for one of a design attempt's files.
+
+    The library is part of the namespace because concept numbers are only
+    unique within a library: tee concept 5 and headwear H05 must never share a
+    directory.
+    """
+    return validate_key(f"designs/{library}/{concept_number:03d}/attempts/{attempt_id}/{name}")

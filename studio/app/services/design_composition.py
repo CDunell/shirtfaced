@@ -20,6 +20,7 @@ from __future__ import annotations
 import datetime as dt
 from dataclasses import dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -29,6 +30,9 @@ from app.archive.garment import Garment, GarmentError
 from app.archive.garment import load as load_garment
 from app.db.archive_models import ComposedDesign
 from app.domain.enums import AttemptState
+
+if TYPE_CHECKING:
+    from app.db.concept_models import DesignAttempt
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 GARMENT_DIR = REPO_ROOT / "assets" / "garments"
@@ -110,18 +114,33 @@ def compose(request: Request) -> tuple[Garment, list[DesignOption]]:
     return garment, list(result.options)
 
 
-def store(session: Session, request: Request, option: DesignOption) -> ComposedDesign:
+def store(
+    session: Session,
+    request: Request,
+    option: DesignOption,
+    *,
+    attempt: DesignAttempt | None = None,
+) -> ComposedDesign:
     """Keep one composed design, or return the one already kept.
 
     The same brief composed twice is the same design, so a repeat finds the
     existing row rather than filling the review queue with duplicates a person
     then has to tell apart. That also makes this safe to call again after a
     failure part-way through a batch.
+
+    ``attempt`` records which design attempt this composition was made for. An
+    existing unlinked row gains the link -- the same design is the same design,
+    and the lineage is worth having. A row already linked to a *different*
+    attempt is returned untouched: rewriting history is not this function's
+    call to make.
     """
     existing = session.execute(
         select(ComposedDesign).where(ComposedDesign.content_hash == option.design.content_hash)
     ).scalar_one_or_none()
     if existing is not None:
+        if attempt is not None and existing.design_attempt_id is None:
+            existing.design_attempt_id = attempt.id
+            session.flush()
         return existing
 
     design = ComposedDesign(
@@ -147,6 +166,7 @@ def store(session: Session, request: Request, option: DesignOption) -> ComposedD
         svg=option.design.svg,
         assembler_version=option.design.assembler_version,
         state=AttemptState.AWAITING_DECISION.value,
+        design_attempt_id=None if attempt is None else attempt.id,
     )
     session.add(design)
     session.flush()

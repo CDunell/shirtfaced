@@ -103,6 +103,19 @@ Every object has a stable ID. Every derivative records its parents. Nothing impo
 
 ## 4. Stage 0 — ideation and opportunity
 
+> **Instantiated 12 August 2026** by Studio migration `0026_design_concept_pipeline`.
+> The concept libraries under `docs/design/` seed `design_concepts` via
+> `python -m app.cli import-design-concepts`; `idea_id` is `design_concepts.id`,
+> the permanent `external_number` is the human handle, `status` is the concept
+> state machine (`backlog → ready → exploring → approved/rejected/held/retired`),
+> and Gate 1's "immutable approved design version" is `approved_designs`, one
+> versioned row per approval, pinned to its master asset. The lineage chain
+> Idea → DesignAttempt → ApprovedDesign in §3 is live as
+> `design_concepts → design_attempts → design_assets → design_decisions →
+> approved_designs`, with `product_links` as the soft bridge to the shop.
+> The rest of this stage — classification, retrieval, similarity flagging —
+> remains target architecture.
+
 ### Inputs
 - human idea
 - phrase/concept bank

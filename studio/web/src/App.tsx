@@ -11,6 +11,7 @@ import { ParagraphMedium } from "baseui/typography";
 
 import { ComposeBench } from "./components/ComposeBench";
 import { DesignBench } from "./components/DesignBench";
+import { DesignsBench } from "./components/DesignsBench";
 import { EmailBench } from "./components/EmailBench";
 import { PrintBench } from "./components/PrintBench";
 import { PromptWorkbench } from "./components/PromptWorkbench";
@@ -24,13 +25,18 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 
-type View = "prompts" | "print" | "compose" | "design" | "social" | "email" | "dashboard";
+type View =
+  "prompts" | "print" | "compose" | "concepts" | "design" | "social" | "email" | "dashboard";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "prompts", label: "Prompts" },
   { id: "print", label: "Print" },
   { id: "compose", label: "Compose" },
-  { id: "design", label: "Design" },
+  // The backlog. "Designs" holds concepts and their lineage; "Score" (below)
+  // is the older single-image scorecard measurer, renamed so the two read as
+  // different tools rather than a typo of each other.
+  { id: "concepts", label: "Designs" },
+  { id: "design", label: "Score" },
   { id: "social", label: "Social" },
   { id: "email", label: "Email" },
   { id: "dashboard", label: "Dashboard" },
@@ -160,6 +166,8 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <PrintBench />
         ) : view === "compose" ? (
           <ComposeBench />
+        ) : view === "concepts" ? (
+          <DesignsBench />
         ) : view === "design" ? (
           <DesignBench />
         ) : view === "social" ? (

@@ -104,6 +104,11 @@ doing it.
   Never named in a generation prompt regardless.
 - **Production backlog:** `studio/worlds/world-01/SHOTLIST.md` and `CONTINUITY.md`.
 - **Design constitution:** `docs/research/SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md`.
+- **Concept libraries and the design backlog:** `docs/design/TSHIRT_CONCEPT_LIBRARY.md`
+  (plus headwear and brand-garment siblings) is the authored seed; the operational
+  queue is Studio PostgreSQL (`design_concepts` → `approved_designs`, migration 0026).
+  Import with `python -m app.cli import-design-concepts`; numbering is permanent and
+  the importer never renumbers or deletes. See ADR-015 in `studio/docs/DECISIONS.md`.
 - **The kill filter:** `docs/research/DESIGN_REVIEW_SCORECARD.md` — 12 hard-fails plus a
   weighted 100-point rubric. Nothing has been scored through it yet.
 - **Compositing:** `studio/app/services/compositing.py` — designs are printed onto blank

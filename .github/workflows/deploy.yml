@@ -107,6 +107,18 @@ jobs:
             public/social-assets/ \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/public/social-assets/
 
+      # The concept libraries seed the design backlog (ADR-015). They live at
+      # repository level because the libraries are brand documents, not Studio
+      # code; Studio is deployed as a standalone tree, so they are copied in
+      # explicitly — after the Studio sync above, whose --delete would remove
+      # them from studio/docs.
+      - name: Sync concept libraries into Studio
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            docs/design/ \
+            ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/docs/design/
+
       - name: Bootstrap Studio
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \

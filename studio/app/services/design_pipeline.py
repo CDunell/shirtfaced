@@ -1,0 +1,428 @@
+"""The design pipeline: concept -> attempt -> asset -> decision -> version.
+
+This is the design-side counterpart of ``generation_orchestrator`` and
+``decision_service``, holding the same guarantees in the same order:
+
+* An attempt row exists before any work is done in its name, so a crash
+  mid-execution leaves a record rather than a mystery file.
+* Assets are stored through the asset store and recorded with their hash, so
+  the database can vouch for the bytes.
+* A decision is immutable, signed, and singular. The second decision is a
+  conflict, not an overwrite -- unless it carries the same idempotency key, in
+  which case it is the same decision asking again.
+* Approval is a separate, versioned milestone. A concept can hold seventeen
+  attempts; only ``approved_designs`` rows may reach anything downstream.
+
+Concept status is moved as a side effect of the work -- backlog to exploring on
+the first attempt, to approved on the first version -- never as a direct edit.
+The one exception is the queue itself: ``ready`` is the owner's to set, and
+this module only reads it.
+"""
+
+from __future__ import annotations
+
+import datetime as dt
+import uuid
+from collections.abc import Sequence
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
+from typing import Any
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
+
+from app.adapters.asset_store import AssetStore, design_attempt_key
+from app.db.concept_models import (
+    ApprovedDesign,
+    DesignAsset,
+    DesignAttempt,
+    DesignAttemptElement,
+    DesignConcept,
+    DesignDecision,
+)
+from app.db.models import AuditEvent
+from app.domain.enums import (
+    DESIGN_DECISION_ATTEMPT_STATES,
+    AuditEventType,
+    ConceptLibrary,
+    ConceptStatus,
+    DesignAssetKind,
+    DesignAttemptMethod,
+    DesignAttemptState,
+    DesignDecisionKind,
+)
+from app.domain.errors import StudioError
+
+__all__ = [
+    "DesignPipelineConflict",
+    "ElementUse",
+    "InvalidDesignAction",
+    "approve_design",
+    "create_attempt",
+    "decide_attempt",
+    "next_concept",
+    "record_asset",
+    "submit_attempt",
+]
+
+
+class DesignPipelineConflict(StudioError):
+    """The action collides with something already recorded. HTTP 409."""
+
+
+class InvalidDesignAction(StudioError):
+    """The action is not valid from the current state. HTTP 422."""
+
+
+@dataclass(frozen=True)
+class ElementUse:
+    """One archive element an attempt is assembled from."""
+
+    element_id: uuid.UUID
+    role: str
+    render_id: uuid.UUID | None = None
+    settings: dict[str, Any] = dataclass_field(default_factory=dict)
+
+
+def next_concept(
+    session: Session, library: ConceptLibrary = ConceptLibrary.TSHIRT
+) -> DesignConcept | None:
+    """The concept "next" means: lowest priority number, then lowest external
+    number, ready ones ahead of the backlog. ``None`` when the queue is empty.
+    """
+    for status in (ConceptStatus.READY, ConceptStatus.BACKLOG):
+        concept = session.execute(
+            select(DesignConcept)
+            .where(DesignConcept.library == library, DesignConcept.status == status)
+            .order_by(DesignConcept.priority, DesignConcept.external_number)
+            .limit(1)
+        ).scalar_one_or_none()
+        if concept is not None:
+            return concept
+    return None
+
+
+def create_attempt(
+    session: Session,
+    concept: DesignConcept,
+    method: DesignAttemptMethod,
+    *,
+    brief_overrides: dict[str, Any] | None = None,
+    production_prompt: str = "",
+    model: str = "",
+    model_settings: dict[str, Any] | None = None,
+    reference_inputs: dict[str, Any] | None = None,
+    execution_rules: dict[str, Any] | None = None,
+    parent_attempt: DesignAttempt | None = None,
+    elements: Sequence[ElementUse] = (),
+) -> DesignAttempt:
+    """Open one execution of a concept. The row exists before any work does."""
+    if parent_attempt is not None and parent_attempt.concept_id != concept.id:
+        raise InvalidDesignAction(
+            f"attempt {parent_attempt.id} belongs to another concept; "
+            "a variation cannot cross concepts"
+        )
+
+    number = session.execute(
+        select(func.coalesce(func.max(DesignAttempt.attempt_number), 0)).where(
+            DesignAttempt.concept_id == concept.id
+        )
+    ).scalar_one()
+
+    # The concept as it stands, frozen with the attempt: the library can be
+    # re-imported afterwards and the attempt must still be explicable.
+    snapshot: dict[str, Any] = {
+        "library": concept.library.value,
+        "external_number": concept.external_number,
+        "slug": concept.slug,
+        "title": concept.title,
+        "concept_text": concept.concept_text,
+        "garments": list(concept.garments),
+        "treatment_lanes": list(concept.treatment_lanes),
+    }
+    snapshot.update(brief_overrides or {})
+
+    attempt = DesignAttempt(
+        concept_id=concept.id,
+        parent_attempt_id=None if parent_attempt is None else parent_attempt.id,
+        attempt_number=number + 1,
+        method=method,
+        state=DesignAttemptState.PLANNED,
+        brief_snapshot=snapshot,
+        source_concept_hash=concept.source_document_hash,
+        production_prompt=production_prompt,
+        model=model,
+        model_settings=model_settings or {},
+        reference_inputs=reference_inputs or {},
+        execution_rules=execution_rules or {},
+    )
+    session.add(attempt)
+    session.flush()
+
+    for use in elements:
+        session.add(
+            DesignAttemptElement(
+                design_attempt_id=attempt.id,
+                element_id=use.element_id,
+                role=use.role,
+                render_id=use.render_id,
+                settings=dict(use.settings),
+            )
+        )
+
+    if concept.status in (ConceptStatus.BACKLOG, ConceptStatus.READY):
+        concept.status = ConceptStatus.EXPLORING
+
+    session.flush()
+    return attempt
+
+
+def record_asset(
+    session: Session,
+    store: AssetStore,
+    attempt: DesignAttempt,
+    kind: DesignAssetKind,
+    name: str,
+    data: bytes,
+    mime_type: str,
+    *,
+    width: int | None = None,
+    height: int | None = None,
+) -> DesignAsset:
+    """Store one file for an attempt and record what was stored."""
+    if attempt.state not in (
+        DesignAttemptState.PLANNED,
+        DesignAttemptState.GENERATING,
+        DesignAttemptState.GENERATED,
+    ):
+        raise InvalidDesignAction(
+            f"attempt is {attempt.state.value}; assets are added before review, not after"
+        )
+
+    concept = attempt.concept
+    key = design_attempt_key(concept.library.value, concept.external_number, str(attempt.id), name)
+    stored = store.save(key, data, mime_type)
+
+    asset = DesignAsset(
+        design_attempt_id=attempt.id,
+        kind=kind,
+        relative_path=stored.key,
+        sha256=stored.sha256,
+        mime_type=stored.mime_type,
+        width=width,
+        height=height,
+        byte_size=stored.byte_size,
+    )
+    session.add(asset)
+
+    if attempt.state in (DesignAttemptState.PLANNED, DesignAttemptState.GENERATING):
+        attempt.state = DesignAttemptState.GENERATED
+
+    session.flush()
+    return asset
+
+
+def submit_attempt(session: Session, attempt: DesignAttempt) -> DesignAttempt:
+    """Put an attempt in front of the owner. Requires something to look at."""
+    if attempt.state is not DesignAttemptState.GENERATED:
+        raise InvalidDesignAction(
+            f"attempt is {attempt.state.value}; only a generated attempt can be submitted"
+        )
+    if not attempt.assets:
+        raise InvalidDesignAction("an attempt with no assets has nothing to review")
+
+    attempt.state = DesignAttemptState.AWAITING_DECISION
+    session.flush()
+    return attempt
+
+
+def decide_attempt(
+    session: Session,
+    attempt: DesignAttempt,
+    decision: DesignDecisionKind,
+    actor: str,
+    *,
+    reason: str | None = None,
+    note: str | None = None,
+    instruction: str | None = None,
+    idempotency_key: str | None = None,
+) -> DesignDecision:
+    """Record the owner's judgment. Immutable, signed, and exactly one."""
+    actor = actor.strip()
+    if not actor:
+        raise InvalidDesignAction("an approval nobody signed is not an approval")
+
+    # Queried rather than read off the relationship: a decision inserted by
+    # this same session does not invalidate the parent's cached collection,
+    # and the second call must see the first either way.
+    existing = session.execute(
+        select(DesignDecision).where(DesignDecision.design_attempt_id == attempt.id)
+    ).scalar_one_or_none()
+    if existing is not None:
+        if idempotency_key is not None and existing.idempotency_key == idempotency_key:
+            return existing
+        raise DesignPipelineConflict(
+            f"attempt already decided: {existing.decision.value} by {existing.actor}. "
+            "A second decision is a mistake or a disagreement, and overwriting the "
+            "first would lose which it was."
+        )
+    if attempt.state is not DesignAttemptState.AWAITING_DECISION:
+        raise InvalidDesignAction(
+            f"attempt is {attempt.state.value}; only awaiting_decision can be decided"
+        )
+
+    recorded = DesignDecision(
+        design_attempt_id=attempt.id,
+        decision=decision,
+        reason=reason,
+        note=note,
+        instruction=instruction,
+        actor=actor,
+        idempotency_key=idempotency_key,
+    )
+    session.add(recorded)
+    # The decision lands first. Everything after this is bookkeeping that must
+    # never undo it.
+    session.flush()
+
+    attempt.state = DESIGN_DECISION_ATTEMPT_STATES[decision]
+
+    _settle_linked_composition(session, attempt, decision, actor, note)
+
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.DESIGN_DECISION_RECORDED,
+            actor=actor,
+            payload_json={
+                "concept_id": str(attempt.concept_id),
+                "concept_number": attempt.concept.external_number,
+                "attempt_id": str(attempt.id),
+                "attempt_number": attempt.attempt_number,
+                "decision": decision.value,
+            },
+        )
+    )
+    session.flush()
+    return recorded
+
+
+def _settle_linked_composition(
+    session: Session,
+    attempt: DesignAttempt,
+    decision: DesignDecisionKind,
+    actor: str,
+    note: str | None,
+) -> None:
+    """Keep a linked composed design consistent with the attempt's decision.
+
+    One decision surface: the attempt. The composed row's in-row state mirrors
+    it so the compose bench and the designs bench never tell different stories
+    about the same artwork.
+    """
+    from app.db.archive_models import ComposedDesign
+    from app.domain.enums import AttemptState
+
+    design = session.execute(
+        select(ComposedDesign).where(ComposedDesign.design_attempt_id == attempt.id)
+    ).scalar_one_or_none()
+    if design is None:
+        return
+
+    states = {
+        DesignDecisionKind.APPROVED: AttemptState.APPROVED,
+        DesignDecisionKind.REJECTED: AttemptState.REJECTED,
+        DesignDecisionKind.VARIATION_REQUESTED: AttemptState.VARIATION_REQUESTED,
+    }
+    design.state = states[decision].value
+    design.decided_by = actor
+    design.decided_at = dt.datetime.now(dt.UTC)
+    design.decision_note = note or ""
+
+
+def approve_design(
+    session: Session,
+    attempt: DesignAttempt,
+    approved_by: str,
+    *,
+    master_asset: DesignAsset | None = None,
+    production_spec: dict[str, Any] | None = None,
+) -> ApprovedDesign:
+    """Freeze one approved attempt as the concept's next production version."""
+    approved_by = approved_by.strip()
+    if not approved_by:
+        raise InvalidDesignAction("an approval nobody signed is not an approval")
+    if attempt.state is not DesignAttemptState.APPROVED:
+        raise InvalidDesignAction(
+            f"attempt is {attempt.state.value}; only an approved attempt becomes a version"
+        )
+    existing = session.execute(
+        select(ApprovedDesign).where(ApprovedDesign.design_attempt_id == attempt.id)
+    ).scalar_one_or_none()
+    if existing is not None:
+        raise DesignPipelineConflict(
+            f"attempt is already version {existing.version} of this concept"
+        )
+
+    master = master_asset or _default_master(attempt)
+    if master is None:
+        raise InvalidDesignAction(
+            "no print_master or artwork asset to pin; an approved design must keep its master"
+        )
+    if master.design_attempt_id != attempt.id:
+        raise InvalidDesignAction("the master asset belongs to a different attempt")
+
+    concept = attempt.concept
+    current = session.execute(
+        select(func.coalesce(func.max(ApprovedDesign.version), 0)).where(
+            ApprovedDesign.concept_id == concept.id
+        )
+    ).scalar_one()
+
+    # The older versions become history the moment a newer one exists. Their
+    # one mutable field records when that happened. Queried, not read off the
+    # relationship, for the same session-cache reason as the decision check.
+    now = dt.datetime.now(dt.UTC)
+    standing = session.execute(
+        select(ApprovedDesign).where(
+            ApprovedDesign.concept_id == concept.id,
+            ApprovedDesign.superseded_at.is_(None),
+        )
+    ).scalars()
+    for previous in standing:
+        previous.superseded_at = now
+
+    version = ApprovedDesign(
+        concept_id=concept.id,
+        design_attempt_id=attempt.id,
+        master_asset_id=master.id,
+        version=current + 1,
+        approved_by=approved_by,
+        production_spec=production_spec or {},
+    )
+    session.add(version)
+    concept.status = ConceptStatus.APPROVED
+
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.DESIGN_APPROVED,
+            actor=approved_by,
+            payload_json={
+                "concept_id": str(concept.id),
+                "concept_number": concept.external_number,
+                "attempt_id": str(attempt.id),
+                "version": current + 1,
+                "master_asset_id": str(master.id),
+            },
+        )
+    )
+    session.flush()
+    return version
+
+
+def _default_master(attempt: DesignAttempt) -> DesignAsset | None:
+    """The print master if one exists, else the artwork. Never a preview."""
+    for kind in (DesignAssetKind.PRINT_MASTER, DesignAssetKind.ARTWORK):
+        for asset in attempt.assets:
+            if asset.kind is kind:
+                return asset
+    return None

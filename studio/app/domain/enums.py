@@ -98,6 +98,11 @@ class AuditEventType(StrEnum):
     REFERENCE_ARCHIVED = "reference_archived"
     REFERENCE_PINNED = "reference_pinned"
     RECONCILIATION_REQUIRED = "reconciliation_required"
+    # Design pipeline events. Recorded here rather than in a new outbox table:
+    # an outbox with no consumer is speculative, and the audit trail is already
+    # the append-only record of what the application did.
+    DESIGN_DECISION_RECORDED = "design_decision_recorded"
+    DESIGN_APPROVED = "design_approved"
 
 
 class ReviewRecommendation(StrEnum):
@@ -338,3 +343,139 @@ class ElementFamily(StrEnum):
     SYMBOL = "symbol"
     ORNAMENT = "ornament"
     PATTERN = "pattern"
+
+
+class ConceptLibrary(StrEnum):
+    """Which concept library a design concept was seeded from.
+
+    Numbering is only unique within a library -- tee concept 5 and headwear H05
+    are different ideas -- so the library is part of the concept's identity, not
+    a display detail. Only the tee library is imported today; the other two are
+    named now so their arrival is a data change, not a schema change.
+    """
+
+    TSHIRT = "tshirt"
+    HEADWEAR = "headwear"
+    BRAND_GARMENT = "brand_garment"
+
+
+class ConceptStatus(StrEnum):
+    """Where a concept sits in the backlog.
+
+    The long-lived idea, not one execution of it -- attempts have their own
+    state machine. ``held`` records a conditional retirement or a deliberate
+    pause: a decision that has not been made yet, which is not the same thing
+    as ``retired``, where it has.
+    """
+
+    BACKLOG = "backlog"
+    READY = "ready"
+    EXPLORING = "exploring"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    HELD = "held"
+    RETIRED = "retired"
+    SUPERSEDED = "superseded"
+
+
+# Statuses only the application can set. The importer derives backlog, held and
+# retired from the Markdown and writes nothing else; once a concept carries one
+# of these, re-import keeps it and reports any disagreement rather than silently
+# resolving it -- the same rule the world importer follows for shots.
+WORKFLOW_OWNED_CONCEPT_STATUSES: frozenset[ConceptStatus] = frozenset(
+    {
+        ConceptStatus.READY,
+        ConceptStatus.EXPLORING,
+        ConceptStatus.APPROVED,
+        ConceptStatus.REJECTED,
+        ConceptStatus.SUPERSEDED,
+    }
+)
+
+
+class ConceptKind(StrEnum):
+    """What kind of execution a concept calls for.
+
+    The importer only ever derives ``garment_led`` (rounds 05-06 declare their
+    garment in the entry itself); everything else defaults to ``other`` and is
+    classified by the owner as concepts are worked, because reading a kind out
+    of prose would be a guess presented as a fact.
+    """
+
+    IMAGE = "image"
+    TYPOGRAPHY = "typography"
+    MIXED = "mixed"
+    GARMENT_LED = "garment_led"
+    OTHER = "other"
+
+
+class DesignAttemptMethod(StrEnum):
+    """How a design attempt was produced."""
+
+    IMAGE_GENERATION = "image_generation"
+    DETERMINISTIC_COMPOSITION = "deterministic_composition"
+    MANUAL_IMPORT = "manual_import"
+    HYBRID = "hybrid"
+
+
+class DesignAttemptState(StrEnum):
+    """Lifecycle of one design attempt.
+
+    Deliberately its own PostgreSQL type rather than a reuse of
+    ``attempt_state``: migration 0017 taught ``composed_designs`` to share the
+    photography enum, which means any value added for designs would silently
+    widen the photography pipeline's vocabulary too. A design attempt also has
+    no ``prompt_ready`` or ``reviewing`` -- borrowing the type would carry
+    states that are meaningless here.
+    """
+
+    PLANNED = "planned"
+    GENERATING = "generating"
+    GENERATED = "generated"
+    AWAITING_DECISION = "awaiting_decision"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    VARIATION_REQUESTED = "variation_requested"
+    FAILED = "failed"
+
+
+class DesignDecisionKind(StrEnum):
+    """What the owner decided about a design attempt.
+
+    The same three values as ``HumanDecisionKind`` and a separate type for the
+    same reason ``DesignAttemptState`` is: sharing the photography type couples
+    two domains that must be able to evolve apart. There is no ``held`` here --
+    holding is a concept-level status; an undecided attempt simply stays at
+    ``awaiting_decision``.
+    """
+
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    VARIATION_REQUESTED = "variation_requested"
+
+
+# The attempt state each design decision moves the attempt to. All three are
+# terminal: a decided attempt is history, and another take is a new attempt row
+# with ``parent_attempt_id`` pointing back at this one.
+DESIGN_DECISION_ATTEMPT_STATES: dict[DesignDecisionKind, DesignAttemptState] = {
+    DesignDecisionKind.APPROVED: DesignAttemptState.APPROVED,
+    DesignDecisionKind.REJECTED: DesignAttemptState.REJECTED,
+    DesignDecisionKind.VARIATION_REQUESTED: DesignAttemptState.VARIATION_REQUESTED,
+}
+
+
+class DesignAssetKind(StrEnum):
+    """The role a stored design file plays.
+
+    Roles rather than formats -- ``mime_type`` already records what the bytes
+    are; this records why they exist. Several kinds legitimately repeat per
+    attempt (a separation per ink, a mockup per garment), so uniqueness lives
+    on the path, not the kind.
+    """
+
+    ARTWORK = "artwork"
+    PREVIEW = "preview"
+    PRINT_MASTER = "print_master"
+    SEPARATION = "separation"
+    SOURCE = "source"
+    MOCKUP = "mockup"

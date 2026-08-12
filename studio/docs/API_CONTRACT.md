@@ -272,6 +272,63 @@ Allows controlled metadata edits.
 
 ### `POST /api/shots/{shot_id}/disable`
 
+## Design concepts
+
+The design backlog: the concept libraries under `docs/design/`, imported into
+PostgreSQL by `python -m app.cli import-design-concepts`, worked through
+attempts and settled by signed decisions. Only an approved-design version lets
+anything downstream.
+
+### `GET /api/concepts`
+
+The backlog in queue order (`priority`, then `external_number`). Filters:
+`status`, `library`, `limit`. Each row carries derived progress — attempt
+count, latest attempt state, approved version count.
+
+### `GET /api/concepts/next`
+
+What "next" actually means: the lowest-priority, lowest-numbered live concept,
+`ready` outranking `backlog`. 404 when the queue is empty.
+
+### `GET /api/concepts/queue`
+
+Attempts awaiting the owner, oldest first.
+
+### `GET /api/concepts/{concept_id}`
+
+One concept in full: attempts, assets, decisions, approved versions.
+
+### `POST /api/concepts/{concept_id}/attempts`
+
+Opens one execution of a concept. `method` is one of `image_generation`,
+`deterministic_composition`, `manual_import`, `hybrid`. Moves a `backlog` or
+`ready` concept to `exploring`.
+
+### `POST /api/concepts/attempts/{attempt_id}/assets`
+
+Multipart upload; stores through the asset store under
+`designs/{library}/{number}/attempts/{attempt_id}/{name}` and records the
+sha256. Refused once the attempt is past review (422).
+
+### `POST /api/concepts/attempts/{attempt_id}/submit`
+
+`generated` → `awaiting_decision`. Refuses an attempt with nothing to review.
+
+### `POST /api/concepts/attempts/{attempt_id}/decision`
+
+The only way out of `awaiting_decision`. Requires `actor`; immutable; a second
+decision is 409 unless it repeats the same `idempotency_key`. Settles a linked
+composed design in the same transaction.
+
+### `POST /api/concepts/attempts/{attempt_id}/approve-design`
+
+Freezes an approved attempt as the concept's next version, pinned to its
+master asset. 409 when the attempt already is a version.
+
+### `GET /api/concepts/assets/{asset_id}`
+
+The stored bytes, served from the row's own path, never from the request.
+
 ## Health
 
 ### `GET /health`

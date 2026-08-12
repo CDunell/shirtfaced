@@ -52,6 +52,20 @@ python -m app.cli attempts world-01         # generation history
 python -m app.cli discard-attempt <id>      # release a world blocked by an attempt
 ```
 
+Design backlog:
+
+```bash
+python -m app.cli import-design-concepts ../docs/design/TSHIRT_CONCEPT_LIBRARY.md
+```
+
+Seeds the design backlog from the concept library. Idempotent like `import-world`:
+concepts are matched on their permanent numbers, wording follows the Markdown,
+statuses the workflow owns are kept, and disagreements are reported rather than
+resolved. From there `GET /api/concepts/next` answers "what next", attempts and
+their assets accumulate under each concept, and only a signed decision and an
+`approved_designs` version let anything downstream — see ADR-015 in
+`docs/DECISIONS.md`.
+
 Generation:
 
 ```bash
