@@ -1,0 +1,41 @@
+name: Backfill vintage eBay listing images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/backfill-vintage-ebay-images.mjs'
+      - 'docs/research/vintage-market-evidence/**/*.jsonl'
+      - 'docs/research/vintage-market-evidence/*.jsonl'
+      - '.github/workflows/backfill-vintage-ebay-images.yml'
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Collect listing images with provenance
+        env:
+          VINTAGE_IMAGE_ROOT: ${{ runner.temp }}/vintage-ebay-images
+        run: node scripts/backfill-vintage-ebay-images.mjs
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Persist private research cache
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'mkdir -p /home/ubuntu/shirtfaced-research/vintage-ebay-images'
+          rsync -az \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            "${{ runner.temp }}/vintage-ebay-images/" \
+            ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-research/vintage-ebay-images/
+      - name: Report cache manifest
+        run: cat "${{ runner.temp }}/vintage-ebay-images/manifest.json"
