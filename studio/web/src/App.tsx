@@ -78,8 +78,10 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           position: "sticky",
           top: 0,
           zIndex: 40,
-          borderBottom: `1px solid ${theme.colors.borderOpaque}`,
-          backgroundColor: theme.colors.backgroundPrimary,
+          // Admin's header: translucent paper over a blur, hairline ink rule.
+          borderBottom: `1px solid color-mix(in srgb, ${theme.colors.contentPrimary} 10%, transparent)`,
+          backgroundColor: `color-mix(in srgb, ${theme.colors.backgroundPrimary} 92%, transparent)`,
+          backdropFilter: "blur(8px)",
         })}
       >
         <div

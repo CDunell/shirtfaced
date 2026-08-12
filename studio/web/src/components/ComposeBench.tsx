@@ -24,7 +24,9 @@ import { Input } from "baseui/input";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Select, type Value } from "baseui/select";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import { LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+
+import { PageTitle, SectionTitle } from "./chrome";
 
 import {
   ApiError,
@@ -207,9 +209,7 @@ export function ComposeBench(): React.JSX.Element {
 
   return (
     <>
-      <HeadingSmall marginTop={0} marginBottom={theme.sizing.scale300}>
-        Compose
-      </HeadingSmall>
+      <PageTitle>Compose</PageTitle>
       <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
         A garment, some words and a seed. The same four inputs always produce the same artwork, so a
         seed is worth writing down.
@@ -390,7 +390,7 @@ export function ComposeBench(): React.JSX.Element {
         </div>
       ) : null}
 
-      <HeadingSmall marginBottom={theme.sizing.scale300}>Kept</HeadingSmall>
+      <SectionTitle>Kept</SectionTitle>
       <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
         A kept design is not an approved one. Nothing leaves <code>awaiting_decision</code> without
         a name against it.

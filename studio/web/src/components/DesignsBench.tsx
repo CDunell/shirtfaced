@@ -3,9 +3,10 @@
  *
  * Three panels, matching the pipeline's shape. The review queue first, because
  * attempts awaiting a decision are the only thing here that blocks on a person.
- * Then the queue's answer to "what next". Then the backlog itself: 260 numbered
- * concepts with their real states, where "worked on" means attempts exist in
- * the database rather than someone remembering a conversation.
+ * Then the queue's answer to "what next" — the one accent moment on the page,
+ * because it is the one thing the page exists to say. Then the backlog itself:
+ * 260 numbered concepts where the default state is unmarked and a chip only
+ * appears when a state is worth marking.
  *
  * Deciding follows the compose bench's rule: a decision needs a name against
  * it, checked here as well as by the server, because an approval nobody signed
@@ -19,9 +20,7 @@ import { Card, StyledBody } from "baseui/card";
 import { FormControl } from "baseui/form-control";
 import { Input } from "baseui/input";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError } from "../api/client";
 import {
@@ -38,6 +37,8 @@ import {
   type DesignAttemptView,
   type DesignDecisionKind,
 } from "../api/concepts";
+import { PageTitle, SectionTitle, StatusChip } from "./chrome";
+import { CREAM, INK, LIME, PAPER } from "../tokens";
 
 function describe(cause: unknown): string {
   if (cause instanceof ApiError) return cause.message;
@@ -54,19 +55,8 @@ const STATUS_FILTERS: { id: string; label: string }[] = [
   { id: "retired", label: "Retired" },
 ];
 
-function statusTagKind(status: string): (typeof TAG_KIND)[keyof typeof TAG_KIND] {
-  switch (status) {
-    case "approved":
-      return TAG_KIND.positive;
-    case "rejected":
-    case "retired":
-      return TAG_KIND.negative;
-    case "exploring":
-    case "awaiting_decision":
-      return TAG_KIND.warning;
-    default:
-      return TAG_KIND.neutral;
-  }
+function number3(value: number): string {
+  return `#${String(value).padStart(3, "0")}`;
 }
 
 export function DesignsBench(): React.JSX.Element {
@@ -74,7 +64,7 @@ export function DesignsBench(): React.JSX.Element {
   const [queue, setQueue] = useState<DesignAttemptView[]>([]);
   const [nextUp, setNextUp] = useState<ConceptView | null>(null);
   const [concepts, setConcepts] = useState<ConceptView[]>([]);
-  const [filter, setFilter] = useState<Value>([{ id: "", label: "All" }]);
+  const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<ConceptDetailView | null>(null);
   const [decider, setDecider] = useState("");
   const [busy, setBusy] = useState(false);
@@ -82,11 +72,10 @@ export function DesignsBench(): React.JSX.Element {
 
   const refresh = useCallback(async () => {
     try {
-      const status = String(filter[0]?.id ?? "");
       const [queued, next, listed] = await Promise.all([
         fetchReviewQueue(),
         fetchNextConcept(),
-        fetchConcepts(status === "" ? undefined : (status as ConceptStatus)),
+        fetchConcepts(filter === "" ? undefined : (filter as ConceptStatus)),
       ]);
       setQueue(queued);
       setNextUp(next);
@@ -162,9 +151,9 @@ export function DesignsBench(): React.JSX.Element {
       <div
         className={css({
           background: "#101010",
-          borderRadius: "6px",
-          padding: "10px",
-          marginBottom: "8px",
+          borderRadius: "12px",
+          padding: "12px",
+          marginBottom: "10px",
           display: "flex",
           justifyContent: "center",
         })}
@@ -178,11 +167,17 @@ export function DesignsBench(): React.JSX.Element {
     );
   };
 
+  const metaLine = css({
+    fontSize: "12px",
+    fontWeight: 600,
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+    color: theme.colors.contentTertiary,
+  });
+
   return (
     <>
-      <HeadingSmall marginTop={0} marginBottom={theme.sizing.scale300}>
-        Designs
-      </HeadingSmall>
+      <PageTitle meta={`${String(concepts.length)} concepts`}>Designs</PageTitle>
       <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
         The concept library as a working queue. The numbers are permanent, the statuses are real,
         and &ldquo;next&rdquo; is a query rather than a memory.
@@ -209,9 +204,9 @@ export function DesignsBench(): React.JSX.Element {
         </FormControl>
       </div>
 
-      <HeadingSmall marginBottom={theme.sizing.scale300}>Review</HeadingSmall>
+      <SectionTitle count={queue.length}>Review</SectionTitle>
       {queue.length === 0 ? (
-        <ParagraphSmall color={theme.colors.contentSecondary}>
+        <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
           Nothing awaits a decision.
         </ParagraphSmall>
       ) : (
@@ -227,10 +222,10 @@ export function DesignsBench(): React.JSX.Element {
             <Card key={attempt.id}>
               <StyledBody>
                 {preview(attempt)}
-                <LabelSmall>
+                <span className={metaLine}>
                   attempt {attempt.attempt_number} · {attempt.method.replace(/_/g, " ")}
-                </LabelSmall>
-                <div className={css({ display: "flex", gap: "6px", marginTop: "8px" })}>
+                </span>
+                <div className={css({ display: "flex", gap: "6px", marginTop: "10px" })}>
                   <Button
                     size={SIZE.mini}
                     disabled={busy}
@@ -268,34 +263,82 @@ export function DesignsBench(): React.JSX.Element {
       )}
 
       {nextUp ? (
-        <Card
-          overrides={{
-            Root: {
-              style: {
-                marginTop: theme.sizing.scale600,
-                marginBottom: theme.sizing.scale700,
-              },
-            },
-          }}
+        // The page's one accent moment: ink surface, lime eyebrow, display
+        // type. What to do next is the thing this bench exists to answer.
+        <section
+          className={css({
+            // Ink on paper in both themes: this is a brand statement, not a
+            // theme surface. In dark mode the theme's "inverse" turns light
+            // grey and the lime eyebrow dies on it; a hairline keeps the ink
+            // card separate from an ink page instead.
+            backgroundColor: INK,
+            color: PAPER,
+            border: `1px solid color-mix(in srgb, ${PAPER} 14%, transparent)`,
+            borderRadius: "20px",
+            paddingTop: "24px",
+            paddingBottom: "24px",
+            paddingLeft: "24px",
+            paddingRight: "24px",
+            marginTop: theme.sizing.scale600,
+            marginBottom: theme.sizing.scale800,
+          })}
         >
-          <StyledBody>
-            <LabelSmall color={theme.colors.contentSecondary}>Next up</LabelSmall>
-            <HeadingSmall marginTop="4px" marginBottom="4px">
-              #{String(nextUp.external_number).padStart(3, "0")} {nextUp.title}
-            </HeadingSmall>
-            <ParagraphSmall marginTop={0}>{nextUp.concept_text}</ParagraphSmall>
-            <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-              <Tag closeable={false} kind={statusTagKind(nextUp.status)}>
-                {nextUp.status}
-              </Tag>
-              {nextUp.garments.map((garment) => (
-                <Tag key={garment} closeable={false} kind={TAG_KIND.neutral}>
-                  {garment}
-                </Tag>
-              ))}
-            </div>
-          </StyledBody>
-        </Card>
+          <span
+            className={css({
+              display: "block",
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: LIME,
+              marginBottom: "10px",
+            })}
+          >
+            Next up
+          </span>
+          <h2
+            className={`display ${css({
+              fontSize: "clamp(26px, 5vw, 36px)",
+              margin: "0 0 10px",
+              color: "inherit",
+            })}`}
+          >
+            {number3(nextUp.external_number)} {nextUp.title}
+          </h2>
+          <p
+            className={css({
+              margin: "0 0 14px",
+              fontSize: "15px",
+              lineHeight: 1.55,
+              opacity: 0.75,
+              maxWidth: "640px",
+            })}
+          >
+            {nextUp.concept_text}
+          </p>
+          <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+            {nextUp.garments.map((garment) => (
+              <span
+                key={garment}
+                className={css({
+                  fontSize: "11px",
+                  fontWeight: 700,
+                  letterSpacing: "0.06em",
+                  textTransform: "uppercase",
+                  borderRadius: "8px",
+                  paddingTop: "3px",
+                  paddingBottom: "3px",
+                  paddingLeft: "8px",
+                  paddingRight: "8px",
+                  backgroundColor: "rgba(242, 240, 237, 0.14)",
+                  color: "inherit",
+                })}
+              >
+                {garment}
+              </span>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <div
@@ -303,28 +346,47 @@ export function DesignsBench(): React.JSX.Element {
           display: "flex",
           alignItems: "center",
           gap: "12px",
-          marginBottom: theme.sizing.scale300,
+          flexWrap: "wrap",
         })}
       >
-        <HeadingSmall marginTop={0} marginBottom={0}>
-          Backlog
-        </HeadingSmall>
-        <div className={css({ width: "180px" })}>
-          <Select
-            clearable={false}
-            searchable={false}
-            size="compact"
-            options={STATUS_FILTERS}
-            value={filter}
-            onChange={({ value }) => {
-              setFilter(value);
-              setSelected(null);
-            }}
-          />
+        <SectionTitle count={concepts.length}>Backlog</SectionTitle>
+        <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
+          {STATUS_FILTERS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              aria-pressed={filter === item.id}
+              onClick={() => {
+                setFilter(item.id);
+                setSelected(null);
+              }}
+              className={`press ${css({
+                appearance: "none",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "inherit",
+                fontSize: "12px",
+                fontWeight: 700,
+                letterSpacing: "0.04em",
+                textTransform: "uppercase",
+                borderRadius: "999px",
+                paddingTop: "6px",
+                paddingBottom: "6px",
+                paddingLeft: "12px",
+                paddingRight: "12px",
+                backgroundColor: filter === item.id ? theme.colors.contentPrimary : "transparent",
+                color:
+                  filter === item.id
+                    ? theme.colors.backgroundPrimary
+                    : theme.colors.contentSecondary,
+                ":hover":
+                  filter === item.id ? {} : { backgroundColor: theme.colors.backgroundSecondary },
+              })}`}
+            >
+              {item.label}
+            </button>
+          ))}
         </div>
-        <ParagraphXSmall color={theme.colors.contentSecondary}>
-          {concepts.length} concepts
-        </ParagraphXSmall>
       </div>
 
       <div
@@ -342,8 +404,9 @@ export function DesignsBench(): React.JSX.Element {
           className={css({
             maxHeight: "540px",
             overflowY: "auto",
-            border: `1px solid ${theme.colors.borderOpaque}`,
-            borderRadius: "8px",
+            backgroundColor: theme.colors.backgroundPrimary,
+            border: `1px solid ${theme.colors.backgroundSecondary}`,
+            borderRadius: "16px",
           })}
         >
           {concepts.map((concept) => (
@@ -357,19 +420,23 @@ export function DesignsBench(): React.JSX.Element {
                 display: "flex",
                 width: "100%",
                 alignItems: "center",
-                gap: "8px",
+                gap: "10px",
                 appearance: "none",
                 border: "none",
-                borderBottom: `1px solid ${theme.colors.borderOpaque}`,
+                borderBottom: `1px solid ${theme.colors.backgroundSecondary}`,
                 cursor: "pointer",
                 fontFamily: "inherit",
                 textAlign: "left",
-                paddingTop: "8px",
-                paddingBottom: "8px",
-                paddingLeft: "12px",
-                paddingRight: "12px",
+                paddingTop: "10px",
+                paddingBottom: "10px",
+                paddingLeft: "14px",
+                paddingRight: "14px",
                 backgroundColor:
                   selected?.id === concept.id ? theme.colors.backgroundSecondary : "transparent",
+                boxShadow:
+                  selected?.id === concept.id
+                    ? `inset 3px 0 0 ${theme.colors.contentPrimary}`
+                    : "none",
                 ":hover": { backgroundColor: theme.colors.backgroundSecondary },
               })}
             >
@@ -378,18 +445,21 @@ export function DesignsBench(): React.JSX.Element {
                   fontVariantNumeric: "tabular-nums",
                   color: theme.colors.contentTertiary,
                   fontSize: "12px",
+                  fontWeight: 600,
                 })}
               >
-                #{String(concept.external_number).padStart(3, "0")}
+                {number3(concept.external_number)}
               </span>
               <span
                 className={css({
                   flex: "1 1 auto",
                   fontSize: "13px",
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  letterSpacing: "0.01em",
                   overflow: "hidden",
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
+                  color: theme.colors.contentPrimary,
                 })}
               >
                 {concept.title}
@@ -399,9 +469,8 @@ export function DesignsBench(): React.JSX.Element {
                   {concept.attempt_count} {concept.attempt_count === 1 ? "attempt" : "attempts"}
                 </span>
               ) : null}
-              <Tag closeable={false} kind={statusTagKind(concept.status)}>
-                {concept.status}
-              </Tag>
+              {/* The default state is unmarked. A chip marks an exception. */}
+              {concept.status !== "backlog" ? <StatusChip status={concept.status} /> : null}
             </button>
           ))}
         </div>
@@ -412,48 +481,58 @@ export function DesignsBench(): React.JSX.Element {
           {selected ? (
             <Card>
               <StyledBody>
-                <LabelSmall color={theme.colors.contentSecondary}>
-                  #{String(selected.external_number).padStart(3, "0")} · {selected.round_label} ·{" "}
-                  {selected.slug}
-                </LabelSmall>
-                <HeadingSmall marginTop="4px" marginBottom="4px">
+                <span className={metaLine}>
+                  {number3(selected.external_number)} · {selected.round_label} · {selected.slug}
+                </span>
+                <h2
+                  className={`display ${css({
+                    fontSize: "clamp(22px, 4vw, 30px)",
+                    margin: "6px 0 10px",
+                    color: theme.colors.contentPrimary,
+                  })}`}
+                >
                   {selected.title}
-                </HeadingSmall>
+                </h2>
                 {/* The owner's words, verbatim. The pipeline never edits them. */}
                 <ParagraphSmall marginTop={0}>{selected.concept_text}</ParagraphSmall>
 
                 <div
                   className={css({
                     display: "flex",
-                    gap: "4px",
+                    gap: "6px",
                     flexWrap: "wrap",
-                    marginBottom: theme.sizing.scale300,
+                    marginBottom: theme.sizing.scale500,
                   })}
                 >
-                  <Tag closeable={false} kind={statusTagKind(selected.status)}>
-                    {selected.status}
-                  </Tag>
+                  <StatusChip status={selected.status} />
                   {selected.retirement ? (
-                    <Tag closeable={false} kind={TAG_KIND.negative}>
-                      {selected.retirement} retirement
-                    </Tag>
+                    <StatusChip status={`${selected.retirement} retirement`} />
                   ) : null}
                   {selected.garments.map((garment) => (
-                    <Tag key={garment} closeable={false} kind={TAG_KIND.neutral}>
-                      {garment}
-                    </Tag>
+                    <StatusChip key={garment} status={garment} />
                   ))}
                   {selected.approved_versions > 0 ? (
-                    <Tag closeable={false} kind={TAG_KIND.positive}>
-                      v{selected.approved_versions}
-                    </Tag>
+                    <StatusChip status={`v${String(selected.approved_versions)} approved`} />
                   ) : null}
                 </div>
 
                 {selected.salvage ? (
-                  <Notification kind={NOTIFICATION_KIND.warning}>
+                  <div
+                    className={css({
+                      backgroundColor: CREAM,
+                      color: "#0d0d0d",
+                      borderRadius: "12px",
+                      paddingTop: "12px",
+                      paddingBottom: "12px",
+                      paddingLeft: "14px",
+                      paddingRight: "14px",
+                      fontSize: "13px",
+                      lineHeight: 1.5,
+                      marginBottom: theme.sizing.scale500,
+                    })}
+                  >
                     Held, not retired: {selected.salvage}
-                  </Notification>
+                  </div>
                 ) : null}
 
                 {selected.attempts.length === 0 ? (
@@ -465,46 +544,48 @@ export function DesignsBench(): React.JSX.Element {
                     <div
                       key={attempt.id}
                       className={css({
-                        borderTop: `1px solid ${theme.colors.borderOpaque}`,
-                        paddingTop: "8px",
-                        marginTop: "8px",
+                        borderTop: `1px solid ${theme.colors.backgroundSecondary}`,
+                        paddingTop: "12px",
+                        marginTop: "12px",
                       })}
                     >
                       {preview(attempt)}
-                      <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-                        <Tag closeable={false} kind={statusTagKind(attempt.state)}>
-                          {attempt.state.replace(/_/g, " ")}
-                        </Tag>
-                        <Tag closeable={false} kind={TAG_KIND.neutral}>
-                          attempt {attempt.attempt_number}
-                        </Tag>
-                        <Tag closeable={false} kind={TAG_KIND.neutral}>
-                          {attempt.method.replace(/_/g, " ")}
-                        </Tag>
+                      <div
+                        className={css({
+                          display: "flex",
+                          gap: "6px",
+                          flexWrap: "wrap",
+                          alignItems: "center",
+                        })}
+                      >
+                        <StatusChip status={attempt.state} />
+                        <span className={metaLine}>
+                          attempt {attempt.attempt_number} · {attempt.method.replace(/_/g, " ")}
+                        </span>
                         {attempt.approved_version !== null ? (
-                          <Tag closeable={false} kind={TAG_KIND.positive}>
-                            v{attempt.approved_version}
-                          </Tag>
+                          <StatusChip status={`v${String(attempt.approved_version)} approved`} />
                         ) : null}
                       </div>
                       {attempt.decision ? (
-                        <ParagraphXSmall marginTop="4px" color={theme.colors.contentSecondary}>
+                        <ParagraphXSmall marginTop="6px" color={theme.colors.contentSecondary}>
                           {attempt.decision.decision.replace(/_/g, " ")} by {attempt.decision.actor}
                           {attempt.decision.reason ? ` — ${attempt.decision.reason}` : ""}
                           {attempt.decision.instruction ? ` — ${attempt.decision.instruction}` : ""}
                         </ParagraphXSmall>
                       ) : null}
                       {attempt.state === "approved" && attempt.approved_version === null ? (
-                        <Button
-                          size={SIZE.mini}
-                          kind={BUTTON_KIND.secondary}
-                          disabled={busy}
-                          onClick={() => {
-                            void onApproveDesign(attempt);
-                          }}
-                        >
-                          Record approved design v{selected.approved_versions + 1}
-                        </Button>
+                        <div className={css({ marginTop: "8px" })}>
+                          <Button
+                            size={SIZE.mini}
+                            kind={BUTTON_KIND.secondary}
+                            disabled={busy}
+                            onClick={() => {
+                              void onApproveDesign(attempt);
+                            }}
+                          >
+                            Record approved design v{selected.approved_versions + 1}
+                          </Button>
+                        </div>
                       ) : null}
                     </div>
                   ))
@@ -512,7 +593,7 @@ export function DesignsBench(): React.JSX.Element {
               </StyledBody>
             </Card>
           ) : (
-            <ParagraphSmall color={theme.colors.contentSecondary}>
+            <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
               Select a concept to see its lineage.
             </ParagraphSmall>
           )}

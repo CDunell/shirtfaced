@@ -20,7 +20,9 @@ import { Card, StyledBody } from "baseui/card";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Select, type Value } from "baseui/select";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { HeadingSmall, LabelSmall, ParagraphXSmall } from "baseui/typography";
+import { LabelSmall, ParagraphXSmall } from "baseui/typography";
+
+import { PageTitle } from "./chrome";
 
 import {
   ApiError,
@@ -280,7 +282,7 @@ export function PromptWorkbench(): React.JSX.Element {
 
   return (
     <div className={css({ maxWidth: "760px", margin: "0 auto" })}>
-      <HeadingSmall marginTop={0}>Prompts</HeadingSmall>
+      <PageTitle>Prompts</PageTitle>
       <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
         Writes the prompt the canon implies. Generates no image and locks nothing. Every prompt
         written is kept, so a variation sits beside the one it varies from.

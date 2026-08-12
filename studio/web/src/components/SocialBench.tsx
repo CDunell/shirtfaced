@@ -12,6 +12,8 @@ import { Select, type Value } from "baseui/select";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
 import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
+import { PageTitle } from "./chrome";
+
 import { ApiError, fetchPhotos, uploadPhoto, type Photo } from "../api/client";
 import { loadCanvasImage } from "../lib/loadCanvasImage";
 import {
@@ -341,9 +343,7 @@ export function SocialBench(): React.JSX.Element {
 
   return (
     <>
-      <HeadingSmall marginTop={0} marginBottom={theme.sizing.scale300}>
-        Social Studio
-      </HeadingSmall>
+      <PageTitle>Social Studio</PageTitle>
       <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "18px" })}>
         {nav("create", "Create")}
         {nav("approval", `Approval ${String(approval.length)}`)}

@@ -18,7 +18,9 @@ import { Card, StyledBody } from "baseui/card";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Select, type Value } from "baseui/select";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { HeadingSmall, LabelSmall, ParagraphXSmall } from "baseui/typography";
+import { LabelSmall, ParagraphXSmall } from "baseui/typography";
+
+import { PageTitle } from "./chrome";
 
 import {
   ApiError,
@@ -246,7 +248,7 @@ export function PrintBench(): React.JSX.Element {
 
   return (
     <div className={css({ maxWidth: "980px", margin: "0 auto" })}>
-      <HeadingSmall marginTop={0}>Print</HeadingSmall>
+      <PageTitle>Print</PageTitle>
       <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
         Drag the corners onto the garment. Every render is real and costs nothing, so what you see
         is the output.
