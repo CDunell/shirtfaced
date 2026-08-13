@@ -93,7 +93,7 @@ def get_thresholds() -> dict[str, Any]:
 
 @router.post("/score", response_model=ScoreResponse, summary="Measure a design image")
 async def score_design_image(
-    image: UploadFile = File(..., description="The design, worn or flat"),  # noqa: B008 -- FastAPI declares dependencies this way
+    image: UploadFile = File(..., description="The design, worn or flat"),
     design_name: str = Form(default=""),
 ) -> ScoreResponse:
     """Measure an uploaded design and report the gates/categories it supports.
