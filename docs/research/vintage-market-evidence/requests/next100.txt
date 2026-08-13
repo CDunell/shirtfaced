@@ -1,6 +1,6 @@
-requested_at=2026-08-13T11:18:00+10:00
+requested_at=2026-08-13T11:24:00+10:00
 target=15
 include_images=true
 manifest_count=true
-attempt=10
-collector=checkpoint-15-end-to-end-next
+attempt=11
+collector=checkpoint-15-end-to-end-replenished
