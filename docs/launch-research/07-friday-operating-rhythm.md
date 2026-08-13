@@ -1,35 +1,31 @@
 # SHIRTFACED — Friday Operating Rhythm
 
-Status: Working publishing system  
+Status: Proposed publishing system — not approved by documentation alone  
 Date: 13 August 2026  
-Scope: Repeatable weekly behaviour linking WORLD 01, documentary content and later product activity
+Scope: Repeatable weekly behaviour linking WORLD 01, documentary content and product activity
+
+## Governance
+
+This document is a planning option. It does not override existing approved launch decisions or create a mandatory cadence unless the project owner explicitly approves it.
 
 ---
 
 # 1. Purpose
 
-Create a recognisable SHIRTFACED weekly rhythm without requiring high-friction audience participation.
-
-Core behaviour:
+Explore a recognisable weekly SHIRTFACED rhythm built around:
 
 - Friday afternoon starts the story
 - Friday night progresses the world
 - Saturday morning shows the aftermath
-- the following weekdays handle product, design and supporting evidence
-
-This is a rhythm, not a rigid demand for filler.
+- following weekdays handle product, design and supporting evidence
 
 ---
 
-# 2. Weekly structure
+# 2. Weekly structure option
 
 ## Friday — Knock-Off
 
-Target window: late afternoon.
-
-Job:
-
-Signal that the weekend world is beginning.
+Possible job: signal that the weekend world is beginning.
 
 Eligible formats:
 
@@ -38,17 +34,9 @@ Eligible formats:
 - 6–12 second held-motion Reel/TikTok
 - occasional city-specific treatment
 
-Content should feel like the first observable evidence of a night, not a campaign announcement.
-
----
-
 ## Friday Night — The Big Night
 
-Job:
-
-Progress the emotional and visual world.
-
-Possible sequence:
+Possible progression:
 
 1. first drinks / arrival
 2. venue / street / festival / party
@@ -56,17 +44,9 @@ Possible sequence:
 4. food stop / servo / Maccas
 5. kick-ons
 
-Do not publish every phase merely because the structure exists. Quality outranks completeness.
-
----
-
 ## Saturday Morning — The Morning After
 
-Job:
-
-Create the recurring aftermath beat.
-
-Subject examples:
+Possible subjects:
 
 - one shoe
 - takeaway wreckage
@@ -78,13 +58,9 @@ Subject examples:
 - discarded wristband
 - someone asleep in the wrong place
 
-The product may appear, but the photograph must still work if the product is ignored.
-
----
-
 ## Sunday–Thursday — Commercial and supporting layer
 
-Eligible jobs:
+Possible jobs:
 
 - design reveal
 - garment reveal
@@ -92,23 +68,21 @@ Eligible jobs:
 - fit imagery
 - campaign callback
 - packaging detail
-- customer evidence once available
-- controlled edit variations for distribution testing
-
-Do not convert the weekdays into endless product tiles.
+- customer evidence
+- controlled edit variations
 
 ---
 
-# 3. Minimum viable weekly cadence
+# 3. Example cadence
 
-When asset quality supports it:
+One possible weekly cadence:
 
-- Friday: 1 strong opening post
+- Friday: 1 opening post
 - Friday night: 1–2 progression pieces
 - Saturday: 1 aftermath piece
-- Sunday–Thursday: 2–4 pieces total across platforms, adapted to each platform
+- Sunday–Thursday: 2–4 pieces total across platforms
 
-This is subordinate to `02-launch-sequencing-and-first-30-days.md` during zero-audience launch. The first-30-day experiment remains the governing cadence until its review gate is complete.
+This is an example schedule, not a governing requirement.
 
 ---
 
@@ -116,24 +90,16 @@ This is subordinate to `02-launch-sequencing-and-first-30-days.md` during zero-a
 
 ## Instagram
 
-Primary job:
-
-Persistent documentary evidence archive and profile conversion.
-
-Use:
+Possible role:
 
 - strongest stills
-- carousels with real sequence value
-- Reels with held observational motion
+- carousels with sequence value
+- Reels with observational motion
 - deliberate covers
 
 ## TikTok
 
-Primary job:
-
-Creative distribution testing.
-
-Use:
+Possible role:
 
 - alternate openings
 - different pacing
@@ -141,28 +107,24 @@ Use:
 - role-based micro-stories
 - native 9:16 edits
 
-Do not duplicate the exact Instagram edit by default.
-
 ---
 
 # 5. Activation insertion points
 
-Activations must attach to the rhythm rather than replace it.
-
 Examples:
 
-- `We Lost Gary` begins Friday and resolves Saturday/Sunday
-- `Friday Forecast` can occasionally replace Friday Knock-Off
-- `Gary's Shout` can resolve after a Friday commerce window
-- `The Last One` belongs to genuine product-stock events, not the weekly content rhythm
+- `We Lost Gary` can begin Friday and resolve Saturday/Sunday
+- `Friday Forecast` can occupy a Friday slot
+- `Gary's Shout` can connect to a commerce window
+- `The Last One` can connect to a genuine stock event
 
-Run one primary activation mechanic at a time.
+Whether one or multiple activation mechanics run together is a creative decision for the project owner, not a rule in this document.
 
 ---
 
 # 6. Operating board fields
 
-Every planned weekend should have:
+Useful planning fields:
 
 - weekend ID
 - narrative/world phase
@@ -179,48 +141,34 @@ Every planned weekend should have:
 - actual publish time
 - performance notes
 
-These fields should later map into the broader publishing pipeline and marketing engine.
+These fields can map into the broader publishing pipeline and marketing engine.
 
 ---
 
-# 7. Review cadence
+# 7. Review options
 
-## Monday review
+Possible review inputs:
 
-Review the prior weekend for:
-
-- strongest share/save behaviour
-- strongest watch behaviour
+- share/save behaviour
+- watch behaviour
 - profile visits
 - follows
 - comments showing recognition
 - activation response
 - production failures
 
-Do not rewrite the entire system because of one post.
-
-## Four-week review
-
-Decide whether:
-
-- Friday Knock-Off is earning recognisable behaviour
-- Morning After is worth retaining as a fixed property
-- frequency should rise or fall
-- any activation deserves repetition
-- audience behaviour supports product-linked mechanics
+Review cadence and decision thresholds remain open unless explicitly approved.
 
 ---
 
-# 8. Guardrails
+# 8. Creative considerations
 
-Do not:
+Potential risks to watch:
 
-- force every weekend to be a campaign
-- over-caption documentary work
-- make every post interactive
-- turn the account into meme tiles
-- invent scarcity
-- publish weak content to preserve cadence
-- let product placement destroy the credibility of the scene
+- forcing weak content to fill a schedule
+- over-captioning documentary work
+- making every post interactive
+- turning the account into meme tiles
+- product placement overwhelming the scene
 
-The rhythm exists to build recognition, not to become another content treadmill.
+These are considerations, not automatic prohibitions.
