@@ -126,7 +126,7 @@ for agent_id in 1 2 3 4; do
     kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
   fi
 done
-vintage_recovery_marker=/home/ubuntu/shirtfaced-research/vintage-agents/.playwright-recovery-v2
+vintage_recovery_marker=/home/ubuntu/shirtfaced-research/vintage-agents/.verifier-diagnostics-v3
 if [ ! -f "$vintage_recovery_marker" ]; then
   # The broken runtime marked the original pool attempted without collecting a
   # record. Run every shard once on the repaired runtime to recover that work.
