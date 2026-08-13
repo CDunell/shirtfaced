@@ -1,8 +1,12 @@
 # SHIRTFACED — Corteiz Mechanics and Shirtfaced Translation
 
-Status: Strategic reference  
+Status: Strategic reference / proposal material  
 Date: 13 August 2026  
-Scope: What to learn from Corteiz without copying its audience behaviour, aesthetic or stunts
+Scope: What may be useful from Corteiz without assuming its execution transfers directly
+
+## Governance
+
+This document is a case-study translation and idea source. It does not create SHIRTFACED rules unless the project owner explicitly approves them.
 
 ---
 
@@ -10,54 +14,41 @@ Scope: What to learn from Corteiz without copying its audience behaviour, aesthe
 
 Corteiz is useful as a case study because it made brand behaviour part of the product experience. It is not a template for SHIRTFACED execution.
 
-SHIRTFACED is aimed at an older Australian audience than the youth-heavy, streetwear-native audience that powered Corteiz. Coordinates, races, scavenger hunts and high-friction access mechanics are therefore not assumed to transfer.
+SHIRTFACED is aimed at an older Australian audience than the youth-heavy, streetwear-native audience that powered Corteiz. Coordinates, races, scavenger hunts and high-friction access mechanics therefore should not be assumed to transfer automatically.
 
-The lesson to retain is structural:
+Potential lesson:
 
 > Make the way the brand behaves recognisable enough that participation, sharing and product discovery feel native to the brand rather than bolted-on promotion.
 
 ---
 
-# 2. Corteiz mechanics worth retaining
+# 2. Mechanics worth considering
 
 ## 2.1 Distinctive worldview
 
-Corteiz built a clear cultural identity before relying on conventional retail mechanics.
-
-SHIRTFACED translation:
+Possible SHIRTFACED translation:
 
 - documentary Australian nights
 - recognisable social roles and moments
 - humour through recognition rather than explanation
-- product embedded inside the world rather than presented as catalogue-first advertising
+- product embedded inside the world rather than catalogue-first advertising
 
 ## 2.2 Behaviour as marketing
 
-Corteiz created releases and events that were themselves stories.
-
-SHIRTFACED translation:
+Possible SHIRTFACED translation:
 
 - recurring weekly behaviours
 - small rituals attached to purchase or ownership
-- campaign structures that create a beginning, escalation and aftermath
-- participation that takes seconds, not hours
+- campaign structures with beginning, escalation and aftermath
+- participation that takes seconds rather than hours
 
-## 2.3 Scarcity only after demand exists
+## 2.3 Scarcity
 
-Scarcity works when an audience already cares.
+The Corteiz case suggests scarcity is strongest when demand already exists. Whether and how SHIRTFACED uses scarcity is a separate project-owner decision.
 
-SHIRTFACED rule:
+## 2.4 Audience as distribution
 
-- no fake exclusivity during zero-audience launch
-- no password gates for the sake of theatre
-- no artificial countdowns to empty rooms
-- no complicated unlock mechanic until there is evidence people are paying attention
-
-## 2.4 Audience becomes distribution
-
-The most valuable amplification is behaviour people naturally want to share.
-
-SHIRTFACED translation:
+Possible SHIRTFACED mechanics:
 
 - mate tagging
 - recognition posts
@@ -67,100 +58,98 @@ SHIRTFACED translation:
 
 ---
 
-# 3. The demographic correction
+# 3. Demographic translation
 
-Do not reproduce Corteiz execution literally.
+The working SHIRTFACED audience is older, more time-poor and less likely to tolerate friction for its own sake than the youth streetwear audience associated with Corteiz.
 
-The working SHIRTFACED audience is older, more time-poor and less likely to tolerate friction for its own sake. They may pay premium prices, share a joke, tag a mate, keep a numbered card, respond to a familiar situation or return for a recurring Friday ritual. They should not be expected to run across a city, decode a puzzle chain or wake at a ridiculous hour to prove loyalty.
+A useful strategic distinction from the discussion is:
 
-Operational principle:
-
-> Corteiz engineered exclusivity through effort. SHIRTFACED should engineer belonging through recognition.
+> Corteiz engineered exclusivity through effort. SHIRTFACED can explore belonging through recognition.
 
 Internal shorthand:
 
 > If you have been there, you know.
 
-This is an operating principle, not necessarily public-facing copy.
+This is strategy language, not automatically public-facing copy.
 
 ---
 
-# 4. What SHIRTFACED should optimise for
+# 4. Candidate optimisation sequence
 
-Priority order:
+One possible funnel model is:
 
 1. stop the scroll
 2. make the world recognisable on the next encounter
 3. earn a follow
-4. create a repeatable weekly expectation
+4. create a repeatable expectation
 5. make sharing or tagging effortless
 6. introduce product naturally
-7. add ownership rituals only when there is an audience to reward
-8. introduce scarcity only when demand supports it
+7. use ownership rituals
+8. use scarcity where appropriate
 
-Do not skip directly from step 1 to step 8.
+This sequence is a planning model, not a locked rollout rule.
 
 ---
 
-# 5. Allowed activation characteristics
+# 5. Candidate activation characteristics
 
-A SHIRTFACED activation should usually be:
+Potentially useful attributes include:
 
 - nationally accessible
 - low friction
 - funny without requiring explanation
 - recognisable to Australian adults
-- executable with the existing documentary/photo/video system
+- executable through the documentary/photo/video system
 - measurable
-- cheap enough to repeat or deliberately rare enough to matter
+- repeatable or intentionally rare
 - compatible with a faceless brand
+
+These are evaluation criteria, not mandatory gates unless approved.
 
 ---
 
-# 6. Rejected-by-default mechanics
+# 6. Higher-friction mechanics to assess deliberately
 
-Unless later evidence changes the decision, do not default to:
+Examples:
 
 - map-pin races
 - city scavenger hunts
-- password-protected stores with no functional reason
-- 3am-only purchase windows
+- password-protected stores
+- unusual-hour purchase windows
 - multi-stage ARGs
-- fake secret-society language
-- arbitrary limited quantities presented as cultural significance
-- participation requiring customers to create elaborate content for the brand
+- secret-society language
+- very limited quantities
+- customer-created challenge content
 
-These can be reconsidered only if the audience itself begins demonstrating appetite for higher-friction participation.
-
----
-
-# 7. Activation gate
-
-Do not introduce a new participation mechanic merely because it sounds interesting.
-
-Before activation, define:
-
-- audience behaviour being tested
-- exact user action required
-- maximum friction
-- content assets required
-- commercial objective, if any
-- success signal
-- stop condition
-
-If the mechanic cannot be described in one sentence to the audience, simplify it.
+The current demographic discussion gives reason to be cautious about these. They are not categorically banned by this document.
 
 ---
 
-# 8. Relationship to existing launch plan
+# 7. Planning record for any activation
 
-This document does not replace `02-launch-sequencing-and-first-30-days.md`.
+Useful information to capture before execution:
 
-The first 30 days remain a discovery and publishing-system test. Activation mechanics are layered in only when they do not compromise that baseline.
+- audience action
+- friction
+- content assets
+- commercial objective
+- measurement
+- cost
+- legal/operational requirements
 
-The activation library is documented in:
+This is planning information, not an approval gate.
+
+---
+
+# 8. Relationship to other docs
+
+Related material:
 
 - `05-shirtfaced-activation-library.md`
 - `06-we-lost-gary-campaign-plan.md`
 - `07-friday-operating-rhythm.md`
 - `08-shirtfaced-shout-mechanic.md`
+- `09-activation-idea-bank.md`
+- `10-shirtfaced-ownership-graph.md`
+
+Where this document conflicts with an explicit project-owner decision, the explicit decision wins.
