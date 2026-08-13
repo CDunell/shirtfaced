@@ -8,7 +8,7 @@ import pytest
 from app.services import vintage_research as vr
 
 
-REQUIRED = "flat graphic design, no background, transparent PNG, print on demand ready"
+REQUIRED = "pure black artwork on a pure white background, no grey, no gradient, maximum contrast, flat graphic design, print on demand ready"
 
 
 def _concepts(extra: int = 0) -> dict[str, object]:

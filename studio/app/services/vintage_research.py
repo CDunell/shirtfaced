@@ -27,13 +27,13 @@ MAX_IMAGE_LIMIT = 24
 
 PASS_1_PROMPT = """You are a print on demand design research expert. Based on these photos of best selling designs, generate 10 design ideas and prompts for an image generator to create similar designs for the retro skate, surf and streetwear niche. Make all of the designs original, but base these on trends and best selling elements from the screenshots of current best sellers using trendy color palettes, design elements, font styles, and popular themes specifically for the retro streetwear niche.
 Make the 10 prompts extremely detailed and specific for the skate, surf and streetwear niche and for an image generator like Chat GPT 2.0 in Kittl design to create graphic designs for t-shirts all using design trends featured in these screenshots.
-Include \"flat graphic design, no background, transparent PNG, print on demand ready\" to every prompt.
+Include \"pure black artwork on a pure white background, no grey, no gradient, maximum contrast, flat graphic design, print on demand ready\" to every prompt.
 
 Return exactly 10 concepts. Do not copy logos, slogans, characters, brand identifiers, or an evidence artwork's exact composition. Synthesize recurring visual tendencies across the supplied evidence. Keep concept_number fixed from 1 through 10."""
 
 PASS_2_PROMPT = """Make these 10 t-shirt design prompts more detailed but still based on the best selling trends featured in the screenshots.
 
-Return exactly the same 10 concepts in the same order and with the same concept_number, title and idea. Expand only the generation prompt substantially: add composition, typography, hierarchy, illustration treatment, print texture, palette, ink/colour behaviour, linework, negative space, placement and production-specific detail wherever the evidence supports those tendencies. Every prompt must still end with or include \"flat graphic design, no background, transparent PNG, print on demand ready\". Do not copy logos, slogans, characters, brand identifiers, or an evidence artwork's exact composition."""
+Return exactly the same 10 concepts in the same order and with the same concept_number, title and idea. Expand only the generation prompt substantially: add composition, typography, hierarchy, illustration treatment, print texture, palette, ink/colour behaviour, linework, negative space, placement and production-specific detail wherever the evidence supports those tendencies. Every prompt must still end with or include \"pure black artwork on a pure white background, no grey, no gradient, maximum contrast, flat graphic design, print on demand ready\". Do not copy logos, slogans, characters, brand identifiers, or an evidence artwork's exact composition."""
 
 CONCEPT_SCHEMA: dict[str, Any] = {
     "type": "object",
@@ -279,6 +279,21 @@ def _call_model(client: Any, model: str, timeout: float, prompt: str, images: li
     return parsed, getattr(response, "id", None)
 
 
+# The phrase every concept must carry. It was "flat graphic design, no
+# background, transparent PNG, print on demand ready" until 2026-08-13, taken
+# from the owner's proven Etsy prompt -- but tested against a real generator that
+# day it does nothing: image models have no alpha channel, bake a background in
+# regardless, and the first render came back black artwork on a black ground.
+# Unusable on a light garment, invisible on a dark one.
+#
+# An explicit white ground is honoured by every generator and keys out cleanly in
+# post, which is where transparency actually has to happen.
+POD_SUFFIX = (
+    "pure black artwork on a pure white background, no grey, no gradient, "
+    "maximum contrast, flat graphic design, print on demand ready"
+)
+
+
 def _validate_concepts(payload: dict[str, Any]) -> None:
     concepts = payload.get("concepts")
     if not isinstance(concepts, list) or len(concepts) != 10:
@@ -286,7 +301,7 @@ def _validate_concepts(payload: dict[str, Any]) -> None:
     numbers = [item.get("concept_number") for item in concepts if isinstance(item, dict)]
     if numbers != list(range(1, 11)):
         raise VintageResearchError("Research concepts must be numbered 1 through 10 in order.")
-    suffix = "flat graphic design, no background, transparent PNG, print on demand ready"
+    suffix = POD_SUFFIX
     for item in concepts:
         if suffix.lower() not in str(item.get("prompt") or "").lower():
             raise VintageResearchError(
