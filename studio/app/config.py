@@ -84,14 +84,6 @@ class Settings(BaseSettings):
     app_port: int = Field(default=8000, ge=1, le=65535)
     debug: bool = False
 
-    session_secret: str = ""
-    login_url: str = "https://admin.shirtfaced.wtf/login"
-
-    @property
-    def auth_enabled(self) -> bool:
-        """Whether requests are checked."""
-        return bool(self.session_secret)
-
     @field_validator("database_url")
     @classmethod
     def _require_psycopg_driver(cls, value: str) -> str:
