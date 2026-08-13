@@ -5,8 +5,9 @@ import { chromium } from 'playwright';
 
 const ROOT='docs/research/vintage-market-evidence';
 const SEED=`${ROOT}/requests/next100-candidate-ids.txt`;
-const OUT=`${ROOT}/batches/ebay-sold-next100-browser-2026-08-13.jsonl`;
-const TARGET=100;
+const TARGET=Number(process.env.VINTAGE_TARGET||15);
+const BATCH_TAG=process.env.VINTAGE_BATCH_TAG||new Date().toISOString().replace(/[:.]/g,'-');
+const OUT=`${ROOT}/batches/ebay-sold-checkpoint-${BATCH_TAG}.jsonl`;
 const CONCURRENCY=Number(process.env.VINTAGE_CONCURRENCY||6);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 
@@ -60,4 +61,4 @@ await browser.close();
 if(rows.length!==TARGET) throw new Error(`Only collected ${rows.length}/${TARGET} unique verified sold listings from ${candidateIds.length} unseen seeded candidates`);
 rows.sort((a,b)=>a.listing_id.localeCompare(b.listing_id));
 await writeFile(OUT,rows.map(r=>JSON.stringify(r)).join('\n')+'\n');
-console.log(JSON.stringify({added:rows.length,out:OUT,existing_before:seen.size,unseen_seed:candidateIds.length},null,2));
+console.log(JSON.stringify({added:rows.length,out:OUT,existing_before:seen.size,unseen_seed:candidateIds.length,batch_tag:BATCH_TAG},null,2));
