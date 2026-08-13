@@ -258,8 +258,10 @@ export function VintageResearchBench(): React.JSX.Element {
         <div className={card}>
           <LabelSmall>Run these yourself, then paste the result back</LabelSmall>
           <ParagraphXSmall>
-            {String(prepared.evidence_images.length)} images selected. Open them, paste them into
+            {String(prepared.evidence_images.length)} images selected. Save them, paste them into
             the model you already pay for with the prompt below, then bring the JSON back.
+            Right-click or long-press to save — they deliberately do not open in a new tab, because
+            a blocked one loses everything prepared here.
           </ParagraphXSmall>
           <div className={css({ display: "flex", gap: "6px", overflowX: "auto", margin: "8px 0" })}>
             {prepared.evidence_images.map((image) => (
