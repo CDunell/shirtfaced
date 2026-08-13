@@ -4,20 +4,11 @@ Status: IDEA BANK — NOT APPROVED
 Date: 13 August 2026  
 Scope: Concrete participation, content, commerce, packaging and cultural activation seeds
 
-This file is deliberately broader than the approved launch plan. Nothing here becomes strategy merely because it is documented. Ideas must pass audience-fit, effort, brand-fit and timing gates before production.
+## Governance
 
-## Selection rule
+Nothing here becomes strategy, sequencing or rollout policy merely because it is documented. Each idea remains an option until explicitly approved by the project owner.
 
-A useful SHIRTFACED activation should normally be:
-
-- understandable in seconds
-- low-friction for a mid-20s to late-30s Australian audience
-- funny or interesting even without a purchase
-- recognisable as SHIRTFACED behaviour rather than generic social marketing
-- capable of producing a photograph, story, object or interaction worth sharing
-- compatible with the documentary world rather than replacing it
-
-Avoid scavenger hunts, arbitrary passwords, forced exclusivity, juvenile participation mechanics and anything requiring the audience to work harder than the payoff deserves.
+Where an idea needs software, data, fulfilment or operational capability that belongs to an already approved system, that capability can be built in advance even if the activation itself has not yet been approved to run.
 
 ---
 
@@ -50,7 +41,7 @@ Saturday morning SHIRTFACED publishes:
 
 People can tag or submit the surviving mate: servo coffee, couch, footy training, Bunnings, balcony, Uber, takeaway breakfast.
 
-Selected submissions become a weekly documentary collage only with permission.
+Selected submissions can become a documentary collage with permission.
 
 Purpose: let the audience extend the documentary universe with almost no participation burden.
 
@@ -58,7 +49,7 @@ Purpose: let the audience extend the documentary universe with almost no partici
 
 ## 3. The Official Last One
 
-Recurring Friday-night post:
+Friday-night post:
 
 > THIS IS YOUR OFFICIAL LAST ONE.
 
@@ -90,19 +81,19 @@ Purpose: participation plus original cultural material.
 
 ## 5. Incident Numbers
 
-Each major campaign/night can receive a permanent incident number:
+Each campaign/night can receive a permanent incident number:
 
 `INCIDENT 0001`
 
 The same number can connect photography, motion, garment, packaging and archive entries.
 
-Purpose: create memory and continuity across the brand without requiring consumers to understand lore beforehand.
+Purpose: create memory and continuity across the brand.
 
 ---
 
 ## 6. The Alibi Department
 
-A simple site generator asks:
+A site generator asks:
 
 - where were you?
 - who were you with?
@@ -114,13 +105,13 @@ Example:
 
 > REASON FOR DELAY: ASSISTING GARY WITH LOCATING HIS PHONE.
 
-Purpose: useful entertainment that people can send directly to mates.
+Purpose: useful entertainment people can send directly to mates.
 
 ---
 
 ## 7. Poor Decisions Hotline
 
-A real voicemail line with no live operator. The greeting can change on Fridays.
+A voicemail line with no live operator. The greeting can change on Fridays.
 
 Example:
 
@@ -130,7 +121,7 @@ With explicit permission, selected anonymous messages can become original audio 
 
 Purpose: original community audio and a recognisable brand object.
 
-Operational gate: privacy, consent and moderation process required before launch.
+Implementation requirement: privacy, consent and moderation handling.
 
 ---
 
@@ -155,11 +146,9 @@ Purpose: repeatable visual language anchored to the BIG NIGHT world.
 
 ## 9. The 11:57 Photo
 
-Every selected Friday at 11:57pm, publish one documentary photograph from an Australian night. No campaign explanation required.
+Publish one documentary photograph from an Australian night at 11:57pm when this property is used.
 
 Purpose: build a recurring photographic property with a specific timestamp.
-
-Do not force weekly publication if the photograph is not good enough.
 
 ---
 
@@ -178,29 +167,25 @@ Purpose: physical brand artifact worth keeping or photographing.
 
 ## 11. Emergency Mate
 
-At an appropriate future customer stage, checkout may optionally allow a customer to nominate an “emergency mate.”
+Checkout can optionally allow a customer to nominate an “emergency mate.”
 
-This must not become spam. A later activation could contact the nominated person only where consent and messaging rules permit.
-
-Example concept:
+Possible message:
 
 > DAVO LISTED YOU AS HIS EMERGENCY MATE. UNFORTUNATELY HE'S BOUGHT ANOTHER SHIRT.
 
 Purpose: referral behaviour expressed through the brand world rather than generic refer-a-friend language.
 
-Operational gate: consent/privacy/legal review.
+Implementation requirement: consent, privacy and messaging-law handling.
 
 ---
 
 ## 12. The One That Got Away
 
-An unreleased design appears naturally in documentary photography. It is not announced or linked.
+An unreleased design appears naturally in documentary photography without announcement or link.
 
-If people independently ask about it, that becomes evidence for possible production.
+Audience reaction can be used as evidence for product interest.
 
-Purpose: test product desire before explicitly selling the product.
-
-Rule: do not manufacture fake comments or pretend demand exists.
+Purpose: product discovery embedded in the world.
 
 ---
 
@@ -217,7 +202,7 @@ Examples:
 - takeaway receipt
 - Gary's dignity
 
-Objects can reveal photographs, short clips, incident references or eventually products.
+Objects can reveal photographs, short clips, incident references or products.
 
 Purpose: turn documentary details into an explorable archive.
 
@@ -243,17 +228,15 @@ Purpose: low-friction recurring participation.
 
 Celebrate the person who holds everyone's shit, finds the phone, orders the Uber and gets everyone home.
 
-Audience may nominate theirs. At customer scale, selected nominees can receive an unexpected product or reward.
+Audience can nominate theirs. Selected nominees can receive product or another approved reward.
 
-Purpose: broaden the BIG NIGHT cast beyond the loudest or most cooked person and create a positive mate-recognition mechanic.
+Purpose: broaden the BIG NIGHT cast beyond the loudest or most cooked person.
 
 ---
 
 ## 16. Night Shift
 
-Document the people working while everyone else is out: bartender, servo worker, kebab shop worker, cleaner, nurse finishing shift, driver or other late-night worker where access and consent are appropriate.
-
-These are documentary portraits, not influencer collaborations.
+Document people working while everyone else is out: bartender, servo worker, kebab shop worker, cleaner, nurse finishing shift, driver or other late-night worker where access and consent are appropriate.
 
 Purpose: widen the Australian-night world and give it more humanity.
 
@@ -261,19 +244,19 @@ Purpose: widen the Australian-night world and give it more humanity.
 
 ## 17. Registered Bad Influence
 
-Future referral mechanic. The customer is not a “brand ambassador.” They become a:
+Referral mechanic concept. The customer becomes a:
 
 > REGISTERED BAD INFLUENCE
 
-After a defined number of genuine mate purchases, they receive a physical object unavailable for ordinary sale.
+A defined mate-purchase threshold can trigger a physical object unavailable for ordinary sale.
 
-Purpose: reward social influence with earned status rather than percentage-off spam.
+Purpose: reward social influence with earned status rather than generic percentage-off language.
 
 ---
 
 ## 18. The Recovery Kit
 
-Rare surprise insert/order package for Saturday delivery or campaign use.
+Surprise insert/order package.
 
 Potential contents: practical recovery items, sticker, small printed artifact and voucher where legally/operationally appropriate.
 
@@ -281,7 +264,7 @@ Exterior:
 
 > OPEN AFTER MAKING THINGS WORSE.
 
-Purpose: unexpected unboxing with real utility.
+Purpose: unexpected unboxing with utility.
 
 ---
 
@@ -293,15 +276,15 @@ Where returned/exchanged garments are legally and operationally suitable for res
 
 with a numbered inspection card.
 
-Purpose: convert an otherwise boring operational state into brand language.
+Purpose: convert an operational state into brand language.
 
-Gate: hygiene, consumer-law, disclosure and fulfilment review.
+Implementation requirement: hygiene, consumer-law, disclosure and fulfilment handling.
 
 ---
 
 ## 20. The Fucking Group Photo
 
-A carousel deliberately recreates the universal failed group-photo sequence:
+A carousel recreates the universal failed group-photo sequence:
 
 1. someone missing
 2. eyes closed
@@ -309,19 +292,13 @@ A carousel deliberately recreates the universal failed group-photo sequence:
 4. someone moves
 5. one unexpectedly excellent photograph
 
-Product remains incidental.
-
-Purpose: carousel-native documentary comedy based on recognition rather than a captioned joke.
+Purpose: carousel-native documentary comedy based on recognition.
 
 ---
 
 # The Department of Poor Decisions
 
 Status: umbrella concept — NOT APPROVED.
-
-A potentially useful organising device is a fictional bureaucratic layer around the BIG NIGHT world:
-
-> SHIRTFACED DEPARTMENT OF POOR DECISIONS
 
 Possible departments:
 
@@ -335,8 +312,6 @@ Possible departments:
 - Complaints Department
 - Office of the Designated Adult
 
-This is not intended to become a novelty sub-brand or dominate garments. Its value is as an occasional deadpan administrative layer across touchpoints.
-
 Possible translations:
 
 - campaign: `INCIDENT REPORT 0047`
@@ -349,21 +324,21 @@ Possible translations:
 - shipping: `TRANSFERRED`
 - sold out: `CASE CLOSED`
 
-Constraint: use sparingly. The documentary world remains primary. If every touchpoint becomes a joke, the system becomes novelty merch.
+Whether and how heavily this layer is used remains an open creative decision.
 
 ---
 
-# Larger reserve activations
+# Larger activation concepts
 
 ## The SHIRTFACED Amnesty
 
-At sufficient scale, accept embarrassing/obsolete novelty shirts for a defined weekend in exchange for controlled SHIRTFACED credit. Photograph surrendered garments as evidence and send textiles through an appropriate reuse/recycling partner.
+Accept embarrassing/obsolete novelty shirts for a defined weekend in exchange for controlled SHIRTFACED credit. Photograph surrendered garments as evidence and send textiles through an appropriate reuse/recycling partner.
 
 Potential closing statement:
 
 > 347 OFFENCES AGAINST CLOTHING. NO CHARGES LAID.
 
-This requires economics, logistics and recycling-partner planning before approval.
+Requires economics, logistics and recycling-partner planning.
 
 ## The Morning-After Billboard
 
@@ -373,69 +348,43 @@ One documentary aftermath image. Tiny SHIRTFACED mark. Minimal copy such as:
 
 > GOOD MORNING, CHAMPION.
 
-The media timing itself follows the BIG NIGHT story arc.
-
 ## The 100-Mate Photo
 
-At genuine community scale, assemble 100 ordinary customers/mates for a formal club-style group photograph. One conspicuous empty chair is labelled GARY.
+Assemble 100 ordinary customers/mates for a formal club-style group photograph. One conspicuous empty chair is labelled GARY.
 
-Participants receive a numbered print. A garment may commemorate the event.
-
-Purpose: produce a real physical event and a long-lived hero image rather than a conventional influencer activation.
+Participants receive a numbered print. A garment can commemorate the event.
 
 ---
 
-# Long-horizon concept: The Night Register
+# The Night Register
 
-Status: strategic seed — NOT APPROVED.
+Status: concept integrated into `10-shirtfaced-ownership-graph.md`.
 
-Every SHIRTFACED garment could eventually carry a small unique identifier, for example:
+Every SHIRTFACED garment carries a unique identifier such as:
 
 `SF-0001847`
 
-The owner may optionally attach one photograph and one sentence to that garment record.
+The owner can attach photographs, dates, places, sentences and mates to that garment record through YOUR NIGHTS.
 
 Example:
 
 > SF-0001847 — Brisbane, 2:06am. We were supposed to be getting an Uber.
 
-Over time this could form an anonymous, consent-based visual archive of Australian nights searchable by broad dimensions such as city, year, incident or garment.
-
-Potential future state:
-
-> 48,219 NIGHTS ON RECORD.
-
-The strategic value is not blockchain, resale speculation or artificial scarcity. The number connects a physical garment to a growing cultural archive.
-
-If ever pursued, required design work includes:
-
-- privacy and consent model
-- moderation
-- image rights
-- identifier generation
-- transfer/resale behaviour
-- deletion requests
-- geographic privacy
-- storage and cost
-- abuse controls
-
-The Night Register should not be built until there is enough customer participation to justify the system.
+The supporting infrastructure belongs to the approved pre-customer Ownership Graph build. Exact public archive behaviour, privacy defaults and presentation remain open until explicitly approved.
 
 ---
 
-# Evaluation gate
+# Idea evaluation record
 
-Before promoting any idea from this bank to an approved activation, record:
+Before executing an idea, capture the practical facts needed to plan it:
 
-1. audience behaviour required
-2. value to the participant
+1. audience action
+2. participant value
 3. asset requirements
 4. engineering requirements
 5. fulfilment requirements
 6. legal/privacy requirements
-7. cost ceiling
-8. success signal
-9. failure signal
-10. stop condition
+7. cost
+8. measurement
 
-No idea advances because it merely sounds good in a brainstorm.
+This is planning information, not an approval gate. Approval comes from the project owner.
