@@ -43,7 +43,7 @@ source** — this audit is reaffirming those, not discovering them fresh. The ne
 
 ## Read this before touching the KEEP count
 
-**A 344-concept "KEEP" list is not a production queue — it's a filtered library.**
+**A 350-concept "KEEP" list is not a production queue — it's a filtered library.**
 The brand-drift complaint that triggered this audit ("carpark cricket, cooked
 sausages, dads, bad parking, karaoke, wheelie bins") was never really about any
 single concept failing the desirability test in isolation. Almost all of them
@@ -55,29 +55,29 @@ esky/gazebo/BBQ mate-group scene, shopping trolley, wheelie bin) as their engine
 Stacked together in a range, individually-fine concepts read as a themed novelty
 pack.
 
-**Recommended device caps for the actual production queue** (not enforced in the
-KEEP/REWORK/RETIRE marks below, which judge each concept on its own merits — apply
-this as a second filter when you build the queue):
-- **Mobility scooter as punchline:** 6 live concepts do this (#47, #135, #162,
-  #215, plus B/headwear don't touch it). Pick one — #215 NICE RIG is the strongest
-  execution (studio automotive photography, no rider-as-joke risk) — and retire
-  the rest from the near-term queue even though they individually pass.
-- **Bird-vs-human or bird-only standoff:** #83, #94, #116, #133, #141, #145,
-  #148, #184, #223, #230, #236 — eleven concepts. Several already carry source
-  notes like "species need not be Australian" / "avoid Australian-species
-  dependence," which is the document itself flagging the same risk. Keep 2-3 with
-  the strongest, least-generic treatment (#133 The Great Ballet, #141 Public
-  Enemy) and shelve the rest regardless of individual pass/fail.
-- **Esky/gazebo/BBQ mate-group scenes:** #13, #36, #39, #51, #199, #222, #235 —
-  seven concepts sharing near-identical staging (mates + BBQ/gazebo + something
-  going wrong). Individually fine; as a cluster it's the single biggest
-  contributor to the "novelty pack" read. Keep 2, not 7.
-- **Shopping trolley:** #37, #50, #65, #160, #218 — five. Keep 1-2.
+**Device caps applied to the production queue** (this actually is enforced in
+the KEEP/REWORK marks below now — corrected from an earlier draft where this
+prose didn't match the per-item verdicts):
+- **Mobility scooter as punchline:** #47, #79, #135, #162 marked REWORK for this
+  reason; #215 NICE RIG kept as the strongest execution (studio automotive
+  photography, no rider-as-joke risk).
+- **Bird-vs-human or bird-only standoff:** #83, #94, #116, #145, #148, #184,
+  #223, #230, #236 marked REWORK; #133 The Great Ballet and #141 Public Enemy
+  kept as the strongest, least-generic treatments. Eleven concepts total.
+- **Esky/gazebo/BBQ mate-group scenes:** #117, #199, #222, #235 marked REWORK
+  for near-duplicate staging. #13, #36, #39, #51 share the same setting but
+  were judged individually distinct enough to keep as-is — this cluster wasn't
+  thinned as hard as the other three; revisit if the queue still reads BBQ-heavy.
+- **Shopping trolley:** #37, #50, #65, #160, #218 — all five marked REWORK.
+  No trolley concept currently survives into the queue as marked; that's a
+  legitimate outcome, not an oversight.
 
-None of the above are marked REWORK/RETIRE below on their own merits — flagging
-them here is the actual point of "concept curation" the reset asked for. A hard
-per-concept pass/fail test doesn't catch a repetition problem; only looking at
-the shape of the whole queue does.
+Everything not listed above is marked REWORK/RETIRE below on its own merits —
+these four bullets are the *only* REWORK calls driven by repetition rather than
+the concept's own execution. Flagging repetition is the actual point of
+"concept curation" the reset asked for — a hard per-concept pass/fail test
+doesn't catch a repetition problem; only looking at the shape of the whole
+queue does.
 
 ## THE MINOR PREMIERS
 
@@ -96,6 +96,11 @@ subject this document already ruled out, independently and before that image
 existed. Flagging this plainly rather than quietly reconciling it — that mockup
 exists in the repo and is committed, but per this library's own standing guardrail
 it shouldn't go to production as currently framed.
+
+**Resolved 2026-08-13 by the owner: the ibis mockup stays.** This is an explicit,
+deliberate exception to #78 and #109's standing retirement, not a reversal of the
+underlying rule — future ibis/wildlife-shorthand concepts are still governed by
+the guardrail above unless a similar explicit call is made.
 
 ---
 
