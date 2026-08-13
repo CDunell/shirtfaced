@@ -160,3 +160,12 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/deploy-site.sh'
+
+      # Runs after everything is live. A green deploy has repeatedly meant
+      # nothing: images 400'd behind a correct listing count, research was
+      # unusable behind rendering benches, an endpoint returned 400 while its
+      # page was being described. This walks the chain a person actually uses
+      # and fails the deploy if any link is broken, so the check does not
+      # depend on anyone remembering to look.
+      - name: Smoke the vintage chain
+        run: python studio/scripts/smoke_vintage.py --base https://studio.shirtfaced.wtf
