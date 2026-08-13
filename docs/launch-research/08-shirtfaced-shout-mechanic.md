@@ -1,169 +1,153 @@
 # SHIRTFACED — The Shirtfaced Shout
 
-Status: Future ownership mechanic  
+Status: Product/activation concept — build-ready infrastructure, activation timing not yet approved  
 Date: 13 August 2026  
-Scope: Low-friction recurring ownership ritual for customers
+Scope: Low-friction recurring ownership ritual linked to numbered garments
+
+## Governance
+
+Only project-owner approvals become rules. Recommendations in this document are options unless explicitly approved.
+
+The infrastructure needed to support this mechanic is part of the pre-customer build where it overlaps with the approved numbered-garment ownership system.
 
 ---
 
 # 1. Concept
 
-Every eligible SHIRTFACED order includes a unique SHOUT number.
+Every SHIRTFACED garment has its permanent SF garment number. A SHOUT can target one number, a range, suffix, production run, campaign cohort or another defined group.
 
-Example:
+Examples:
 
-`SHOUT #00481`
+`SF 00481`
 
-At a defined cadence, SHIRTFACED publishes one number. The owner of that number receives a defined reward.
+`SF 01400–01499`
 
-The default reward concept is the next eligible product/drop at no charge, but the exact reward must be commercially and legally approved before launch.
+The selected owner receives a defined reward or consequence.
+
+Possible rewards include product, credit, free shipping, access or another approved benefit.
 
 ---
 
 # 2. Why it exists
 
-The mechanic should:
+The mechanic can:
 
 - make ownership persist beyond checkout
-- create a reason to retain packaging/order inserts
-- give existing customers a recurring reason to check the brand
+- make garment numbers meaningful after purchase
+- give customers a recurring reason to check the brand
 - create early-number provenance without fake exclusivity
 - work nationally
 - require effectively zero effort from the customer
 
-This is not a lottery-style mechanic to be improvised casually. Promotion law, terms, accounting and fulfilment must be checked before implementation.
+Promotion law, terms, accounting and fulfilment must be handled correctly before any prize-style activation goes live.
 
 ---
 
 # 3. Customer experience
 
-## At fulfilment
+The garment already carries its SF number through the ownership system.
 
-Customer receives a physical or digital SHOUT number.
+A SHOUT publication could be:
 
-Example insert:
+`THIS WEEK'S SHOUT: SF 00481`
 
-`SHOUT #00481`
+or:
 
-Optional supporting line:
+`CHECK YOUR TAG. SF 01400–01499. YOU'RE ON THE SHOUT.`
 
-`KEEP THIS.`
-
-Do not overexplain on the card if the website/order email already contains the rules.
-
-## At draw/publication
-
-SHIRTFACED publishes:
-
-`THIS WEEK'S SHOUT: #00481`
-
-The customer follows the published claim process.
+The customer's claimed account can verify ownership automatically.
 
 ---
 
 # 4. System requirements
 
-Before launch, define:
+Build support for:
 
-- unique number generation
-- order-to-number mapping
-- duplicate prevention
-- customer lookup
-- eligibility rules
-- claim verification
-- claim deadline
-- reward type
-- stock treatment
-- refund/return interaction
-- cancellation handling
+- unique garment number generation
+- garment-to-owner mapping
+- campaign/run/range querying
+- eligibility rules configurable by admin
+- selection/audit history
+- reward assignment
+- claim or automatic fulfilment state
+- refund/return/cancellation interaction
+- customer notification
 - privacy treatment
-- terms and conditions
-- Australian trade-promotion legal review if required
+- admin audit log
+- terms/promotion metadata where required
 
-The mapping must be internal and auditable.
+The mapping must be internal, auditable and tied to the same garment identity used by YOUR SHIT.
 
 ---
 
-# 5. Suggested data model
+# 5. Data model extension
 
-Minimum fields:
+Possible fields/entities:
 
-- `shout_number`
-- `order_id`
-- `customer_id`
-- `issued_at`
-- `order_status`
-- `eligible`
+- `shout_event_id`
+- `selection_type`
+- `selection_criteria`
+- `garment_id`
+- `owner_account_id`
 - `selected_at`
+- `notified_at`
 - `claimed_at`
 - `reward_id`
 - `fulfilment_status`
+- `eligibility_snapshot`
+- `audit_metadata`
 
-Do not expose customer identity publicly by default.
-
----
-
-# 6. Cadence
-
-Do not begin with a weekly promise unless operational capacity and legal treatment are confirmed.
-
-Recommended rollout:
-
-## Phase 1 — pilot
-
-- issue numbers to a small defined order cohort
-- run one controlled SHOUT event
-- validate claim and fulfilment process
-
-## Phase 2 — recurring
-
-Only after the pilot works:
-
-- define a stable cadence
-- automate number assignment
-- automate customer verification where practical
-- integrate publication scheduling into the marketing engine
+Do not duplicate the master garment number in a separate numbering system unless explicitly approved.
 
 ---
 
-# 7. Creative extensions
+# 6. Activation variants
 
-Only after the base mechanic proves understandable:
+Possible variants:
 
-- Gary's Shout
-- number-ending event, e.g. all eligible numbers ending in a specified suffix
+- single garment number
+- number range
+- suffix event
 - first-customer anniversary call-back
-- historic low-number stories
-- product-specific SHOUT rounds
+- production-run event
+- campaign-specific event
+- Gary's Shout
+- historic low-number recognition
 
-Do not constantly change the mechanic. Recognition depends on a stable core rule.
+These are options, not locked cadence or reward rules.
 
 ---
 
-# 8. Measurement
+# 7. Pre-customer validation
 
-Track:
+Validate the system before customer one:
 
-- percentage of issued numbers successfully mapped
-- claim completion rate
-- repeat site visits from existing customers where measurable
+- deterministic selection
+- no duplicate/ambiguous garment IDs
+- correct current-owner resolution
+- transfer handling
+- return/refund handling
+- notification flow
+- reward fulfilment
+- audit replay
+- admin override/support path
+- legal terms attachment where needed
+
+Validation is a readiness requirement, not a reason to defer building the capability.
+
+---
+
+# 8. Measurement once used
+
+Track where relevant:
+
+- notification delivery
+- reward claim/fulfilment
+- repeat site visits
 - direct traffic around SHOUT publication
 - customer posts showing numbers
 - support burden
 - cost per reward
-- repeat purchase behaviour among numbered customers
+- repeat purchase behaviour among selected cohorts
 
----
-
-# 9. Go / no-go gate
-
-Do not launch until:
-
-- real order volume exists
-- fulfilment can reliably issue unique numbers
-- legal/promotion treatment is confirmed
-- claim process is tested end-to-end
-- reward economics are acceptable
-- customer-service handling is documented
-
-This is a customer-stage mechanic, not a zero-audience launch tactic.
+No cadence, reward value or activation date is approved by this document alone.
