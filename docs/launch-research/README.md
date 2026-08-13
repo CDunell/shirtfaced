@@ -3,83 +3,65 @@
 Status: Active index  
 Updated: 13 August 2026
 
-This directory contains the launch, discovery and activation strategy for SHIRTFACED.
+This directory contains launch, discovery, activation and ownership-system material for SHIRTFACED.
 
-## Governing sequence
+## Governance
 
-1. `02-launch-sequencing-and-first-30-days.md` — zero-audience launch, publishing baseline and measurement gates
-2. `03-day-zero-infrastructure-decisions.md` — infrastructure decisions required before launch
-3. `04-corteiz-mechanics-and-shirtfaced-translation.md` — what to retain from Corteiz-style brand behaviour and what not to copy
-4. `05-shirtfaced-activation-library.md` — concrete low-friction activation bank
-5. `06-we-lost-gary-campaign-plan.md` — first narrative activation campaign plan
-6. `07-friday-operating-rhythm.md` — recurring Friday-night / Saturday-morning publishing behaviour
-7. `08-shirtfaced-shout-mechanic.md` — future customer ownership and reward mechanic
-8. `09-activation-idea-bank.md` — unapproved creative activation bank, Department of Poor Decisions framework, reserve stunts and Night Register seed
+Only decisions explicitly approved by the project owner are project rules.
 
-## Operating hierarchy
+Assistant-generated recommendations, priorities, gates, sequencing and “best use” language are proposals only unless explicitly approved. Documentation does not convert a recommendation into policy.
 
-When documents appear to conflict, use this order:
+### Approved ownership-system directive
 
-1. existing SHIRTFACED creative source-of-truth and brand constraints
-2. first-30-day launch sequencing while the account remains in zero-audience discovery mode
-3. Friday operating rhythm after or within the limits of the launch test
-4. one activation mechanic at a time
-5. customer-stage mechanics only after real customers and operating systems exist
-6. idea-bank concepts only after explicit approval and evaluation
+Build the complete numbered-garment ownership/social system before customers arrive so customer one can use the full intended capability from day one.
 
-## Locked strategic correction
+That includes the infrastructure for:
 
-SHIRTFACED will not copy youth-streetwear activation mechanics literally.
+- permanent garment numbers
+- garment claiming/accounts
+- provenance/archive
+- mates
+- nights/memories
+- ownership transfer
+- garment-number targeting/reward mechanics
 
-The useful lesson from Corteiz is that brand behaviour can itself become recognisable and shareable.
+Engineering implementation can be sequenced internally, but approved capability is not to be deferred merely because customers do not yet exist.
 
-SHIRTFACED translation:
+---
 
-> belonging through recognition, not exclusivity through effort.
+## Library
 
-Do not introduce map hunts, arbitrary passwords, 3am-only buying, fake scarcity or elaborate puzzle mechanics unless later audience evidence explicitly supports higher-friction participation.
+- `02-launch-sequencing-and-first-30-days.md` — zero-audience publishing and discovery plan
+- `03-day-zero-infrastructure-decisions.md` — infrastructure decisions around launch
+- `04-corteiz-mechanics-and-shirtfaced-translation.md` — Corteiz case-study translation and idea source
+- `05-shirtfaced-activation-library.md` — concrete activation concepts
+- `06-we-lost-gary-campaign-plan.md` — plannable We Lost Gary campaign concept
+- `07-friday-operating-rhythm.md` — proposed recurring Friday/Saturday content system
+- `08-shirtfaced-shout-mechanic.md` — numbered-garment Shout mechanic and infrastructure
+- `09-activation-idea-bank.md` — broad creative idea bank
+- `10-shirtfaced-ownership-graph.md` — approved ownership/social system direction and conceptual architecture
 
-## Current priority
+## Status interpretation
 
-Build and test:
+Use these labels consistently:
 
-- Friday Knock-Off
-- The Morning After
-- We Lost Gary
-- low-cost packaging behaviour such as Explain Yourself once fulfilment exists
+- **APPROVED DIRECTION** — explicitly confirmed by the project owner
+- **PLAN / CONCEPT** — documented and plannable, but not automatically approved for execution
+- **IDEA BANK** — retained creative seed only
+- **TECHNICAL / LEGAL REQUIREMENT** — implementation constraint arising from security, privacy, law, platform or manufacturing reality; not a creative preference
 
-Hold until customers exist:
+If a document contains language that looks like a rule but is not traceable to an explicit project-owner decision or a genuine technical/legal requirement, treat it as a proposal and correct the document.
 
-- Mates Rates
-- Gary's Shout
-- The Last One
-- The Shirtfaced Shout
+## Current approved strategic distinction from the Corteiz discussion
 
-Idea bank / not approved:
+Use Corteiz as a seed for distinctive brand behaviour, not as a literal execution template for SHIRTFACED's older Australian audience.
 
-- National Gary Register
-- Proof of Life
-- Australian Nightlife Census
-- Incident Numbers
-- Alibi Department
-- Poor Decisions Hotline
-- Receipt of Events
-- 11:57 Photo
-- Mate Insurance
-- Emergency Mate
-- The One That Got Away
-- Lost Property
-- Sunday Tribunal
-- The Designated Adult
-- Night Shift
-- Registered Bad Influence
-- Recovery Kit
-- Previously Involved
-- The Fucking Group Photo
-- Department of Poor Decisions
-- SHIRTFACED Amnesty
-- Morning-After Billboard
-- 100-Mate Photo
-- The Night Register
+The working strategic idea is belonging through recognition rather than asking people to perform high-friction youth-streetwear rituals.
 
-The activation library and idea bank are backlogs, not instructions to run everything. `09-activation-idea-bank.md` is explicitly non-governing until individual concepts are promoted through the evaluation gate.
+Specific activation choices still require project-owner approval.
+
+## Idea-bank status
+
+The activation library and idea bank preserve ideas so they are not lost. Inclusion does not approve production, rollout order, cadence, reward, spend or timing.
+
+The ownership graph is different: the direction to build the complete system ready for customer one is explicitly approved.
