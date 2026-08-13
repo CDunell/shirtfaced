@@ -14,6 +14,7 @@ This directory contains the launch, discovery and activation strategy for SHIRTF
 5. `06-we-lost-gary-campaign-plan.md` — first narrative activation campaign plan
 6. `07-friday-operating-rhythm.md` — recurring Friday-night / Saturday-morning publishing behaviour
 7. `08-shirtfaced-shout-mechanic.md` — future customer ownership and reward mechanic
+8. `09-activation-idea-bank.md` — unapproved creative activation bank, Department of Poor Decisions framework, reserve stunts and Night Register seed
 
 ## Operating hierarchy
 
@@ -24,6 +25,7 @@ When documents appear to conflict, use this order:
 3. Friday operating rhythm after or within the limits of the launch test
 4. one activation mechanic at a time
 5. customer-stage mechanics only after real customers and operating systems exist
+6. idea-bank concepts only after explicit approval and evaluation
 
 ## Locked strategic correction
 
@@ -53,4 +55,31 @@ Hold until customers exist:
 - The Last One
 - The Shirtfaced Shout
 
-The activation library is a backlog, not an instruction to run everything.
+Idea bank / not approved:
+
+- National Gary Register
+- Proof of Life
+- Australian Nightlife Census
+- Incident Numbers
+- Alibi Department
+- Poor Decisions Hotline
+- Receipt of Events
+- 11:57 Photo
+- Mate Insurance
+- Emergency Mate
+- The One That Got Away
+- Lost Property
+- Sunday Tribunal
+- The Designated Adult
+- Night Shift
+- Registered Bad Influence
+- Recovery Kit
+- Previously Involved
+- The Fucking Group Photo
+- Department of Poor Decisions
+- SHIRTFACED Amnesty
+- Morning-After Billboard
+- 100-Mate Photo
+- The Night Register
+
+The activation library and idea bank are backlogs, not instructions to run everything. `09-activation-idea-bank.md` is explicitly non-governing until individual concepts are promoted through the evaluation gate.
