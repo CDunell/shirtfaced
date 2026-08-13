@@ -9,13 +9,11 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, RedirectResponse
-from starlette.middleware.base import BaseHTTPMiddleware
+from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 
 from app import __version__
-from app.config import PROJECT_ROOT, Settings, get_settings
+from app.config import PROJECT_ROOT, get_settings
 from app.routes import (
     api,
     archive_files,
@@ -33,34 +31,9 @@ from app.routes import (
     vintage_evidence,
 )
 from app.routes import range as design_range
-from app.security import SESSION_COOKIE, verify_session_token
 from app.web import mount_interface
 
 logger = logging.getLogger(__name__)
-
-UNAUTHENTICATED_PATHS = frozenset({"/health", "/ready"})
-
-
-class RequireAdminSession(BaseHTTPMiddleware):
-    """Let through only requests carrying a session admin signed."""
-
-    def __init__(self, application: FastAPI, settings: Settings) -> None:
-        super().__init__(application)
-        self._settings = settings
-
-    async def dispatch(self, request: Request, call_next):  # type: ignore[no-untyped-def]
-        if request.url.path in UNAUTHENTICATED_PATHS:
-            return await call_next(request)
-
-        email_address = verify_session_token(
-            request.cookies.get(SESSION_COOKIE), self._settings.session_secret
-        )
-        if email_address:
-            return await call_next(request)
-
-        if request.url.path.startswith("/api/"):
-            return JSONResponse({"detail": "Not signed in."}, status_code=401)
-        return RedirectResponse(f"{self._settings.login_url}?next={request.url}", status_code=307)
 
 
 def _social_assets_root() -> Path | None:
@@ -81,15 +54,6 @@ def create_app() -> FastAPI:
         version=__version__,
         debug=settings.debug,
     )
-
-    if settings.auth_enabled:
-        application.add_middleware(RequireAdminSession, settings=settings)  # type: ignore[arg-type]
-        logger.info("Requiring an admin session on every request.")
-    else:
-        logger.warning(
-            "SESSION_SECRET is not set, so requests are NOT authenticated. This is "
-            "only safe while Studio is reachable from this machine alone."
-        )
 
     application.include_router(health.router)
     application.include_router(api.router)

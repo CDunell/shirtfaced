@@ -4,8 +4,9 @@
     {
       "name": "storefront",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "3200"],
-      "port": 3200
+      "runtimeArgs": ["run", "dev"],
+      "port": 3200,
+      "autoPort": true
     },
     {
       "name": "studio-web",
@@ -20,6 +21,18 @@
         "5173"
       ],
       "port": 5173
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "admin", "run", "dev", "--", "--port", "3300"],
+      "port": 3300
+    },
+    {
+      "name": "scribbleandjot",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8990", "--bind", "127.0.0.1", "--directory", "C:/scribbleandjot"],
+      "port": 8990
     }
   ]
 }
