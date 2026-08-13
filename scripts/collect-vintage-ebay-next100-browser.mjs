@@ -22,20 +22,31 @@ const context=await browser.newContext({viewport:{width:1440,height:1200},locale
 const page=await context.newPage();
 const rows=[];
 
+function idsFromHrefs(hrefs){
+ return [...new Set(hrefs.map(h=>String(h||'').match(/ebay\.com\/itm\/(?:[^/?#]+\/)?(\d{9,15})/i)?.[1]).filter(Boolean))];
+}
+
 async function searchIds(brand,era,pageno){
- const q=encodeURIComponent(`vintage ${brand} ${era} shirt t-shirt hoodie cap`);
- const url=`https://www.ebay.com/sch/i.html?_nkw=${q}&LH_Sold=1&LH_Complete=1&_pgn=${pageno}&_ipg=120`;
- await page.goto(url,{waitUntil:'domcontentloaded',timeout:30000}).catch(()=>null);
- await sleep(1000);
- const hrefs=await page.locator('a[href*="/itm/"]').evaluateAll(as=>as.map(a=>a.href)).catch(()=>[]);
- return [...new Set(hrefs.map(h=>h.match(/\/itm\/(?:[^/?#]+\/)?(\d{9,15})/)?.[1]).filter(Boolean))];
+ const start=(pageno-1)*10;
+ const query=`site:ebay.com/itm \"This listing sold on\" vintage ${brand} ${era} (shirt OR tee OR hoodie OR cap)`;
+ const google=`https://www.google.com/search?q=${encodeURIComponent(query)}&num=10&start=${start}&filter=0`;
+ await page.goto(google,{waitUntil:'domcontentloaded',timeout:30000}).catch(()=>null);
+ await sleep(900);
+ let hrefs=await page.locator('a').evaluateAll(as=>as.map(a=>a.href)).catch(()=>[]);
+ let ids=idsFromHrefs(hrefs);
+ if(ids.length) return ids;
+ const bing=`https://www.bing.com/search?q=${encodeURIComponent(query)}&count=10&first=${start+1}`;
+ await page.goto(bing,{waitUntil:'domcontentloaded',timeout:30000}).catch(()=>null);
+ await sleep(900);
+ hrefs=await page.locator('a').evaluateAll(as=>as.map(a=>a.href)).catch(()=>[]);
+ return idsFromHrefs(hrefs);
 }
 
 async function verify(id,brand,tradition,era){
  const p=await context.newPage();
  try{
   await p.goto(`https://www.ebay.com/itm/${id}`,{waitUntil:'domcontentloaded',timeout:30000});
-  await sleep(900);
+  await sleep(700);
   const body=(await p.locator('body').innerText({timeout:5000}).catch(()=>''))||'';
   if(/pardon our interruption|security measure|access denied|captcha/i.test(body)) return null;
   if(!/(This listing sold on|This item was sold|\bSOLD\b|Sold item)/i.test(body)) return null;
@@ -44,14 +55,15 @@ async function verify(id,brand,tradition,era){
   const soldDate=body.match(/(?:This listing sold on|This item was sold on)\s+([^\n.]+)/i)?.[1]?.trim()||null;
   const priceRaw=body.match(/(?:US |AU |C )?\$([0-9,]+(?:\.\d{2})?)/)?.[1];
   const imgs=await p.locator('img').evaluateAll(imgs=>imgs.map(i=>i.currentSrc||i.src).filter(u=>/ebayimg\.com\/images\/g\//i.test(u||''))).catch(()=>[]);
-  return {id:`EBAY-BROWSER-${id}`,marketplace:'ebay',listing_id:id,sold:true,title,brand,tradition,era_claim:era,sold_price:priceRaw?Number(priceRaw.replace(/,/g,'')):null,currency:/AU \$/.test(body)?'AUD':/C \$/.test(body)?'CAD':'USD',image_count:new Set(imgs).size||null,sold_date:soldDate,source_url:`https://www.ebay.com/itm/${id}`,retrieved:new Date().toISOString().slice(0,10),collector:'ebay-playwright-sold-verified'};
+  return {id:`EBAY-BROWSER-${id}`,marketplace:'ebay',listing_id:id,sold:true,title,brand,tradition,era_claim:era,sold_price:priceRaw?Number(priceRaw.replace(/,/g,'')):null,currency:/AU \$/.test(body)?'AUD':/C \$/.test(body)?'CAD':'USD',image_count:new Set(imgs).size||null,sold_date:soldDate,source_url:`https://www.ebay.com/itm/${id}`,retrieved:new Date().toISOString().slice(0,10),collector:'indexed-search-plus-ebay-playwright-verified'};
  }catch{return null;} finally{await p.close();}
 }
 
 for(const [brand,tradition] of brands){
  for(const era of eras){
-  for(let pg=1;pg<=8 && rows.length<TARGET;pg++){
+  for(let pg=1;pg<=10 && rows.length<TARGET;pg++){
    const ids=await searchIds(brand,era,pg);
+   console.log(`DISCOVERY ${brand} ${era} p${pg}: ${ids.length}`);
    for(const id of ids){
     if(rows.length>=TARGET) break;
     if(seen.has(id)) continue;
