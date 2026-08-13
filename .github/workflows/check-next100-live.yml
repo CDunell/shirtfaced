@@ -24,7 +24,9 @@ jobs:
             echo "=== AGENT $agent ==="
             cat "$d/state.json" 2>/dev/null || echo 'no state'
             echo "enabled=$([ -f "$d/enabled" ] && echo yes || echo no)"
-            echo "attempted=$(wc -l < "$d/attempted-ids.txt" 2>/dev/null || echo 0)"
+            pid=$(python3 -c "import json; print(json.load(open('$d/pid.json')).get('pid',''))" 2>/dev/null || true)
+            echo "pid=$pid alive=$([ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && echo yes || echo no)"
+            echo "attempted_v2=$(wc -l < "$d/attempted-ids-v2.txt" 2>/dev/null || echo 0)"
             echo "discovered=$(wc -l < "$d/discovered-ids.txt" 2>/dev/null || echo 0)"
             echo "buffered=$(wc -l < "$d/checkpoint-buffer.jsonl" 2>/dev/null || echo 0)"
             echo '--- log tail ---'
