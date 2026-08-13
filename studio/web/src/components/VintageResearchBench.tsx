@@ -26,6 +26,8 @@ import { PageTitle } from "./chrome";
 
 import {
   ApiError,
+  importManualRun,
+  prepareManualRun,
   fetchDesignConceptTargets,
   fetchResearchRun,
   fetchResearchRuns,
@@ -33,6 +35,7 @@ import {
   startResearchRun,
   updateResearchConcept,
   type DesignConceptTarget,
+  type ManualPrepared,
   type ResearchConcept,
   type ResearchRun,
 } from "../api/client";
@@ -59,6 +62,11 @@ export function VintageResearchBench(): React.JSX.Element {
   // Attempt number per concept, so the button reports what it created
   // rather than leaving a click with nothing to show for it.
   const [queued, setQueued] = useState<Record<number, number>>({});
+  // The manual path: prepare hands over the prompt and the images, you run both
+  // passes in a subscription UI, then paste the JSON back. No metered API call
+  // on either side of it.
+  const [prepared, setPrepared] = useState<ManualPrepared | null>(null);
+  const [pasted, setPasted] = useState("");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -100,6 +108,47 @@ export function VintageResearchBench(): React.JSX.Element {
         setBusy(false);
       });
   }, [query, era, tradition, imageLimit]);
+
+  const prepare = useCallback(() => {
+    setError(null);
+    const limit = Number.parseInt(imageLimit, 10);
+    prepareManualRun({
+      query,
+      era,
+      tradition,
+      image_limit: Number.isFinite(limit) ? limit : 16,
+    })
+      .then((result) => {
+        setPrepared(result);
+      })
+      .catch((cause: unknown) => {
+        setError(cause instanceof ApiError ? cause.message : "Could not select evidence.");
+      });
+  }, [query, era, tradition, imageLimit]);
+
+  const importPasted = useCallback(() => {
+    setError(null);
+    let concepts: unknown[];
+    try {
+      const parsed: unknown = JSON.parse(pasted);
+      concepts = Array.isArray(parsed)
+        ? parsed
+        : ((parsed as { concepts?: unknown[] }).concepts ?? []);
+    } catch {
+      setError("That is not valid JSON.");
+      return;
+    }
+    importManualRun(concepts, prepared)
+      .then((created) => {
+        setRun(created);
+        setRuns((previous) => [created, ...previous]);
+        setPasted("");
+        setPrepared(null);
+      })
+      .catch((cause: unknown) => {
+        setError(cause instanceof ApiError ? cause.message : "Those concepts were refused.");
+      });
+  }, [pasted, prepared]);
 
   const applyConcept = useCallback(
     (number: number, body: { status?: string; prompt?: string }) => {
@@ -196,9 +245,64 @@ export function VintageResearchBench(): React.JSX.Element {
         />
       </div>
 
-      <Button onClick={start} disabled={busy} isLoading={busy}>
-        {busy ? "Running both passes — this takes a while" : "Run both passes"}
-      </Button>
+      <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap" })}>
+        <Button onClick={prepare} kind={BUTTON_KIND.primary}>
+          Prepare manual run — no API cost
+        </Button>
+        <Button onClick={start} disabled={busy} isLoading={busy} kind={BUTTON_KIND.secondary}>
+          {busy ? "Running both passes — this takes a while" : "Run both passes (billed)"}
+        </Button>
+      </div>
+
+      {prepared ? (
+        <div className={card}>
+          <LabelSmall>Run these yourself, then paste the result back</LabelSmall>
+          <ParagraphXSmall>
+            {String(prepared.evidence_images.length)} images selected. Open them, paste them into
+            the model you already pay for with the prompt below, then bring the JSON back.
+          </ParagraphXSmall>
+          <div className={css({ display: "flex", gap: "6px", overflowX: "auto", margin: "8px 0" })}>
+            {prepared.evidence_images.map((image) => (
+              <a key={image.image_url} href={image.image_url} target="_blank" rel="noreferrer">
+                <img
+                  src={image.image_url}
+                  alt={image.filename}
+                  className={css({
+                    width: "72px",
+                    height: "72px",
+                    objectFit: "contain",
+                    background: theme.colors.backgroundSecondary,
+                    borderRadius: "6px",
+                  })}
+                />
+              </a>
+            ))}
+          </div>
+          <Textarea value={prepared.pass1_prompt} rows={6} readOnly />
+          <div className={css({ marginTop: "6px" })}>
+            <Textarea value={prepared.pass2_prompt} rows={3} readOnly />
+          </div>
+          <LabelSmall overrides={{ Block: { style: { marginTop: "10px" } } }}>
+            Paste the concepts JSON
+          </LabelSmall>
+          <Textarea
+            value={pasted}
+            rows={6}
+            placeholder='{"concepts": [...]}'
+            onChange={(event) => {
+              setPasted(event.currentTarget.value);
+            }}
+          />
+          <Button
+            size={SIZE.compact}
+            onClick={importPasted}
+            disabled={pasted.trim().length === 0}
+            overrides={{ BaseButton: { style: { marginTop: "8px" } } }}
+          >
+            Import concepts
+          </Button>
+        </div>
+      ) : null}
 
       {runs.length > 0 ? (
         <div className={css({ margin: "14px 0" })}>

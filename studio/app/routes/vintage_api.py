@@ -32,8 +32,10 @@ from app.domain.errors import StudioError
 from app.services.vintage_research import (
     VintageResearchError,
     execute_research,
+    import_run,
     list_runs,
     load_run,
+    prepare_manual_run,
     update_concept,
 )
 
@@ -92,6 +94,45 @@ def runs_create(body: RunRequest, settings: SettingsDep) -> dict[str, Any]:
             image_urls=None,
             image_limit=body.image_limit,
         )
+    except VintageResearchError as error:
+        raise _handled(error) from error
+
+
+class ManualImport(BaseModel):
+    """Concepts produced by hand, plus the selection they were produced from."""
+
+    concepts: list[dict[str, Any]]
+    prepared: dict[str, Any] = Field(default_factory=dict)
+
+
+@router.post("/manual/prepare")
+def manual_prepare(body: RunRequest) -> dict[str, Any]:
+    """The prompt and the images, with no model call and no API spend.
+
+    Selection is identical to POST /runs -- the same images in the same order.
+    The difference is who runs the passes: this hands them to a person with a
+    subscription instead of billing an API key for capability already paid for.
+    """
+    try:
+        return prepare_manual_run(
+            filters={
+                "query": body.query,
+                "brand": body.brand,
+                "era": body.era,
+                "tradition": body.tradition,
+            },
+            listing_ids=body.listing_ids or None,
+            image_limit=body.image_limit,
+        )
+    except VintageResearchError as error:
+        raise _handled(error) from error
+
+
+@router.post("/manual/import", status_code=201)
+def manual_import(body: ManualImport) -> dict[str, Any]:
+    """Store hand-run concepts as an ordinary run, held to the same validation."""
+    try:
+        return import_run({"concepts": body.concepts}, body.prepared)
     except VintageResearchError as error:
         raise _handled(error) from error
 

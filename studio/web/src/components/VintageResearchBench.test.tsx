@@ -34,7 +34,7 @@ function run(overrides: Partial<ResearchRun> = {}): ResearchRun {
 /** Routes by URL: a blanket stub would hide which endpoint produced a result. */
 function stubRoutes(runs: ResearchRun[], onPost?: (url: string, body: unknown) => void) {
   const fetchMock = vi.fn((url: string, init?: RequestInit) => {
-    if (init?.method === "POST") {
+    if (init?.method === "POST" && !url.includes("/manual/")) {
       // init.body is always the JSON string the client sends; narrowed so the
       // parse is not reading a Blob or a stream's default stringification.
       const raw = typeof init.body === "string" ? init.body : null;
@@ -53,6 +53,27 @@ function stubRoutes(runs: ResearchRun[], onPost?: (url: string, body: unknown) =
                 }
               : concept({ status: "approved" }),
           ),
+      });
+    }
+    if (url.includes("/manual/prepare")) {
+      onPost?.(url, undefined);
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            pass1_prompt: "You are a print on demand design research expert.",
+            pass2_prompt: "Make these 10 t-shirt design prompts more detailed.",
+            evidence_filters: {},
+            evidence_listing_ids: ["406847192188"],
+            evidence_images: [
+              {
+                listing_id: "406847192188",
+                filename: "image-01.jpg",
+                image_url: "/vintage-evidence/image/406847192188/image-01.jpg",
+              },
+            ],
+          }),
       });
     }
     if (url.includes("design-concepts")) {
@@ -149,6 +170,35 @@ describe("VintageResearchBench", () => {
     });
     // vintage_design creates the DesignAttempt; vintage_research only records it.
     expect(posted.at(-1)?.url).toContain("/api/vintage-design/runs/");
+  });
+
+  it("offers a manual path that costs nothing, alongside the billed one", async () => {
+    stubRoutes([run()]);
+
+    renderWithBase(<VintageResearchBench />);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Prepare manual run/ })).toBeInTheDocument();
+    });
+    // The API path stays available, and says plainly that it bills.
+    expect(screen.getByRole("button", { name: /billed/ })).toBeInTheDocument();
+  });
+
+  it("hands over the prompt and the selected images without calling a model", async () => {
+    const posted: { url: string; body: unknown }[] = [];
+    stubRoutes([run()], (url, body) => posted.push({ url, body }));
+
+    renderWithBase(<VintageResearchBench />);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Prepare manual run/ })).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByRole("button", { name: /Prepare manual run/ }));
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText('{"concepts": [...]}')).toBeInTheDocument();
+    });
+    expect(posted.at(-1)?.url).toContain("/manual/prepare");
+    // Nothing went to the endpoint that spends money.
+    expect(posted.every((p) => !p.url.endsWith("/runs"))).toBe(true);
   });
 
   it("hides the pipeline while a concept is still pending", async () => {

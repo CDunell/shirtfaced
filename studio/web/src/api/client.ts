@@ -818,6 +818,14 @@ export interface ResearchRun {
   concepts: ResearchConcept[];
 }
 
+export interface ManualPrepared {
+  pass1_prompt: string;
+  pass2_prompt: string;
+  evidence_filters: Record<string, string>;
+  evidence_listing_ids: string[];
+  evidence_images: { listing_id: string; filename: string; image_url: string }[];
+}
+
 export interface PipelineResult {
   design_concept_id: string;
   attempt_id: string;
@@ -862,6 +870,38 @@ export async function startResearchRun(
   signal?: AbortSignal,
 ): Promise<ResearchRun> {
   return request<ResearchRun>("/api/vintage-research/runs", "POST", signal, body);
+}
+
+/**
+ * The prompt and the images, with no model call.
+ *
+ * Same selection as startResearchRun -- same images, same order, same cap. The
+ * difference is who runs the passes: this hands them to a person with a
+ * subscription rather than billing an API key for what is already paid for.
+ */
+export async function prepareManualRun(
+  body: {
+    query?: string;
+    brand?: string;
+    era?: string;
+    tradition?: string;
+    image_limit?: number;
+  },
+  signal?: AbortSignal,
+): Promise<ManualPrepared> {
+  return request<ManualPrepared>("/api/vintage-research/manual/prepare", "POST", signal, body);
+}
+
+/** Store hand-run concepts as an ordinary run, validated the same way. */
+export async function importManualRun(
+  concepts: unknown[],
+  prepared: ManualPrepared | null,
+  signal?: AbortSignal,
+): Promise<ResearchRun> {
+  return request<ResearchRun>("/api/vintage-research/manual/import", "POST", signal, {
+    concepts,
+    prepared: prepared ?? {},
+  });
 }
 
 export async function updateResearchConcept(

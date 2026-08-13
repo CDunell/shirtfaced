@@ -506,3 +506,80 @@ def mark_pipeline(run_id: str, concept_number: int, payload: dict[str, Any]) -> 
     concept["pipeline"] = payload
     concept["updated_at"] = dt.datetime.now(dt.UTC).isoformat()
     save_run(run)
+
+
+def prepare_manual_run(
+    *,
+    filters: dict[str, Any],
+    listing_ids: list[str] | None = None,
+    image_limit: int = DEFAULT_IMAGE_LIMIT,
+) -> dict[str, Any]:
+    """Everything a person needs to run both passes themselves, and no API call.
+
+    ``execute_research`` sends the evidence bytes to a metered endpoint twice.
+    The owner already pays for OpenAI, Gemini and Anthropic subscriptions, and
+    an API key bills separately from all three -- so the cheap path is to hand
+    the same prompt and the same images to a person, who runs them in a UI they
+    have already paid for and pastes the result back through ``import_run``.
+
+    Selection is identical to the automated path: the same ``select_images``,
+    the same breadth-first order, the same cap. Only the model call is absent.
+    """
+    listings, images = select_images(
+        filters=filters,
+        listing_ids=listing_ids,
+        image_urls=None,
+        image_limit=image_limit,
+    )
+    return {
+        "pass1_prompt": PASS_1_PROMPT,
+        "pass2_prompt": PASS_2_PROMPT,
+        "evidence_filters": filters,
+        "evidence_listing_ids": [item["listing_id"] for item in listings],
+        "evidence_listings": listings,
+        "evidence_images": [_serialisable_image(image) for image in images],
+    }
+
+
+def import_run(payload: dict[str, Any], prepared: dict[str, Any]) -> dict[str, Any]:
+    """Store concepts produced by hand as a run of the ordinary shape.
+
+    Validated exactly as a model response is -- ten concepts, numbered one to
+    ten in order, each carrying the POD phrase. Work done in a chat window is
+    not held to a lower standard than work done through the API, or the review
+    screen starts lying about what it is showing.
+    """
+    _validate_concepts(payload)
+    now = dt.datetime.now(dt.UTC)
+    concepts = [
+        {
+            "concept_number": item["concept_number"],
+            "title": item.get("title", ""),
+            "idea": item.get("idea", ""),
+            "pass1_prompt": item.get("prompt", ""),
+            "pass2_prompt": item.get("prompt", ""),
+            "edited_prompt": None,
+            "status": "pending",
+            "review_note": "",
+            "pipeline": None,
+        }
+        for item in payload["concepts"]
+    ]
+    return save_run(
+        {
+            "id": str(uuid.uuid4()),
+            "status": "completed",
+            "source": "manual",
+            "created_at": now.isoformat(),
+            "completed_at": now.isoformat(),
+            "evidence_filters": prepared.get("evidence_filters", {}),
+            "evidence_listing_ids": prepared.get("evidence_listing_ids", []),
+            "evidence_listings": prepared.get("evidence_listings", []),
+            "evidence_images": prepared.get("evidence_images", []),
+            "pass1": {"prompt": PASS_1_PROMPT, "version": PASS_1_VERSION, "output": payload},
+            "pass2": {"prompt": PASS_2_PROMPT, "version": PASS_2_VERSION, "output": payload},
+            "model": "manual",
+            "model_settings": {},
+            "concepts": concepts,
+        }
+    )
