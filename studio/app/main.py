@@ -28,6 +28,7 @@ from app.routes import (
     printing,
     social,
     vintage_agents,
+    vintage_design,
     vintage_evidence,
 )
 from app.routes import range as design_range
@@ -102,6 +103,7 @@ def create_app() -> FastAPI:
     application.include_router(email.router)
     application.include_router(vintage_evidence.router)
     application.include_router(vintage_agents.router)
+    application.include_router(vintage_design.router)
 
     social_assets = _social_assets_root()
     if social_assets is not None:
