@@ -82,7 +82,7 @@ def vintage_evidence_image(listing_id: str, filename: str) -> FileResponse:
 
 @router.get("/vintage-evidence")
 def vintage_evidence_page() -> HTMLResponse:
-    return HTMLResponse(_PAGE)
+    return HTMLResponse(_PAGE, headers={"Cache-Control": "no-store"})
 
 
 _PAGE = r'''<!doctype html>

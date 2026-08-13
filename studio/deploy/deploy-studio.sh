@@ -123,6 +123,20 @@ mkdir -p /home/ubuntu/shirtfaced-research/vintage-agents \
   /home/ubuntu/shirtfaced-research/vintage-agent-outbox \
   /home/ubuntu/shirtfaced-research/vintage-ebay-images
 
+# Collectors are detached child processes, so restarting Studio does not replace
+# their code. Stop enabled instances here and restart them through the API after
+# Studio is healthy, ensuring every deploy moves workers onto the current script.
+enabled_vintage_agents=()
+for agent_id in 1 2 3 4; do
+  agent_dir="/home/ubuntu/shirtfaced-research/vintage-agents/agent-$agent_id"
+  [ -f "$agent_dir/enabled" ] || continue
+  enabled_vintage_agents+=("$agent_id")
+  pid=$(python3 -c "import json; print(json.load(open('$agent_dir/pid.json')).get('pid',''))" 2>/dev/null || true)
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+  fi
+done
+
 say "Installing Social publisher timer"
 sudo install -m 0644 "$ROOT/deploy/shirtfaced-social-publisher.service" /etc/systemd/system/shirtfaced-social-publisher.service
 sudo install -m 0644 "$ROOT/deploy/shirtfaced-social-publisher.timer" /etc/systemd/system/shirtfaced-social-publisher.timer
@@ -137,6 +151,11 @@ PORT=${APP_PORT:-8010}
 for attempt in $(seq 1 30); do
   if curl -fsS -m 5 "http://127.0.0.1:$PORT/ready" >/dev/null 2>&1; then
     echo "Studio is ready on 127.0.0.1:$PORT."
+    for agent_id in "${enabled_vintage_agents[@]}"; do
+      curl -fsS -m 5 -X POST "http://127.0.0.1:$PORT/api/vintage-agents/$agent_id" \
+        -H 'content-type: application/json' -d '{"enabled":true}' >/dev/null
+      echo "Restarted vintage Agent $agent_id on the current worker script."
+    done
     exit 0
   fi
   sleep 2
