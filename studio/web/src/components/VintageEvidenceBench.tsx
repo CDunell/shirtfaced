@@ -226,7 +226,6 @@ export function VintageEvidenceBench(): React.JSX.Element {
             {record.source_url ? (
               <a
                 href={record.source_url}
-                target="_blank"
                 rel="noreferrer"
                 className={css({ fontSize: "12px", color: theme.colors.contentPrimary })}
               >

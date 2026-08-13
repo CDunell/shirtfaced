@@ -263,19 +263,19 @@ export function VintageResearchBench(): React.JSX.Element {
           </ParagraphXSmall>
           <div className={css({ display: "flex", gap: "6px", overflowX: "auto", margin: "8px 0" })}>
             {prepared.evidence_images.map((image) => (
-              <a key={image.image_url} href={image.image_url} target="_blank" rel="noreferrer">
-                <img
-                  src={image.image_url}
-                  alt={image.filename}
-                  className={css({
-                    width: "72px",
-                    height: "72px",
-                    objectFit: "contain",
-                    background: theme.colors.backgroundSecondary,
-                    borderRadius: "6px",
-                  })}
-                />
-              </a>
+              <img
+                key={image.image_url}
+                src={image.image_url}
+                alt={image.filename}
+                title={image.filename}
+                className={css({
+                  width: "150px",
+                  height: "150px",
+                  objectFit: "contain",
+                  background: theme.colors.backgroundSecondary,
+                  borderRadius: "6px",
+                })}
+              />
             ))}
           </div>
           <Textarea value={prepared.pass1_prompt} rows={6} readOnly />
