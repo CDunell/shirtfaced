@@ -1,6 +1,6 @@
-requested_at=2026-08-13T10:14:00+10:00
-target=100
+requested_at=2026-08-13T11:04:00+10:00
+target=15
 include_images=true
 manifest_count=true
-attempt=7
-collector=expanded-web-index-seeded-ebay-playwright-verified
+attempt=8
+collector=checkpoint-15-end-to-end
