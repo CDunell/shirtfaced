@@ -24,12 +24,7 @@ import { ProgressBar } from "baseui/progress-bar";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
 import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
-import {
-  ApiError,
-  getDesignThresholds,
-  scoreDesign,
-  type DesignScore,
-} from "../api/client";
+import { ApiError, getDesignThresholds, scoreDesign, type DesignScore } from "../api/client";
 
 function describe(cause: unknown): string {
   if (cause instanceof ApiError) return cause.message;
@@ -49,8 +44,12 @@ export function DesignBench(): React.JSX.Element {
 
   useEffect(() => {
     getDesignThresholds()
-      .then((thresholds) => { setCategoryCount(Object.keys(thresholds.categories).length); })
-      .catch(() => { setCategoryCount(null); });
+      .then((thresholds) => {
+        setCategoryCount(Object.keys(thresholds.categories).length);
+      })
+      .catch(() => {
+        setCategoryCount(null);
+      });
   }, []);
 
   const onFile = useCallback(async (file: File) => {
@@ -75,7 +74,8 @@ export function DesignBench(): React.JSX.Element {
     typeof measurements.print_coverage === "number" ? measurements.print_coverage : null;
   const assessed = result?.scoreCategories.length ?? 0;
   const failedGates = result?.hardGates.filter((gate) => gate.result === "fail").length ?? 0;
-  const untestedGates = result?.hardGates.filter((gate) => gate.result === "not_tested").length ?? 0;
+  const untestedGates =
+    result?.hardGates.filter((gate) => gate.result === "not_tested").length ?? 0;
 
   const statusTag = (status: string) =>
     status === "pass"
@@ -267,8 +267,7 @@ export function DesignBench(): React.JSX.Element {
                       </ParagraphXSmall>
                       <ParagraphXSmall margin={0} color={theme.colors.contentPrimary}>
                         {category.score.toFixed(1)}/{category.maximum}
-                        {belowFloor &&
-                          ` — below floor of ${String(category.minimumRequired)}`}
+                        {belowFloor && ` — below floor of ${String(category.minimumRequired)}`}
                       </ParagraphXSmall>
                     </div>
                   );
