@@ -56,6 +56,9 @@ export function VintageResearchBench(): React.JSX.Element {
   const [imageLimit, setImageLimit] = useState("16");
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [pipelineTarget, setPipelineTarget] = useState<Value>([]);
+  // Attempt number per concept, so the button reports what it created
+  // rather than leaving a click with nothing to show for it.
+  const [queued, setQueued] = useState<Record<number, number>>({});
 
   useEffect(() => {
     const controller = new AbortController();
@@ -119,8 +122,9 @@ export function VintageResearchBench(): React.JSX.Element {
       const target = pipelineTarget[0]?.id;
       if (!run || target === undefined) return;
       sendConceptToPipeline(run.id, number, String(target))
-        .then(() => {
+        .then((result) => {
           setError(null);
+          setQueued((previous) => ({ ...previous, [number]: result.attempt_number }));
         })
         .catch((cause: unknown) => {
           setError(cause instanceof ApiError ? cause.message : "Could not queue that concept.");
@@ -327,6 +331,11 @@ export function VintageResearchBench(): React.JSX.Element {
                 >
                   Send to design pipeline
                 </Button>
+                {queued[concept.concept_number] !== undefined ? (
+                  <Tag closeable={false} kind={TAG_KIND.positive}>
+                    Attempt {String(queued[concept.concept_number])} created
+                  </Tag>
+                ) : null}
               </div>
             ) : null}
           </article>

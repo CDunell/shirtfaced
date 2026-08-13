@@ -42,7 +42,17 @@ function stubRoutes(runs: ResearchRun[], onPost?: (url: string, body: unknown) =
       return Promise.resolve({
         ok: true,
         status: 200,
-        json: () => Promise.resolve(concept({ status: "approved" })),
+        json: () =>
+          Promise.resolve(
+            url.includes("/pipeline")
+              ? {
+                  design_concept_id: "c1",
+                  attempt_id: "a1",
+                  attempt_number: 3,
+                  state: "pending",
+                }
+              : concept({ status: "approved" }),
+          ),
       });
     }
     if (url.includes("design-concepts")) {
@@ -118,6 +128,27 @@ describe("VintageResearchBench", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Send to design pipeline" })).toBeInTheDocument();
     });
+  });
+
+  it("sends to the endpoint that creates the attempt, and says which", async () => {
+    const posted: { url: string; body: unknown }[] = [];
+    stubRoutes([run({ concepts: [concept({ status: "approved" })] })], (url, body) =>
+      posted.push({ url, body }),
+    );
+
+    renderWithBase(<VintageResearchBench />);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Send to design pipeline" })).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText("Design concept"));
+    await userEvent.click(await screen.findByText(/#7 Ibis/));
+    await userEvent.click(screen.getByRole("button", { name: "Send to design pipeline" }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Attempt 3 created/)).toBeInTheDocument();
+    });
+    // vintage_design creates the DesignAttempt; vintage_research only records it.
+    expect(posted.at(-1)?.url).toContain("/api/vintage-design/runs/");
   });
 
   it("hides the pipeline while a concept is still pending", async () => {

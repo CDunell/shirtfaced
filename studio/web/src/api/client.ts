@@ -818,6 +818,13 @@ export interface ResearchRun {
   concepts: ResearchConcept[];
 }
 
+export interface PipelineResult {
+  design_concept_id: string;
+  attempt_id: string;
+  attempt_number: number;
+  state: string;
+}
+
 export interface DesignConceptTarget {
   id: string;
   number: number;
@@ -871,14 +878,22 @@ export async function updateResearchConcept(
   );
 }
 
+/**
+ * Send an approved concept into the design pipeline.
+ *
+ * Hits vintage_design rather than vintage_research: that endpoint creates the
+ * DesignAttempt, having first checked the concept is approved, resolved the
+ * design concept and refused an empty prompt. The research service only records
+ * that it happened.
+ */
 export async function sendConceptToPipeline(
   runId: string,
   number: number,
   designConceptId: string,
   signal?: AbortSignal,
-): Promise<{ status: string }> {
-  return request<{ status: string }>(
-    `/api/vintage-research/runs/${runId}/concepts/${String(number)}/pipeline`,
+): Promise<PipelineResult> {
+  return request<PipelineResult>(
+    `/api/vintage-design/runs/${runId}/concepts/${String(number)}/pipeline`,
     "POST",
     signal,
     { design_concept_id: designConceptId },

@@ -9,6 +9,12 @@ Nothing here holds logic. ``vintage_research`` already owns retrieval,
 execution and persistence; these are the thin wrappers that let a browser
 reach them. The evidence listing keeps its existing endpoint in
 ``vintage_evidence``.
+
+Sending an approved concept to the design pipeline is deliberately absent:
+``vintage_design`` already does it, and does it properly -- it checks the
+concept is approved, resolves the design concept, refuses an empty prompt
+and creates the DesignAttempt. A wrapper here only recorded the intent and
+created nothing, which made the button look like it worked.
 """
 
 from __future__ import annotations
@@ -28,7 +34,6 @@ from app.services.vintage_research import (
     execute_research,
     list_runs,
     load_run,
-    mark_pipeline,
     update_concept,
 )
 
@@ -52,10 +57,6 @@ class ConceptUpdate(BaseModel):
     status: str | None = None
     prompt: str | None = None
     review_note: str | None = None
-
-
-class PipelineRequest(BaseModel):
-    design_concept_id: str
 
 
 def _handled(error: StudioError) -> HTTPException:
@@ -115,15 +116,6 @@ def concept_update(run_id: str, number: int, body: ConceptUpdate) -> dict[str, A
         )
     except VintageResearchError as error:
         raise _handled(error) from error
-
-
-@router.post("/runs/{run_id}/concepts/{number}/pipeline", status_code=202)
-def concept_to_pipeline(run_id: str, number: int, body: PipelineRequest) -> dict[str, str]:
-    try:
-        mark_pipeline(run_id, number, {"design_concept_id": body.design_concept_id})
-    except VintageResearchError as error:
-        raise _handled(error) from error
-    return {"status": "queued"}
 
 
 @router.get("/design-concepts")
