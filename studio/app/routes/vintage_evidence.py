@@ -21,12 +21,23 @@ def _root() -> Path:
 
 
 def _safe_listing_dir(listing_id: str) -> Path:
+    """The directory for one listing, or 400/404.
+
+    Traversal is already impossible before any path work: ``isdigit()`` admits
+    no slash, no dot, no separator, so ``root / listing_id`` is always a direct
+    child of root and cannot escape it.
+
+    Deliberately does NOT call ``resolve()``. A merged evidence root is built
+    from symlinks to more than one collector's tree, and resolving follows those
+    links out to their real location -- whose parents are not the root, so a
+    resolve-then-compare check rejects every legitimate image. That is not
+    hypothetical: it 400'd all 11,544 of them, the eBay ones included.
+    """
     if not listing_id.isdigit():
         raise HTTPException(status_code=400, detail="Invalid listing id")
-    root = _root()
-    candidate = (root / listing_id).resolve()
-    if root not in candidate.parents:
-        raise HTTPException(status_code=400, detail="Invalid path")
+    candidate = _root() / listing_id
+    if not candidate.is_dir():
+        raise HTTPException(status_code=404, detail="Listing not found")
     return candidate
 
 
@@ -86,8 +97,11 @@ def vintage_evidence_api() -> JSONResponse:
 def vintage_evidence_image(listing_id: str, filename: str) -> FileResponse:
     if Path(filename).name != filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
-    path = (_safe_listing_dir(listing_id) / filename).resolve()
-    if path.parent != _safe_listing_dir(listing_id) or not path.is_file():
+    # Same reasoning: the filename is already constrained to a bare name above,
+    # so joining it cannot escape the listing directory, and resolving would
+    # again break on a symlinked root.
+    path = _safe_listing_dir(listing_id) / filename
+    if not path.is_file():
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(path)
 
