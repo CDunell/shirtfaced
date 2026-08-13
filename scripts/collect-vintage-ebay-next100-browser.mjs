@@ -22,8 +22,35 @@ const context=await browser.newContext({viewport:{width:1440,height:1200},locale
 const page=await context.newPage();
 const rows=[];
 
-function idsFromHrefs(hrefs){
- return [...new Set(hrefs.map(h=>String(h||'').match(/ebay\.com\/itm\/(?:[^/?#]+\/)?(\d{9,15})/i)?.[1]).filter(Boolean))];
+function candidateStrings(value){
+ const out=new Set([String(value||'')]);
+ for(let i=0;i<3;i++){
+  for(const s of [...out]){try{out.add(decodeURIComponent(s));}catch{}}
+ }
+ for(const s of [...out]){
+  try{
+   const u=new URL(s);
+   for(const key of ['q','url','u','r','redir','redirect']){const v=u.searchParams.get(key); if(v) out.add(v);}
+  }catch{}
+ }
+ return [...out];
+}
+function idsFromValues(values){
+ const ids=[];
+ for(const value of values){
+  for(const s of candidateStrings(value)){
+   const m=s.match(/(?:https?:\/\/)?(?:www\.)?ebay\.com\/itm\/(?:[^/?#]+\/)?(\d{9,15})/i) || s.match(/ebay\.com%2Fitm%2F(?:[^%]+%2F)?(\d{9,15})/i);
+   if(m) ids.push(m[1]);
+  }
+ }
+ return [...new Set(ids)];
+}
+
+async function idsFromCurrentPage(){
+ const hrefs=await page.locator('a').evaluateAll(as=>as.map(a=>a.getAttribute('href')||a.href)).catch(()=>[]);
+ const html=await page.content().catch(()=> '');
+ const htmlMatches=[...html.matchAll(/(?:https?:\\?\/\\?\/)?(?:www\\?\.)?ebay\\?\.com\\?\/itm\\?\/(?:[^\"'<>?]+\\?\/)?(\d{9,15})/gi)].map(m=>m[1]);
+ return [...new Set([...idsFromValues(hrefs),...htmlMatches])];
 }
 
 async function searchIds(brand,era,pageno){
@@ -31,15 +58,13 @@ async function searchIds(brand,era,pageno){
  const query=`site:ebay.com/itm \"This listing sold on\" vintage ${brand} ${era} (shirt OR tee OR hoodie OR cap)`;
  const google=`https://www.google.com/search?q=${encodeURIComponent(query)}&num=10&start=${start}&filter=0`;
  await page.goto(google,{waitUntil:'domcontentloaded',timeout:30000}).catch(()=>null);
- await sleep(900);
- let hrefs=await page.locator('a').evaluateAll(as=>as.map(a=>a.href)).catch(()=>[]);
- let ids=idsFromHrefs(hrefs);
+ await sleep(700);
+ let ids=await idsFromCurrentPage();
  if(ids.length) return ids;
  const bing=`https://www.bing.com/search?q=${encodeURIComponent(query)}&count=10&first=${start+1}`;
  await page.goto(bing,{waitUntil:'domcontentloaded',timeout:30000}).catch(()=>null);
- await sleep(900);
- hrefs=await page.locator('a').evaluateAll(as=>as.map(a=>a.href)).catch(()=>[]);
- return idsFromHrefs(hrefs);
+ await sleep(700);
+ return idsFromCurrentPage();
 }
 
 async function verify(id,brand,tradition,era){
