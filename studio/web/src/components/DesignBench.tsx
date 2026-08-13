@@ -49,8 +49,8 @@ export function DesignBench(): React.JSX.Element {
 
   useEffect(() => {
     getDesignThresholds()
-      .then((thresholds) => setCategoryCount(Object.keys(thresholds.categories).length))
-      .catch(() => setCategoryCount(null));
+      .then((thresholds) => { setCategoryCount(Object.keys(thresholds.categories).length); })
+      .catch(() => { setCategoryCount(null); });
   }, []);
 
   const onFile = useCallback(async (file: File) => {
