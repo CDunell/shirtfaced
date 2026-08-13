@@ -17,7 +17,7 @@ jobs:
       - name: Inspect collector
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
-          D=/home/ubuntu/vintage-next100-31656617081
+          D=/home/ubuntu/vintage-next100-31656898276
           echo '=== STATUS ==='
           if [ -f "$D/exit.code" ]; then cat "$D/exit.code"; else echo RUNNING; fi
           echo '=== VERIFIED COUNT ==='
