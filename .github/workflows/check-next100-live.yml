@@ -1,5 +1,6 @@
 name: Check vintage checkpoint live
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -17,11 +18,16 @@ jobs:
       - name: Inspect collector
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
-          D=/home/ubuntu/vintage-next100-31656898276
-          echo '=== STATUS ==='
-          if [ -f "$D/exit.code" ]; then cat "$D/exit.code"; else echo RUNNING; fi
-          echo '=== VERIFIED COUNT ==='
-          grep -Ec '^[0-9]+/15 ' "$D/collector.log" 2>/dev/null || true
-          echo '=== LOG TAIL ==='
-          tail -80 "$D/collector.log" 2>/dev/null || true
+          root=/home/ubuntu/shirtfaced-research/vintage-agents
+          for agent in 1 2 3 4; do
+            d="$root/agent-$agent"
+            echo "=== AGENT $agent ==="
+            cat "$d/state.json" 2>/dev/null || echo 'no state'
+            echo "enabled=$([ -f "$d/enabled" ] && echo yes || echo no)"
+            echo "attempted=$(wc -l < "$d/attempted-ids.txt" 2>/dev/null || echo 0)"
+            echo "discovered=$(wc -l < "$d/discovered-ids.txt" 2>/dev/null || echo 0)"
+            echo "buffered=$(wc -l < "$d/checkpoint-buffer.jsonl" 2>/dev/null || echo 0)"
+            echo '--- log tail ---'
+            tail -60 "$d/agent.log" 2>/dev/null || true
+          done
           REMOTE
