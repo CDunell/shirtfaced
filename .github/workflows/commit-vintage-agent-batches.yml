@@ -1,0 +1,60 @@
+name: Commit vintage agent batches
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Pull completed 15-record batches
+        run: |
+          mkdir -p docs/research/vintage-market-evidence/batches
+          mkdir -p /tmp/vintage-agent-outbox
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-research/vintage-agent-outbox/ \
+            /tmp/vintage-agent-outbox/ || true
+          find /tmp/vintage-agent-outbox -maxdepth 1 -type f -name '*.jsonl' -print0 | while IFS= read -r -d '' f; do
+            lines=$(wc -l < "$f")
+            if [ "$lines" -ne 15 ]; then
+              echo "Skipping incomplete batch $f ($lines rows)"
+              continue
+            fi
+            cp "$f" docs/research/vintage-market-evidence/batches/
+          done
+      - name: Commit batches
+        id: commit
+        run: |
+          if [ -z "$(git status --porcelain -- docs/research/vintage-market-evidence/batches)" ]; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/research/vintage-market-evidence/batches
+          git commit -m 'add fully processed vintage agent checkpoints'
+          git pull --rebase origin main
+          git push
+          echo 'changed=true' >> "$GITHUB_OUTPUT"
+      - name: Archive committed outbox batches
+        if: steps.commit.outputs.changed == 'true'
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          root=/home/ubuntu/shirtfaced-research/vintage-agent-outbox
+          archive="$root/committed"
+          mkdir -p "$archive"
+          find "$root" -maxdepth 1 -type f -name '*.jsonl' -exec mv -t "$archive" {} +
+          REMOTE
