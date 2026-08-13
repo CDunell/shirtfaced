@@ -63,9 +63,6 @@ say "Syncing the element archive"
 ./.venv/bin/python -m app.cli sync-archive
 
 say "Importing design concepts"
-# The concept libraries are synced from the repository's docs/design by CI.
-# Idempotent like import-world: numbers are permanent, wording follows the
-# Markdown, statuses the workflow owns are kept, conflicts are reported.
 if [ -f docs/design/TSHIRT_CONCEPT_LIBRARY.md ]; then
   ./.venv/bin/python -m app.cli import-design-concepts docs/design/TSHIRT_CONCEPT_LIBRARY.md
 else
@@ -73,8 +70,6 @@ else
 fi
 
 say "Checking Social render assets"
-# Production Social rendering uses rasterized PNGs. SVGs remain alongside them as
-# editable/source assets, but GO must not depend on browser SVG rasterisation.
 SOCIAL_ROOT="$ROOT/public/social-assets/v3"
 required_social_assets=(
   light-corner-mark-4x5.png
@@ -98,10 +93,6 @@ done
 
 say "Building the interface"
 if [ -d web ]; then
-  # Build the production bundle against PNG overlays directly. Rewriting the
-  # minified bundle after Vite builds is brittle because generated JS may contain
-  # SVG strings unrelated to the runtime overlay lookup. The checkout is replaced
-  # by rsync on every deploy, so this production-only source rewrite is disposable.
   SOCIAL_ASSET_VERSION=$(date +%s)
   sed -i -E \
     "s#(/social-assets/v3/[^\"'\x60]+)\.svg#\1.png?v=${SOCIAL_ASSET_VERSION}#g" \
@@ -118,6 +109,19 @@ if [ -d web ]; then
 
   ( cd web && npm install --silent && npm run build --silent )
 fi
+
+say "Installing vintage agent Chromium runtime"
+if [ -d "$ROOT/worker_scripts" ]; then
+  (
+    cd "$ROOT/worker_scripts"
+    npm install --silent
+    sudo npx playwright install-deps chromium >/dev/null
+    npx playwright install chromium >/dev/null
+  )
+fi
+mkdir -p /home/ubuntu/shirtfaced-research/vintage-agents \
+  /home/ubuntu/shirtfaced-research/vintage-agent-outbox \
+  /home/ubuntu/shirtfaced-research/vintage-ebay-images
 
 say "Installing Social publisher timer"
 sudo install -m 0644 "$ROOT/deploy/shirtfaced-social-publisher.service" /etc/systemd/system/shirtfaced-social-publisher.service
