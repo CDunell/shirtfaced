@@ -163,8 +163,13 @@ adapter, not a new capability.
 
 ## 9. What is genuinely missing, shortest list
 
-1. **Nothing executes an attempt.** Either wire generation, or rename the state
-   so it stops reading as automatic.
+1. **Nothing executes an attempt** — and it should stay that way. The owner
+   holds paid subscriptions to OpenAI, Gemini and Anthropic; an API key bills
+   separately from all three, so wiring generation would charge twice for
+   something already owned. The manual hop is the cheap path, not a defect.
+   What it needs is to be *deliberate*: copy the prompt, generate in the
+   subscription UI, upload the result. Rename the state so it stops reading as
+   automatic, and consider local generation for volume.
 2. **Reference images do not reach generation** (§8).
 3. **The prompts sent are generic.** `PASS_1_PROMPT` asks for "the retro skate,
    surf and streetwear niche" at large. `docs/ARCHIVE_PROMPT_LIBRARY.md` holds
