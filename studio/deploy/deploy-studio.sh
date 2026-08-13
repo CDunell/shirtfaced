@@ -63,9 +63,6 @@ say "Syncing the element archive"
 ./.venv/bin/python -m app.cli sync-archive
 
 say "Importing design concepts"
-# The concept libraries are synced from the repository's docs/design by CI.
-# Idempotent like import-world: numbers are permanent, wording follows the
-# Markdown, statuses the workflow owns are kept, conflicts are reported.
 if [ -f docs/design/TSHIRT_CONCEPT_LIBRARY.md ]; then
   ./.venv/bin/python -m app.cli import-design-concepts docs/design/TSHIRT_CONCEPT_LIBRARY.md
 else
@@ -73,8 +70,6 @@ else
 fi
 
 say "Checking Social render assets"
-# Production Social rendering uses rasterized PNGs. SVGs remain alongside them as
-# editable/source assets, but GO must not depend on browser SVG rasterisation.
 SOCIAL_ROOT="$ROOT/public/social-assets/v3"
 required_social_assets=(
   light-corner-mark-4x5.png
@@ -98,10 +93,6 @@ done
 
 say "Building the interface"
 if [ -d web ]; then
-  # Build the production bundle against PNG overlays directly. Rewriting the
-  # minified bundle after Vite builds is brittle because generated JS may contain
-  # SVG strings unrelated to the runtime overlay lookup. The checkout is replaced
-  # by rsync on every deploy, so this production-only source rewrite is disposable.
   SOCIAL_ASSET_VERSION=$(date +%s)
   sed -i -E \
     "s#(/social-assets/v3/[^\"'\x60]+)\.svg#\1.png?v=${SOCIAL_ASSET_VERSION}#g" \
@@ -119,6 +110,40 @@ if [ -d web ]; then
   ( cd web && npm install --silent && npm run build --silent )
 fi
 
+mkdir -p /home/ubuntu/shirtfaced-research/vintage-agents \
+  /home/ubuntu/shirtfaced-research/vintage-agent-outbox \
+  /home/ubuntu/shirtfaced-research/vintage-ebay-images
+
+# Collectors import Playwright from this directory. Stop them before npm touches
+# node_modules; replacing dependencies under a live worker corrupts its runtime.
+enabled_vintage_agents=()
+for agent_id in 1 2 3 4; do
+  agent_dir="/home/ubuntu/shirtfaced-research/vintage-agents/agent-$agent_id"
+  [ -f "$agent_dir/enabled" ] || continue
+  enabled_vintage_agents+=("$agent_id")
+  pid=$(python3 -c "import json; print(json.load(open('$agent_dir/pid.json')).get('pid',''))" 2>/dev/null || true)
+  if [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null; then
+    kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
+  fi
+done
+vintage_recovery_marker=/home/ubuntu/shirtfaced-research/vintage-agents/.sold-evidence-html-v4
+if [ ! -f "$vintage_recovery_marker" ]; then
+  # The broken runtime marked the original pool attempted without collecting a
+  # record. Run every shard once on the repaired runtime to recover that work.
+  enabled_vintage_agents=(1 2 3 4)
+fi
+
+say "Installing vintage agent Chromium runtime"
+if [ -d "$ROOT/worker_scripts" ]; then
+  (
+    cd "$ROOT/worker_scripts"
+    npm install --silent
+    node -e "import('playwright').then(p => { if (!p.chromium) process.exit(1) })"
+    sudo npx playwright install-deps chromium >/dev/null
+    npx playwright install chromium >/dev/null
+  )
+fi
+
 say "Installing Social publisher timer"
 sudo install -m 0644 "$ROOT/deploy/shirtfaced-social-publisher.service" /etc/systemd/system/shirtfaced-social-publisher.service
 sudo install -m 0644 "$ROOT/deploy/shirtfaced-social-publisher.timer" /etc/systemd/system/shirtfaced-social-publisher.timer
@@ -133,6 +158,12 @@ PORT=${APP_PORT:-8010}
 for attempt in $(seq 1 30); do
   if curl -fsS -m 5 "http://127.0.0.1:$PORT/ready" >/dev/null 2>&1; then
     echo "Studio is ready on 127.0.0.1:$PORT."
+    for agent_id in "${enabled_vintage_agents[@]}"; do
+      ./.venv/bin/python -c \
+        "from app.services.vintage_agents import set_enabled; set_enabled($agent_id, True)"
+      echo "Restarted vintage Agent $agent_id on the current worker script."
+    done
+    touch "$vintage_recovery_marker"
     exit 0
   fi
   sleep 2

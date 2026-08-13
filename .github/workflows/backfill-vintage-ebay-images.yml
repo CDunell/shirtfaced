@@ -1,0 +1,96 @@
+name: Backfill vintage eBay listing images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/backfill-vintage-ebay-images-browser.mjs'
+      - 'docs/research/vintage-market-evidence/**/*.jsonl'
+      - 'docs/research/vintage-market-evidence/*.jsonl'
+      - '.github/workflows/backfill-vintage-ebay-images.yml'
+  workflow_dispatch:
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      REMOTE_RUN_DIR: /home/ubuntu/vintage-backfill-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Stage browser collector and evidence on Oracle
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            "mkdir -p '$REMOTE_RUN_DIR/docs/research/vintage-market-evidence' '$REMOTE_RUN_DIR/scripts'"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            scripts/backfill-vintage-ebay-images-browser.mjs \
+            ubuntu@${{ secrets.ORACLE_HOST }}:"$REMOTE_RUN_DIR/scripts/"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" \
+            docs/research/vintage-market-evidence/ \
+            ubuntu@${{ secrets.ORACLE_HOST }}:"$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/"
+      - name: Install browser runtime on Oracle
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "bash -s" <<REMOTE
+          set -euo pipefail
+          cd "$REMOTE_RUN_DIR"
+          test -f package.json || npm init -y >/dev/null 2>&1
+          npm install --silent playwright@1.55.0
+          sudo npx playwright install-deps chromium >/dev/null
+          npx playwright install chromium >/dev/null
+          REMOTE
+      - name: Start detached Chromium backfill on Oracle
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "bash -s" <<REMOTE
+          set -euo pipefail
+          mkdir -p /home/ubuntu/shirtfaced-research/vintage-ebay-images
+          cd "$REMOTE_RUN_DIR"
+          rm -f exit.code collector.log
+          nohup bash -lc '
+            VINTAGE_IMAGE_ROOT=/home/ubuntu/shirtfaced-research/vintage-ebay-images \
+            VINTAGE_MAX_IMAGES=12 \
+            VINTAGE_CONCURRENCY=6 \
+              node scripts/backfill-vintage-ebay-images-browser.mjs > collector.log 2>&1
+            echo \$? > exit.code
+          ' >/dev/null 2>&1 < /dev/null &
+          echo "browser collector launched"
+          REMOTE
+      - name: Wait for detached collector
+        run: |
+          for i in $(seq 1 200); do
+            status=$(ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=2 \
+              -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+              "if [ -f '$REMOTE_RUN_DIR/exit.code' ]; then cat '$REMOTE_RUN_DIR/exit.code'; else echo RUNNING; fi")
+            if [ "$status" != "RUNNING" ]; then
+              ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+                "cat '$REMOTE_RUN_DIR/collector.log'; cat /home/ubuntu/shirtfaced-research/vintage-ebay-images/manifest.json"
+              test "$status" = "0"
+              exit
+            fi
+            sleep 12
+          done
+          echo "collector did not finish before workflow poll limit" >&2
+          exit 1
+      - name: Manifest count
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'python3 - <<"PY"
+          import json, os
+          root="/home/ubuntu/shirtfaced-research/vintage-ebay-images"
+          manifest=os.path.join(root,"manifest.json")
+          data=json.load(open(manifest)) if os.path.exists(manifest) else {}
+          files=0
+          listings=0
+          for dirpath,_,names in os.walk(root):
+              imgs=[n for n in names if n.lower().endswith((".jpg",".jpeg",".png",".webp"))]
+              files += len(imgs)
+              if imgs:
+                  listings += 1
+          data["image_files_on_disk"] = files
+          data["listings_with_images_on_disk"] = listings
+          print(json.dumps(data, indent=2))
+          PY'

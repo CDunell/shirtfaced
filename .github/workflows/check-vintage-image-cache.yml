@@ -1,0 +1,56 @@
+name: Check vintage image cache
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/check-vintage-image-cache.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Count cached evidence images
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'python3 - <<"PY"
+          import json, os
+          root="/home/ubuntu/shirtfaced-research/vintage-ebay-images"
+          manifest=os.path.join(root,"manifest.json")
+          data=json.load(open(manifest)) if os.path.exists(manifest) else {}
+          listing_dirs=0
+          listings_with_images=0
+          image_files=0
+          source_kinds={}
+          if os.path.isdir(root):
+              for name in os.listdir(root):
+                  p=os.path.join(root,name)
+                  if not (name.isdigit() and os.path.isdir(p)):
+                      continue
+                  listing_dirs += 1
+                  images=[n for n in os.listdir(p) if n.lower().endswith((".jpg",".jpeg",".png",".webp"))]
+                  if images:
+                      listings_with_images += 1
+                      image_files += len(images)
+                  prov=os.path.join(p,"provenance.json")
+                  if os.path.exists(prov):
+                      try:
+                          for row in json.load(open(prov)):
+                              kind=row.get("source_kind","legacy")
+                              source_kinds[kind]=source_kinds.get(kind,0)+1
+                      except Exception:
+                          pass
+          print(json.dumps({
+              "manifest": data,
+              "listing_dirs_on_disk": listing_dirs,
+              "listings_with_images_on_disk": listings_with_images,
+              "image_files_on_disk": image_files,
+              "image_source_kinds": source_kinds,
+          }, indent=2))
+          PY'

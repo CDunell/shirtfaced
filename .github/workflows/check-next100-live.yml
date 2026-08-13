@@ -1,0 +1,35 @@
+name: Check vintage checkpoint live
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/check-next100-live.yml'
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Inspect collector
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          root=/home/ubuntu/shirtfaced-research/vintage-agents
+          for agent in 1 2 3 4; do
+            d="$root/agent-$agent"
+            echo "=== AGENT $agent ==="
+            cat "$d/state.json" 2>/dev/null || echo 'no state'
+            echo "enabled=$([ -f "$d/enabled" ] && echo yes || echo no)"
+            pid=$(python3 -c "import json; print(json.load(open('$d/pid.json')).get('pid',''))" 2>/dev/null || true)
+            echo "pid=$pid alive=$([ -n "$pid" ] && kill -0 "$pid" 2>/dev/null && echo yes || echo no)"
+            echo "attempted_v2=$(wc -l < "$d/attempted-ids-v2.txt" 2>/dev/null || echo 0)"
+            echo "discovered=$(wc -l < "$d/discovered-ids.txt" 2>/dev/null || echo 0)"
+            echo "buffered=$(wc -l < "$d/checkpoint-buffer.jsonl" 2>/dev/null || echo 0)"
+            echo '--- log tail ---'
+            tail -60 "$d/agent.log" 2>/dev/null || true
+          done
+          REMOTE

@@ -1,0 +1,33 @@
+name: Collect vintage eBay sold evidence
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Collect verified sold listings
+        run: node scripts/collect-vintage-ebay-sold.mjs
+      - name: Commit corpus growth
+        run: |
+          if [ -z "$(git status --porcelain -- docs/research/vintage-market-evidence/ebay-sold-auto.jsonl)" ]; then
+            echo 'No new verified sold listings'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/research/vintage-market-evidence/ebay-sold-auto.jsonl
+          git commit -m 'collect vintage eBay sold evidence'
+          git pull --rebase origin main
+          git push

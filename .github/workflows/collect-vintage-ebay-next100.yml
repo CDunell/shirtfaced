@@ -1,0 +1,99 @@
+name: Collect vintage eBay evidence checkpoints
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/research/vintage-market-evidence/requests/next100.txt'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: vintage-evidence-collector
+  cancel-in-progress: false
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    env:
+      REMOTE_RUN_DIR: /home/ubuntu/vintage-next100-${{ github.run_id }}
+      BATCH_FILE: ebay-sold-checkpoint-${{ github.run_id }}.jsonl
+      BUFFER_FILE: /home/ubuntu/shirtfaced-research/vintage-ebay-buffer.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Stage collector, image backfill and evidence on Oracle
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "mkdir -p '$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/batches' '$REMOTE_RUN_DIR/scripts' /home/ubuntu/shirtfaced-research"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" scripts/collect-vintage-ebay-next100-browser.mjs scripts/backfill-vintage-ebay-images-browser.mjs ubuntu@${{ secrets.ORACLE_HOST }}:"$REMOTE_RUN_DIR/scripts/"
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" docs/research/vintage-market-evidence/ ubuntu@${{ secrets.ORACLE_HOST }}:"$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/"
+      - name: Install Chromium runtime on Oracle
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "bash -s" <<REMOTE
+          set -euo pipefail
+          cd "$REMOTE_RUN_DIR"
+          test -f package.json || npm init -y >/dev/null 2>&1
+          npm install --silent playwright@1.55.0
+          sudo npx playwright install-deps chromium >/dev/null
+          npx playwright install chromium >/dev/null
+          REMOTE
+      - name: Run accumulating collector
+        run: |
+          ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "bash -s" <<REMOTE
+          set -euo pipefail
+          cd "$REMOTE_RUN_DIR"
+          VINTAGE_TARGET=15 VINTAGE_BATCH_TAG=${{ github.run_id }} VINTAGE_BUFFER_FILE="$BUFFER_FILE" node scripts/collect-vintage-ebay-next100-browser.mjs | tee collector.log
+          REMOTE
+      - name: Check whether checkpoint is ready
+        id: checkpoint
+        run: |
+          if ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "test -f '$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/batches/$BATCH_FILE'"; then
+            count=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "wc -l < '$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/batches/$BATCH_FILE'")
+            test "$count" -eq 15
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "checkpoint ready: $count/15"
+          else
+            buffered=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "test -f '$BUFFER_FILE' && wc -l < '$BUFFER_FILE' || echo 0")
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "buffer persisted: $buffered/15; next replenishment continues from here"
+          fi
+      - name: Browser image capture and manifest refresh on Oracle
+        if: steps.checkpoint.outputs.ready == 'true'
+        run: |
+          ssh -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "bash -s" <<REMOTE
+          set -euo pipefail
+          cd "$REMOTE_RUN_DIR"
+          VINTAGE_IMAGE_ROOT=/home/ubuntu/shirtfaced-research/vintage-ebay-images VINTAGE_CONCURRENCY=6 node scripts/backfill-vintage-ebay-images-browser.mjs | tee image-backfill.log
+          REMOTE
+      - name: Verify checkpoint image coverage
+        if: steps.checkpoint.outputs.ready == 'true'
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "python3 - <<'PY'
+          import json, pathlib
+          run=pathlib.Path('$REMOTE_RUN_DIR'); batch=run/'docs/research/vintage-market-evidence/batches'/'$BATCH_FILE'; cache=pathlib.Path('/home/ubuntu/shirtfaced-research/vintage-ebay-images')
+          rows=[json.loads(x) for x in batch.read_text().splitlines() if x.strip()]
+          covered=[(r['listing_id'],sum(1 for p in (cache/str(r['listing_id'])).glob('*') if p.suffix.lower() in {'.jpg','.jpeg','.png','.webp'})) for r in rows]
+          ok=sum(1 for _,n in covered if n>0); print(json.dumps({'checkpoint_records':len(rows),'checkpoint_with_images':ok,'coverage':covered},indent=2))
+          if ok != len(rows): raise SystemExit(f'checkpoint image coverage incomplete: {ok}/{len(rows)}')
+          PY"
+      - name: Pull and commit completed checkpoint
+        if: steps.checkpoint.outputs.ready == 'true'
+        run: |
+          rsync -az -e "ssh -i ~/.ssh/deploy_key" ubuntu@${{ secrets.ORACLE_HOST }}:"$REMOTE_RUN_DIR/docs/research/vintage-market-evidence/batches/$BATCH_FILE" docs/research/vintage-market-evidence/batches/
+          test "$(wc -l < docs/research/vintage-market-evidence/batches/$BATCH_FILE)" -eq 15
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "docs/research/vintage-market-evidence/batches/$BATCH_FILE"
+          git commit -m 'add 15 fully processed vintage eBay sold references'
+          git pull --rebase origin main
+          git push
+      - name: Manifest count
+        if: steps.checkpoint.outputs.ready == 'true'
+        run: ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'cat /home/ubuntu/shirtfaced-research/vintage-ebay-images/manifest.json'
