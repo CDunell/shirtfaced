@@ -7,6 +7,8 @@ import { DesignBench } from "./components/DesignBench";
 import { DesignsBench } from "./components/DesignsBench";
 import { EmailBench } from "./components/EmailBench";
 import { PrintBench } from "./components/PrintBench";
+import { VintageEvidenceBench } from "./components/VintageEvidenceBench";
+import { VintageResearchBench } from "./components/VintageResearchBench";
 import { PromptWorkbench } from "./components/PromptWorkbench";
 import { ServiceStatus } from "./components/ServiceStatus";
 import { SocialBench } from "./components/SocialBench";
@@ -17,13 +19,24 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 type View =
-  "prompts" | "print" | "compose" | "concepts" | "design" | "social" | "email" | "dashboard";
+  | "prompts"
+  | "print"
+  | "compose"
+  | "concepts"
+  | "design"
+  | "evidence"
+  | "research"
+  | "social"
+  | "email"
+  | "dashboard";
 const VIEWS: { id: View; label: string }[] = [
   { id: "prompts", label: "Prompts" },
   { id: "print", label: "Print" },
   { id: "compose", label: "Compose" },
   { id: "concepts", label: "Designs" },
   { id: "design", label: "Score" },
+  { id: "evidence", label: "Evidence" },
+  { id: "research", label: "Research" },
   { id: "social", label: "Social" },
   { id: "email", label: "Email" },
   { id: "dashboard", label: "Dashboard" },
@@ -182,6 +195,10 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <DesignsBench />
         ) : view === "design" ? (
           <DesignBench />
+        ) : view === "evidence" ? (
+          <VintageEvidenceBench />
+        ) : view === "research" ? (
+          <VintageResearchBench />
         ) : view === "social" ? (
           <SocialBench />
         ) : view === "email" ? (

@@ -765,3 +765,128 @@ export async function verifyDesign(
 ): Promise<Reproducibility> {
   return request<Reproducibility>(`/api/compose/designs/${designId}/verify`, "POST", signal);
 }
+
+/* ---------------------------------------------------------------- vintage */
+
+/** One cached marketplace listing kept as design evidence. */
+export interface EvidenceRecord {
+  listing_id: string;
+  title: string;
+  brand: string;
+  tradition: string;
+  era_claim: string;
+  marketplace?: string;
+  source_url?: string;
+  sold?: string;
+  images: string[];
+}
+
+export interface EvidenceManifest {
+  listings_with_images?: number;
+  image_count?: number;
+  failed?: number;
+}
+
+export interface EvidenceResponse {
+  manifest: EvidenceManifest;
+  records: EvidenceRecord[];
+}
+
+export interface ResearchConcept {
+  concept_number: number;
+  title: string;
+  idea: string;
+  pass1_prompt?: string;
+  pass2_prompt?: string;
+  edited_prompt?: string;
+  status?: string;
+  review_note?: string;
+  updated_at?: string;
+}
+
+export interface ResearchImage {
+  listing_id: string;
+  filename: string;
+  image_url: string;
+}
+
+export interface ResearchRun {
+  id: string;
+  created_at?: string;
+  filters?: Record<string, string>;
+  evidence_images?: ResearchImage[];
+  concepts: ResearchConcept[];
+}
+
+export interface DesignConceptTarget {
+  id: string;
+  number: number;
+  title: string;
+}
+
+/** Every cached listing, with the counts the header reports. */
+export async function fetchEvidence(signal?: AbortSignal): Promise<EvidenceResponse> {
+  return request<EvidenceResponse>("/api/vintage-evidence", "GET", signal);
+}
+
+export async function fetchResearchRuns(signal?: AbortSignal): Promise<ResearchRun[]> {
+  return request<ResearchRun[]>("/api/vintage-research/runs", "GET", signal);
+}
+
+export async function fetchResearchRun(runId: string, signal?: AbortSignal): Promise<ResearchRun> {
+  return request<ResearchRun>(`/api/vintage-research/runs/${runId}`, "GET", signal);
+}
+
+/**
+ * Both passes against the selected evidence.
+ *
+ * Slow by nature -- it sends real image bytes to the model twice -- so callers
+ * should expect this to take a while rather than treat a delay as a failure.
+ */
+export async function startResearchRun(
+  body: {
+    query?: string;
+    brand?: string;
+    era?: string;
+    tradition?: string;
+    image_limit?: number;
+    listing_ids?: string[];
+  },
+  signal?: AbortSignal,
+): Promise<ResearchRun> {
+  return request<ResearchRun>("/api/vintage-research/runs", "POST", signal, body);
+}
+
+export async function updateResearchConcept(
+  runId: string,
+  number: number,
+  body: { status?: string; prompt?: string; review_note?: string },
+  signal?: AbortSignal,
+): Promise<ResearchConcept> {
+  return request<ResearchConcept>(
+    `/api/vintage-research/runs/${runId}/concepts/${String(number)}`,
+    "POST",
+    signal,
+    body,
+  );
+}
+
+export async function sendConceptToPipeline(
+  runId: string,
+  number: number,
+  designConceptId: string,
+  signal?: AbortSignal,
+): Promise<{ status: string }> {
+  return request<{ status: string }>(
+    `/api/vintage-research/runs/${runId}/concepts/${String(number)}/pipeline`,
+    "POST",
+    signal,
+    { design_concept_id: designConceptId },
+  );
+}
+
+export async function fetchDesignConceptTargets(
+  signal?: AbortSignal,
+): Promise<DesignConceptTarget[]> {
+  return request<DesignConceptTarget[]>("/api/vintage-research/design-concepts", "GET", signal);
+}

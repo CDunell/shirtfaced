@@ -27,6 +27,7 @@ from app.routes import (
     printing,
     social,
     vintage_agents,
+    vintage_api,
     vintage_design,
     vintage_design_page,
     vintage_evidence,
@@ -68,6 +69,7 @@ def create_app() -> FastAPI:
     application.include_router(design_range.router)
     application.include_router(social.router)
     application.include_router(email.router)
+    application.include_router(vintage_api.router)
     application.include_router(vintage_evidence.router)
     application.include_router(vintage_agents.router)
     application.include_router(vintage_design.router)
