@@ -12,7 +12,7 @@ from typing import Any
 AGENT_COUNT = 4
 STATE_ROOT = Path(os.environ.get("VINTAGE_AGENT_ROOT", "/home/ubuntu/shirtfaced-research/vintage-agents"))
 SCRIPT = Path(os.environ.get("VINTAGE_AGENT_SCRIPT", "/home/ubuntu/shirtfaced-studio/worker_scripts/vintage-agent.mjs"))
-EVIDENCE_ROOT = Path(os.environ.get("VINTAGE_EVIDENCE_DOC_ROOT", "/home/ubuntu/shirtfaced-studio/docs/research/vintage-market-evidence"))
+EVIDENCE_ROOT = Path(os.environ.get("VINTAGE_EVIDENCE_DOC_ROOT", "/home/ubuntu/shirtfaced-site/docs/research/vintage-market-evidence"))
 IMAGE_ROOT = Path(os.environ.get("VINTAGE_EVIDENCE_ROOT", "/home/ubuntu/shirtfaced-research/vintage-ebay-images"))
 OUTBOX_ROOT = Path(os.environ.get("VINTAGE_AGENT_OUTBOX", "/home/ubuntu/shirtfaced-research/vintage-agent-outbox"))
 
@@ -115,7 +115,7 @@ def _stop(agent_id: int) -> None:
 
 
 def set_enabled(agent_id: int, enabled: bool) -> dict[str, Any]:
-    _dir(agent_id)  # validation
+    _dir(agent_id)
     if enabled:
         _start(agent_id)
     else:
