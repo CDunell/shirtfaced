@@ -1,6 +1,6 @@
-requested_at=2026-08-13T09:44:00+10:00
+requested_at=2026-08-13T10:01:00+10:00
 target=100
 include_images=true
 manifest_count=true
-attempt=3
-collector=chromium-oracle
+attempt=4
+collector=indexed-search-plus-ebay-playwright
