@@ -110,8 +110,11 @@ function AttemptCard({
         )}
       </div>
 
+      {/* The full image opens in the same tab. Chrome and Edge both block
+          target="_blank" under their pop-up settings, so it did not open at
+          all; back returns to the panel. */}
       {attempt.image_url ? (
-        <a href={attempt.image_url} target="_blank" rel="noreferrer">
+        <a href={attempt.image_url} rel="noreferrer">
           <img
             src={attempt.thumbnail_url ?? attempt.image_url}
             alt={`Generated image for ${attempt.shot.external_id}, ${attempt.shot.title}`}
