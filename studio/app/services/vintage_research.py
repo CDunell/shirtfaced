@@ -153,12 +153,14 @@ def _image_path(image_url: str) -> tuple[str, Path]:
     if len(parts) != 2 or not parts[0].isdigit() or Path(parts[1]).name != parts[1]:
         raise VintageResearchError(f"Invalid evidence image path: {image_url}")
     listing_id, filename = parts
-    listing_dir = (root() / listing_id).resolve()
-    evidence_root = root()
-    if evidence_root not in listing_dir.parents:
-        raise VintageResearchError("Evidence path escaped the evidence root")
-    path = (listing_dir / filename).resolve()
-    if path.parent != listing_dir or not path.is_file():
+    # No resolve(). A merged evidence root is symlinks into more than one
+    # collector's tree, and resolving follows each link out to its real
+    # location -- whose parents are not the root, so a resolve-then-compare
+    # check refuses every legitimate image. Traversal is already impossible
+    # above: isdigit() admits no separator, and the filename is constrained to
+    # a bare name, so neither join can leave the root.
+    path = root() / listing_id / filename
+    if not path.is_file():
         raise VintageResearchError(f"Evidence image is missing: {image_url}")
     return listing_id, path
 
