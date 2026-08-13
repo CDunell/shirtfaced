@@ -152,8 +152,8 @@ for attempt in $(seq 1 30); do
   if curl -fsS -m 5 "http://127.0.0.1:$PORT/ready" >/dev/null 2>&1; then
     echo "Studio is ready on 127.0.0.1:$PORT."
     for agent_id in "${enabled_vintage_agents[@]}"; do
-      curl -fsS -m 5 -X POST "http://127.0.0.1:$PORT/api/vintage-agents/$agent_id" \
-        -H 'content-type: application/json' -d '{"enabled":true}' >/dev/null
+      ./.venv/bin/python -c \
+        "from app.services.vintage_agents import set_enabled; set_enabled($agent_id, True)"
       echo "Restarted vintage Agent $agent_id on the current worker script."
     done
     exit 0
