@@ -1,4 +1,5 @@
 """Two-pass visual research over retained Vintage Evidence."""
+
 from __future__ import annotations
 
 import uuid
@@ -91,7 +92,10 @@ def review_concept(run_id: str, concept_number: int, body: ConceptReviewIn) -> d
         raise _fail(error) from error
 
 
-@router.post("/runs/{run_id}/concepts/{concept_number}/pipeline", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/runs/{run_id}/concepts/{concept_number}/pipeline",
+    status_code=status.HTTP_201_CREATED,
+)
 def send_to_pipeline(
     run_id: str,
     concept_number: int,
@@ -121,7 +125,10 @@ def send_to_pipeline(
         DesignAttemptMethod.IMAGE_GENERATION,
         production_prompt=str(prompt),
         model=settings.openai_image_model,
-        model_settings={"size": settings.openai_image_size, "quality": settings.openai_image_quality},
+        model_settings={
+            "size": settings.openai_image_size,
+            "quality": settings.openai_image_quality,
+        },
         reference_inputs={
             "vintage_research_run_id": run_id,
             "research_concept_number": concept_number,

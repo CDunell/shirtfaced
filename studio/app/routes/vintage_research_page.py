@@ -1,17 +1,27 @@
+# ruff: noqa: E501 -- this module embeds a browser page as a string literal.
+# Its HTML, CSS and JS are minified onto single lines and cannot be wrapped
+# without changing what is served. Same exemption vintage_evidence.py carries.
 """Server-rendered Studio workbench for Vintage Evidence research."""
+
 from __future__ import annotations
 
 from html import escape
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, Query
+from fastapi import APIRouter, Depends, Form, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.config import Settings, get_settings
 from app.db.concept_models import DesignConcept
 from app.db.session import get_db_session
-from app.services.vintage_research import execute_research, filter_evidence, load_run, update_concept
+from app.services.vintage_research import (
+    VintageResearchError,
+    execute_research,
+    filter_evidence,
+    load_run,
+    update_concept,
+)
 
 router = APIRouter()
 SessionDep = Annotated[Session, Depends(get_db_session)]
@@ -21,7 +31,10 @@ STYLE = """<style>body{font:14px system-ui;background:#f5f3ee;margin:0}.s{max-wi
 
 
 def _page(body: str) -> HTMLResponse:
-    return HTMLResponse(f"<!doctype html><meta name='viewport' content='width=device-width,initial-scale=1'><title>Vintage Research</title>{STYLE}<main class='s'><h1>Vintage Evidence Research</h1><p class='m'>Actual evidence images → Pass 1 exactly 10 concepts → Pass 2 the same 10 with expanded prompts.</p>{body}</main>", headers={"Cache-Control": "no-store"})
+    return HTMLResponse(
+        f"<!doctype html><meta name='viewport' content='width=device-width,initial-scale=1'><title>Vintage Research</title>{STYLE}<main class='s'><h1>Vintage Evidence Research</h1><p class='m'>Actual evidence images → Pass 1 exactly 10 concepts → Pass 2 the same 10 with expanded prompts.</p>{body}</main>",
+        headers={"Cache-Control": "no-store"},
+    )
 
 
 @router.get("/vintage-research")
@@ -61,12 +74,30 @@ def run_research(
     return RedirectResponse(f"/vintage-research/{run['id']}", status_code=303)
 
 
+# Declared before the {run_id} route so it wins the match. Without it a GET to
+# /vintage-research/run -- a reload or a back-nav after submitting the form, which
+# posts to this same path -- falls into review() as run_id="run", fails the UUID
+# parse and surfaces as an unexplained 500. Sending it back to the form is what
+# the visitor was after.
+@router.get("/vintage-research/run")
+def run_get() -> RedirectResponse:
+    return RedirectResponse("/vintage-research", status_code=303)
+
+
 @router.get("/vintage-research/{run_id}")
 def review(run_id: str, session: SessionDep) -> HTMLResponse:
-    run = load_run(run_id)
-    sources = "".join(f"<img src='{escape(i['image_url'])}' title='{escape(i['filename'])}'>" for i in run.get("evidence_images", []))
+    try:
+        run = load_run(run_id)
+    except VintageResearchError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+    sources = "".join(
+        f"<img src='{escape(i['image_url'])}' title='{escape(i['filename'])}'>"
+        for i in run.get("evidence_images", [])
+    )
     targets = session.query(DesignConcept).order_by(DesignConcept.external_number).all()
-    target_options = "".join(f"<option value='{c.id}'>#{c.external_number} {escape(c.title)}</option>" for c in targets)
+    target_options = "".join(
+        f"<option value='{c.id}'>#{c.external_number} {escape(c.title)}</option>" for c in targets
+    )
     concepts = []
     for c in run.get("concepts", []):
         n = c["concept_number"]
@@ -76,8 +107,10 @@ def review(run_id: str, session: SessionDep) -> HTMLResponse:
         pipe = ""
         if c.get("status") == "approved":
             pipe = f"<form class='f' method='post' action='/vintage-research/{run_id}/{n}/pipeline'><select name='design_concept_id'>{target_options}</select><button>Send to design pipeline</button></form>"
-        concepts.append(f"<article class='x'><b>{n}. {escape(c['title'])}</b><p>{escape(c['idea'])}</p><div class='p'>{escape(prompt)}</div><p><b>Status:</b> {escape(c.get('status','pending'))}</p>{actions}{edit}{pipe}</article>")
-    body = f"<section class='c'><a href='/vintage-research'>New research run</a><h2>Run {escape(run_id[:8])}</h2><p class='m'>{escape(run.get('model',''))} · {len(run.get('evidence_images',[]))} exact images</p><h3>Exact source images supplied</h3><div class='src'>{sources}</div></section><section class='c'><div class='k'>{''.join(concepts)}</div></section>"
+        concepts.append(
+            f"<article class='x'><b>{n}. {escape(c['title'])}</b><p>{escape(c['idea'])}</p><div class='p'>{escape(prompt)}</div><p><b>Status:</b> {escape(c.get('status', 'pending'))}</p>{actions}{edit}{pipe}</article>"
+        )
+    body = f"<section class='c'><a href='/vintage-research'>New research run</a><h2>Run {escape(run_id[:8])}</h2><p class='m'>{escape(run.get('model', ''))} · {len(run.get('evidence_images', []))} exact images</p><h3>Exact source images supplied</h3><div class='src'>{sources}</div></section><section class='c'><div class='k'>{''.join(concepts)}</div></section>"
     return _page(body)
 
 

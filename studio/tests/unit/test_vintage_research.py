@@ -7,7 +7,6 @@ import pytest
 
 from app.services import vintage_research as vr
 
-
 REQUIRED = (
     "pure black artwork on a pure white background, no grey, no gradient, "
     "maximum contrast, flat graphic design, print on demand ready"
@@ -28,7 +27,9 @@ def _concepts(extra: int = 0) -> dict[str, object]:
     }
 
 
-def test_select_images_uses_actual_cached_bytes_and_persists_hash(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_select_images_uses_actual_cached_bytes_and_persists_hash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     evidence = tmp_path / "123456"
     evidence.mkdir()
     payload = b"\x89PNG\r\n\x1a\nactual-evidence-bytes"

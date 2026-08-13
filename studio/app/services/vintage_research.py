@@ -1,8 +1,12 @@
+# ruff: noqa: E501 -- PASS_1_PROMPT and PASS_2_PROMPT are prompt text sent
+# verbatim to the model. Wrapping a line inside those literals inserts a
+# newline into what is sent, so line length is not ours to choose here.
 """Two-pass visual design research over retained vintage sold-listing evidence.
 
 The evidence metadata is only for retrieval. The research model receives the actual
 cached image bytes and both passes are persisted with their complete provenance.
 """
+
 from __future__ import annotations
 
 import base64
@@ -134,10 +138,7 @@ def filter_evidence(filters: dict[str, Any]) -> list[dict[str, Any]]:
             (not query or query in hay)
             and (not brand or str(row.get("brand") or "").lower() == brand)
             and (not era or str(row.get("era_claim") or "").lower() == era)
-            and (
-                not tradition
-                or str(row.get("tradition") or "").lower() == tradition
-            )
+            and (not tradition or str(row.get("tradition") or "").lower() == tradition)
         )
 
     return [row for row in rows if matches(row)]
@@ -191,9 +192,9 @@ def select_images(
         while len(chosen_urls) < image_limit:
             added = False
             for row in rows:
-                images = row.get("images") or []
-                if depth < len(images):
-                    chosen_urls.append(images[depth])
+                row_images = row.get("images") or []
+                if depth < len(row_images):
+                    chosen_urls.append(row_images[depth])
                     added = True
                     if len(chosen_urls) >= image_limit:
                         break
@@ -245,10 +246,20 @@ def _image_content(images: list[dict[str, Any]]) -> list[dict[str, str]]:
     return content
 
 
-def _call_model(client: Any, model: str, timeout: float, prompt: str, images: list[dict[str, Any]], *, prior: dict[str, Any] | None = None) -> tuple[dict[str, Any], str | None]:
+def _call_model(
+    client: Any,
+    model: str,
+    timeout: float,
+    prompt: str,
+    images: list[dict[str, Any]],
+    *,
+    prior: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], str | None]:
     text = prompt
     if prior is not None:
-        text += "\n\nPASS 1 OUTPUT TO EXPAND, WITHOUT CHANGING THE CONCEPTS:\n" + json.dumps(prior, ensure_ascii=False)
+        text += "\n\nPASS 1 OUTPUT TO EXPAND, WITHOUT CHANGING THE CONCEPTS:\n" + json.dumps(
+            prior, ensure_ascii=False
+        )
     try:
         response = client.responses.create(
             model=model,
@@ -481,7 +492,7 @@ def update_concept(
         concept["review_note"] = review_note.strip()
     concept["updated_at"] = dt.datetime.now(dt.UTC).isoformat()
     save_run(run)
-    return concept
+    return dict(concept)
 
 
 def mark_pipeline(run_id: str, concept_number: int, payload: dict[str, Any]) -> None:

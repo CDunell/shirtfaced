@@ -71,6 +71,10 @@ select = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["B008"]
+# FastAPI declares dependencies as argument defaults -- Form(), Query(),
+# Depends() in a signature is the framework's documented way to state one,
+# not the mutable-default bug B008 is written to catch.
+"app/routes/**" = ["B008"]
 
 [tool.mypy]
 python_version = "3.12"

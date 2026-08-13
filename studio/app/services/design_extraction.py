@@ -318,7 +318,8 @@ def to_review(
         gate(
             "thumbnail_hierarchy_survives",
             "pass" if measurements.thumbnail_survives else "fail",
-            f"T1 thumbnail test {'survives' if measurements.thumbnail_survives else 'does not survive'}; "
+            "T1 thumbnail test "
+            f"{'survives' if measurements.thumbnail_survives else 'does not survive'}; "
             f"coverage {measurements.print_coverage:.1%}",
         )
         gate(

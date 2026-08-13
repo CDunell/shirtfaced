@@ -111,7 +111,7 @@ def vintage_evidence_page() -> HTMLResponse:
     return HTMLResponse(_PAGE, headers={"Cache-Control": "no-store"})
 
 
-_PAGE = r'''<!doctype html>
+_PAGE = r"""<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -135,4 +135,4 @@ async function setAll(on){const d=await fetch('/api/vintage-agents').then(r=>r.j
 async function loadAgents(){try{const openId=$('agents').querySelector('.agent[open]')?.dataset.id;const d=await fetch('/api/vintage-agents').then(r=>r.json());$('agents').innerHTML=(d.agents||[]).map(a=>{const target=a.batch_target||15,progress=a.batch_progress||0,pct=Math.min(100,Math.round((progress/target)*100));return `<details class="agent" name="collector-accordion" data-id="${a.id}" ${openId===String(a.id)?'open':''}><summary class="agent-summary"><span class="agent-name">Agent ${a.id}</span><span class="agent-state">${a.running?'running':'stopped'}</span><span class="agent-progress">${progress}/${target}</span></summary><div class="agent-body"><div class="agent-toggle"><span>Collector ${a.enabled?'on':'off'} · ${esc(a.status)}</span><label class="switch"><input type="checkbox" aria-label="Toggle Agent ${a.id}" ${a.enabled?'checked':''} onchange="toggleAgent(${a.id},this.checked)"><span class="track"></span></label></div><div class="aprogress"><div class="abar" style="width:${pct}%"></div></div><div class="agent-row"><span>Current checkpoint</span><b>${progress}/${target}</b></div><div class="agent-row"><span>Completed batches</span><b>${a.completed_batches||0}</b></div><div class="agent-row"><span>Completed records</span><b>${a.completed_records||0}</b></div><div class="agent-row"><span>Last listing</span><b>${esc(a.last_listing_id||'—')}</b></div><div class="agent-row"><span>Last error</span><b>${esc(a.last_error||'—')}</b></div></div></details>`}).join('')||'<div class="agent-error">Agent API unavailable.</div>';for(const el of $('agents').querySelectorAll('.agent'))el.addEventListener('toggle',()=>{if(el.open)for(const other of $('agents').querySelectorAll('.agent[open]'))if(other!==el)other.open=false})}catch(e){$('agents').innerHTML='<div class="agent-error">Agent controls unavailable.</div>'}}
 fetch('/api/vintage-evidence').then(r=>r.json()).then(d=>{rows=d.records||[];const m=d.manifest||{};$('stats').innerHTML=`<span><b>${rows.length}</b> cached listings</span><span><b>${m.listings_with_images??0}</b> with images</span><span><b>${m.image_count??0}</b> image files</span><span><b>${m.failed??0}</b> failed</span>`;fill('brand','brand');fill('era','era_claim');fill('trad','tradition');render()}).catch(()=>{$('grid').innerHTML='<div class="empty">Evidence cache unavailable.</div>'});
 loadAgents();setInterval(loadAgents,5000);for(const id of ['q','brand','era','trad'])$(id).addEventListener(id==='q'?'input':'change',render);
-</script></body></html>'''
+</script></body></html>"""

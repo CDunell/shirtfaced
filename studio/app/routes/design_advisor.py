@@ -54,7 +54,8 @@ def advise_design(payload: AdviseRequest) -> DirectionResponse:
     if not payload.phrase.strip() and not payload.has_graphic:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "Supply a phrase, set has_graphic true, or both -- there is nothing to advise on otherwise.",
+            "Supply a phrase, set has_graphic true, or both -- "
+            "there is nothing to advise on otherwise.",
         )
 
     direction = advise(

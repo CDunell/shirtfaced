@@ -44,7 +44,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from corpus_tiers import is_excluded  # noqa: E402
+from corpus_tiers import is_excluded
 
 CORPUS_ROOT = Path(__file__).resolve().parent.parent / "var" / "design_corpus"
 REPORT_PATH = CORPUS_ROOT / "design_patterns.json"

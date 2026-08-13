@@ -26,10 +26,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # studio/, for app.*
 
-from app.services.design_advisor import phrase_words  # noqa: E402
+from corpus_tiers import is_excluded
+from mine_design_patterns import CORPUS_ROOT, _analyse, _placement_band
 
-from corpus_tiers import is_excluded  # noqa: E402
-from mine_design_patterns import CORPUS_ROOT, _analyse, _placement_band  # noqa: E402
+from app.services.design_advisor import phrase_words
 
 OUTPUT_PATH = CORPUS_ROOT / "joined.json"
 

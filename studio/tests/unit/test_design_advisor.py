@@ -13,7 +13,14 @@ from app.services.design_advisor import advise, length_bucket, phrase_words
 
 
 def _row(tradition="skate", words=3, coverage=0.05, ink=4, band="upper", light_on_dark=True):
-    return {"t": tradition, "w": words, "cov": coverage, "ink": ink, "band": band, "lod": light_on_dark}
+    return {
+        "t": tradition,
+        "w": words,
+        "cov": coverage,
+        "ink": ink,
+        "band": band,
+        "lod": light_on_dark,
+    }
 
 
 def _pool(count, **overrides):
@@ -65,8 +72,12 @@ def test_intent_and_archetype_follow_the_three_way_split() -> None:
 
 
 def test_confidence_is_corpus_only_once_the_matching_pool_is_large_enough() -> None:
-    thin = advise(phrase="Weekend Warrior Club", has_graphic=True, tradition="skate", rows=_pool(10))
-    deep = advise(phrase="Weekend Warrior Club", has_graphic=True, tradition="skate", rows=_pool(60))
+    thin = advise(
+        phrase="Weekend Warrior Club", has_graphic=True, tradition="skate", rows=_pool(10)
+    )
+    deep = advise(
+        phrase="Weekend Warrior Club", has_graphic=True, tradition="skate", rows=_pool(60)
+    )
 
     def confidence_of(direction, field_name):
         return next(r for r in direction.recommendations if r.field_name == field_name).confidence
@@ -108,13 +119,17 @@ def test_alternatives_surface_a_neighbouring_tradition_at_a_different_scale() ->
     rows = _pool(50, tradition="skate", words=3, coverage=0.05) + _pool(
         30, tradition="band-merch", words=3, coverage=0.20
     )
-    direction = advise(phrase="Weekend Warrior Club", has_graphic=True, tradition="skate", rows=rows)
+    direction = advise(
+        phrase="Weekend Warrior Club", has_graphic=True, tradition="skate", rows=rows
+    )
 
     assert any("band-merch" in alt for alt in direction.alternatives)
 
 
 def test_not_decided_always_names_what_it_cannot_judge() -> None:
-    direction = advise(phrase="Weekend Warrior Club", has_graphic=True, tradition="skate", rows=_pool(50))
+    direction = advise(
+        phrase="Weekend Warrior Club", has_graphic=True, tradition="skate", rows=_pool(50)
+    )
 
     assert len(direction.not_decided) == 4
     assert any("funny" in note or "good" in note for note in direction.not_decided)

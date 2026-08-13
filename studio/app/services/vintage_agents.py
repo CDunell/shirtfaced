@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 import signal
@@ -10,11 +11,36 @@ from pathlib import Path
 from typing import Any
 
 AGENT_COUNT = 4
-STATE_ROOT = Path(os.environ.get("VINTAGE_AGENT_ROOT", "/home/ubuntu/shirtfaced-research/vintage-agents"))
-SCRIPT = Path(os.environ.get("VINTAGE_AGENT_SCRIPT", "/home/ubuntu/shirtfaced-studio/worker_scripts/vintage-agent.mjs"))
-EVIDENCE_ROOT = Path(os.environ.get("VINTAGE_EVIDENCE_DOC_ROOT", "/home/ubuntu/shirtfaced-site/docs/research/vintage-market-evidence"))
-IMAGE_ROOT = Path(os.environ.get("VINTAGE_EVIDENCE_ROOT", "/home/ubuntu/shirtfaced-research/vintage-ebay-images"))
-OUTBOX_ROOT = Path(os.environ.get("VINTAGE_AGENT_OUTBOX", "/home/ubuntu/shirtfaced-research/vintage-agent-outbox"))
+STATE_ROOT = Path(
+    os.environ.get(
+        "VINTAGE_AGENT_ROOT",
+        "/home/ubuntu/shirtfaced-research/vintage-agents",
+    )
+)
+SCRIPT = Path(
+    os.environ.get(
+        "VINTAGE_AGENT_SCRIPT",
+        "/home/ubuntu/shirtfaced-studio/worker_scripts/vintage-agent.mjs",
+    )
+)
+EVIDENCE_ROOT = Path(
+    os.environ.get(
+        "VINTAGE_EVIDENCE_DOC_ROOT",
+        "/home/ubuntu/shirtfaced-site/docs/research/vintage-market-evidence",
+    )
+)
+IMAGE_ROOT = Path(
+    os.environ.get(
+        "VINTAGE_EVIDENCE_ROOT",
+        "/home/ubuntu/shirtfaced-research/vintage-ebay-images",
+    )
+)
+OUTBOX_ROOT = Path(
+    os.environ.get(
+        "VINTAGE_AGENT_OUTBOX",
+        "/home/ubuntu/shirtfaced-research/vintage-agent-outbox",
+    )
+)
 
 
 def _dir(agent_id: int) -> Path:
@@ -90,8 +116,8 @@ def _start(agent_id: int) -> None:
             "VINTAGE_TARGET": "15",
         }
     )
-    proc = subprocess.Popen(  # noqa: S603
-        ["node", str(SCRIPT)],  # noqa: S607
+    proc = subprocess.Popen(
+        ["node", str(SCRIPT)],
         stdin=subprocess.DEVNULL,
         stdout=log,
         stderr=subprocess.STDOUT,
@@ -107,11 +133,11 @@ def _stop(agent_id: int) -> None:
     (d / "enabled").unlink(missing_ok=True)
     pid_data = _read(d / "pid.json", {})
     pid = pid_data.get("pid") if isinstance(pid_data, dict) else None
-    if _pid_alive(pid):
-        try:
+    # Narrowed to int deliberately: pid comes off an untyped json dict, and a
+    # string or a null reaching killpg is a TypeError at the worst moment.
+    if isinstance(pid, int) and _pid_alive(pid):
+        with contextlib.suppress(OSError):
             os.killpg(pid, signal.SIGTERM)
-        except OSError:
-            pass
 
 
 def set_enabled(agent_id: int, enabled: bool) -> dict[str, Any]:

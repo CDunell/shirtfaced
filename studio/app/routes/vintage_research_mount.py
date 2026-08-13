@@ -1,4 +1,5 @@
 """Mount the Vintage Evidence research UI and its pipeline hand-off."""
+
 from __future__ import annotations
 
 import uuid
@@ -57,7 +58,10 @@ def send_to_pipeline(
         DesignAttemptMethod.IMAGE_GENERATION,
         production_prompt=prompt,
         model=settings.openai_image_model,
-        model_settings={"size": settings.openai_image_size, "quality": settings.openai_image_quality},
+        model_settings={
+            "size": settings.openai_image_size,
+            "quality": settings.openai_image_quality,
+        },
         reference_inputs={
             "vintage_research_run_id": run_id,
             "research_concept_number": number,

@@ -49,7 +49,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from app.services.garment_frame import locate_garment
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from corpus_tiers import is_excluded  # noqa: E402
+from corpus_tiers import is_excluded
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPORA = {
