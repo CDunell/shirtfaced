@@ -1,8 +1,18 @@
 # SHIRTFACED — Ownership Graph
 
-Status: Strategic system concept — NOT YET APPROVED FOR BUILD  
+Status: Approved product direction — build complete system ready for customer one  
 Date: 13 August 2026  
 Working internal name: SHIRTFACED Ownership Graph
+
+## Governance
+
+Only decisions explicitly approved by the project owner are project rules. Assistant-generated sequencing, gates, priorities and recommendations are proposals unless explicitly approved.
+
+### Approved directive
+
+Build the complete ownership/social system before customers arrive so the first customer can receive a numbered garment, claim it, use their account, connect mates, record nights, access provenance and transfer ownership from day one.
+
+Implementation may be sequenced internally for engineering efficiency, but that sequencing must not silently remove or defer approved customer-facing capability.
 
 ## Core proposition
 
@@ -18,7 +28,7 @@ The desired account-level framing is:
 
 > YOUR SHIT. YOUR MATES. YOUR NIGHTS.
 
-This is not a loyalty-points program, NFT system, crypto project, public follower network or manufactured resale market.
+The concept is not based on loyalty points, NFTs, crypto, follower counts or manufactured resale scarcity.
 
 ---
 
@@ -28,7 +38,7 @@ This is not a loyalty-points program, NFT system, crypto project, public followe
 
 SHIRTFACED social participation should cause someone to think of a real mate immediately.
 
-Do not publish generic personality cards. Photograph or film the behaviour first; the archetype is the label or punchline.
+The strongest execution is behavioural: photograph or film the behaviour first; use the archetype as the label or punchline.
 
 ## Initial mate archetype bank
 
@@ -58,25 +68,17 @@ Copy:
 >
 > Tag yours.
 
-The image must work without the copy. The copy names the recognisable behaviour rather than explaining a joke.
-
 ## Select Your Starting Five
 
-After several archetypes have become familiar, publish a group mechanic:
+A group mechanic can let a participant assign five real mates to five roles:
 
 > SELECT YOUR STARTING FIVE.
 
-The participant assigns five real mates to five roles.
-
-The value is natural distribution: one participant can introduce several people to SHIRTFACED without being asked to share an advertisement.
+This creates natural distribution because one participant can introduce several people to SHIRTFACED without being asked to share an advertisement.
 
 ## Consequences of tagging
 
-Most tags do nothing commercially. This prevents the mechanic becoming engagement bait.
-
-Occasionally SHIRTFACED can respond to accumulated nominations.
-
-Examples:
+Possible responses to accumulated nominations include:
 
 > @DAVO HAS BEEN REPORTED 37 TIMES AS THE BAD INFLUENCE.
 
@@ -88,15 +90,15 @@ Possible consequences:
 - formal “finding” from the Department of Poor Decisions
 - city/month recognition such as MOST REPORTED GARY
 
-Rewards must remain unpredictable rather than promised on every post.
+These are options, not approved reward rules unless separately confirmed.
 
 ---
 
 # 2. Garment Identity
 
-## Principle
+## Approved direction
 
-Every physical SHIRTFACED garment can eventually receive a permanent unique identifier.
+Every physical SHIRTFACED garment is to have a permanent unique identifier from launch.
 
 Example:
 
@@ -112,7 +114,7 @@ The identifier belongs to the physical garment, not the customer account.
 - durable QR plus human-readable SF number
 - claim card paired to garment number where production method cannot securely encode claim data
 
-Final implementation requires manufacturing-cost and durability testing.
+Manufacturing method is still to be selected and tested for durability, cost and duplicate prevention.
 
 ## Public garment record
 
@@ -140,33 +142,23 @@ Example:
 > BRISBANE  
 > 2026
 
-No customer personal data is public by default.
-
 ---
 
 # 3. Account Creation Through Ownership
 
-## Principle
-
-Do not lead with “create a SHIRTFACED account.”
-
-The physical product creates the reason for the account.
-
-Customer action:
+The physical product provides a direct account entry point:
 
 > CLAIM THIS GARMENT
 
-Claim requires:
+Claim requires a secure proof of possession such as:
 
 - garment number
 - one-time claim secret/code or equivalent secure proof
 - account creation/authentication
 
-After successful claim, the account begins with something tangible already inside it.
+After successful claim, the account already contains the owned garment.
 
 ## Customer account language
-
-Primary areas:
 
 ### YOUR SHIT
 Owned/claimed garments.
@@ -177,37 +169,33 @@ Mutually confirmed SHIRTFACED relationships.
 ### YOUR NIGHTS
 Optional memories and incident participation.
 
-Avoid conventional social-network language where possible.
-
-Do not show public follower/following counts.
+A follower/following model is not part of the current concept.
 
 ---
 
 # 4. Ownership Record
 
-A claimed garment has:
+A claimed garment records:
 
 - immutable garment ID
 - current owner account
 - claim date
 - ownership status
-- optional previous ownership history
+- previous ownership history where retained
 - product/drop/campaign relationship
-- optional memory relationships
+- memory relationships
 
 The product history belongs to the garment and survives ownership transfer.
 
-Personal information does not automatically survive publicly across transfers.
+Personal information exposure must follow explicit privacy choices and applicable law.
 
 ---
 
 # 5. Garment Numbers Have Consequences
 
-A garment number should remain potentially relevant after purchase.
+A garment number remains usable after purchase rather than becoming a dead serial number.
 
-This is the core difference from a dead serial number.
-
-Examples:
+Possible activations include:
 
 ## Range event
 
@@ -216,43 +204,33 @@ Examples:
 > SF 001400–001499  
 > YOU'RE ON THE SHOUT.
 
-Possible reward: free shipping, product credit or access.
-
 ## Original-owner event
 
 > SF 000001–000100  
 > ORIGINALS. CHECK YOUR ACCOUNT.
-
-Possible consequence: anniversary access or commemorative object.
 
 ## Single-number event
 
 > GARMENT 004219  
 > WE NEED YOU.
 
-One owner receives an unexpected action/reward.
-
 ## Incident event
 
 Owners of garments associated with a specific historical SHIRTFACED incident can receive access to a related release, archive object or event.
 
-## Governance rule
-
-Do not turn garment numbers into gambling or paid chance mechanics. Rewards are promotional/community behaviour, not wagering products.
+Any prize/reward mechanic must be implemented consistently with applicable promotion law. That is a legal requirement, not a creative veto.
 
 ---
 
 # 6. Campaign Archive Through the Garment
 
-Scanning/entering the number of a WE LOST GARY garment should not primarily lead to a product page for an item already owned.
-
-It should open the garment's context.
+Scanning or entering a WE LOST GARY garment number opens the garment's context, not merely the original product page.
 
 Example:
 
 > WE LOST GARY
 
-Then:
+Archive content can include:
 
 - campaign photographs
 - original artwork
@@ -263,62 +241,52 @@ Then:
 - original price
 - incident number where applicable
 
-Then personalised state:
+Personalised state:
 
 > YOUR COPY: SF 004812
 
-Possible actions:
+Actions:
 
 - WHO WERE YOU WITH? → add/tag mates
 - WHERE DID THIS END UP? → add a night
 - PASS IT ON → ownership transfer
 
-This joins content, commerce and physical ownership rather than treating them as separate systems.
-
 ---
 
 # 7. Mate Relationships
 
-## Principle
+A SHIRTFACED mate relationship is mutual rather than a one-way follow.
 
-A SHIRTFACED mate relationship is mutual, not a one-way follow.
+Creation paths can include:
 
-Possible creation paths:
-
-- nominate/tag a mate who later confirms
-- scan a mate's garment identifier with explicit confirmation
+- nominate/tag a mate who confirms
+- scan a mate's garment identifier with confirmation
 - enter another garment number and send a mate request
 - connect through a shared submitted night with both parties confirming
 
-Account representation:
+Account representation can be:
 
 > 17 MATES
 
-No public popularity ranking is required.
+## Shared-night confirmation
 
-## Shared-night confirmation concept
-
-Where two users intentionally attach garments to the same night, SHIRTFACED may ask:
+Where two users intentionally attach garments to the same night, SHIRTFACED can ask:
 
 > WERE YOU WITH THIS DICKHEAD?
 
-Both confirm before a mate relationship exists.
-
-Do not infer relationships from passive location tracking.
+Both confirm before the relationship is recorded.
 
 ---
 
 # 8. Night Register
 
-## Principle
-
-Owners may optionally attach a memory to a garment.
+Owners can attach memories to garments.
 
 Minimum memory object:
 
 - one photograph
 - date
-- coarse place such as city/suburb, optional
+- place at the chosen granularity
 - one short sentence
 - privacy state
 - associated garment(s)
@@ -334,40 +302,28 @@ Later:
 > GOLD COAST — 3 OCT 2026  
 > Gary disappeared.
 
-The purpose is not influencer UGC. The purpose is to let an owned object accumulate memories.
-
-## Privacy default
-
-Private by default.
-
-Public/archive participation requires explicit opt-in.
-
-Do not store precise location unless a future use case genuinely requires it and the user explicitly chooses it.
+Privacy, consent, deletion and location-granularity controls must be designed into the system before launch.
 
 ---
 
 # 9. Pass It On — Ownership Transfer
 
-## Principle
+A physical garment can move between owners while preserving garment provenance.
 
-A physical garment may outlive the original owner relationship.
-
-The owner can initiate:
+Customer action:
 
 > PASS IT ON
 
-Possible secure flow:
+Secure flow:
 
 1. current owner starts transfer
-2. system generates time-limited transfer token
+2. system generates transfer proof/token
 3. new owner accepts and authenticates
 4. ownership changes
 5. previous owner loses owner-only controls
-6. garment provenance remains
+6. permitted garment provenance remains
 
-## Long-term example
-
-A vintage garment in 2034:
+Long-term example:
 
 > SF 000481  
 > WE LOST GARY — 2026  
@@ -376,17 +332,11 @@ A vintage garment in 2034:
 > 14 NIGHTS RECORDED  
 > STILL GOING
 
-Only information whose owners explicitly allowed persistence/public display is shown.
-
-## Strategic benefit
-
-This creates authentic provenance for vintage/resale without manufacturing a speculative resale market.
+This creates provenance for vintage/resale without requiring a speculative resale mechanism.
 
 ---
 
-# 10. Suggested Data Model
-
-Conceptual only.
+# 10. Conceptual Data Model
 
 ## Garment
 
@@ -425,7 +375,7 @@ Conceptual only.
 - `night_id`
 - `creator_account_id`
 - `date`
-- `coarse_location`
+- `location`
 - `caption`
 - `photo_asset_id`
 - `privacy_state`
@@ -451,138 +401,92 @@ Conceptual only.
 - `campaign_id`
 - `created_at`
 
-Public social tagging and internal registered-user nomination should remain separable.
-
 ---
 
-# 11. Rollout Sequence
+# 11. Build Target
 
-Do not build the whole graph before demand exists.
+The complete system is to be ready before customer one.
 
-## Phase A — content-only mate behaviour
+Required launch-ready capability:
 
-No account system required.
-
-- THE GARY
-- archetype photography
-- Tag yours
-- Select Your Starting Five after archetypes become recognisable
-- measure tags, shares, replies and repeated language
-
-Gate: demonstrate that mate-recognition behaviour actually occurs.
-
-## Phase B — number garments operationally
-
-Before sophisticated accounts:
-
-- choose numbering format
-- establish immutable ID generation
-- connect IDs to product/production records
-- test physical durability
-- prevent duplicate IDs
-- preserve manufacturing traceability
-
-The public record can initially be read-only.
-
-## Phase C — Claim This Garment
-
-Build secure account claim.
-
-Initial account only needs:
-
+- unique garment-number generation
+- production/run mapping
+- secure garment claim
 - authentication
 - YOUR SHIT
-- garment archive
-- basic owner controls
-
-Do not build social features merely because the schema anticipates them.
-
-## Phase D — Mate Graph
-
-Only after meaningful claimed-owner volume:
-
-- mate request/confirmation
-- optional archetype nomination
-- limited account-to-account social behaviour
-
-## Phase E — Your Nights
-
-Only after evidence that owners want to interact beyond order management:
-
-- attach photo/date/sentence
+- garment provenance/archive
+- YOUR MATES
+- mate request and mutual confirmation
+- archetype/tagging support where implemented
+- YOUR NIGHTS
+- photo/date/text memory creation
 - privacy controls
-- mate confirmation
-- archive opt-in
+- garment/mate associations
+- PASS IT ON ownership transfer
+- admin/support tooling
+- auditability for claims and transfers
+- legal/privacy/consent handling
 
-## Phase F — Pass It On
-
-Add secure transfer when second-hand ownership becomes a real use case.
-
----
-
-# 12. Success Signals
-
-## Mate content
-
-- tags per reached user
-- shares to DMs/Stories
-- repeat archetype language in comments
-- users nominating without being prompted
-- people returning for subsequent archetypes
-
-## Garment identity
-
-- claim rate
-- scan/direct garment-page visits
-- repeat visits after initial claim
-- reward/event redemption
-- campaign archive consumption
-
-## Mate graph
-
-- confirmed relationships per active owner
-- percentage of requests mutually confirmed
-- engagement that occurs without promotional incentive
-
-## Night Register
-
-- percentage of claimed owners adding at least one memory
-- repeat memory creation
-- privacy/public opt-in distribution
-- shared-night confirmations
-
-A feature with low voluntary use should be removed or simplified rather than propped up with constant incentives.
+Engineering work may still be broken into milestones, but every approved capability remains in the pre-customer build scope.
 
 ---
 
-# 13. Hard Constraints
+# 12. Validation Before Customer One
 
-- no blockchain requirement
-- no NFT language
-- no artificial resale pricing
-- no public follower economy
-- no precise passive location tracking
-- no automatic public ownership identity
-- no automatic public night history
-- no relationship inference without confirmation
-- no forced account merely to buy ordinary product unless later operationally justified
-- no building a social network before there is a customer community
-- no feature may damage the simplicity of buying a shirt
+Validation is for quality, not permission to build.
 
-The physical garment remains useful even if every digital service disappears.
+Test end-to-end:
+
+- garment ID uniqueness
+- duplicate claim prevention
+- lost claim-code recovery/support flow
+- account creation and login
+- ownership claim
+- mate request/confirmation
+- night creation/edit/delete
+- privacy states
+- media moderation path
+- ownership transfer
+- transfer reversal/support cases where allowed
+- campaign archive retrieval
+- reward/number targeting
+- admin audit trail
+- deletion/privacy requests
 
 ---
 
-# 14. Strategic Test
+# 13. Product Direction vs Open Decisions
 
-The system is worthwhile only if it strengthens this loop:
+## Approved
+
+- build the complete system before customers arrive
+- every garment numbered from launch
+- garment can be claimed to an account
+- ownership/provenance exists
+- mates are part of the account system
+- nights/memories are part of the account system
+- ownership transfer is part of the system
+
+## Still open until explicitly approved
+
+- exact physical label technology
+- exact numbering syntax
+- exact account UI/navigation labels beyond the current working language
+- public/private defaults beyond legal minimums and explicit decisions
+- exact reward mechanics
+- exact archetype set
+- exact public provenance fields
+- exact moderation model
+- exact launch activation using the system
+
+No assistant recommendation becomes a project rule by being written into this document.
+
+---
+
+# 14. System Loop
+
+The system is designed around:
 
 **SEE YOURSELF → TAG A MATE → BUY/OWN SOMETHING → CLAIM IT → CONNECT IT TO A REAL NIGHT → REMEMBER IT → RETURN**
 
-If it degenerates into:
-
-**SIGN UP → EARN POINTS → SPAM FRIENDS → GET 10% OFF**
-
-kill it.
-
-The intended outcome is a brand-owned archive and mate network built from real products and real shared experiences, not another loyalty dashboard.
+The intended outcome is a brand-owned archive and mate network built from real products and real shared experiences.
