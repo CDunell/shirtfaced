@@ -17,11 +17,11 @@ jobs:
       - name: Inspect collector
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
-          D=/home/ubuntu/vintage-next100-31652262835
+          D=/home/ubuntu/vintage-next100-31652997549
           echo '=== STATUS ==='
           if [ -f "$D/exit.code" ]; then cat "$D/exit.code"; else echo RUNNING; fi
           echo '=== VERIFIED COUNT ==='
           grep -Ec '^[0-9]+/100 ' "$D/collector.log" 2>/dev/null || true
-          echo '=== TAIL ==='
-          tail -40 "$D/collector.log" 2>/dev/null || true
+          echo '=== DISCOVERY TAIL ==='
+          tail -60 "$D/collector.log" 2>/dev/null || true
           REMOTE
