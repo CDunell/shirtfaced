@@ -28,7 +28,7 @@ class TwoPartAttemptIn(BaseModel):
     creative_query: str | None = Field(default=None, max_length=4000)
     structure_query: str | None = Field(default=None, max_length=1000)
     evidence_limit: int = Field(default=12, ge=1, le=30)
-    method: DesignAttemptMethod = DesignAttemptMethod.GENERATED
+    method: DesignAttemptMethod = DesignAttemptMethod.IMAGE_GENERATION
     production_prompt: str = ""
     model: str = ""
     model_settings: dict[str, Any] = Field(default_factory=dict)
