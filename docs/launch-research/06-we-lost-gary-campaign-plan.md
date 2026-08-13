@@ -1,20 +1,22 @@
 # SHIRTFACED — We Lost Gary Campaign Plan
 
-Status: Plannable campaign concept  
+Status: Plannable campaign concept — not approved for execution by documentation alone  
 Date: 13 August 2026  
-Scope: First narrative activation using an existing SHIRTFACED design concept
+Scope: Narrative activation using an existing SHIRTFACED design concept
+
+## Governance
+
+This document describes one executable campaign shape. It does not set rollout timing, campaign priority or approval gates. Those decisions belong to the project owner.
 
 ---
 
 # 1. Objective
 
-Use an already-developed SHIRTFACED phrase/design as a simple recognition mechanic rather than launching it as a standalone product tile.
+Use the WE LOST GARY design as a recognition mechanic rather than only as a standalone product tile.
 
 Primary audience behaviour:
 
 > Notice that one mate has disappeared, then tag the mate who always disappears.
-
-No puzzle, password, map or high-friction action is required.
 
 ---
 
@@ -28,145 +30,57 @@ Later there are four.
 
 Nobody in the brand copy initially explains the absence.
 
-The audience should be capable of noticing before the reveal.
-
 ---
 
-# 3. Campaign sequence
+# 3. Campaign sequence option
 
 ## Friday — 4:03pm
 
-### Scene
-
-Five mates at the beginning of the night.
-
-### Format
-
-Strong documentary still or short held-motion clip.
-
-### Copy
-
-Minimal. No Gary reference.
-
-### Purpose
-
-Establish group continuity.
-
----
+Five mates at the beginning of the night. Minimal copy. No Gary reference.
 
 ## Friday — 8:46pm
 
-### Scene
-
-Same five deeper into the night.
-
-### Format
-
-Still/carousel/short clip.
-
-### Copy
-
-No Gary reference.
-
-### Purpose
-
-Reinforce recognisable faces/clothing without telegraphing the mechanism.
-
----
+Same five deeper into the night. Reinforce recognisable faces/clothing.
 
 ## Friday — 11:38pm
 
-### Scene
-
-Five outside venue / street / food stop transition.
-
-### Purpose
-
-Final clear five-person evidence.
-
----
+Five outside venue / street / food-stop transition. Final clear five-person evidence.
 
 ## Saturday — 1:17am
 
-### Scene
-
-Servo / Maccas / street stop.
-
-### Critical change
-
-Only four mates remain.
-
-### Copy
-
-Do not explain it.
-
-### Purpose
-
-Allow the audience to discover the absence.
-
----
+Servo / Maccas / street stop. Only four mates remain. No explanation.
 
 ## Saturday — 8:52am
 
-### Scene
+Morning-after evidence with four mates and one visual absence marker.
 
-Morning-after evidence with four mates and one visual absence marker: empty chair, unused sleeping spot, untouched cup, missing position in composition or equivalent.
-
-### Caption
+Possible caption:
 
 `Anyone seen Gary?`
 
-### Purpose
-
-Confirm the joke without overexplaining it.
-
----
-
 ## Sunday
 
-### Post
-
-`WE LOST GARY` artwork reveal.
-
-### Purpose
-
-Connect the documentary story to the existing design language.
-
----
+Possible `WE LOST GARY` artwork reveal.
 
 ## Monday
 
-### Post
-
-Garment reveal / fit / product detail.
-
-### Purpose
-
-Move from story recognition into product consideration.
-
----
+Possible garment reveal / fit / product detail.
 
 ## Tuesday
 
-### Commerce
+Possible product release.
 
-Product available if the product launch is ready.
-
-### CTA
-
-Normal purchase CTA. Do not turn checkout into a game.
+This exact calendar is a planning option, not a locked schedule.
 
 ---
 
 # 4. Audience participation
 
-Primary CTA after the reveal:
+Possible CTA:
 
 `Tag your Gary.`
 
-Meaning:
-
-Tag the mate who habitually disappears from nights out, wanders off, goes home without telling anyone or is mysteriously missing when the group photo happens.
+Meaning: tag the mate who habitually disappears from nights out, wanders off, goes home without telling anyone or is mysteriously missing when the group photo happens.
 
 The name does not need to literally be Gary.
 
@@ -174,92 +88,69 @@ The name does not need to literally be Gary.
 
 # 5. Asset list
 
-Minimum viable production:
+Suggested production set:
 
-- 1 early-evening five-person still
-- 1 venue/night five-person still or clip
-- 1 late-night five-person still or clip
-- 1 four-person servo/food-stop still or clip
-- 1 four-person morning-after still
-- 1 clean `WE LOST GARY` design asset
-- 1 garment reveal asset
-- 1 product detail/commerce asset
-
-Preferred:
-
-- both still and motion options from each scene
-- alternate crop for Instagram/TikTok
-- one reserve scene in case continuity breaks
+- early-evening five-person still
+- venue/night five-person still or clip
+- late-night five-person still or clip
+- four-person servo/food-stop still or clip
+- four-person morning-after still
+- clean `WE LOST GARY` design asset
+- garment reveal asset
+- product detail/commerce asset
+- alternate still/motion options where available
+- reserve continuity scene
 
 ---
 
 # 6. Continuity requirements
 
-This concept fails if the audience cannot reliably recognise the group.
+For the concept to read visually:
 
-Lock:
+- same core characters remain recognisable
+- wardrobe continuity supports identification
+- Gary is memorable without becoming an obvious protagonist
+- locations fit WORLD 01 progression
+- unexplained replacement people do not confuse the count
 
-- same five characters
-- recognisable wardrobe continuity
-- Gary visually distinct enough to be remembered without becoming the obvious protagonist
-- locations consistent with WORLD 01 progression
-- no unexplained replacement people that confuse the count
-
-Product placement must remain incidental during the setup phase.
+These are execution requirements of this specific concept, not broader brand rules.
 
 ---
 
-# 7. Measurement
+# 7. Measurement options
 
-Track:
+Useful signals if executed:
 
-- comments identifying the missing person before Saturday reveal
+- comments identifying the missing person before reveal
 - shares
-- mate tags after `Anyone seen Gary?`
+- mate tags after reveal
 - profile visits
-- follows attributable to campaign posts where platform data permits
-- product page visits after design reveal
-- conversion if the product goes live
+- follows attributable where platform data permits
+- product page visits
+- conversion if product-linked
 
-The strongest qualitative signal is unsolicited recognition: people noticing Gary is gone before being told.
-
----
-
-# 8. Go / no-go gate
-
-Run only when:
-
-- the account has enough profile depth for a new visitor to understand WORLD 01
-- the five-character continuity assets are strong
-- the garment/design is production-ready if product linkage is intended
-- publishing cadence will not be disrupted by missing assets
-
-Do not run if the concept has to be explained in the first post.
+Unsolicited recognition that Gary is gone is especially useful evidence that the visual story worked.
 
 ---
 
-# 9. Failure handling
+# 8. Failure handling
 
-If nobody notices the disappearance before the reveal:
+If the disappearance is not understood, record that as campaign evidence and inspect continuity, sequencing and visual clarity.
 
-- do not invent engagement
-- complete the sequence cleanly
-- treat it as evidence that character continuity was too weak
-- revise visual storytelling before repeating the mechanic
-
-Do not compensate by writing longer captions.
+Do not fabricate engagement data.
 
 ---
 
-# 10. Expansion only after proof
+# 9. Extensions
 
-If the first campaign produces organic recognition, Gary can become a recurring character/device in future content.
+Possible extensions include:
 
-Possible later extensions:
+- Gary appearing unexpectedly in unrelated campaign evidence
+- Gary's Shout
+- Gary-related packaging inserts
+- `Anyone seen Gary?` callbacks
+- mate archetype system integration
+- National Gary Register
+- garment-number / Night Register connections
 
-- Gary appears unexpectedly in unrelated campaign evidence
-- Gary's Shout order mechanic
-- limited Gary packaging insert
-- recurring `Anyone seen Gary?` callback
-
-Do not establish lore before the audience demonstrates that it remembers the character.
+These extensions can be designed and technically supported in advance. Whether and when they are used is a project-owner decision.
