@@ -7,7 +7,9 @@ import crypto from 'node:crypto';
 const AGENT=Number(process.env.VINTAGE_AGENT_ID||1), AGENT_COUNT=Number(process.env.VINTAGE_AGENT_COUNT||4), TARGET=Number(process.env.VINTAGE_TARGET||15);
 const STATE=process.env.VINTAGE_AGENT_STATE, OUTBOX=process.env.VINTAGE_AGENT_OUTBOX, IMG=process.env.VINTAGE_IMAGE_ROOT, DOC=process.env.VINTAGE_EVIDENCE_DOC_ROOT;
 if(!STATE||!OUTBOX||!IMG||!DOC) throw new Error('agent paths missing');
-const ENABLED=path.join(STATE,'enabled'), ATTEMPTED=path.join(STATE,'attempted-ids.txt'), DISCOVERED=path.join(STATE,'discovered-ids.txt'), CURSOR=path.join(STATE,'discovery-cursor.txt'), BUFFER=path.join(STATE,'checkpoint-buffer.jsonl');
+// v2 deliberately retries candidates poisoned by the original deploy race,
+// where Playwright disappeared after an ID had already been marked attempted.
+const ENABLED=path.join(STATE,'enabled'), ATTEMPTED=path.join(STATE,'attempted-ids-v2.txt'), DISCOVERED=path.join(STATE,'discovered-ids.txt'), CURSOR=path.join(STATE,'discovery-cursor-v2.txt'), BUFFER=path.join(STATE,'checkpoint-buffer.jsonl');
 const brands=['Stussy','Vision Street Wear','Powell Peralta','Santa Cruz','Independent Trucks','Thrasher','Airwalk','Alien Workshop','World Industries','Blind Skateboards','Hook Ups','Freshjive','Gotcha','Mambo','Quiksilver','Billabong','Rusty','Rip Curl','T&C Surf Designs','Ocean Pacific','Mossimo','No Fear','Volcom','Hobie','Hurley','DC Shoes','Element','Etnies','Zero Skateboards','Toy Machine','Girl Skateboards','Creature','RVCA'];
 const eras=['80s','90s','2000s','Y2K'];
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));

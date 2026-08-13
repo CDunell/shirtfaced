@@ -110,22 +110,12 @@ if [ -d web ]; then
   ( cd web && npm install --silent && npm run build --silent )
 fi
 
-say "Installing vintage agent Chromium runtime"
-if [ -d "$ROOT/worker_scripts" ]; then
-  (
-    cd "$ROOT/worker_scripts"
-    npm install --silent
-    sudo npx playwright install-deps chromium >/dev/null
-    npx playwright install chromium >/dev/null
-  )
-fi
 mkdir -p /home/ubuntu/shirtfaced-research/vintage-agents \
   /home/ubuntu/shirtfaced-research/vintage-agent-outbox \
   /home/ubuntu/shirtfaced-research/vintage-ebay-images
 
-# Collectors are detached child processes, so restarting Studio does not replace
-# their code. Stop enabled instances here and restart them through the API after
-# Studio is healthy, ensuring every deploy moves workers onto the current script.
+# Collectors import Playwright from this directory. Stop them before npm touches
+# node_modules; replacing dependencies under a live worker corrupts its runtime.
 enabled_vintage_agents=()
 for agent_id in 1 2 3 4; do
   agent_dir="/home/ubuntu/shirtfaced-research/vintage-agents/agent-$agent_id"
@@ -136,6 +126,23 @@ for agent_id in 1 2 3 4; do
     kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true
   fi
 done
+vintage_recovery_marker=/home/ubuntu/shirtfaced-research/vintage-agents/.playwright-recovery-v2
+if [ ! -f "$vintage_recovery_marker" ]; then
+  # The broken runtime marked the original pool attempted without collecting a
+  # record. Run every shard once on the repaired runtime to recover that work.
+  enabled_vintage_agents=(1 2 3 4)
+fi
+
+say "Installing vintage agent Chromium runtime"
+if [ -d "$ROOT/worker_scripts" ]; then
+  (
+    cd "$ROOT/worker_scripts"
+    npm install --silent
+    node -e "import('playwright').then(p => { if (!p.chromium) process.exit(1) })"
+    sudo npx playwright install-deps chromium >/dev/null
+    npx playwright install chromium >/dev/null
+  )
+fi
 
 say "Installing Social publisher timer"
 sudo install -m 0644 "$ROOT/deploy/shirtfaced-social-publisher.service" /etc/systemd/system/shirtfaced-social-publisher.service
@@ -156,6 +163,7 @@ for attempt in $(seq 1 30); do
         "from app.services.vintage_agents import set_enabled; set_enabled($agent_id, True)"
       echo "Restarted vintage Agent $agent_id on the current worker script."
     done
+    touch "$vintage_recovery_marker"
     exit 0
   fi
   sleep 2
