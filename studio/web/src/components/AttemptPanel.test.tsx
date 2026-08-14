@@ -65,7 +65,7 @@ describe("AttemptPanel", () => {
 
     renderWithBase(panel());
 
-    expect(await screen.findByText(/2 reference image\(s\)/)).toBeInTheDocument();
+    expect(await screen.findByText(/2 reference images/)).toBeInTheDocument();
     expect(screen.getByText(/2 evidence images travel with this brief/)).toBeInTheDocument();
 
     // Shown, not just counted. Counting says evidence exists; the images say

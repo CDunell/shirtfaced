@@ -456,7 +456,7 @@ export const BRIEF_PACKAGE = {
     "A type-led chest lockup.",
     "",
     "EVIDENCE",
-    "2 reference image(s) from the vintage corpus.",
+    "2 reference images from the vintage corpus are shown with this brief in Studio.",
   ].join("\n"),
   evidence_images: [
     {

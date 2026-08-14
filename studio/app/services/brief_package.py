@@ -127,11 +127,18 @@ def compose_brief(attempt: DesignAttempt) -> BriefPackage:
         lines += [
             "",
             "EVIDENCE",
+            # One sentence, and no URLs. The first version printed each entry's
+            # dict repr; the second replaced that with one line per URL, which
+            # is a shorter wall of the same noise -- and the paths are relative,
+            # so pasted into ChatGPT or Gemini they are not merely ugly but
+            # meaningless. The images are shown beside this brief in Studio and
+            # attached as files from there, which is how a person actually gets
+            # them to a generation interface.
             (
-                f"{len(images)} reference image(s) from the vintage corpus. "
-                "Attach them alongside this brief; they are what the era is read from."
+                f"{len(images)} reference image{'s' if len(images) != 1 else ''} from the "
+                "vintage corpus are shown with this brief in Studio. Attach them alongside "
+                "it — they are what the era is read from."
             ),
-            *(image.url for image in images),
         ]
 
     return BriefPackage(

@@ -130,24 +130,44 @@ def test_the_evidence_travels_and_says_why() -> None:
     )
 
     assert "EVIDENCE" in package.text
-    assert "2 reference image(s)" in package.text
-    assert "Attach them alongside this brief" in package.text
+    assert "2 reference images" in package.text
+    assert "Attach them alongside it" in package.text
     assert package.research_run_id == "run-9"
 
 
-def test_the_brief_carries_urls_not_dict_reprs() -> None:
-    """The bug this pins. Every entry is a dict, and str() on one prints its
-    repr -- sha256 hashes, byte counts and mime types dumped into a brief that
-    a person is meant to paste into a generation interface."""
+def test_the_brief_says_the_evidence_exists_and_lists_nothing() -> None:
+    """Two bugs pinned at once, because the first fix was only half of it.
+
+    The original printed each entry's dict repr -- sha256 hashes, byte counts,
+    mime types -- into a brief a person is meant to paste into a generation
+    interface. The fix replaced that with one line per URL, which is a shorter
+    wall of the same noise, and the paths are relative: pasted into ChatGPT they
+    are not merely ugly but meaningless.
+
+    The brief says how many there are. The images are shown beside it and
+    attached from there.
+    """
     package = compose_brief(
         attempt(concept(full_brief()), references={"evidence_images": STORED_EVIDENCE})
     )
 
-    assert "/vintage-evidence/image/406847192188/image-01.jpg" in package.text
+    assert "2 reference images from the" in package.text
+    assert "shown with this brief in Studio" in package.text
+    # No repr, and no URL wall either.
     assert "sha256" not in package.text
     assert "byte_size" not in package.text
-    assert "mime_type" not in package.text
     assert "{" not in package.text
+    assert "/vintage-evidence/" not in package.text
+    # They are still carried for the screen that renders them.
+    assert len(package.evidence_images) == 2
+
+
+def test_one_evidence_image_reads_as_one() -> None:
+    package = compose_brief(
+        attempt(concept(full_brief()), references={"evidence_images": STORED_EVIDENCE[:1]})
+    )
+
+    assert "1 reference image from the" in package.text
 
 
 def test_each_evidence_image_is_addressable_for_a_screen() -> None:
