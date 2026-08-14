@@ -151,6 +151,14 @@ export function VintageResearchBench(): React.JSX.Element {
 
   const importPasted = useCallback(() => {
     setError(null);
+    if (pasted.trim().length === 0) {
+      setError(
+        "Nothing in the box yet. Paste the JSON in, or use Paste JSON — if that " +
+          "says Blocked, the browser refused clipboard access and you will need " +
+          "to paste by hand.",
+      );
+      return;
+    }
     let concepts: unknown[];
     try {
       const parsed: unknown = JSON.parse(pasted);
@@ -361,7 +369,6 @@ export function VintageResearchBench(): React.JSX.Element {
           <Button
             size={SIZE.compact}
             onClick={importPasted}
-            disabled={pasted.trim().length === 0}
             overrides={{ BaseButton: { style: { marginTop: "8px" } } }}
           >
             Import concepts

@@ -287,6 +287,30 @@ describe("VintageResearchBench", () => {
     expect(screen.getByText(/Vintage Research/i)).toBeInTheDocument();
   });
 
+  it("says why nothing happened instead of sitting there disabled", async () => {
+    // The button was disabled while the box was empty, so a click did nothing
+    // and explained nothing -- indistinguishable from broken, which is how it
+    // was reported.
+    stubRoutes([run()]);
+
+    renderWithBase(<VintageResearchBench />);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Prepare manual run/ })).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByRole("button", { name: /Prepare manual run/ }));
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Import concepts" })).toBeInTheDocument();
+    });
+
+    const button = screen.getByRole("button", { name: "Import concepts" });
+    expect(button).toBeEnabled();
+    await userEvent.click(button);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Nothing in the box yet/)).toBeInTheDocument();
+    });
+  });
+
   it("hides the pipeline while a concept is still pending", async () => {
     stubRoutes([run()]);
 

@@ -272,7 +272,10 @@ export function PasteButton({
   }, [onPaste]);
 
   useEffect(() => {
-    if (state === "idle") return undefined;
+    // A success can fade; a refusal must not. Clearing "Blocked" after a couple
+    // of seconds leaves the reader with an empty field, a button that appears
+    // to have worked, and nothing to act on.
+    if (state !== "done") return undefined;
     const timer = setTimeout(() => {
       setState("idle");
     }, 2500);
