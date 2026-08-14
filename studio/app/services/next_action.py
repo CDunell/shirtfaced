@@ -19,7 +19,12 @@ responses the attempt screen already fetches.
 from __future__ import annotations
 
 from app.db.concept_models import ApprovedDesign, DesignAttempt
-from app.domain.design_review import CATEGORY_LIMITS, HARD_GATE_IDS, ReviewEvaluation
+from app.domain.design_review import (
+    APPROVAL_PERCENTAGE,
+    CATEGORY_LIMITS,
+    HARD_GATE_IDS,
+    ReviewEvaluation,
+)
 from app.domain.enums import DesignAttemptState
 
 __all__ = ["approved_next_action", "next_action"]
@@ -58,6 +63,11 @@ def next_action(attempt: DesignAttempt, evaluation: ReviewEvaluation | None = No
             return (
                 "Artwork attached. Measure it, then answer the thirteen gates and rate "
                 "the nine categories."
+            )
+        if evaluation.eligible_for_design_approval:
+            return (
+                f"Answered in full and passing at {evaluation.percentage:.0f}/100. "
+                "Submit it for a decision."
             )
         return _judgement_sentence(evaluation) + " Then submit it for a decision."
 
@@ -129,9 +139,14 @@ def _judgement_sentence(evaluation: ReviewEvaluation) -> str:
         names = ", ".join(category.label for category in evaluation.failed_category_minimums)
         return f"Below the floor on {names}. The design has to change, not the rating."
 
+    # Reached only when every gate passed and every floor was met, so the
+    # total is the only thing left that can be short. Callers must check
+    # eligibility before asking for this sentence -- a passing review routed
+    # here once and was told it scored "below the 75 needed" at 80/100, which
+    # contradicted the verdict panel directly above it.
     return (
-        f"Scored {evaluation.percentage:.0f}/100, below the 75 needed. "
-        "The design has to change, not the rating."
+        f"Scored {evaluation.percentage:.0f}/100, below the "
+        f"{APPROVAL_PERCENTAGE:.0f} needed. The design has to change, not the rating."
     )
 
 

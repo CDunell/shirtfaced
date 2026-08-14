@@ -86,19 +86,25 @@ class ElementUse:
     settings: dict[str, Any] = dataclass_field(default_factory=dict)
 
 
-def next_concept(
-    session: Session, library: ConceptLibrary = ConceptLibrary.TSHIRT
-) -> DesignConcept | None:
+def next_concept(session: Session, library: ConceptLibrary | None = None) -> DesignConcept | None:
     """The concept "next" means: lowest priority number, then lowest external
     number, ready ones ahead of the backlog. ``None`` when the queue is empty.
+
+    Across every library unless one is named. Defaulting to the tee library
+    meant "what is next" quietly answered "what is next in one library", and a
+    concept created from Research was never the answer no matter how long it
+    had waited.
     """
     for status in (ConceptStatus.READY, ConceptStatus.BACKLOG):
-        concept = session.execute(
+        statement = (
             select(DesignConcept)
-            .where(DesignConcept.library == library, DesignConcept.status == status)
-            .order_by(DesignConcept.priority, DesignConcept.external_number)
+            .where(DesignConcept.status == status)
+            .order_by(DesignConcept.priority, DesignConcept.external_number, DesignConcept.library)
             .limit(1)
-        ).scalar_one_or_none()
+        )
+        if library is not None:
+            statement = statement.where(DesignConcept.library == library)
+        concept = session.execute(statement).scalar_one_or_none()
         if concept is not None:
             return concept
     return None

@@ -461,6 +461,12 @@ export function DesignsBench(): React.JSX.Element {
               >
                 {concept.title}
               </span>
+              {/* Numbering is per-library, so #001 alone is ambiguous once a
+                  second library exists. The tee library is the default and
+                  stays unmarked; anything else says so. */}
+              {concept.library !== "tshirt" ? (
+                <StatusChip status={concept.library.replace(/_/g, " ")} />
+              ) : null}
               {concept.attempt_count > 0 ? (
                 <span className={css({ fontSize: "11px", color: theme.colors.contentTertiary })}>
                   {concept.attempt_count} {concept.attempt_count === 1 ? "attempt" : "attempts"}

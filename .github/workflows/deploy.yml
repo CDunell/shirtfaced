@@ -169,3 +169,12 @@ jobs:
       # depend on anyone remembering to look.
       - name: Smoke the vintage chain
         run: python studio/scripts/smoke_vintage.py --base https://studio.shirtfaced.wtf
+
+      # The product design chain, for the same reason. Phase 1 shipped two
+      # defects that every unit test, type check and lint pass was happy with:
+      # a scorecard endpoint made unreachable by route ordering, and a backlog
+      # that listed one library so a concept created from Research was
+      # invisible. Both were found by opening the app; this is that check,
+      # automated, so the next one is found by a deploy.
+      - name: Smoke the design chain
+        run: python studio/scripts/smoke_design_chain.py --base https://studio.shirtfaced.wtf

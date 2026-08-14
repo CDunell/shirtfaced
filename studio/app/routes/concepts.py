@@ -432,15 +432,23 @@ def list_concepts(
     status_filter: Annotated[
         ConceptStatus | None, Query(alias="status", description="Filter by status")
     ] = None,
-    library: Annotated[ConceptLibrary, Query()] = ConceptLibrary.TSHIRT,
+    # Every library by default. This used to default to the tee library, which
+    # made the backlog screen show one slice of the backlog and call it the
+    # backlog -- and the moment research concepts got their own library, a
+    # concept created from Research was invisible in Designs and the chain
+    # broke one step after it started. The library is part of a concept's
+    # identity because numbering is per-library; it was never meant to be a
+    # filter the reader cannot see.
+    library: Annotated[ConceptLibrary | None, Query()] = None,
     limit: Annotated[int, Query(ge=1, le=500)] = 500,
 ) -> list[ConceptView]:
     statement = (
         select(DesignConcept)
-        .where(DesignConcept.library == library)
-        .order_by(DesignConcept.priority, DesignConcept.external_number)
+        .order_by(DesignConcept.library, DesignConcept.priority, DesignConcept.external_number)
         .limit(limit)
     )
+    if library is not None:
+        statement = statement.where(DesignConcept.library == library)
     if status_filter is not None:
         statement = statement.where(DesignConcept.status == status_filter)
 
@@ -460,7 +468,7 @@ def list_concepts(
 @router.get("/next", response_model=ConceptView, summary="What next actually means")
 def get_next_concept(
     session: SessionDependency,
-    library: Annotated[ConceptLibrary, Query()] = ConceptLibrary.TSHIRT,
+    library: Annotated[ConceptLibrary | None, Query()] = None,
 ) -> ConceptView:
     """The lowest-priority, lowest-numbered live concept; ready outranks backlog."""
     concept = next_concept(session, library)
@@ -484,6 +492,41 @@ def review_queue(session: SessionDependency) -> list[AttemptView]:
         .options(selectinload(DesignAttempt.assets), selectinload(DesignAttempt.decision))
     ).scalars()
     return [AttemptView.of(attempt) for attempt in attempts]
+
+
+# --- Literal paths before the "/{concept_id}" catch-all -----------------------
+#
+# FastAPI matches in declaration order, so a literal route declared after
+# "/{concept_id}" is unreachable: "rubric" is parsed as a concept UUID and the
+# request fails validation before the handler is ever considered. Found by
+# opening the app rather than by a test, which is the point -- every unit test
+# calls the function directly and none of them route.
+
+
+@router.get("/rubric", summary="Every gate and category a review has to answer")
+def get_rubric() -> dict[str, Any]:
+    """The form's whole content: three groups, thirteen gates, nine categories.
+
+    Served rather than hardcoded in the client so a change to the scorecard
+    reaches the screen without a second edit in another language.
+    """
+    return rubric()
+
+
+@router.get("/garments", summary="Garments and the zones they declare")
+def get_garments(settings: SettingsDependency) -> dict[str, list[dict[str, Any]]]:
+    """What an approval can choose from, read off the garment files themselves."""
+    return {
+        key: [
+            {
+                "key": zone.key,
+                "width_mm": round(zone.width_mm, 1),
+                "height_mm": round(zone.height_mm, 1),
+            }
+            for zone in zones
+        ]
+        for key, zones in available_garments(settings.assets_root_resolved).items()
+    }
 
 
 @router.get("/{concept_id}", response_model=ConceptDetailView, summary="One concept, in full")
@@ -673,16 +716,6 @@ def post_approve_design(
         raise _invalid(error) from error
     session.commit()
     return ApprovedDesignView.of(version)
-
-
-@router.get("/rubric", summary="Every gate and category a review has to answer")
-def get_rubric() -> dict[str, Any]:
-    """The form's whole content: three groups, thirteen gates, nine categories.
-
-    Served rather than hardcoded in the client so a change to the scorecard
-    reaches the screen without a second edit in another language.
-    """
-    return rubric()
 
 
 def _review_view(
@@ -883,22 +916,6 @@ def post_measure(
         raise _conflict_message(str(error)) from error
     session.commit()
     return _review_view(session, attempt, scored.record)
-
-
-@router.get("/garments", summary="Garments and the zones they declare")
-def get_garments(settings: SettingsDependency) -> dict[str, list[dict[str, Any]]]:
-    """What an approval can choose from, read off the garment files themselves."""
-    return {
-        key: [
-            {
-                "key": zone.key,
-                "width_mm": round(zone.width_mm, 1),
-                "height_mm": round(zone.height_mm, 1),
-            }
-            for zone in zones
-        ]
-        for key, zones in available_garments(settings.assets_root_resolved).items()
-    }
 
 
 @router.get(

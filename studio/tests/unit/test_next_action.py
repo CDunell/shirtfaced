@@ -90,6 +90,24 @@ def test_one_outstanding_item_is_singular() -> None:
     assert "gates" not in sentence
 
 
+def test_a_passing_review_not_yet_submitted_says_so_rather_than_the_opposite() -> None:
+    """Found by running the exit test in a browser.
+
+    A fully answered, passing review sitting in `generated` was routed through
+    the not-eligible sentence and told "scored 80/100, below the 75 needed" --
+    directly contradicting the verdict panel above it, which said every gate
+    was answered and every floor met.
+    """
+    sentence = next_action(
+        attempt(DesignAttemptState.GENERATED, assets=True),
+        complete(80),
+    )
+
+    assert "80/100" in sentence
+    assert "below" not in sentence
+    assert "Submit it for a decision" in sentence
+
+
 def test_a_passing_review_awaiting_decision_offers_both_ways_out() -> None:
     sentence = next_action(attempt(DesignAttemptState.AWAITING_DECISION), complete(90))
 
