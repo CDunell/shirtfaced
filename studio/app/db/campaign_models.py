@@ -386,7 +386,7 @@ class ShotCharacter(Base):
 
     shot_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("shots.id", name="fk_shot_characters_shot_id", ondelete="CASCADE"),
+        ForeignKey("shots.id", name="fk_shot_characters_shot_id_shots", ondelete="CASCADE"),
         primary_key=True,
     )
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
