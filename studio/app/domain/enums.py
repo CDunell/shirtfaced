@@ -357,6 +357,15 @@ class ConceptLibrary(StrEnum):
     TSHIRT = "tshirt"
     HEADWEAR = "headwear"
     BRAND_GARMENT = "brand_garment"
+    # Concepts the research bench produced rather than a document seeded.
+    #
+    # Its own library rather than a high band of tee numbers, because the
+    # importer matches on ``(library, external_number)`` and updates the
+    # authored fields of whatever it matches. A research concept holding the
+    # next free tee number would be silently overwritten -- title, text and all
+    # -- the day the Markdown grew to that number. Nothing imports this
+    # library, so nothing can collide with it.
+    VINTAGE_RESEARCH = "vintage_research"
 
 
 class ConceptStatus(StrEnum):

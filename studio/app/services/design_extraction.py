@@ -41,69 +41,29 @@ from typing import Any
 import numpy as np
 from PIL import Image, ImageFilter
 
-# The 13 hard-gate ids, verbatim from ``admin/src/design-system/workflow.ts``'s
-# ``HARD_GATE_IDS`` -- that file is the spec (DESIGN_ENGINE_ADAPTATION.md's own
-# rule: "don't let the docs outrank the code"). Labels are this module's own,
-# for human-readable API output; the ids are what a caller should match on.
-HARD_GATE_IDS: tuple[str, ...] = (
-    "product_blank_defined",
-    "collection_role_defined",
-    "dominant_proposition_clear",
-    "thumbnail_hierarchy_survives",
-    "essential_text_legible",
-    "construction_conflicts_resolved",
-    "production_detail_feasible",
-    "identity_geometry_preserved",
-    "logo_removal_recognition_survives",
-    "competitor_substitution_survives",
-    "worn_body_review_completed",
-    "production_files_match_art",
-    "rights_cleared_for_sale",
+# The gate ids, labels, category limits and floors live in
+# ``app/domain/design_review.py`` and are imported rather than restated. They
+# were duplicated here until the 14 August port; two copies of a rubric drift,
+# and the drift is invisible until something is approved that should not have
+# been. Re-exported so existing callers keep working.
+from app.domain.design_review import (
+    CATEGORY_LIMITS,
+    GATE_LABELS,
+    HARD_GATE_IDS,
+    points_floor,
 )
 
-GATE_LABELS: dict[str, str] = {
-    "product_blank_defined": "Product and blank defined",
-    "collection_role_defined": "Collection role defined",
-    "dominant_proposition_clear": "Dominant proposition is clear",
-    "thumbnail_hierarchy_survives": "Thumbnail hierarchy survives (T1)",
-    "essential_text_legible": "Essential text legible under blur (T2)",
-    "construction_conflicts_resolved": "No construction conflicts",
-    "production_detail_feasible": "Production detail feasible",
-    "identity_geometry_preserved": "Identity geometry preserved",
-    "logo_removal_recognition_survives": "Recognition survives logo removal (T4)",
-    "competitor_substitution_survives": "Resists competitor substitution (T5)",
-    "worn_body_review_completed": "Worn-body review completed",
-    "production_files_match_art": "Production files match approved art",
-    "rights_cleared_for_sale": "Rights cleared for sale",
-}
-
-# The 9 weighted categories, ``DESIGN_REVIEW_SCORECARD.md`` Sections 4 and 6 --
-# id -> (label, maximum points, floor). The floor is stated in the source text
-# as a 0-5 rating ("minimum 3/5"); ``points_floor`` below converts it onto the
-# same points scale as ``score``, which is what ``domain.ts``'s
-# ``scoreCategorySchema`` and ``workflow.ts``'s ``evaluateReview`` actually
-# compare against -- comparing a points score to a raw 0-5 number would defeat
-# every floor check silently. Typography's floor is conditional in the source
-# text ("minimum 3/5 when typography is present"); a typography-free design
-# should not be rated on it at all, not rated 0.
-CATEGORY_LIMITS: dict[str, tuple[str, int, int]] = {
-    "product_fit": ("Product Fit", 10, 3),
-    "dominant_proposition": ("Dominant Proposition", 10, 4),
-    "composition_and_hierarchy": ("Composition and Hierarchy", 15, 4),
-    "distance_and_silhouette": ("Distance and Silhouette", 10, 3),
-    "typography": ("Typography", 10, 3),
-    "brand_recognition": ("Brand Recognition", 15, 3),
-    "collection_contribution": ("Collection Contribution", 10, 3),
-    "production_integrity": ("Production Integrity", 15, 4),
-    "commercial_wearability": ("Commercial Wearability", 5, 3),
-}
-
-
-def points_floor(category_id: str) -> float:
-    """A category's release floor, in the same points-out-of-maximum scale as
-    its ``score`` -- not the 0-5 rating the scorecard states it in."""
-    _label, maximum, rating_floor = CATEGORY_LIMITS[category_id]
-    return round((rating_floor / 5) * maximum, 2)
+__all__ = [
+    "CATEGORY_LIMITS",
+    "GATE_LABELS",
+    "HARD_GATE_IDS",
+    "Measurements",
+    "extract",
+    "load_thresholds",
+    "measure",
+    "points_floor",
+    "to_review",
+]
 
 
 # Corpus-derived thresholds, replaced by mine_design_patterns.py's real output

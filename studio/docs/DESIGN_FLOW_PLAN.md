@@ -112,8 +112,8 @@ no new top-level destinations).
 | 4 | **Designs → attempt** | `Measure this artwork`, persisted on the attempt | "Measured. Nine categories and ten gates still need a person." |
 | 5 | **Designs → attempt** | The judgement form, three groups | "Answer these and the design can be decided." |
 | 6 | **Designs → attempt** | `score_design()` server-side, then decide | "Passed: 84/100, no failed gates. Approve, or send back." |
-| 7 | **Designs → concept** | Existing `Record approved design v1` | "Approved as v1. It can be printed now." |
-| 8 | **Print** | Approved designs as a print source | "Printing v1 of #261. Drag the corners to place it." |
+| 7 | **Designs → concept** | `Record approved design v1`, now freezing garment, zone and print width | "Approved as v1, 240mm on the centre chest. It can be printed now." |
+| 8 | **Print** | The approved version rendered into its defined zone | "Printing v1 of #261 at 240mm in the centre chest zone." |
 
 Steps 2–6 are one screen, in order down the page. Nothing is inferred from
 state: each sentence is written next to the control it describes.
@@ -125,6 +125,27 @@ matches on `(library, external_number)` and overwrites authored fields on a
 match. A research concept allocated the next free number in `tshirt` would be
 silently overwritten the day the Markdown grew to that number. A separate
 library keeps numbering independent and the importer never sees it.
+
+**Print means the zone render, not the photograph.** The first draft of this map
+read item 5 off `printing.py` and had the approved artwork dragged onto a
+photograph by its corners. Corrected by the owner, 14 August: that path never
+got off the ground and was replaced by defined zones. `app/archive/garment.py`
+reads a garment SVG's named zones in real millimetres and `place()` hangs a
+design from the zone's top edge, raising `DESIGN_EXCEEDS_ZONE` rather than
+scaling to fit; `placements.py` holds fourteen zones per fit with maximum bounds
+and seam clearance. That is what an approved design prints into.
+
+The garment, zone and print width are frozen at approval in
+`ApprovedDesign.production_spec`, which already exists for exactly this — *"print
+method, colours, sizing, whatever production needs frozen with the approval
+rather than recalled later"*. A raster brought back from a paid interface
+carries no millimetres, so the size has to be a decision recorded at approval
+rather than a property read off the file.
+
+Consequence worth noting: **`printing.py` puts a design onto a *photograph*,**
+which is a product shot for socials — world-side work, and Phase 2 moves it to
+Admin. Phase 1 leaves it alone rather than wiring `approved_designs` into a
+router that is about to emigrate.
 
 **One new table, `design_reviews`.** One row per attempt, holding the
 measurement, the answered gates and the answered categories. Mutable while the

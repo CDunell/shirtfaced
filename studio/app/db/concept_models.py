@@ -32,8 +32,10 @@ import uuid
 from typing import Any
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     DateTime,
+    Float,
     ForeignKey,
     Index,
     Integer,
@@ -68,6 +70,7 @@ __all__ = [
     "DesignAttemptElement",
     "DesignConcept",
     "DesignDecision",
+    "DesignReviewRecord",
     "ProductLink",
 ]
 
@@ -272,6 +275,11 @@ class DesignAttempt(Base, TimestampMixin):
     decision: Mapped[DesignDecision | None] = relationship(
         back_populates="attempt", cascade="all, delete-orphan", uselist=False
     )
+    # Also at most one, for the same reason: a review is a working document
+    # until the decision freezes it, not a log of sittings.
+    review: Mapped[DesignReviewRecord | None] = relationship(
+        back_populates="attempt", cascade="all, delete-orphan", uselist=False
+    )
     approved_design: Mapped[ApprovedDesign | None] = relationship(
         back_populates="attempt", uselist=False
     )
@@ -366,6 +374,81 @@ class DesignDecision(Base):
     )
 
     attempt: Mapped[DesignAttempt] = relationship(back_populates="decision")
+
+
+class DesignReviewRecord(Base, TimestampMixin):
+    """One attempt's review against the scorecard: the answers and the verdict.
+
+    The row that closes the gap the 14 August audit called blocking. Nothing
+    could answer the scorecard's human questions, so ``score_design`` could
+    never receive a complete input and no design could pass -- not one, ever,
+    by construction. This is where those answers live.
+
+    One row per attempt, not one per sitting. A review is a working document
+    while the attempt is undecided: answering three more gates updates it, and
+    a pile of half-finished reviews would answer nothing. The moment a
+    ``design_decisions`` row exists the review is frozen by
+    ``design_scoring.score_design``, because what justified a decision has to
+    stay readable exactly as it was when the decision was made.
+
+    ``evaluation`` stores the computed verdict beside the raw answers on
+    purpose. The arithmetic is deterministic and could be recomputed, but the
+    thresholds are explicitly calibratable (``DESIGN_REVIEW_SCORECARD.md``
+    §12) -- so a recomputation next year would silently re-judge last year's
+    decisions against numbers nobody applied at the time.
+    """
+
+    __tablename__ = "design_reviews"
+    __table_args__ = (
+        UniqueConstraint("design_attempt_id", name="uq_design_reviews_design_attempt_id"),
+        CheckConstraint("reviewer <> ''", name="review_has_a_reviewer"),
+        CheckConstraint("percentage >= 0 AND percentage <= 100", name="percentage_is_a_percentage"),
+        # Partial: the attempt screen asks for the ones still open, and that
+        # set stays small while the decided set grows without bound.
+        Index(
+            "ix_design_reviews_eligible",
+            "updated_at",
+            postgresql_where=text("eligible_for_design_approval"),
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    design_attempt_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("design_attempts.id", ondelete="CASCADE"), nullable=False
+    )
+    reviewer: Mapped[str] = mapped_column(String(64), nullable=False)
+
+    # What the machine measured off the artwork: coverage, ink count, the
+    # T1/T2/T3 reductions. Kept beside the human answers rather than in its own
+    # table because it is evidence for this review and meaningless without it.
+    measurements: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    # The thirteen gates and the nine categories, in domain.ts's shape.
+    hard_gates: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False, default=list)
+    score_categories: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=False, default=list
+    )
+    rationale: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    # What the reviewer asked for, before the scorecard was consulted.
+    requested_decision: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default="design_approved"
+    )
+
+    # The verdict, and the parts of it worth querying without opening the blob.
+    evaluation: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    total_score: Mapped[float] = mapped_column(Float, nullable=False, server_default=text("0"))
+    percentage: Mapped[float] = mapped_column(Float, nullable=False, server_default=text("0"))
+    band: Mapped[str] = mapped_column(String(32), nullable=False, server_default="")
+    eligible_for_design_approval: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    scored_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+
+    attempt: Mapped[DesignAttempt] = relationship(back_populates="review")
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<DesignReviewRecord {self.percentage:.0f}/100 {self.band!r}>"
 
 
 class ApprovedDesign(Base):
