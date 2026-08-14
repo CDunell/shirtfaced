@@ -1,0 +1,162 @@
+# Session handover — 14 August 2026
+
+Two implementation sessions are working this repository at once: this one on the
+**product design pipeline**, and a concurrent one on **AI social/world
+production**. `WORKING_AGREEMENT.md` divides creative direction from
+implementation; it does not divide two implementers. This does.
+
+Written from the product side. Where it proposes rather than records, it says so.
+
+---
+
+## 1. What is live, verified
+
+`main` is at `d570116`. The deploy is green and migration **0027** is applied to
+production.
+
+Phase 1 of `studio/docs/DESIGN_FLOW_PLAN.md` shipped: a research concept becomes
+a numbered design concept, an attempt takes artwork through a drop zone,
+measures it, carries thirteen hard gates and nine weighted categories, and
+`score_design()` gates the approval before it is recorded. Print renders the
+approved version into a defined garment zone.
+
+Both smoke chains pass against production:
+
+```
+  ok  the scorecard is reachable and complete   13 gates and 9 categories in 3 groups
+  ok  the backlog lists every library           260 concepts across ['tshirt'] libraries
+  ok  garments declare printable zones          22 garments, 89 zones
+  ok  an attempt's review evaluates             0/100, 2 blockers, next action stated
+  ok  an approved version renders into its zone no approved version exists yet to print
+```
+
+**Three defects were found by running rather than reasoning**, and one of them
+was not ours: garments resolved to a path that does not exist on the box, so
+`design_composition` and `design_range` had been finding **zero garments in
+production** for as long as they have been deployed. `22 garments, 89 zones` was
+`0, 0` this morning. Nothing said so until a check asked.
+
+Take that as the standard rather than as a war story: a green deploy, a passing
+type check and a rendering screen are all compatible with a feature that does
+nothing.
+
+## 2. What is decided
+
+**ADR-016** — one production spine, still and video, and the judge stops being
+columns. `social_shots`, `social_generation_attempts`, `social_assets` and
+`social_continuity_checks` do not become tables; `shots`, `generation_attempts`,
+`image_assets` and `automated_reviews` are extended instead. Built in Studio.
+
+**ADR-017** — two provenances share one `shots` table. `SHOTLIST.md` is not
+mutated into a screenplay database. Markdown shots keep `campaign_id` and
+`scene_id` NULL; campaign shots are database-native.
+
+Both are in `studio/docs/DECISIONS.md` on `main`. They are the owner's
+decisions, not this session's proposals.
+
+## 3. Ownership — proposed, and needing agreement
+
+### The product pipeline (this session)
+
+| | |
+|---|---|
+| tables | `design_concepts`, `design_attempts`, `design_assets`, `design_decisions`, `design_reviews`, `approved_designs`, `design_attempt_elements`, `product_links` |
+| services | `design_scoring.py`, `design_extraction.py`, `approved_print.py`, `design_pipeline.py`, `next_action.py`, `concept_importer.py` |
+| domain | `domain/design_review.py` |
+| routes | `routes/concepts.py`, `routes/design.py` |
+| web | `AttemptPanel.tsx`, `DesignsBench.tsx` |
+| migrations | `0027` (done) |
+| smoke | `scripts/smoke_design_chain.py` |
+
+### The world / campaign pipeline (concurrent session)
+
+| | |
+|---|---|
+| new tables | campaigns, story versions, characters, wardrobe/appearances, locations, scenes, edit versions, performance |
+| extended tables | `shots`, `generation_attempts`, `image_assets` → `media_assets`, `automated_reviews` |
+| services | `review_service.py`, `canon_service.py`, `generation_orchestrator.py`, `prompt_planner.py`, `world_importer.py`, `social_delivery.py`, `decision_service.py` |
+| routes | `routes/social.py`, `routes/api.py` (world parts), `routes/printing.py` |
+| web | `SocialBench.tsx`, `PromptWorkbench.tsx`, `WorldPage.tsx`, `PrintBench.tsx` |
+| migrations | `0028` onward |
+| smoke | `scripts/smoke_vintage.py`, plus equivalent coverage for the campaign chain |
+
+## 4. Where the boundary is not clean — five things, unowned
+
+These are the collisions. None is settled, and each needs an owner before code
+is written against it.
+
+**4.1 The judge rewrite.** ADR-016 says `automated_reviews` adopts the shape
+`design_reviews` was given: gates as data carrying their own ids and
+applicability, not as columns. That is the product session's pattern applied to
+the world session's table. Whoever writes it, the open question underneath is
+sharper: **one review table for both pipelines, or two tables sharing one
+shape?** A product design review and a photograph review answer different
+rubrics against different subjects; they currently share only an idea. Merging
+them is tempting and probably wrong. Two tables and one contract module is the
+proposal, and it is only a proposal.
+
+**4.2 The `media_assets` rename.** Fifteen Python files, four of them
+migrations, including `print_service.py` — which the product side changed today
+for the zone-print path. Whoever does it should do it in one commit, and the
+other session should have nothing in flight in those files when it lands.
+
+**4.3 Phase 2's navigation separation.** The plan separates product and world
+destinations inside Studio. That edits `App.tsx` and touches `SocialBench` and
+`PromptWorkbench`, which are world-side files. It cannot be done unilaterally
+while the campaign UI is being built in them.
+
+**4.4 `next_action.py`.** The product side computes one sentence per state, from
+rows that already exist, with one copy of each phrasing. If the world pipeline
+wants the same — and Phase 3's `ProductionItem` assumes something like it — that
+is either a shared module or a second implementation. It should be decided
+before the second one exists.
+
+**4.5 Measurement reuse.** `design_extraction` measures an image into gate
+results and category scores. Continuity, garment-artwork fidelity and
+first/last-frame compatibility are measurement problems of the same family.
+Whether the world judge reuses that service or grows its own is unanswered.
+
+## 5. Protocol while both sessions run
+
+**Alembic slots are claimed by pushing.** `deploy-studio.sh` runs `alembic
+upgrade head`, so two heads fail the deploy outright rather than subtly. Before
+writing a migration, `ls studio/app/db/migrations/versions/` against current
+`main`. `0027` is `design_reviews`, applied to production. The next free slot is
+`0028`.
+
+**The full gate before every commit**, both sides:
+
+```
+cd studio && ruff check . && ruff format --check . && mypy --platform linux app && pytest tests/unit
+cd web && npx eslint . && npx prettier --check . && npx tsc --noEmit && npx vitest run && npm run build
+```
+
+`mypy` needs `--platform linux` because `os.killpg` does not exist on win32.
+
+**Exercise it before claiming it works.** Server checks have passed while a
+React screen was throwing, and a type check has passed while a path resolved to
+a directory that does not exist on the box.
+
+**Add smoke coverage for anything new.** Both smoke scripts run as the last
+deploy steps and fail the deploy. Assert concrete facts — counts, real bytes,
+named zones — not that a response was received. A check that compares a response
+to itself passes while the endpoint is unreachable.
+
+**Do not edit the other session's files without saying so first.**
+
+## 6. What this session needs from the other
+
+1. Confirmation of the ownership split in §3, or a counter-proposal.
+2. An owner for each of the five items in §4 — particularly 4.1, because the
+   judge rewrite is the largest shared surface and both pipelines regress if it
+   is done twice.
+3. Warning before `media_assets` lands, so nothing is in flight in
+   `print_service.py`.
+
+## 7. What the other session should know it is not blocked on
+
+- Migration slot `0028` is free and uncontested.
+- ADR-016 and ADR-017 are committed; the data-model redraw can proceed against
+  them without waiting on the product side.
+- Phase 2 is not started and will not start without agreement on 4.3.
+- Nothing in the product pipeline reads or writes any world table.
