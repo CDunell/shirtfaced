@@ -24,7 +24,19 @@ from typing import Any
 
 from app.db.concept_models import DesignAttempt
 
-__all__ = ["BriefPackage", "compose_brief"]
+__all__ = ["BriefPackage", "EvidenceImage", "compose_brief"]
+
+
+@dataclass(frozen=True)
+class EvidenceImage:
+    """One reference image, as the screen and the brief both need it."""
+
+    url: str
+    listing_id: str
+    filename: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {"url": self.url, "listing_id": self.listing_id, "filename": self.filename}
 
 
 @dataclass(frozen=True)
@@ -32,14 +44,14 @@ class BriefPackage:
     """The brief as text, plus the evidence it refers to."""
 
     text: str
-    evidence_images: list[str]
+    evidence_images: list[EvidenceImage]
     evidence_listing_ids: list[str]
     research_run_id: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "text": self.text,
-            "evidence_images": list(self.evidence_images),
+            "evidence_images": [image.to_dict() for image in self.evidence_images],
             "evidence_listing_ids": list(self.evidence_listing_ids),
             "research_run_id": self.research_run_id,
             "evidence_count": len(self.evidence_images),
@@ -104,11 +116,11 @@ def compose_brief(attempt: DesignAttempt) -> BriefPackage:
     if prompt:
         lines += ["", "PROMPT", prompt]
 
-    images = [str(item) for item in references.get("evidence_images") or []]
+    images = _evidence(references.get("evidence_images"))
     listings = [str(item) for item in references.get("evidence_listing_ids") or []]
     if not images:
         research = concept.preferred_execution or {}
-        images = [str(item) for item in research.get("evidence_images") or []]
+        images = _evidence(research.get("evidence_images"))
         listings = [str(item) for item in research.get("evidence_listing_ids") or []]
 
     if images:
@@ -119,7 +131,7 @@ def compose_brief(attempt: DesignAttempt) -> BriefPackage:
                 f"{len(images)} reference image(s) from the vintage corpus. "
                 "Attach them alongside this brief; they are what the era is read from."
             ),
-            *images,
+            *(image.url for image in images),
         ]
 
     return BriefPackage(
@@ -128,3 +140,39 @@ def compose_brief(attempt: DesignAttempt) -> BriefPackage:
         evidence_listing_ids=listings,
         research_run_id=str(references.get("vintage_research_run_id") or ""),
     )
+
+
+def _evidence(stored: Any) -> list[EvidenceImage]:
+    """Read the stored evidence, whatever shape it is in.
+
+    The research run records each image as a dict -- ``image_url``, ``filename``,
+    ``listing_id``, ``sha256``, ``byte_size``, ``mime_type``. The first version
+    of this module assumed a list of strings and called ``str()`` on each entry,
+    which printed the whole dict's repr into the brief: a wall of sha256 hashes
+    and byte counts where the URLs should have been, and no image anywhere.
+
+    Plain strings are still accepted, because an older run may hold them and a
+    brief that drops its evidence is worse than one that shows a bare path.
+    """
+    found: list[EvidenceImage] = []
+    for item in stored or []:
+        if isinstance(item, dict):
+            url = str(item.get("image_url") or item.get("url") or "").strip()
+            if not url:
+                continue
+            found.append(
+                EvidenceImage(
+                    url=url,
+                    listing_id=str(item.get("listing_id") or ""),
+                    filename=str(item.get("filename") or url.rsplit("/", 1)[-1]),
+                )
+            )
+        elif isinstance(item, str) and item.strip():
+            found.append(
+                EvidenceImage(
+                    url=item.strip(),
+                    listing_id="",
+                    filename=item.strip().rsplit("/", 1)[-1],
+                )
+            )
+    return found

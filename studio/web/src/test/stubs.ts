@@ -458,7 +458,18 @@ export const BRIEF_PACKAGE = {
     "EVIDENCE",
     "2 reference image(s) from the vintage corpus.",
   ].join("\n"),
-  evidence_images: ["listing-1/0.jpg", "listing-1/2.jpg"],
+  evidence_images: [
+    {
+      url: "/vintage-evidence/image/406847192188/image-01.jpg",
+      listing_id: "406847192188",
+      filename: "image-01.jpg",
+    },
+    {
+      url: "/vintage-evidence/image/406828771234/image-01.webp",
+      listing_id: "406828771234",
+      filename: "image-01.webp",
+    },
+  ],
   evidence_listing_ids: ["listing-1"],
   research_run_id: "run-9",
   evidence_count: 2,

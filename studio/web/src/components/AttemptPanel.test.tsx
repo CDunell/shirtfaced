@@ -67,6 +67,12 @@ describe("AttemptPanel", () => {
 
     expect(await screen.findByText(/2 reference image\(s\)/)).toBeInTheDocument();
     expect(screen.getByText(/2 evidence images travel with this brief/)).toBeInTheDocument();
+
+    // Shown, not just counted. Counting says evidence exists; the images say
+    // whether it is the right evidence.
+    const thumbs = screen.getAllByRole("img", { name: /^evidence image-01/ });
+    expect(thumbs).toHaveLength(2);
+    expect(thumbs[0]).toHaveAttribute("src", "/vintage-evidence/image/406847192188/image-01.jpg");
   });
 
   it("shows the gates the brief answers as facts, not as choices", async () => {

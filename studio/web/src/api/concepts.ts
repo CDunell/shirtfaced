@@ -508,9 +508,15 @@ export async function fetchAdvice(
 /** Everything that leaves the building with one attempt: the words, the product
  * definition, the prompt and the evidence images. Composed on the server so the
  * text a person takes and the record of what they took cannot differ. */
+export interface EvidenceImage {
+  url: string;
+  listing_id: string;
+  filename: string;
+}
+
 export interface BriefPackage {
   text: string;
-  evidence_images: string[];
+  evidence_images: EvidenceImage[];
   evidence_listing_ids: string[];
   research_run_id: string;
   evidence_count: number;

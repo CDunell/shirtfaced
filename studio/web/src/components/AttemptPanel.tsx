@@ -299,12 +299,49 @@ export function AttemptPanel({
         >
           {brief?.text ?? "Composing the brief…"}
         </pre>
-        {brief && brief.evidence_count > 0 ? (
-          <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
-            {brief.evidence_count} evidence image
-            {brief.evidence_count === 1 ? "" : "s"} travel with this brief. Attach them alongside it
-            — they are what the era is read from.
-          </ParagraphXSmall>
+        {brief && brief.evidence_images.length > 0 ? (
+          <>
+            <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+              {brief.evidence_images.length} evidence image
+              {brief.evidence_images.length === 1 ? "" : "s"} travel with this brief. Attach them
+              alongside it — they are what the era is read from.
+            </ParagraphXSmall>
+            {/* Shown, not just counted. A count says evidence exists; the
+                images say whether it is the right evidence, which is the only
+                question worth asking of a reference. */}
+            <div
+              className={css({
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))",
+                gap: "8px",
+                marginBottom: "10px",
+              })}
+            >
+              {brief.evidence_images.map((image) => (
+                <a
+                  key={image.url}
+                  href={image.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={`${image.filename} — listing ${image.listing_id}`}
+                  className={css({
+                    display: "block",
+                    aspectRatio: "1 / 1",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                    backgroundColor: theme.colors.backgroundSecondary,
+                  })}
+                >
+                  <img
+                    src={image.url}
+                    alt={`evidence ${image.filename} from listing ${image.listing_id}`}
+                    loading="lazy"
+                    className={css({ width: "100%", height: "100%", objectFit: "cover" })}
+                  />
+                </a>
+              ))}
+            </div>
+          </>
         ) : null}
         {attempt.method === "image_generation" ? (
           <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
