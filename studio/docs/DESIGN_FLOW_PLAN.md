@@ -4,9 +4,13 @@
 two-pipeline split, and the ten-step sequence in
 `SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md`.
 
-**Scope: the product pipeline only.** World, socials and marketing belong to
-`admin.shirtfaced.wtf` and get their own plan. Nothing here touches them except
-Phase 2, which moves them out.
+**Scope: the product pipeline only.** World, socials and marketing get their
+own plan, and one is now being written — `docs/stage-2/social-ai-production/`.
+Nothing here touches them except Phase 2, which separates them.
+
+*An earlier version of this line said they "belong to `admin.shirtfaced.wtf`".
+That was inherited from the audit and is wrong: admin holds twelve shop and
+storefront-content tables and no world code at all. See Phase 2.*
 
 `docs/shirtfaced-audit.md` is a guideline for direction; it predates the vintage
 subsystem and one of its factual claims is corrected in the 14 August audit.
@@ -143,9 +147,10 @@ carries no millimetres, so the size has to be a decision recorded at approval
 rather than a property read off the file.
 
 Consequence worth noting: **`printing.py` puts a design onto a *photograph*,**
-which is a product shot for socials — world-side work, and Phase 2 moves it to
-Admin. Phase 1 leaves it alone rather than wiring `approved_designs` into a
-router that is about to emigrate.
+which is a product shot for socials — world-side work. Phase 1 leaves it alone
+rather than wiring `approved_designs` into a router that belongs to the other
+pipeline. It stays in Studio (see the Phase 2 correction); what changes is which
+part of the interface owns it.
 
 **One new table, `design_reviews`.** One row per attempt, holding the
 measurement, the answered gates and the answered categories. Mutable while the
@@ -270,11 +275,11 @@ constitution being implemented.
 ### Found while running Phase 1, for the phase each belongs to
 
 - **`printing.py` is world-side.** It puts a design on a *photograph* — a
-  product shot for socials. Phase 2 moves it to Admin. Phase 1 left it alone
-  rather than wiring `approved_designs` into a router about to emigrate.
+  product shot for socials. Phase 1 left it alone rather than wiring
+  `approved_designs` into a router that belongs to the other pipeline.
 - **`admin` has no tests now.** `workflow.test.ts` was its only test file, so
-  `npm test` there matches nothing. Not in the deploy path. Phase 2's business,
-  when the world pipeline moves in.
+  `npm test` there matches nothing. Not in the deploy path. Admin is the
+  storefront, so this is the storefront's business rather than Phase 2's.
 - **`Score` is now a second, worse door to measurement.** `/api/design/score`
   still takes a loose file that attaches to no attempt. The attempt panel
   measures the attempt's own artwork and persists it. Phase 5 folds Score into
@@ -285,6 +290,78 @@ constitution being implemented.
 
 ## Phase 2 — separate the two pipelines
 
+> **Corrected 14 August 2026, before any of it was built. The original wording
+> is wrong and is kept below so the error is legible.**
+>
+> It read: *"Prompts, Social, Email and the world Dashboard leave Studio for
+> Admin."* That inherits the audit's premise that **World → `admin.shirtfaced.wtf`**,
+> and the premise does not survive looking at what admin actually is.
+
+### What admin actually is
+
+Twelve tables, all of them shop: `products`, `product_colours`, `colour_stock`,
+and storefront page content — about, shipping, returns, contact, size guide,
+home, account, more, product page. Drizzle, on its own `SHOP_DATABASE_URL`.
+Zero occurrences of shot, canon, world, generation, campaign or scene.
+
+**Admin is the storefront and its CMS. It is not a world tool.**
+
+Meanwhile Studio's PostgreSQL already owns the entire world production stack:
+`worlds`, `shots`, `generation_attempts`, `image_assets`, `human_decisions`,
+`canon_proposals`, `photos`, `reference_frames` — and `social_posts`,
+`social_derivatives`, `cadence_policies`, `publication_jobs`.
+
+So the audit named a building without checking what was inside it. That is the
+same error Phase 0.2 caught pointing the other way: the scorecard was said to
+live in "the world tool" when admin held no world code at all, only an
+unreferenced contract island.
+
+### What this means for the AI social production model
+
+The concurrent session's `docs/stage-2/social-ai-production/POSTGRES_DATA_MODEL.md`
+(on main at `8c0c9b44`) puts eleven `social_*` tables — campaign, story version,
+characters, wardrobe, locations, scenes, shots, generation attempts, assets,
+continuity checks, edit versions — in **Studio's PostgreSQL**, and its §10 says
+"inside Studio".
+
+**That is correct and should not move.** Its step 10 is a real foreign key into
+`social_posts`, which is a Studio table. Cross-database foreign keys do not
+exist, so relocating those tables to Admin would either break the kickoff
+invariant the whole document rests on, or put campaign→scene→shot→generation
+lineage in the shop's database beside the returns-page copy.
+
+Its table names are `social_`-prefixed throughout and collide with nothing in
+the photography pipeline or the design pipeline.
+
+**One coordination item:** both that work and this branch's
+`0027_design_reviews` descend from `0026`. `studio/deploy/deploy-studio.sh:53`
+runs `alembic upgrade head`, so two heads fails the deploy outright rather than
+subtly. `0027` is taken; the social production migration is `0028`.
+
+### What Phase 2 becomes
+
+Not a move of data. Studio keeps being where production data lives, product and
+world alike, because that is where it already is and where the foreign keys
+already point.
+
+What is actually wrong is one interface presenting two pipelines as one queue.
+So Phase 2 is a **separation inside Studio** — the product destinations and the
+world destinations stop sharing a navigation bar and a Dashboard — with the
+storefront handoff to Admin staying what it already is: a soft
+`product_links` reference across two databases, one-directional, at the end.
+
+Whether the world pipeline eventually gets its own front end, and whether that
+front end is Admin or a third app, is a decision that needs making on evidence
+rather than inherited from a sentence in an audit. It is not a prerequisite for
+Phase 3.
+
+**Exit test:** a person opening Studio can tell which destinations are product
+and which are world without being told, Phase 1 still passes, and nothing has
+moved database.
+
+<details>
+<summary>The original Phase 2, superseded</summary>
+
 Prompts, Social, Email and the world Dashboard leave Studio for Admin. Studio
 keeps evidence, research, concepts, design, compose, score and print.
 
@@ -293,6 +370,8 @@ never has to explain why a photography shot is in a product queue.
 
 **Exit test:** Studio's navigation contains only product destinations, Phase 1
 still passes, and nothing that moved is unreachable in Admin.
+
+</details>
 
 ## Phase 3 — one record, one screen
 
