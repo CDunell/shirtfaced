@@ -89,3 +89,19 @@ def test_pass2_rejects_cosmetic_expansion() -> None:
     second = _concepts()
     with pytest.raises(vr.VintageResearchError, match="did not substantially expand"):
         vr._validate_pass2(first, second)
+
+
+def test_manual_prompts_carry_the_contract_the_api_gets_from_its_schema() -> None:
+    """A chat window has no structured output, so the prompt has to say the shape.
+
+    The API path passes CONCEPT_SCHEMA and is forced into it. The manual path
+    was handed the same prompt with nothing enforcing the result, and a run came
+    back as prose that import_run then refused.
+    """
+    contract = vr.manual_output_contract()
+
+    for field in vr.CONCEPT_SCHEMA["properties"]["concepts"]["items"]["required"]:
+        assert field in contract
+    assert '{"concepts":' in contract
+    assert "1 to 10 in order" in contract
+    assert vr.POD_SUFFIX in contract

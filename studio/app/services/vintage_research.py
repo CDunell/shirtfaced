@@ -510,6 +510,30 @@ def mark_pipeline(run_id: str, concept_number: int, payload: dict[str, Any]) -> 
     save_run(run)
 
 
+def manual_output_contract() -> str:
+    """The output shape, spelled out, because a chat window has no schema.
+
+    The API path passes ``CONCEPT_SCHEMA`` as a structured output, so the model
+    is forced into the shape and ``PASS_1_PROMPT`` never had to describe it.
+    Handing that same prompt to a person pasting into a chat window drops the
+    enforcement silently -- which is how a run came back as ten paragraphs of
+    prose that ``import_run`` then refused.
+
+    Built from ``CONCEPT_SCHEMA`` rather than written out, so the instruction
+    and the validator cannot drift apart.
+    """
+    fields = CONCEPT_SCHEMA["properties"]["concepts"]["items"]["required"]
+    example = ", ".join(f'"{name}": ...' for name in fields)
+    return (
+        "\n\nReturn JSON only, with no prose before or after it, in exactly "
+        "this shape:\n"
+        '{"concepts": [{' + example + "}]}\n"
+        f"Required on every concept: {', '.join(fields)}. "
+        "Return exactly 10, with concept_number running 1 to 10 in order. "
+        f'Every "prompt" must contain this phrase verbatim: "{POD_SUFFIX}"'
+    )
+
+
 def prepare_manual_run(
     *,
     filters: dict[str, Any],
@@ -533,9 +557,10 @@ def prepare_manual_run(
         image_urls=None,
         image_limit=image_limit,
     )
+    contract = manual_output_contract()
     return {
-        "pass1_prompt": PASS_1_PROMPT,
-        "pass2_prompt": PASS_2_PROMPT,
+        "pass1_prompt": PASS_1_PROMPT + contract,
+        "pass2_prompt": PASS_2_PROMPT + contract,
         "evidence_filters": filters,
         "evidence_listing_ids": [item["listing_id"] for item in listings],
         "evidence_listings": listings,
