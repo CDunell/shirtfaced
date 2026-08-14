@@ -1,7 +1,7 @@
 """Metadata-level contract tests for the campaign production foundation.
 
 These are intentionally database-free. Integration coverage still has to exercise
-migration 0028 against PostgreSQL before merge, but these tests catch drift between
+migration 0029 against PostgreSQL before merge, but these tests catch drift between
 the ORM metadata and the hand-written migration while the schema is being built.
 """
 
