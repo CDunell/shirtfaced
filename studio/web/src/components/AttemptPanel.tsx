@@ -332,10 +332,15 @@ export function AttemptPanel({
                     backgroundColor: theme.colors.backgroundSecondary,
                   })}
                 >
+                  {/* Eager on purpose. `loading="lazy"` left all eight at
+                      naturalWidth 0 when checked, and the panel is opened
+                      deliberately by somebody who wants to look at exactly
+                      these images -- deferring them buys nothing and is the
+                      only thing standing between the reader and the evidence.
+                      Eight thumbnails is not a payload worth optimising. */}
                   <img
                     src={image.url}
                     alt={`evidence ${image.filename} from listing ${image.listing_id}`}
-                    loading="lazy"
                     className={css({ width: "100%", height: "100%", objectFit: "cover" })}
                   />
                 </a>
