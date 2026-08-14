@@ -371,12 +371,6 @@ class ShotCharacter(Base):
     __tablename__ = "shot_characters"
     __table_args__ = (
         ForeignKeyConstraint(
-            ["shot_id", "campaign_id"],
-            ["shots.id", "shots.campaign_id"],
-            name="fk_shot_characters_shot_same_campaign",
-            ondelete="CASCADE",
-        ),
-        ForeignKeyConstraint(
             ["character_id", "campaign_id"],
             ["characters.id", "characters.campaign_id"],
             name="fk_shot_characters_character_same_campaign",
@@ -390,7 +384,11 @@ class ShotCharacter(Base):
         ),
     )
 
-    shot_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
+    shot_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("shots.id", name="fk_shot_characters_shot_id", ondelete="CASCADE"),
+        primary_key=True,
+    )
     campaign_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
     character_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True)
     appearance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
