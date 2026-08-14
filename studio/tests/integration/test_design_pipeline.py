@@ -14,13 +14,15 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import FilesystemAssetStore
-from app.db.concept_models import DesignConcept
+from app.db.concept_models import DesignBrief, DesignConcept
 from app.domain.enums import (
+    CollectionRole,
     ConceptStatus,
     DesignAssetKind,
     DesignAttemptMethod,
     DesignAttemptState,
     DesignDecisionKind,
+    GraphicArchetype,
 )
 from app.services.concept_importer import import_concepts
 from app.services.concept_loader import parse_concept_library
@@ -47,7 +49,8 @@ def store(tmp_path: Path) -> FilesystemAssetStore:
 
 
 @pytest.fixture
-def concept(session: Session) -> DesignConcept:
+def unbriefed(session: Session) -> DesignConcept:
+    """A concept as the importer leaves it: an idea, with no product decided."""
     loaded = parse_concept_library(VALID_LIBRARY, source_path="docs/design/FIXTURE.md")
     import_concepts(session, loaded)
     session.flush()
@@ -56,12 +59,71 @@ def concept(session: Session) -> DesignConcept:
     return found
 
 
+@pytest.fixture
+def concept(session: Session, unbriefed: DesignConcept) -> DesignConcept:
+    """The same concept with a brief, because since Phase 4 an attempt cannot
+    open without one.
+
+    The tests below are about the pipeline -- attempts, decisions, versions --
+    and the brief is a precondition of reaching it rather than their subject.
+    The gate itself is tested by ``test_an_attempt_needs_a_brief_first``.
+    """
+    unbriefed.brief = DesignBrief(
+        concept_id=unbriefed.id,
+        collection_role=CollectionRole.CORE,
+        graphic_archetype=GraphicArchetype.TYPOGRAPHIC_HERO,
+    )
+    session.flush()
+    return unbriefed
+
+
 def _submitted(session: Session, store: FilesystemAssetStore, concept: DesignConcept):
     attempt = create_attempt(session, concept, DesignAttemptMethod.MANUAL_IMPORT)
     record_asset(
         session, store, attempt, DesignAssetKind.ARTWORK, "design.svg", SVG, "image/svg+xml"
     )
     return submit_attempt(session, attempt)
+
+
+# --- The brief gates artwork -------------------------------------------------
+
+
+def test_an_attempt_needs_a_brief_first(session: Session, unbriefed: DesignConcept) -> None:
+    """Constitution steps 2 and 4, enforced where artwork begins.
+
+    The audit's diagnosis of generic output was that the bench produced a
+    graphic idea and jumped straight to artwork. This is the jump, refused.
+    """
+    with pytest.raises(InvalidDesignAction) as refused:
+        create_attempt(session, unbriefed, DesignAttemptMethod.MANUAL_IMPORT)
+
+    message = str(refused.value)
+    assert "a collection role" in message
+    assert "a graphic archetype" in message
+    assert "before any artwork exists" in message
+
+
+def test_a_half_written_brief_still_refuses_and_names_the_gap(
+    session: Session, unbriefed: DesignConcept
+) -> None:
+    unbriefed.brief = DesignBrief(concept_id=unbriefed.id, collection_role=CollectionRole.HERO)
+    session.flush()
+
+    with pytest.raises(InvalidDesignAction) as refused:
+        create_attempt(session, unbriefed, DesignAttemptMethod.MANUAL_IMPORT)
+
+    message = str(refused.value)
+    assert "a graphic archetype" in message
+    assert "a collection role" not in message
+
+
+def test_a_briefed_concept_opens_an_attempt(session: Session, concept: DesignConcept) -> None:
+    attempt = create_attempt(session, concept, DesignAttemptMethod.MANUAL_IMPORT)
+
+    assert attempt.attempt_number == 1
+    # The brief travels with the attempt, so it stays explicable if the brief
+    # changes afterwards.
+    assert attempt.brief_snapshot["title"] == concept.title
 
 
 # --- The queue ---------------------------------------------------------------
