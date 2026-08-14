@@ -12,7 +12,7 @@ afterEach(() => {
 
 const noop = (): void => undefined;
 
-/** The shell opens on Designs, so a dashboard assertion has to go there first. */
+/** The shell opens on Work, so a dashboard assertion has to go there first. */
 async function showDashboard(): Promise<void> {
   await userEvent.click(screen.getByRole("button", { name: "Dashboard" }));
 }
@@ -26,10 +26,10 @@ describe("App", () => {
     // The wordmark is admin's, with the product name swapped. It is lowercase and
     // split across two elements, so the whole banner is what gets read.
     expect(screen.getByRole("banner")).toHaveTextContent("shirtfaced / studio");
-    // Designs is the default view. Studio is the product tool, so it opens on the
-    // product queue; it used to open on Prompts, which is world work, and that is
-    // the interleaving Phase 2a exists to stop.
-    expect(screen.getByRole("heading", { name: "Designs" })).toBeInTheDocument();
+    // Work is the default view. It is the one screen that answers "what should I
+    // be doing" without requiring you to know which screen owns what, which is
+    // the plan's governing rule. It used to open on Prompts, which is world work.
+    expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument();
     await showDashboard();
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
     await waitFor(() => {
@@ -50,8 +50,10 @@ describe("App", () => {
     expect(banner).toHaveTextContent("World");
     // Product destinations lead, in the order the work happens.
     const labels = Array.from(banner.querySelectorAll("button")).map((b) => b.textContent);
-    expect(labels.indexOf("Evidence")).toBeLessThan(labels.indexOf("Prompts"));
+    expect(labels.indexOf("Work")).toBeLessThan(labels.indexOf("Prompts"));
     expect(labels.indexOf("Designs")).toBeLessThan(labels.indexOf("Social"));
+    // Work leads the product group: the other destinations are where its rows send you.
+    expect(labels.indexOf("Work")).toBeLessThan(labels.indexOf("Evidence"));
   });
 
   it("shows the world alongside the service status", async () => {

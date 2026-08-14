@@ -66,6 +66,7 @@ __all__ = [
     "load_review",
     "next_status_for_review",
     "score_design",
+    "stored_input",
 ]
 
 
@@ -303,15 +304,20 @@ def guard_decision(
             "approving straight from the queue."
         )
 
-    evaluation = evaluate_review(_input_from(record))
+    evaluation = evaluate_review(stored_input(record))
     if not evaluation.eligible_for_design_approval:
         reasons = "; ".join(evaluation.blockers) or "the review does not meet the scorecard"
         raise NotEligible(f"the scorecard does not support approving this design: {reasons}")
     return evaluation
 
 
-def _input_from(record: DesignReviewRecord) -> DesignReviewInput:
-    """The stored review, back as the input it was evaluated from."""
+def stored_input(record: DesignReviewRecord) -> DesignReviewInput:
+    """The stored review, back as the input it was evaluated from.
+
+    Public because more than one caller needs it: the attempt screen renders
+    from it, and Work evaluates from it to say what is outstanding. Two private
+    copies would be two ways to read the same row.
+    """
     return DesignReviewInput(
         design_id=str(record.design_attempt_id),
         reviewer_id=record.reviewer,

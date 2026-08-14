@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useStyletron } from "baseui";
 import { ParagraphMedium } from "baseui/typography";
 import { ComposeBench } from "./components/ComposeBench";
+import { WorkBench } from "./components/WorkBench";
 import { DesignBench } from "./components/DesignBench";
 import { DesignsBench } from "./components/DesignsBench";
 import { EmailBench } from "./components/EmailBench";
@@ -13,12 +14,14 @@ import { PromptWorkbench } from "./components/PromptWorkbench";
 import { ServiceStatus } from "./components/ServiceStatus";
 import { SocialBench } from "./components/SocialBench";
 import { WorldPage } from "./components/WorldPage";
+import type { WorkItem } from "./api/concepts";
 import type { ThemeName } from "./theme";
 export interface AppProps {
   themeName: ThemeName;
   onToggleTheme: () => void;
 }
 type View =
+  | "work"
   | "prompts"
   | "print"
   | "compose"
@@ -59,6 +62,9 @@ const PIPELINES: { id: Pipeline; label: string; blurb: string }[] = [
 
 const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
   // Product: evidence → research → concept → design → approved version → print.
+  // Work leads because it is the answer to "what should I be doing", and the
+  // other destinations are where its rows send you.
+  { id: "work", label: "Work", pipeline: "product" },
   { id: "evidence", label: "Evidence", pipeline: "product" },
   { id: "research", label: "Research", pipeline: "product" },
   { id: "concepts", label: "Designs", pipeline: "product" },
@@ -96,7 +102,12 @@ const IconClose = () => (
 );
 export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   const [css, theme] = useStyletron();
-  const [view, setView] = useState<View>("concepts");
+  // Work is the front door: it is the one screen that answers what to do
+  // without knowing which screen owns what.
+  const [view, setView] = useState<View>("work");
+  // What Work sent us to, so Designs can open straight onto it. Cleared once
+  // consumed, so navigating away and back does not silently re-open it.
+  const [focus, setFocus] = useState<{ conceptId: string; attemptId: string | null } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const hairline = `1px solid color-mix(in srgb, ${theme.colors.contentPrimary} 10%, transparent)`;
   const item = (active: boolean) =>
@@ -272,14 +283,27 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           paddingRight: "16px",
         })}
       >
-        {view === "prompts" ? (
+        {view === "work" ? (
+          <WorkBench
+            onOpen={(item: WorkItem) => {
+              // Every row lands on the screen that can actually do the thing.
+              setFocus({ conceptId: item.concept_id, attemptId: item.attempt_id });
+              setView("concepts");
+            }}
+          />
+        ) : view === "prompts" ? (
           <PromptWorkbench />
         ) : view === "print" ? (
           <PrintBench />
         ) : view === "compose" ? (
           <ComposeBench />
         ) : view === "concepts" ? (
-          <DesignsBench />
+          <DesignsBench
+            focus={focus}
+            onFocusConsumed={() => {
+              setFocus(null);
+            }}
+          />
         ) : view === "design" ? (
           <DesignBench />
         ) : view === "evidence" ? (

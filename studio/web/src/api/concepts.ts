@@ -368,3 +368,45 @@ export function printedVersionUrl(versionId: string, showZones = false): string 
   const suffix = showZones ? "?show_zones=true" : "";
   return `/api/concepts/versions/${encodeURIComponent(versionId)}/print.svg${suffix}`;
 }
+
+/* --- The work queue --------------------------------------------------------
+ *
+ * One row per thing being made, each carrying the one thing to do to it next.
+ * Derived on the server from concepts, attempts, reviews and versions, so this
+ * cannot disagree with the screens it sends you to.
+ */
+
+export type WorkStage =
+  | "awaiting_decision"
+  | "review_open"
+  | "needs_artwork"
+  | "approved_unversioned"
+  | "ready_to_print"
+  | "unstarted"
+  | "settled";
+
+export interface WorkItem {
+  concept_id: string;
+  library: string;
+  external_number: number;
+  title: string;
+  concept_status: string;
+  research_run_id: string;
+  research_concept_number: number | null;
+  attempt_id: string | null;
+  attempt_number: number | null;
+  attempt_state: DesignAttemptState | null;
+  has_artwork: boolean;
+  percentage: number | null;
+  eligible: boolean;
+  blockers: string[];
+  approved_version: number | null;
+  approved_design_id: string | null;
+  stage: WorkStage;
+  next_action: string;
+}
+
+export async function fetchWork(includeSettled = false): Promise<WorkItem[]> {
+  const suffix = includeSettled ? "?include_settled=true" : "";
+  return await json<WorkItem[]>(`/api/concepts/work${suffix}`);
+}

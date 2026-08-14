@@ -86,6 +86,7 @@ from app.services.design_scoring import (
     score_design,
 )
 from app.services.next_action import next_action
+from app.services.production_item import work_queue
 
 router = APIRouter(prefix="/api/concepts", tags=["concepts"])
 
@@ -501,6 +502,22 @@ def review_queue(session: SessionDependency) -> list[AttemptView]:
 # request fails validation before the handler is ever considered. Found by
 # opening the app rather than by a test, which is the point -- every unit test
 # calls the function directly and none of them route.
+
+
+@router.get("/work", summary="Everything in flight, most-blocked first")
+def get_work(
+    session: SessionDependency,
+    include_settled: Annotated[
+        bool, Query(description="Include rejected and finished concepts")
+    ] = False,
+) -> list[dict[str, Any]]:
+    """The product queue as one list, each row carrying its own next action.
+
+    Derived from the concepts, attempts, reviews and versions that already
+    exist, never stored -- a saved copy of a derived state drifts silently, and
+    this cannot disagree with the tables it describes.
+    """
+    return [item.to_dict() for item in work_queue(session, include_settled=include_settled)]
 
 
 @router.get("/rubric", summary="Every gate and category a review has to answer")

@@ -59,7 +59,18 @@ function number3(value: number): string {
   return `#${String(value).padStart(3, "0")}`;
 }
 
-export function DesignsBench(): React.JSX.Element {
+export interface DesignsBenchProps {
+  /** A concept, and optionally an attempt, that Work asked us to open. Work is
+   * a way in rather than a second place to do the job, so it hands over rather
+   * than duplicating the screen. */
+  focus?: { conceptId: string; attemptId: string | null } | null;
+  onFocusConsumed?: () => void;
+}
+
+export function DesignsBench({
+  focus,
+  onFocusConsumed,
+}: DesignsBenchProps = {}): React.JSX.Element {
   const [css, theme] = useStyletron();
   const [queue, setQueue] = useState<DesignAttemptView[]>([]);
   const [nextUp, setNextUp] = useState<ConceptView | null>(null);
@@ -136,6 +147,21 @@ export function DesignsBench(): React.JSX.Element {
     },
     [open],
   );
+
+  // Consumed once. Navigating away and back should not silently re-open what
+  // Work pointed at three screens ago.
+  useEffect(() => {
+    if (!focus) return;
+    const timer = setTimeout(() => {
+      void open(focus.conceptId).then(() => {
+        setOpenAttemptId(focus.attemptId);
+        onFocusConsumed?.();
+      });
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [focus, open, onFocusConsumed]);
 
   const preview = (attempt: DesignAttemptView) => {
     const artwork = attempt.assets.find((asset) => asset.kind === "artwork") ?? attempt.assets[0];

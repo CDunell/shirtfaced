@@ -131,7 +131,27 @@ def run(base: str) -> list[Link]:
         backlog.detail = f"{len(concepts)} concepts across {libraries or 'no'} libraries"
     links.append(backlog)
 
-    # 3. Garment zones are readable, because Print has nothing to place into
+    # 3. Work answers what to do, and every row says what. A row with no
+    #    sentence sends somebody hunting through six screens, which is the
+    #    exact failure Phase 3 exists to remove.
+    work = Link("work states a next action for every item")
+    status, payload = _json(f"{base}/api/concepts/work")
+    if status != 200 or not isinstance(payload, list):
+        work.detail = f"HTTP {status} — {payload}"
+    else:
+        silent = [item for item in payload if not str(item.get("next_action") or "").strip()]
+        stageless = [item for item in payload if not str(item.get("stage") or "").strip()]
+        if silent:
+            work.detail = f"{len(silent)} of {len(payload)} items state no next action"
+        elif stageless:
+            work.detail = f"{len(stageless)} items carry no stage"
+        else:
+            stages = sorted({str(item.get("stage")) for item in payload})
+            work.ok = True
+            work.detail = f"{len(payload)} items, stages {stages or 'none'}"
+    links.append(work)
+
+    # 4. Garment zones are readable, because Print has nothing to place into
     #    without them and an approval cannot record a zone that is not offered.
     garments = Link("garments declare printable zones")
     status, payload = _json(f"{base}/api/concepts/garments")
@@ -143,7 +163,7 @@ def run(base: str) -> list[Link]:
         garments.detail = f"{len(payload)} garments, {zones} zones"
     links.append(garments)
 
-    # 4. An attempt's review is fetchable and evaluates. Reported per attempt
+    # 5. An attempt's review is fetchable and evaluates. Reported per attempt
     #    rather than in aggregate: one broken review is the whole chain for the
     #    person holding that design.
     review = Link("an attempt's review evaluates")
@@ -172,7 +192,7 @@ def run(base: str) -> list[Link]:
                 )
     links.append(review)
 
-    # 5. An approved version prints. The audit's finding was that printing.py
+    # 6. An approved version prints. The audit's finding was that printing.py
     #    held no reference to approved_designs at all, so this link is the whole
     #    point of item 5 and the far end of the chain.
     printed = Link("an approved version renders into its zone")

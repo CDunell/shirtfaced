@@ -446,8 +446,58 @@ rows that already exist so it cannot drift from them.
 **Work** replaces the Dashboard: items, each showing its next action as a button
 that goes straight there. Nothing else on it.
 
+**Corrected while building:** the plan said *"Work replaces the Dashboard"*.
+Phase 2a put the Dashboard on the world side, where it belongs, so Work replaces
+nothing — it is the product tool's own front door, and the world Dashboard stays
+as world. Work leads the product group and Studio opens on it.
+
+**No migration.** A `ProductionItem` is derived from the concept, its attempts,
+their reviews and the approved version. A stored copy of a derived state drifts
+silently, and this cannot disagree with the tables it describes. It also keeps
+Phase 3 off the alembic chain while a second session is working it.
+
 **Exit test:** the entire Phase 1 flow is driven from Work without touching the
 top navigation.
+
+### Passed 14 August, run in a browser against a database migrated from empty
+
+```
+Work        WORK · 1 OUTSTANDING
+            START HERE  #001 SECOND BREAKFAST
+            Copy the brief, make the artwork in ChatGPT, Gemini or Claude, then
+            bring the file back to the drop zone below. Nothing is generated
+            here and nothing is billed.
+            [Open the brief]
+              → Designs, with the concept and the attempt already open
+
+Attempt     [drop artwork] → [Measure this artwork]
+            → 13 gates answered, 9 categories rated
+            → [Submit for a decision] → [Approve]
+            → garment_tee_crew_front · centre_chest · 180mm
+            → [Record approved design v1]
+            DO THIS NEXT — Approved as v1. Print it at 180mm in the centre
+                           chest zone on garment tee crew front.
+            PRINTED — 2419px wide, the artwork in its zone
+
+Work        #001 SECOND BREAKFAST
+            READY TO PRINT · 80/100 · ATTEMPT 1
+            Approved as v1. Print it at 180mm in the centre chest zone.
+```
+
+The navigation was used exactly once, to return to Work at the end and confirm
+it had followed. Everything before that came from a button on the row.
+
+The smoke chain, extended with a Work link:
+
+```
+  ok  work states a next action for every item   1 items, stages ['ready_to_print']
+all 6 links intact.
+```
+
+**The gate held under a mistake worth recording.** Driving the run, `Approve`
+was clicked while four categories were still unrated, because the test harness
+raced ahead of the form. It was refused, and the screen said which four. The
+product behaved correctly; the driver did not.
 
 ## Phase 4 — the constitution's first four steps
 

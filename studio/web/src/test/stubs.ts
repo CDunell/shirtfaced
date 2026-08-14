@@ -391,6 +391,33 @@ export const RUBRIC = {
   productionPercentage: 85,
 };
 
+/** One work row. Defaults to the case that matters: something waiting on a
+ * person, with a sentence saying what to do about it. */
+export function workItem(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    concept_id: "concept-1",
+    library: "tshirt",
+    external_number: 1,
+    title: "ABSOLUTE WEAPON",
+    concept_status: "exploring",
+    research_run_id: "",
+    research_concept_number: null,
+    attempt_id: "attempt-1",
+    attempt_number: 1,
+    attempt_state: "awaiting_decision",
+    has_artwork: true,
+    percentage: 80,
+    eligible: true,
+    blockers: [],
+    approved_version: null,
+    approved_design_id: null,
+    stage: "awaiting_decision",
+    next_action:
+      "Passed at 80/100 with no failed gates. Approve it, or send it back with a reason.",
+    ...overrides,
+  };
+}
+
 export const GARMENTS = {
   garment_tee_crew_front: [{ key: "centre_chest", width_mm: 279.4, height_mm: 279.4 }],
 };
@@ -479,6 +506,7 @@ export interface Routes {
   conceptAction?: unknown;
   conceptActionStatus?: number;
   conceptActionDetail?: string;
+  work?: unknown;
   rubric?: unknown;
   attemptReview?: unknown;
   garments?: unknown;
@@ -497,6 +525,9 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
     // share those suffixes, and ordering decides which handler answers.
     if (input.startsWith("/api/concepts")) {
       // Before the /attempts branch: the scorecard endpoints share that path.
+      if (input === "/api/concepts/work" || input.startsWith("/api/concepts/work?")) {
+        return Promise.resolve(new Response(JSON.stringify(routes.work ?? [])));
+      }
       if (input === "/api/concepts/rubric") {
         return Promise.resolve(new Response(JSON.stringify(routes.rubric ?? RUBRIC)));
       }
