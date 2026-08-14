@@ -19,9 +19,13 @@ created nothing, which made the button look like it worked.
 
 from __future__ import annotations
 
+import io
+import json
+import zipfile
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -31,6 +35,7 @@ from app.db.session import get_db_session
 from app.domain.errors import StudioError
 from app.services.vintage_research import (
     VintageResearchError,
+    _image_path,
     execute_research,
     import_run,
     list_runs,
@@ -126,6 +131,63 @@ def manual_prepare(body: RunRequest) -> dict[str, Any]:
         )
     except VintageResearchError as error:
         raise _handled(error) from error
+
+
+@router.post("/manual/bundle")
+def manual_bundle(body: RunRequest) -> StreamingResponse:
+    """The same selection as /manual/prepare, as one zip.
+
+    Saving sixteen images one right-click at a time is the tedious part of the
+    manual path, and on a phone it is worse. The archive is a few megabytes per
+    run, so this builds the zip in memory rather than staging files.
+
+    Carries the prompts and a manifest beside the images: a folder of unlabelled
+    jpegs a week later is not evidence of anything, and the manifest is what
+    lets a design be traced back to the listings that informed it.
+    """
+    try:
+        prepared = prepare_manual_run(
+            filters={
+                "query": body.query,
+                "brand": body.brand,
+                "era": body.era,
+                "tradition": body.tradition,
+            },
+            listing_ids=body.listing_ids or None,
+            image_limit=body.image_limit,
+        )
+    except VintageResearchError as error:
+        raise _handled(error) from error
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("pass-1-prompt.txt", prepared["pass1_prompt"])
+        archive.writestr("pass-2-prompt.txt", prepared["pass2_prompt"])
+        archive.writestr(
+            "manifest.json",
+            json.dumps(
+                {
+                    "filters": prepared["evidence_filters"],
+                    "listings": prepared["evidence_listings"],
+                    "images": prepared["evidence_images"],
+                },
+                indent=2,
+            ),
+        )
+        for index, image in enumerate(prepared["evidence_images"], start=1):
+            try:
+                _, path = _image_path(image["image_url"])
+            except VintageResearchError:
+                # A missing file is a gap in the zip, not a failed download.
+                continue
+            archive.writestr(f"images/{index:02d}-{path.name}", path.read_bytes())
+
+    buffer.seek(0)
+    return StreamingResponse(
+        buffer,
+        media_type="application/zip",
+        headers={"Content-Disposition": 'attachment; filename="vintage-research-run.zip"'},
+    )
 
 
 @router.post("/manual/import", status_code=201)

@@ -165,6 +165,37 @@ def _image_path(image_url: str) -> tuple[str, Path]:
     return listing_id, path
 
 
+def _interleave_sources(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Round-robin the collectors so one cannot crowd the others out.
+
+    ``evidence_records`` sorts by listing_id descending, and the archive
+    adapter mints synthetic ids based at 9e14 to stay clear of eBay's
+    twelve-digit ones. String order then puts every archive record above every
+    eBay record, so a sixteen-image run drew sixteen archive pieces and none of
+    the sold listings -- the curated half of the corpus was unreachable at any
+    normal limit.
+
+    Ordering by source in turn fixes that without ranking them: an unfiltered
+    run now sees both, and a filtered one still sees whatever matched.
+    """
+    buckets: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        key = str(row.get("marketplace") or "unknown")
+        buckets.setdefault(key, []).append(row)
+    if len(buckets) < 2:
+        return rows
+
+    ordered: list[dict[str, Any]] = []
+    queues = list(buckets.values())
+    index = 0
+    while any(index < len(queue) for queue in queues):
+        for queue in queues:
+            if index < len(queue):
+                ordered.append(queue[index])
+        index += 1
+    return ordered
+
+
 def select_images(
     *,
     filters: dict[str, Any],
@@ -178,6 +209,8 @@ def select_images(
     wanted = {str(item) for item in (listing_ids or []) if str(item).isdigit()}
     if wanted:
         rows = [row for row in rows if str(row.get("listing_id")) in wanted]
+
+    rows = _interleave_sources(rows)
 
     by_url: dict[str, dict[str, Any]] = {}
     for row in rows:

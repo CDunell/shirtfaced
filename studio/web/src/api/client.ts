@@ -913,6 +913,39 @@ export async function prepareManualRun(
   return request<ManualPrepared>("/api/vintage-research/manual/prepare", "POST", signal, body);
 }
 
+/**
+ * The same selection as a prepare, delivered as one zip.
+ *
+ * Saving sixteen images one right-click at a time is the tedious part of the
+ * manual path, and worse on a phone. Returns a Blob rather than JSON, so it
+ * does not go through `request`.
+ */
+export async function downloadResearchBundle(
+  body: {
+    query?: string;
+    brand?: string;
+    era?: string;
+    tradition?: string;
+    image_limit?: number;
+  },
+  signal?: AbortSignal,
+): Promise<Blob> {
+  const response = await fetch("/api/vintage-research/manual/bundle", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    ...(signal ? { signal } : {}),
+  });
+  if (!response.ok) {
+    const detail = await response
+      .json()
+      .then((payload: { detail?: string }) => payload.detail)
+      .catch(() => undefined);
+    throw new ApiError(response.status, detail ?? "The bundle could not be built.");
+  }
+  return response.blob();
+}
+
 /** Store hand-run concepts as an ordinary run, validated the same way. */
 export async function importManualRun(
   concepts: unknown[],

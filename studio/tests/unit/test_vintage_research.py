@@ -105,3 +105,32 @@ def test_manual_prompts_carry_the_contract_the_api_gets_from_its_schema() -> Non
     assert '{"concepts":' in contract
     assert "1 to 10 in order" in contract
     assert vr.POD_SUFFIX in contract
+
+
+def test_sources_are_interleaved_so_one_cannot_crowd_out_the_other() -> None:
+    """Archive ids sort above every eBay id, so ordering alone hid half the corpus.
+
+    evidence_records sorts by listing_id descending and the archive adapter
+    mints ids at 9e14 to avoid colliding with eBay's twelve digits. A sixteen
+    image run drew sixteen archive pieces and no sold listings at all.
+    """
+    rows = [
+        {"listing_id": "900000000000003", "marketplace": "archive"},
+        {"listing_id": "900000000000002", "marketplace": "archive"},
+        {"listing_id": "900000000000001", "marketplace": "archive"},
+        {"listing_id": "406847192188", "marketplace": "ebay"},
+        {"listing_id": "406847192187", "marketplace": "ebay"},
+    ]
+
+    ordered = vr._interleave_sources(rows)
+
+    # Both sources appear inside the first four, rather than one filling them.
+    first_four = {row["marketplace"] for row in ordered[:4]}
+    assert first_four == {"archive", "ebay"}
+    assert len(ordered) == len(rows)
+
+
+def test_interleaving_leaves_a_single_source_untouched() -> None:
+    rows = [{"listing_id": "1", "marketplace": "ebay"}, {"listing_id": "2", "marketplace": "ebay"}]
+
+    assert vr._interleave_sources(rows) == rows

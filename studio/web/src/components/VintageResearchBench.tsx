@@ -26,6 +26,7 @@ import { CopyButton, PasteButton, PageTitle } from "./chrome";
 
 import {
   ApiError,
+  downloadResearchBundle,
   importManualRun,
   prepareManualRun,
   fetchDesignConceptTargets,
@@ -146,6 +147,30 @@ export function VintageResearchBench(): React.JSX.Element {
       })
       .catch((cause: unknown) => {
         setError(cause instanceof ApiError ? cause.message : "Could not select evidence.");
+      });
+  }, [query, era, tradition, imageLimit]);
+
+  const downloadBundle = useCallback(() => {
+    setError(null);
+    const limit = Number.parseInt(imageLimit, 10);
+    downloadResearchBundle({
+      query,
+      era: String(era[0]?.id ?? ""),
+      tradition: String(tradition[0]?.id ?? ""),
+      image_limit: Number.isFinite(limit) ? limit : 16,
+    })
+      .then((blob) => {
+        // Object URL rather than a data URI: a few megabytes of zip in a URI
+        // is a string the browser has to hold twice.
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "vintage-research-run.zip";
+        link.click();
+        URL.revokeObjectURL(url);
+      })
+      .catch((cause: unknown) => {
+        setError(cause instanceof ApiError ? cause.message : "The bundle could not be built.");
       });
   }, [query, era, tradition, imageLimit]);
 
@@ -306,7 +331,10 @@ export function VintageResearchBench(): React.JSX.Element {
               color: theme.colors.contentSecondary,
             })}
           >
-            <li>Save the images below — right-click, or long-press on a phone.</li>
+            <li>
+              Download the zip — every image, both prompts and a manifest. Or save the thumbnails
+              one at a time by right-click or long-press.
+            </li>
             <li>Copy Pass 1 and send it with those images to ChatGPT or Gemini.</li>
             <li>Send Pass 2 to the same chat to deepen the same ten.</li>
             <li>Copy the JSON it returns and paste it into the box at the bottom.</li>
@@ -318,6 +346,13 @@ export function VintageResearchBench(): React.JSX.Element {
             Right-click or long-press to save — they deliberately do not open in a new tab, because
             a blocked one loses everything prepared here.
           </ParagraphXSmall>
+          <Button
+            size={SIZE.compact}
+            onClick={downloadBundle}
+            overrides={{ BaseButton: { style: { marginBottom: "10px" } } }}
+          >
+            Download zip — images + prompts
+          </Button>
           <div className={css({ display: "flex", gap: "6px", overflowX: "auto", margin: "8px 0" })}>
             {prepared.evidence_images.map((image) => (
               <img
