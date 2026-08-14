@@ -3,7 +3,20 @@
 **Status:** ACTIVE — Stage 2 production authority  
 **Scope:** Instagram + TikTok campaign content development and AI production  
 **Upstream of:** SocialBench, social posting, derivative review and publishing systems  
-**Production assumption:** 100% AI-generated visual production unless explicitly overridden
+**Production assumption:** 100% AI-generated visual production unless explicitly overridden  
+**Persistence rule:** PostgreSQL is engaged from campaign kickoff and is the system of record for the full production lifecycle
+
+---
+
+## 0. PostgreSQL-first production invariant
+
+Creative development does not happen outside the production system and get persisted later.
+
+A campaign row must exist at kickoff. Story versions, characters, wardrobe, locations, scenes, shots, generation attempts, continuity checks, edit versions, derivatives, publication jobs and performance must all retain lineage back to that campaign.
+
+**No generation without a persisted campaign. No shot without a persisted scene. No generation attempt without a persisted shot specification. No published derivative without lineage back to kickoff.**
+
+See `POSTGRES_DATA_MODEL.md` for the canonical upstream data model and its relationship to the existing `social_posts`, `social_derivatives`, `publication_jobs` and cadence infrastructure.
 
 ---
 
@@ -44,6 +57,8 @@ Every campaign must therefore be developed before generation at the level of:
 - continuity constraints between independently generated AI shots
 
 The generation model is the camera department, locations department, casting department, lighting department, wardrobe department and VFX department. The production system must supply those departments with deterministic instructions.
+
+Every one of those decisions must be persisted as structured production data or explicit versioned creative state rather than existing only in model context.
 
 ---
 
@@ -167,9 +182,11 @@ The directing language may change between posts and campaigns. The shirtfaced wo
 
 ## 6. AI campaign development hierarchy
 
-Every cycle must be built in this order.
+Every cycle must be built in this order and persisted as it is developed.
 
 ### Level 1 — Campaign premise
+
+Creating the campaign is the kickoff event and must create the PostgreSQL campaign root before further work begins.
 
 Define:
 
@@ -198,6 +215,8 @@ Minimum story phases:
 
 The ten-post loop is then cut from or authored around this larger event.
 
+Story development is versioned in PostgreSQL. Approved story versions are immutable; revisions create new versions.
+
 ### Level 3 — Scene architecture
 
 Each scene receives:
@@ -216,6 +235,8 @@ Each scene receives:
 - continuity-in state
 - continuity-out state
 - candidate post(s)
+
+Scenes must be persisted before shot planning begins.
 
 ### Level 4 — Shot architecture
 
@@ -253,6 +274,8 @@ Required fields:
 - intended edit-out
 - still-frame extraction potential
 
+The persisted shot record is the production contract consumed by the generation layer.
+
 ### Level 5 — Generation batches
 
 Shots should be generated in continuity-aware batches rather than as unrelated prompts.
@@ -263,6 +286,8 @@ Batch examples:
 - same room from multiple camera positions
 - sequential actions requiring matching first / last frames
 - clean still-image companion set for a completed scene
+
+Every generation attempt must be retained with provider/model/settings/prompt/reference provenance and QC outcome, including rejected attempts.
 
 ### Level 6 — Edit and derivatives
 
@@ -281,13 +306,15 @@ Derivatives may alter:
 
 They must not accidentally invent contradictory story facts.
 
+Edit versions and downstream platform derivatives must retain lineage to the selected source shots and campaign root.
+
 ---
 
 ## 7. Garment placement is a directing decision
 
 Products are not pasted into completed stories as an afterthought.
 
-Wardrobe allocation must be decided during story development.
+Wardrobe allocation must be decided during story development and persisted against characters/scenes.
 
 For every recurring character define:
 
@@ -318,7 +345,7 @@ The cycle should contain enough intentional hero coverage to sell the product wh
 
 Because shots are generated rather than photographed, continuity cannot be assumed.
 
-Each campaign must retain a **continuity bible** containing at minimum:
+Each campaign must retain a **continuity bible** in persisted structured data containing at minimum:
 
 - character reference images
 - face / hair / body / age descriptors
@@ -347,7 +374,7 @@ Examples:
 - rear graphic appears on the front
 - object locations break screen direction
 
-These require rejection or regeneration.
+These require rejection or regeneration, with the failed check and rejection reason retained in PostgreSQL.
 
 ---
 
@@ -382,6 +409,8 @@ A nominal 60–90 minute AI production therefore means a deliberately authored b
 
 The system should generate only material with a plausible editorial role. Cheap AI generation is not a reason to create undirected sludge.
 
+Binary image/video/audio assets belong in object/file storage; PostgreSQL stores stable references, hashes, technical metadata, provenance and creative lineage.
+
 ---
 
 ## 10. Stories are outside the ten-post count
@@ -411,8 +440,9 @@ Stories should feel adjacent to the campaign rather than like another mandatory 
 
 This directory is the root for the AI social-production authority.
 
-The next specifications should live here as the system is expanded:
+The specifications should live here as the system is expanded:
 
+- `POSTGRES_DATA_MODEL.md` — persistence from kickoff through generation, edit, publication and performance
 - `STORY_ENGINE.md` — premise generation, narrative arcs, beat system, humour and escalation
 - `DIRECTING_BIBLE.md` — camera grammar, shot vocabulary, lens intent, movement, blocking and visual signatures
 - `SCENE_SPEC.md` — machine-readable scene schema and continuity state
@@ -424,7 +454,7 @@ The next specifications should live here as the system is expanded:
 - `CONTENT_CYCLE.md` — canonical 10-post loop, platform translation and experimentation rules
 - `QUALITY_GATE.md` — visual, continuity, brand, garment and narrative acceptance criteria
 
-These should ultimately be represented in the Studio data model and SocialBench so campaign development is planned, generated, reviewed, approved/rejected and measured as one connected workflow.
+These must ultimately be represented in the Studio data model and SocialBench so campaign development is planned, generated, reviewed, approved/rejected and measured as one connected workflow.
 
 ---
 
@@ -453,6 +483,8 @@ Measure separately:
 
 Optimisation should modify the formula using shirtfaced evidence rather than blindly chasing generic social-media benchmarks.
 
+Because the creative lineage starts at campaign kickoff, performance must be attributable backwards through post, edit, selected shots, generation attempts, shot design, scene, story version and campaign premise.
+
 ---
 
 ## 13. Governing principle
@@ -461,4 +493,4 @@ Optimisation should modify the formula using shirtfaced evidence rather than bli
 
 The goal is not to make AI videos that look impressive in isolation.
 
-The goal is to create a persistent, recognisable shirtfaced world that can produce years of stories, films, photographs, characters, products and recurring jokes through a controlled AI production system.
+The goal is to create a persistent, recognisable shirtfaced world that can produce years of stories, films, photographs, characters, products and recurring jokes through a controlled AI production system with full production provenance from kickoff onward.
