@@ -83,6 +83,26 @@ describe("DesignsBench", () => {
     });
   });
 
+  it("carries the composer and the loose-file measurer, closed until asked", async () => {
+    // Phase 5's exit test: two navigation entries removed, no capability lost.
+    stubApi({ concepts: [] });
+
+    renderWithBase(<DesignsBench />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Compose artwork/ })).toBeInTheDocument();
+    });
+    const compose = screen.getByRole("button", { name: /Compose artwork/ });
+    const measure = screen.getByRole("button", { name: /Measure a loose file/ });
+    // Closed, and mounting nothing, so a backlog does not pay for three benches.
+    expect(compose).toHaveAttribute("aria-expanded", "false");
+    expect(measure).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByText("Composing")).not.toBeInTheDocument();
+
+    await userEvent.click(compose);
+    expect(compose).toHaveAttribute("aria-expanded", "true");
+  });
+
   it("does not offer approval from the queue at all", async () => {
     // Approval needs the scorecard answered, and the queue has nowhere to
     // answer it. Offering an Approve button that the server would refuse is

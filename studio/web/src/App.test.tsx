@@ -56,6 +56,20 @@ describe("App", () => {
     expect(labels.indexOf("Work")).toBeLessThan(labels.indexOf("Evidence"));
   });
 
+  it("no longer offers Compose or Score as destinations", () => {
+    // Phase 5. They were three screens that each knew part of one journey.
+    // The capabilities did not go anywhere -- they fold into Designs.
+    stubApi();
+
+    renderWithBase(<App themeName="light" onToggleTheme={noop} />);
+
+    const banner = screen.getByRole("banner");
+    const labels = Array.from(banner.querySelectorAll("button")).map((b) => b.textContent);
+    expect(labels).not.toContain("Compose");
+    expect(labels).not.toContain("Score");
+    expect(labels).toContain("Designs");
+  });
+
   it("shows the world alongside the service status", async () => {
     stubApi();
 

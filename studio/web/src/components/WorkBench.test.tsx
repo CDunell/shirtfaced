@@ -121,6 +121,49 @@ describe("WorkBench", () => {
     }
   });
 
+  it("renders a stage this build has never heard of", async () => {
+    // Phase 4 added `needs_brief` on the server while this file still held
+    // Phase 3's seven stages. STAGES[stage].label threw, and because Work is
+    // the default view the whole application rendered blank in production
+    // while the API, the smoke chain and CI all stayed green.
+    stubApi({
+      work: [
+        workItem({
+          stage: "a_stage_from_the_future",
+          next_action: "Do the thing the server says, even if this build has no label for it.",
+        }),
+      ],
+    });
+
+    renderWithBase(<WorkBench onOpen={noop} />);
+
+    // The sentence is the part that tells somebody what to do, and it survives
+    // -- in the hero and in the row, which is why there are two of it.
+    expect((await screen.findAllByText(/Do the thing the server says/)).length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId("work-row")).toHaveLength(1);
+    // The unknown stage renders readably rather than taking the page down.
+    expect(screen.getAllByText(/a stage from the future/).length).toBeGreaterThan(0);
+  });
+
+  it("labels a concept with no brief as needing one", async () => {
+    stubApi({
+      work: [
+        workItem({
+          stage: "needs_brief",
+          attempt_id: null,
+          percentage: null,
+          next_action: "Write the brief: choose its role in the range.",
+        }),
+      ],
+    });
+
+    renderWithBase(<WorkBench onOpen={noop} />);
+
+    await waitFor(() => {
+      expect(screen.getAllByRole("button", { name: "Write the brief" }).length).toBeGreaterThan(0);
+    });
+  });
+
   it("says so plainly when there is nothing to do", async () => {
     stubApi({ work: [] });
 

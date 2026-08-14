@@ -38,7 +38,9 @@ import {
 } from "../api/concepts";
 import { AttemptPanel } from "./AttemptPanel";
 import { BriefPanel } from "./BriefPanel";
-import { PageTitle, SectionTitle, StatusChip } from "./chrome";
+import { ComposeBench } from "./ComposeBench";
+import { DesignBench } from "./DesignBench";
+import { Disclosure, PageTitle, SectionTitle, StatusChip } from "./chrome";
 import { CREAM, INK, LIME, PAPER } from "../tokens";
 
 function describe(cause: unknown): string {
@@ -656,6 +658,25 @@ export function DesignsBench({
           )}
         </div>
       </div>
+
+      {/* Phase 5. Compose and Score were top-level destinations, which made the
+          design journey three screens that each knew part of it. They are the
+          same capabilities, reached from the one screen that owns the journey.
+          Closed by default and mounted only when opened, so a backlog does not
+          pay for three benches' worth of fetching. */}
+      <Disclosure
+        label="Compose artwork"
+        blurb="The deterministic composer: a garment, some words, a seed. Same seed, same bytes."
+      >
+        {() => <ComposeBench />}
+      </Disclosure>
+
+      <Disclosure
+        label="Measure a loose file"
+        blurb="For something that is not a concept yet. An attempt measures its own artwork."
+      >
+        {() => <DesignBench />}
+      </Disclosure>
     </>
   );
 }

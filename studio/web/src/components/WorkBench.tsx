@@ -40,15 +40,31 @@ function describe(cause: unknown): string {
  *
  * The verb matters more than the noun: "Judge it" is a thing to do, "awaiting
  * decision" is a thing to be. */
-const STAGES: Record<WorkStage, { label: string; action: string }> = {
+const STAGES: Partial<Record<WorkStage, { label: string; action: string }>> = {
   awaiting_decision: { label: "Waiting on you", action: "Judge it" },
   review_open: { label: "Review open", action: "Answer the scorecard" },
   needs_artwork: { label: "Needs artwork", action: "Open the brief" },
+  needs_brief: { label: "Needs a brief", action: "Write the brief" },
   approved_unversioned: { label: "Approved", action: "Record the version" },
   ready_to_print: { label: "Ready to print", action: "Open it" },
   unstarted: { label: "Not started", action: "Start it" },
   settled: { label: "Settled", action: "Open it" },
 };
+
+/** A stage this build has never heard of still has to render.
+ *
+ * The server owns the stage vocabulary and can add to it, and this file cannot
+ * be deployed in the same instant. Phase 4 added `needs_brief` on the server
+ * while this map still held Phase 3's seven; `STAGES[stage].label` threw, and
+ * because Work is the default view **the whole application rendered blank in
+ * production** while the API, the smoke chain and CI all stayed green.
+ *
+ * So the lookup is total. An unknown stage shows the row and its sentence --
+ * which is the part that actually tells somebody what to do -- rather than
+ * taking the page down. */
+function stageOf(stage: WorkStage): { label: string; action: string } {
+  return STAGES[stage] ?? { label: stage.replace(/_/g, " "), action: "Open it" };
+}
 
 function number3(value: number): string {
   return `#${String(value).padStart(3, "0")}`;
@@ -157,7 +173,7 @@ export function WorkBench({ onOpen }: WorkBenchProps): React.JSX.Element {
               onOpen(first);
             }}
           >
-            {STAGES[first.stage].action}
+            {stageOf(first.stage).action}
           </Button>
         </section>
       ) : null}
@@ -262,7 +278,7 @@ export function WorkBench({ onOpen }: WorkBenchProps): React.JSX.Element {
                     color: theme.colors.contentTertiary,
                   })}
                 >
-                  {STAGES[item.stage].label}
+                  {stageOf(item.stage).label}
                   {item.percentage === null ? "" : ` · ${item.percentage.toFixed(0)}/100`}
                   {item.attempt_number === null ? "" : ` · attempt ${String(item.attempt_number)}`}
                 </span>
@@ -283,7 +299,7 @@ export function WorkBench({ onOpen }: WorkBenchProps): React.JSX.Element {
                 onOpen(item);
               }}
             >
-              {STAGES[item.stage].action}
+              {stageOf(item.stage).action}
             </Button>
           </div>
         ))}

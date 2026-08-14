@@ -2,9 +2,7 @@
 import { useState } from "react";
 import { useStyletron } from "baseui";
 import { ParagraphMedium } from "baseui/typography";
-import { ComposeBench } from "./components/ComposeBench";
 import { WorkBench } from "./components/WorkBench";
-import { DesignBench } from "./components/DesignBench";
 import { DesignsBench } from "./components/DesignsBench";
 import { EmailBench } from "./components/EmailBench";
 import { PrintBench } from "./components/PrintBench";
@@ -24,9 +22,7 @@ type View =
   | "work"
   | "prompts"
   | "print"
-  | "compose"
   | "concepts"
-  | "design"
   | "evidence"
   | "research"
   | "social"
@@ -67,9 +63,9 @@ const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
   { id: "work", label: "Work", pipeline: "product" },
   { id: "evidence", label: "Evidence", pipeline: "product" },
   { id: "research", label: "Research", pipeline: "product" },
+  // Compose and Score used to be destinations here. Phase 5 folded them into
+  // Designs: they are steps of one journey, not places to go.
   { id: "concepts", label: "Designs", pipeline: "product" },
-  { id: "compose", label: "Compose", pipeline: "product" },
-  { id: "design", label: "Score", pipeline: "product" },
   // World: canon → shot → photograph → decision → social → customer.
   { id: "dashboard", label: "Dashboard", pipeline: "world" },
   { id: "prompts", label: "Prompts", pipeline: "world" },
@@ -295,8 +291,6 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <PromptWorkbench />
         ) : view === "print" ? (
           <PrintBench />
-        ) : view === "compose" ? (
-          <ComposeBench />
         ) : view === "concepts" ? (
           <DesignsBench
             focus={focus}
@@ -304,8 +298,6 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
               setFocus(null);
             }}
           />
-        ) : view === "design" ? (
-          <DesignBench />
         ) : view === "evidence" ? (
           <VintageEvidenceBench />
         ) : view === "research" ? (

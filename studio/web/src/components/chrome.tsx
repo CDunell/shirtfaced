@@ -335,3 +335,72 @@ export function PasteButton({
     </button>
   );
 }
+
+/** A section that is closed until asked for, and mounts nothing until it opens.
+ *
+ * Phase 5 folds Compose and Score into Designs. Rendering both eagerly would
+ * make one screen fetch three benches' worth of data to show a backlog, so the
+ * children are not constructed until the panel is open — which is also why this
+ * takes a render function rather than elements.
+ */
+export function Disclosure({
+  label,
+  blurb,
+  children,
+}: {
+  label: string;
+  blurb: string;
+  children: () => ReactNode;
+}): React.JSX.Element {
+  const [css, theme] = useStyletron();
+  const [open, setOpen] = useState(false);
+  return (
+    <section
+      className={css({
+        border: `1px solid ${theme.colors.backgroundSecondary}`,
+        borderRadius: "16px",
+        marginTop: theme.sizing.scale600,
+        overflow: "hidden",
+      })}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => {
+          setOpen((previous) => !previous);
+        }}
+        className={css({
+          appearance: "none",
+          border: "none",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          textAlign: "left",
+          width: "100%",
+          display: "flex",
+          alignItems: "baseline",
+          gap: "10px",
+          flexWrap: "wrap",
+          padding: "14px 16px",
+          backgroundColor: open ? theme.colors.backgroundSecondary : "transparent",
+          ":hover": { backgroundColor: theme.colors.backgroundSecondary },
+        })}
+      >
+        <span
+          className={css({
+            fontSize: "13px",
+            fontWeight: 700,
+            letterSpacing: "0.04em",
+            textTransform: "uppercase",
+            color: theme.colors.contentPrimary,
+          })}
+        >
+          {open ? "−" : "+"} {label}
+        </span>
+        <span className={css({ fontSize: "12px", color: theme.colors.contentTertiary })}>
+          {blurb}
+        </span>
+      </button>
+      {open ? <div className={css({ padding: "16px" })}>{children()}</div> : null}
+    </section>
+  );
+}

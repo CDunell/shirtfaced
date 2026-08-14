@@ -376,14 +376,23 @@ export function printedVersionUrl(versionId: string, showZones = false): string 
  * cannot disagree with the screens it sends you to.
  */
 
+/** The stages the server sends today.
+ *
+ * `(string & {})` keeps the known names autocompleting while admitting one the
+ * server adds before this file is redeployed. The union used to be closed, and
+ * a closed union told the compiler a lookup was total when it was not -- which
+ * is how `needs_brief` blanked the whole application. Types describe what the
+ * API actually returns, not what it returned when they were written. */
 export type WorkStage =
   | "awaiting_decision"
   | "review_open"
   | "needs_artwork"
+  | "needs_brief"
   | "approved_unversioned"
   | "ready_to_print"
   | "unstarted"
-  | "settled";
+  | "settled"
+  | (string & Record<never, never>);
 
 export interface WorkItem {
   concept_id: string;
