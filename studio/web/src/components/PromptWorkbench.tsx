@@ -22,7 +22,7 @@ import { Select, type Value } from "baseui/select";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
 import { LabelSmall, ParagraphXSmall } from "baseui/typography";
 
-import { PageTitle } from "./chrome";
+import { CopyButton, PageTitle } from "./chrome";
 
 import {
   ApiError,
@@ -117,29 +117,6 @@ function UploadTheResult({ promptId }: { promptId: string }): React.JSX.Element 
 /** A prompt with a copy button. Selecting by hand on a phone is miserable. */
 function PromptBlock({ title, text }: { title: string; text: string }): React.JSX.Element {
   const [css, theme] = useStyletron();
-  const [copied, setCopied] = useState(false);
-
-  const copy = useCallback(() => {
-    // Older mobile browsers have no clipboard API; the textarea is still selectable.
-    void navigator.clipboard.writeText(text).then(
-      () => {
-        setCopied(true);
-      },
-      () => {
-        setCopied(false);
-      },
-    );
-  }, [text]);
-
-  useEffect(() => {
-    if (!copied) return undefined;
-    const timer = setTimeout(() => {
-      setCopied(false);
-    }, 2000);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [copied]);
 
   return (
     <div className={css({ marginTop: theme.sizing.scale700 })}>
@@ -153,9 +130,7 @@ function PromptBlock({ title, text }: { title: string; text: string }): React.JS
         })}
       >
         <LabelSmall>{title}</LabelSmall>
-        <Button size={SIZE.compact} kind={BUTTON_KIND.secondary} onClick={copy}>
-          {copied ? "Copied" : "Copy"}
-        </Button>
+        <CopyButton text={text} label={title} />
       </div>
       <textarea
         readOnly
