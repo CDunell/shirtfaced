@@ -469,9 +469,9 @@ def upgrade() -> None:
         sa.Column("eyeline", sa.String(length=160), nullable=True),
         sa.Column("continuity_notes", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(
-            ["shot_id", "campaign_id"],
-            ["shots.id", "shots.campaign_id"],
-            name="fk_shot_characters_shot_same_campaign",
+            ["shot_id"],
+            ["shots.id"],
+            name="fk_shot_characters_shot_id_shots",
             ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
@@ -488,9 +488,72 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("shot_id", "character_id", name="pk_shot_characters"),
     )
+    op.execute(
+        """
+        CREATE FUNCTION enforce_shot_character_same_campaign()
+        RETURNS trigger
+        LANGUAGE plpgsql
+        AS $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1
+                FROM shots
+                WHERE id = NEW.shot_id
+                  AND campaign_id = NEW.campaign_id
+            ) THEN
+                RAISE EXCEPTION 'shot character campaign does not match shot campaign'
+                    USING ERRCODE = '23503';
+            END IF;
+            RETURN NEW;
+        END;
+        $$
+        """
+    )
+    op.execute(
+        """
+        CREATE TRIGGER trg_shot_characters_same_campaign
+        BEFORE INSERT OR UPDATE OF shot_id, campaign_id ON shot_characters
+        FOR EACH ROW
+        EXECUTE FUNCTION enforce_shot_character_same_campaign()
+        """
+    )
+    op.execute(
+        """
+        CREATE FUNCTION enforce_shot_campaign_matches_characters()
+        RETURNS trigger
+        LANGUAGE plpgsql
+        AS $$
+        BEGIN
+            IF NEW.campaign_id IS DISTINCT FROM OLD.campaign_id
+               AND EXISTS (
+                    SELECT 1
+                    FROM shot_characters
+                    WHERE shot_id = NEW.id
+                      AND campaign_id IS DISTINCT FROM NEW.campaign_id
+               ) THEN
+                RAISE EXCEPTION 'shot campaign does not match existing shot characters'
+                    USING ERRCODE = '23503';
+            END IF;
+            RETURN NEW;
+        END;
+        $$
+        """
+    )
+    op.execute(
+        """
+        CREATE TRIGGER trg_shots_character_campaign
+        BEFORE UPDATE OF campaign_id ON shots
+        FOR EACH ROW
+        EXECUTE FUNCTION enforce_shot_campaign_matches_characters()
+        """
+    )
 
 
 def downgrade() -> None:
+    op.execute("DROP TRIGGER IF EXISTS trg_shots_character_campaign ON shots")
+    op.execute("DROP FUNCTION IF EXISTS enforce_shot_campaign_matches_characters()")
+    op.execute("DROP TRIGGER IF EXISTS trg_shot_characters_same_campaign ON shot_characters")
+    op.execute("DROP FUNCTION IF EXISTS enforce_shot_character_same_campaign()")
     op.drop_table("shot_characters")
 
     op.drop_index("ix_shots_scene_id_sequence", table_name="shots")
