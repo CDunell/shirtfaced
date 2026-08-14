@@ -93,6 +93,31 @@ describe("AttemptPanel", () => {
     expect(screen.getAllByText(/from the brief:/).length).toBeGreaterThan(0);
   });
 
+  it("stops inviting artwork onto an abandoned attempt, and says why", async () => {
+    // Reported: uploading did nothing but show "Storing the artwork…". The
+    // server refused with 422 because the attempt was abandoned, and the error
+    // rendered at the top of the panel -- several screens above the drop zone
+    // on a phone. So the control offered something it could never accept.
+    stubApi({});
+
+    renderWithBase(
+      panel(
+        designAttemptView({
+          state: "failed",
+          assets: [],
+          failure_message: "the prompt belongs to another concept",
+        }),
+      ),
+    );
+
+    expect(
+      await screen.findByText(/This attempt was abandoned and cannot take artwork/),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/the prompt belongs to another concept/)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Attach artwork to this attempt")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Measure this artwork" })).not.toBeInTheDocument();
+  });
+
   it("gives the artwork somewhere to land", async () => {
     // uploadAsset existed with zero call sites, which meant every attempt was
     // stuck in `planned` and could never be submitted, decided or approved.

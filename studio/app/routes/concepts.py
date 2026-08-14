@@ -188,6 +188,9 @@ class AttemptView(BaseModel):
     assets: list[AssetView]
     decision: DecisionView | None
     approved_version: int | None
+    # Why a failed attempt failed. Without it a settled row looks identical to
+    # a working one on screen, and the drop zone invites artwork it will refuse.
+    failure_message: str | None
 
     @classmethod
     def of(cls, attempt: DesignAttempt) -> AttemptView:
@@ -206,6 +209,7 @@ class AttemptView(BaseModel):
             approved_version=(
                 None if attempt.approved_design is None else attempt.approved_design.version
             ),
+            failure_message=attempt.failure_message,
         )
 
 

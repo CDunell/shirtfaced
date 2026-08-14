@@ -553,6 +553,7 @@ export function designAttemptView(overrides: Partial<DesignAttemptView> = {}): D
     assets: [],
     decision: null,
     approved_version: null,
+    failure_message: null,
     ...overrides,
   };
 }

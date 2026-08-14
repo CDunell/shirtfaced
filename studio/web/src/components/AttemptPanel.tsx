@@ -96,6 +96,8 @@ export function AttemptPanel({
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState("");
   const [dragging, setDragging] = useState(false);
+  // Kept beside the drop zone as well as at the top of the panel.
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const fileInput = useRef<HTMLInputElement | null>(null);
 
@@ -185,9 +187,24 @@ export function AttemptPanel({
 
   const onFile = useCallback(
     (file: File) => {
-      void run("upload", () => uploadAsset(attempt.id, file));
+      setUploadError(null);
+      setBusy("upload");
+      setError(null);
+      uploadAsset(attempt.id, file)
+        .then(async () => {
+          await load();
+          await onChanged();
+        })
+        .catch((cause: unknown) => {
+          const message = describe(cause);
+          setError(message);
+          setUploadError(message);
+        })
+        .finally(() => {
+          setBusy(null);
+        });
     },
-    [attempt.id, run],
+    [attempt.id, load, onChanged],
   );
 
   const answerGate = useCallback(
@@ -225,6 +242,12 @@ export function AttemptPanel({
     [review],
   );
 
+  // Settled means settled everywhere. `frozen` only covered a recorded
+  // decision, so an abandoned attempt still offered a drop zone, a measure
+  // button and a scorecard -- and the upload it invited came back 422 with the
+  // error rendered at the top of the panel, out of sight of the control that
+  // caused it. On a phone that reads as "nothing happened".
+  const settled = review?.frozen === true || attempt.state === "failed";
   const evaluation = review?.evaluation;
   const sentence = review?.next_action ?? "";
 
@@ -383,6 +406,16 @@ export function AttemptPanel({
       {/* --- Artwork ---------------------------------------------------- */}
       <div className={panel}>
         <SectionTitle>Artwork</SectionTitle>
+        {attempt.state === "failed" ? (
+          <Notification
+            kind={NOTIFICATION_KIND.warning}
+            overrides={{ Body: { style: { width: "auto" } } }}
+          >
+            This attempt was abandoned and cannot take artwork.
+            {attempt.failure_message ? ` ${attempt.failure_message}` : ""}
+          </Notification>
+        ) : null}
+
         {artwork ? (
           <div
             className={css({
@@ -402,7 +435,7 @@ export function AttemptPanel({
           </div>
         ) : null}
 
-        {review?.frozen ? null : (
+        {settled ? null : (
           <div
             onDragOver={(event) => {
               event.preventDefault();
@@ -434,6 +467,15 @@ export function AttemptPanel({
                   ? "Drop a replacement, or click to choose one."
                   : "Drop the artwork here, or click to choose a file."}
             </ParagraphSmall>
+            {/* The reason, where the drop happened. It is also shown at the top
+                of the panel, which on a phone is several screens above the
+                control that caused it -- so a refused upload read as the
+                message changing back and nothing else happening. */}
+            {uploadError ? (
+              <ParagraphXSmall marginBottom={0} color={CORAL}>
+                {uploadError}
+              </ParagraphXSmall>
+            ) : null}
             <input
               ref={fileInput}
               type="file"
@@ -449,7 +491,7 @@ export function AttemptPanel({
           </div>
         )}
 
-        {artwork && !review?.frozen ? (
+        {artwork && !settled ? (
           <div className={css({ marginTop: "10px" })}>
             <Button
               size={SIZE.compact}
@@ -548,7 +590,7 @@ export function AttemptPanel({
                           <button
                             key={option.id}
                             type="button"
-                            disabled={review.frozen || busy !== null}
+                            disabled={settled || busy !== null}
                             aria-pressed={result === option.id}
                             aria-label={`${gate.label}: ${option.label}`}
                             onClick={() => {
@@ -597,7 +639,7 @@ export function AttemptPanel({
                           <button
                             key={value}
                             type="button"
-                            disabled={review.frozen || busy !== null}
+                            disabled={settled || busy !== null}
                             aria-pressed={rating === value}
                             aria-label={`${category.label}: ${String(value)} — ${
                               rubric.ratingMeanings[value] ?? ""
@@ -627,7 +669,7 @@ export function AttemptPanel({
       ) : null}
 
       {/* --- The decision ----------------------------------------------- */}
-      {review?.frozen ? null : (
+      {settled ? null : (
         <div className={panel}>
           <SectionTitle>Decision</SectionTitle>
           {/* One box, above both paths. Abandoning needs a reason as much as a

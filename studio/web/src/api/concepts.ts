@@ -68,6 +68,9 @@ export interface DesignAttemptView {
   assets: DesignAssetView[];
   decision: DesignDecisionView | null;
   approved_version: number | null;
+  /** Why a failed attempt failed. A settled row otherwise looks identical to a
+   * working one, and the drop zone invites artwork it will refuse. */
+  failure_message: string | null;
 }
 
 export interface ConceptView {
