@@ -410,3 +410,69 @@ export async function fetchWork(includeSettled = false): Promise<WorkItem[]> {
   const suffix = includeSettled ? "?include_settled=true" : "";
   return await json<WorkItem[]>(`/api/concepts/work${suffix}`);
 }
+
+/* --- The brief: the constitution's steps 1-4 and 6 ------------------------- */
+
+export interface BriefView {
+  concept_id: string;
+  garment_category: string;
+  canonical_blank: string;
+  fit_block: string;
+  fabric_weight: string;
+  garment_colour: string;
+  wash: string;
+  production_method: string;
+  intended_use: string;
+  commercial_tier: string;
+  target_release: string;
+  collection_role: string | null;
+  graphic_archetype: string | null;
+  layout_archetype: string | null;
+  archetype_departure_reason: string;
+  zones: Record<string, string>;
+  typography: Record<string, string>;
+  advisor_snapshot: Record<string, unknown>;
+  notes: string;
+  ready_for_artwork: boolean;
+  next_action: string;
+}
+
+export async function fetchBrief(conceptId: string): Promise<BriefView> {
+  return await json<BriefView>(`/api/concepts/${encodeURIComponent(conceptId)}/brief`);
+}
+
+export async function saveBrief(conceptId: string, brief: Partial<BriefView>): Promise<BriefView> {
+  return await json<BriefView>(`/api/concepts/${encodeURIComponent(conceptId)}/brief`, {
+    method: "PUT",
+    body: JSON.stringify(brief),
+  });
+}
+
+export interface AdvisorRecommendation {
+  field: string;
+  value: string;
+  evidence: string;
+  confidence: string;
+}
+
+export interface AdvisorDirection {
+  input: string;
+  intent: string;
+  tradition: string;
+  recommendations: AdvisorRecommendation[];
+  alternatives: string[];
+  not_decided: string[];
+}
+
+/** The advisor answers constitution steps 3 and 4 from 12,151 measured images.
+ * Until Phase 4 nothing called it. */
+export async function fetchAdvice(
+  phrase: string,
+  hasGraphic: boolean,
+  tradition = "novelty",
+): Promise<AdvisorDirection> {
+  return await json<AdvisorDirection>("/api/design/advise", {
+    method: "POST",
+    body: JSON.stringify({ phrase, has_graphic: hasGraphic, tradition }),
+  });
+}

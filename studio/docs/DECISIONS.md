@@ -463,3 +463,29 @@ Performance`
 
 with `World → Shot` deliberately retained. No migration until that redraw is
 complete and reconciled with ADR-016.
+
+
+## ADR-018 - The constitution's five collection roles, not `domain.ts`'s six
+
+Phase 4 needed a `collection_role` enum and found two lists.
+
+`SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` section 4 names five: **Anchor,
+Core, Expression, Hero, Collaboration**. The deleted
+`admin/src/design-system/domain.ts` carried six: `core`, `staple`, `expression`,
+`hero`, `capsule`, `collaboration` -- no `anchor`, plus `staple` and `capsule`
+which section 4 does not define.
+
+**The constitution wins.** It is the governing document, its five each carry a
+definition a review can be held against, and `staple` and `capsule` carry none.
+A role nobody can point to in the constitution is a role nobody can defend in a
+review, which is the only place these are used.
+
+Recorded rather than silently reconciled, because the same divergence produced
+ADR-016's larger finding: `workflow.ts`'s thirteen hard gates are the
+constitution's section 16 twelve plus rights, and are *not*
+`DESIGN_REVIEW_SCORECARD.md`'s HF-01..HF-12 -- that document's *HF-10 Collection
+Redundancy* still has no gate id. Two documents disagreeing about a vocabulary
+is a pattern here rather than an accident, and each instance gets written down
+when it is met.
+
+Nothing is migrated: no row ever held a collection role before migration 0028.

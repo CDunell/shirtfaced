@@ -48,6 +48,7 @@ _URGENCY: dict[str, int] = {
     "awaiting_decision": 10,  # blocked on a person, and they are the person
     "review_open": 20,  # artwork in, scorecard part-answered
     "needs_artwork": 30,  # brief ready, nothing brought back yet
+    "needs_brief": 35,  # an idea with no product decided around it yet
     "approved_unversioned": 40,  # decided, not yet frozen as a version
     "ready_to_print": 50,  # a version exists
     "unstarted": 60,  # in the backlog, never attempted
@@ -67,6 +68,10 @@ class ProductionItem:
     # Where the idea came from, when it came from research rather than Markdown.
     research_run_id: str
     research_concept_number: int | None
+    # The constitution's steps 2 and 4, and whether artwork may begin.
+    collection_role: str | None
+    graphic_archetype: str | None
+    brief_ready: bool
 
     attempt_id: uuid.UUID | None
     attempt_number: int | None
@@ -92,6 +97,9 @@ class ProductionItem:
             "concept_status": self.concept_status,
             "research_run_id": self.research_run_id,
             "research_concept_number": self.research_concept_number,
+            "collection_role": self.collection_role,
+            "graphic_archetype": self.graphic_archetype,
+            "brief_ready": self.brief_ready,
             "attempt_id": None if self.attempt_id is None else str(self.attempt_id),
             "attempt_number": self.attempt_number,
             "attempt_state": self.attempt_state,
@@ -122,6 +130,7 @@ def work_queue(session: Session, *, include_settled: bool = False) -> list[Produ
                 selectinload(DesignConcept.attempts).selectinload(DesignAttempt.review),
                 selectinload(DesignConcept.attempts).selectinload(DesignAttempt.approved_design),
                 selectinload(DesignConcept.approved_versions),
+                selectinload(DesignConcept.brief),
             )
         )
         .scalars()
@@ -157,6 +166,17 @@ def _item(concept: DesignConcept) -> ProductionItem:
         concept_status=concept.status.value,
         research_run_id=str(concept.parsed_json.get("vintage_research_run_id") or ""),
         research_concept_number=_int_or_none(concept.parsed_json.get("research_concept_number")),
+        collection_role=(
+            None
+            if concept.brief is None or concept.brief.collection_role is None
+            else concept.brief.collection_role.value
+        ),
+        graphic_archetype=(
+            None
+            if concept.brief is None or concept.brief.graphic_archetype is None
+            else concept.brief.graphic_archetype.value
+        ),
+        brief_ready=bool(concept.brief is not None and concept.brief.ready_for_artwork),
         attempt_id=None if attempt is None else attempt.id,
         attempt_number=None if attempt is None else attempt.attempt_number,
         attempt_state=None if attempt is None else attempt.state.value,
@@ -206,9 +226,12 @@ def _stage(concept: DesignConcept, attempt: DesignAttempt | None, version: Any |
     if version is not None:
         return "ready_to_print"
     if attempt is None:
-        if concept.status in (ConceptStatus.BACKLOG, ConceptStatus.READY):
-            return "unstarted"
-        return "settled"
+        if concept.status not in (ConceptStatus.BACKLOG, ConceptStatus.READY):
+            return "settled"
+        # An idea with no product decided around it cannot open an attempt at
+        # all, so telling somebody to start one would send them into a refusal.
+        ready = concept.brief is not None and concept.brief.ready_for_artwork
+        return "unstarted" if ready else "needs_brief"
 
     state = attempt.state
     if state is DesignAttemptState.AWAITING_DECISION:
@@ -235,12 +258,24 @@ def _next_action(
     screen cannot disagree about the same row.
     """
     if attempt is None:
-        if concept.status in (ConceptStatus.BACKLOG, ConceptStatus.READY):
+        if concept.status not in (ConceptStatus.BACKLOG, ConceptStatus.READY):
+            return f"Nothing is outstanding: this concept is {concept.status.value}."
+        brief = concept.brief
+        if brief is None or not brief.ready_for_artwork:
+            missing = []
+            if brief is None or brief.collection_role is None:
+                missing.append("its role in the range")
+            if brief is None or brief.graphic_archetype is None:
+                missing.append("its graphic archetype")
             return (
-                "Nothing has been made for this yet. Open it and start an attempt, "
-                "which is where the brief comes from."
+                f"Write the brief: choose {' and '.join(missing)}. The constitution "
+                "decides what a product is before any artwork exists, and the advisor "
+                "recommends from the corpus as you choose."
             )
-        return f"Nothing is outstanding: this concept is {concept.status.value}."
+        return (
+            "The product is defined. Start an attempt, and the brief goes with it "
+            "as the thing the artwork is made against."
+        )
     return next_action(attempt, evaluation)
 
 

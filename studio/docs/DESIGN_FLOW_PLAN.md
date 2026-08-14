@@ -519,6 +519,80 @@ service and no field today, and it is what made the first two test renders fail.
 graphic archetype recorded, and the advisor's recommendation is visible at the
 moment those are chosen.
 
+### Passed 14 August, run against a database migrated from empty
+
+```
+POST /api/concepts/{id}/attempts        -> 422
+  #1 SECOND BREAKFAST has no brief with a collection role and a graphic
+  archetype. The constitution decides what a product is before any artwork
+  exists -- open the brief and choose them, and the advisor will recommend
+  from the corpus as you do.
+
+Designs -> concept
+  BEFORE ANY ARTWORK
+  Choose a collection role and a graphic archetype. ...an attempt cannot open
+  without them.
+
+  WHAT THE CORPUS SAYS
+  Graphic archetype - image-and-title lockup
+  Both supplied. Section 8 allows supporting elements but demands one dominant
+  archetype - a lockup makes them one object instead of two competing ones.
+  - default
+
+  [Collection role: Core]  [Graphic archetype: Typographic hero]
+
+  collection_role   : core
+  graphic_archetype : typographic_hero
+  ready_for_artwork : True
+  advice recorded   : True
+  next_action       : The product is defined. Start an attempt, and the brief
+                      goes with it.
+
+POST /api/concepts/{id}/attempts        -> 201, attempt 2, state planned
+```
+
+### The plan was wrong about the advisor, and the advisor was honest about it
+
+The plan said *"`design_advisor` already answers 3 and 4 from 12,151 measured
+images and nothing calls it. This is mostly wiring, not building."* The wiring
+was indeed the work. But the advisor answers from **a documented default, not
+from the corpus** -- its own output says so:
+
+> The corpus has not been mined, so nothing below is evidence-backed. Run
+> `scripts/mine_design_patterns.py`.
+
+and every recommendation is marked `default` rather than `corpus`. Verified
+against production as well as locally: both say the same thing.
+
+`_load_joined()` reads `var/design_corpus/joined.json`. That file does not exist
+locally, is not in git, and is not on the box -- the same class of gap as the
+garment path, found the same way. **The refusal path is working exactly as
+`DESIGN_ENGINE_ADAPTATION.md` section 6 specified**: it declines to fabricate
+confidence and names what is missing. That is the design being right while the
+data is absent.
+
+So Phase 4 delivers the advisor *wired and honest*, not the advisor *informed*.
+Making it informed is running the miner and getting its output onto the box,
+which is a data operation and a deploy question rather than more code. Recorded
+here rather than quietly counted as done.
+
+### Deliberately narrower than the constitution
+
+Section 3 requires eleven fields before artwork; the gate is on two. Enough to
+stop an undeclared design, cheap enough not to become ceremony before a first
+sketch. Widening it is the owner's call.
+
+Section 6 allows a documented departure from the layout library, so the layout
+archetype is recorded but not gated -- refusing to proceed without one would be
+stricter than the constitution.
+
+### What it changed elsewhere
+
+`Send to design pipeline` no longer creates an attempt when the concept has no
+brief. It creates the concept, keeps the researched prompt against it, and says
+to write the brief. That endpoint produced dead rows for as long as it existed;
+now it cannot.
+
 ## Phase 5 — consolidate the design journey
 
 Designs becomes the one screen; Compose becomes a generation method inside it

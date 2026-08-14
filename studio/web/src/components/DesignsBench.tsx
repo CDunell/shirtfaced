@@ -37,6 +37,7 @@ import {
   type DesignDecisionKind,
 } from "../api/concepts";
 import { AttemptPanel } from "./AttemptPanel";
+import { BriefPanel } from "./BriefPanel";
 import { PageTitle, SectionTitle, StatusChip } from "./chrome";
 import { CREAM, INK, LIME, PAPER } from "../tokens";
 
@@ -563,6 +564,19 @@ export function DesignsBench({
                     Held, not retired: {selected.salvage}
                   </div>
                 ) : null}
+
+                {/* The brief comes before the attempts, because the
+                    constitution decides what a product is before any artwork
+                    exists -- and because an attempt cannot be opened without
+                    it, so a reader who scrolls past it hits a refusal. */}
+                <BriefPanel
+                  conceptId={selected.id}
+                  conceptText={selected.concept_text}
+                  onChanged={async () => {
+                    await refresh();
+                    await open(selected.id);
+                  }}
+                />
 
                 {selected.attempts.length === 0 ? (
                   <ParagraphSmall color={theme.colors.contentSecondary}>

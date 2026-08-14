@@ -40,6 +40,7 @@ from app.db.concept_models import (
     ApprovedDesign,
     DesignAsset,
     DesignAttempt,
+    DesignBrief,
     DesignConcept,
     DesignDecision,
     DesignReviewRecord,
@@ -56,12 +57,16 @@ from app.domain.design_review import (
     ScoreCategory,
 )
 from app.domain.enums import (
+    CollectionRole,
     ConceptLibrary,
     ConceptStatus,
     DesignAssetKind,
     DesignAttemptMethod,
     DesignAttemptState,
     DesignDecisionKind,
+    GraphicArchetype,
+    LayoutArchetype,
+    ZoneState,
 )
 from app.services.approved_print import PrintRefused, available_garments, print_approved
 from app.services.design_extraction import measure, to_review
@@ -298,6 +303,105 @@ class ApproveDesignIn(BaseModel):
     garment_colour: str = Field(default="", max_length=32)
 
 
+class BriefIn(BaseModel):
+    """The constitution's steps 1-4 and 6. Everything optional: a brief is
+    filled in over time, and the gate is on opening an attempt rather than on
+    saving a draft."""
+
+    garment_category: str = Field(default="", max_length=60)
+    canonical_blank: str = Field(default="", max_length=120)
+    fit_block: str = Field(default="", max_length=60)
+    fabric_weight: str = Field(default="", max_length=60)
+    garment_colour: str = Field(default="", max_length=60)
+    wash: str = Field(default="", max_length=60)
+    production_method: str = Field(default="", max_length=60)
+    intended_use: str = Field(default="", max_length=2000)
+    commercial_tier: str = Field(default="", max_length=60)
+    target_release: str = Field(default="", max_length=120)
+    collection_role: CollectionRole | None = None
+    graphic_archetype: GraphicArchetype | None = None
+    layout_archetype: LayoutArchetype | None = None
+    archetype_departure_reason: str = Field(default="", max_length=2000)
+    zones: dict[str, ZoneState] = Field(default_factory=dict)
+    typography: dict[str, str] = Field(default_factory=dict)
+    advisor_snapshot: dict[str, Any] = Field(default_factory=dict)
+    notes: str = Field(default="", max_length=4000)
+
+
+class BriefView(BaseModel):
+    concept_id: str
+    garment_category: str
+    canonical_blank: str
+    fit_block: str
+    fabric_weight: str
+    garment_colour: str
+    wash: str
+    production_method: str
+    intended_use: str
+    commercial_tier: str
+    target_release: str
+    collection_role: str | None
+    graphic_archetype: str | None
+    layout_archetype: str | None
+    archetype_departure_reason: str
+    zones: dict[str, Any]
+    typography: dict[str, Any]
+    advisor_snapshot: dict[str, Any]
+    notes: str
+    ready_for_artwork: bool
+    next_action: str
+
+    @classmethod
+    def of(cls, concept: DesignConcept, brief: DesignBrief | None) -> BriefView:
+        ready = brief is not None and brief.ready_for_artwork
+        missing = []
+        if brief is None or brief.collection_role is None:
+            missing.append("a collection role")
+        if brief is None or brief.graphic_archetype is None:
+            missing.append("a graphic archetype")
+        return cls(
+            concept_id=str(concept.id),
+            garment_category="" if brief is None else brief.garment_category,
+            canonical_blank="" if brief is None else brief.canonical_blank,
+            fit_block="" if brief is None else brief.fit_block,
+            fabric_weight="" if brief is None else brief.fabric_weight,
+            garment_colour="" if brief is None else brief.garment_colour,
+            wash="" if brief is None else brief.wash,
+            production_method="" if brief is None else brief.production_method,
+            intended_use="" if brief is None else brief.intended_use,
+            commercial_tier="" if brief is None else brief.commercial_tier,
+            target_release="" if brief is None else brief.target_release,
+            collection_role=(
+                None
+                if brief is None or brief.collection_role is None
+                else brief.collection_role.value
+            ),
+            graphic_archetype=(
+                None
+                if brief is None or brief.graphic_archetype is None
+                else brief.graphic_archetype.value
+            ),
+            layout_archetype=(
+                None
+                if brief is None or brief.layout_archetype is None
+                else brief.layout_archetype.value
+            ),
+            archetype_departure_reason=("" if brief is None else brief.archetype_departure_reason),
+            zones={} if brief is None else brief.zones,
+            typography={} if brief is None else brief.typography,
+            advisor_snapshot={} if brief is None else brief.advisor_snapshot,
+            notes="" if brief is None else brief.notes,
+            ready_for_artwork=ready,
+            next_action=(
+                "The product is defined. Start an attempt, and the brief goes with it."
+                if ready
+                else f"Choose {' and '.join(missing)}. The constitution decides what a "
+                "product is before any artwork exists, and an attempt cannot open "
+                "without them."
+            ),
+        )
+
+
 class GateIn(BaseModel):
     id: str = Field(min_length=1, max_length=64)
     result: ReviewResult
@@ -502,6 +606,62 @@ def review_queue(session: SessionDependency) -> list[AttemptView]:
 # request fails validation before the handler is ever considered. Found by
 # opening the app rather than by a test, which is the point -- every unit test
 # calls the function directly and none of them route.
+
+
+@router.get(
+    "/{concept_id}/brief",
+    response_model=BriefView,
+    summary="What the product is, before any artwork exists",
+)
+def get_brief(concept_id: uuid.UUID, session: SessionDependency) -> BriefView:
+    concept = _concept(session, concept_id)
+    return BriefView.of(concept, concept.brief)
+
+
+@router.put(
+    "/{concept_id}/brief",
+    response_model=BriefView,
+    summary="Record the constitution's steps 1-4 and 6",
+)
+def put_brief(concept_id: uuid.UUID, body: BriefIn, session: SessionDependency) -> BriefView:
+    """Partial saves are welcome; a brief is filled in over time.
+
+    The gate is on opening an attempt, not on saving a draft -- refusing a
+    half-written brief would mean the thinking has to happen somewhere else,
+    which is where it was happening before this existed.
+    """
+    concept = _concept(session, concept_id)
+    brief = concept.brief
+    if brief is None:
+        brief = DesignBrief(concept_id=concept.id)
+        session.add(brief)
+        concept.brief = brief
+
+    for field_name in (
+        "garment_category",
+        "canonical_blank",
+        "fit_block",
+        "fabric_weight",
+        "garment_colour",
+        "wash",
+        "production_method",
+        "intended_use",
+        "commercial_tier",
+        "target_release",
+        "archetype_departure_reason",
+        "notes",
+    ):
+        setattr(brief, field_name, getattr(body, field_name))
+    brief.collection_role = body.collection_role
+    brief.graphic_archetype = body.graphic_archetype
+    brief.layout_archetype = body.layout_archetype
+    brief.zones = {key: state.value for key, state in body.zones.items()}
+    brief.typography = dict(body.typography)
+    if body.advisor_snapshot:
+        brief.advisor_snapshot = dict(body.advisor_snapshot)
+
+    session.commit()
+    return BriefView.of(concept, brief)
 
 
 @router.get("/work", summary="Everything in flight, most-blocked first")

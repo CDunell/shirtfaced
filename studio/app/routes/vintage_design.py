@@ -158,23 +158,39 @@ def send_to_pipeline(
         except InvalidDesignAction as error:
             raise _fail(error) from error
         created = True
-    attempt = create_attempt(
-        session,
-        target,
-        DesignAttemptMethod.IMAGE_GENERATION,
-        production_prompt=str(prompt),
-        model=settings.openai_image_model,
-        model_settings={
-            "size": settings.openai_image_size,
-            "quality": settings.openai_image_quality,
-        },
-        reference_inputs={
+    # The attempt is opened only when the concept already has a brief carrying
+    # a collection role and a graphic archetype. Phase 4 made that the
+    # constitution's own order -- what a product is gets decided before artwork
+    # exists -- and creating an attempt that cannot be worked is how this
+    # endpoint produced dead rows for as long as it has existed.
+    attempt = None
+    if target.brief is not None and target.brief.ready_for_artwork:
+        attempt = create_attempt(
+            session,
+            target,
+            DesignAttemptMethod.IMAGE_GENERATION,
+            production_prompt=str(prompt),
+            model=settings.openai_image_model,
+            model_settings={
+                "size": settings.openai_image_size,
+                "quality": settings.openai_image_quality,
+            },
+            reference_inputs={
+                "vintage_research_run_id": run_id,
+                "research_concept_number": concept_number,
+                "evidence_listing_ids": run.get("evidence_listing_ids", []),
+                "evidence_images": run.get("evidence_images", []),
+            },
+        )
+    else:
+        # The researched prompt is not lost -- it is the thing the brief is
+        # written against, and the attempt picks it up when one is opened.
+        target.preferred_execution = {
+            **dict(target.preferred_execution),
             "vintage_research_run_id": run_id,
             "research_concept_number": concept_number,
-            "evidence_listing_ids": run.get("evidence_listing_ids", []),
-            "evidence_images": run.get("evidence_images", []),
-        },
-    )
+            "production_prompt": str(prompt),
+        }
     session.commit()
     payload = {
         "design_concept_id": str(target.id),
@@ -182,13 +198,20 @@ def send_to_pipeline(
         "design_concept_title": target.title,
         "design_concept_library": target.library.value,
         "concept_created": created,
-        "attempt_id": str(attempt.id),
-        "attempt_number": attempt.attempt_number,
-        "state": attempt.state.value,
+        "attempt_id": None if attempt is None else str(attempt.id),
+        "attempt_number": None if attempt is None else attempt.attempt_number,
+        "state": None if attempt is None else attempt.state.value,
         # What to do next, in words, rather than left for a screen to infer.
         "next_action": (
             "Open the attempt in Designs, copy the brief, make the artwork in a paid "
             "interface, and bring the file back to the drop zone."
+            if attempt is not None
+            else (
+                "Open it in Work and write the brief: what the product is, its role in "
+                "the range, and its graphic archetype. An attempt cannot open until "
+                "those are chosen, and the researched prompt is kept against the "
+                "concept until it does."
+            )
         ),
     }
     mark_pipeline(run_id, concept_number, payload)

@@ -59,7 +59,8 @@ describe("WorkBench", () => {
     await waitFor(() => {
       expect(screen.getAllByRole("button", { name: "Judge it" }).length).toBeGreaterThan(0);
     });
-    await userEvent.click(screen.getAllByRole("button", { name: "Judge it" })[0]!);
+    const [judge] = screen.getAllByRole("button", { name: "Judge it" });
+    if (judge) await userEvent.click(judge);
 
     expect(opened).toEqual(["concept-1:attempt-1"]);
   });
@@ -116,7 +117,7 @@ describe("WorkBench", () => {
       expect(screen.getAllByTestId("work-row")).toHaveLength(2);
     });
     for (const row of screen.getAllByTestId("work-row")) {
-      expect(row.textContent ?? "").toMatch(/\w+\./);
+      expect(row.textContent).toMatch(/\w+\./);
     }
   });
 

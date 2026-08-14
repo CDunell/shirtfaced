@@ -172,6 +172,26 @@ def create_concept(
     return concept
 
 
+def _require_brief(concept: DesignConcept) -> None:
+    """The constitution's steps 2 and 4, enforced where artwork begins."""
+    brief = concept.brief
+    if brief is not None and brief.ready_for_artwork:
+        return
+
+    missing = []
+    if brief is None or brief.collection_role is None:
+        missing.append("a collection role")
+    if brief is None or brief.graphic_archetype is None:
+        missing.append("a graphic archetype")
+
+    raise InvalidDesignAction(
+        f"#{concept.external_number} {concept.title} has no brief with "
+        f"{' and '.join(missing)}. The constitution decides what a product is "
+        "before any artwork exists -- open the brief and choose them, and the "
+        "advisor will recommend from the corpus as you do."
+    )
+
+
 def _slug(title: str, number: int) -> str:
     """``0261-a-title-like-this``. The number leads because titles repeat --
     "shirtfaced" appears three times in the tee library -- and the slug is
@@ -194,7 +214,21 @@ def create_attempt(
     parent_attempt: DesignAttempt | None = None,
     elements: Sequence[ElementUse] = (),
 ) -> DesignAttempt:
-    """Open one execution of a concept. The row exists before any work does."""
+    """Open one execution of a concept. The row exists before any work does.
+
+    Refuses without a brief carrying a collection role and a graphic archetype.
+    That is the constitution's own order -- "define the product, define its role
+    in the range, select the garment architecture, select the graphic
+    architecture" all precede "construct the composition" -- and the 14 August
+    audit's diagnosis of why output arrived as competent generic work: the
+    research bench produced a graphic idea and jumped straight to artwork.
+
+    Deliberately narrower than §3, which requires eleven fields before artwork.
+    Gating on two is enough to stop an undeclared design and cheap enough that
+    it does not become ceremony before a first sketch. Widening it is the
+    owner's decision, not a thing to creep.
+    """
+    _require_brief(concept)
     if parent_attempt is not None and parent_attempt.concept_id != concept.id:
         raise InvalidDesignAction(
             f"attempt {parent_attempt.id} belongs to another concept; "

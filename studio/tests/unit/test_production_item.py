@@ -14,18 +14,28 @@ from app.db.concept_models import (
     ApprovedDesign,
     DesignAsset,
     DesignAttempt,
+    DesignBrief,
     DesignConcept,
     DesignReviewRecord,
 )
 from app.domain.design_review import CATEGORY_LIMITS, GATE_LABELS, HARD_GATE_IDS, ScoreCategory
 from app.domain.enums import (
+    CollectionRole,
     ConceptLibrary,
     ConceptStatus,
     DesignAssetKind,
     DesignAttemptMethod,
     DesignAttemptState,
+    GraphicArchetype,
 )
 from app.services.production_item import _item, work_queue
+
+
+def brief(
+    role: CollectionRole | None = CollectionRole.CORE,
+    archetype: GraphicArchetype | None = GraphicArchetype.TYPOGRAPHIC_HERO,
+) -> DesignBrief:
+    return DesignBrief(collection_role=role, graphic_archetype=archetype)
 
 
 def concept(
@@ -34,6 +44,7 @@ def concept(
     attempts: list[DesignAttempt] | None = None,
     versions: list[ApprovedDesign] | None = None,
     parsed: dict[str, object] | None = None,
+    brief: DesignBrief | None = None,
 ) -> DesignConcept:
     row = DesignConcept(
         library=ConceptLibrary.TSHIRT,
@@ -49,6 +60,7 @@ def concept(
     )
     row.attempts = attempts or []
     row.approved_versions = versions or []
+    row.brief = brief
     return row
 
 
@@ -118,13 +130,35 @@ def version(number: int = 1, superseded: bool = False) -> ApprovedDesign:
 # --- stages ------------------------------------------------------------------
 
 
-def test_an_untouched_backlog_concept_is_unstarted_and_says_where_the_brief_is() -> None:
+def test_a_concept_with_no_brief_is_told_to_write_one() -> None:
+    """Phase 4. Telling somebody to start an attempt when create_attempt would
+    refuse it sends them into a wall."""
     item = _item(concept())
 
-    assert item.stage == "unstarted"
+    assert item.stage == "needs_brief"
     assert item.attempt_id is None
-    assert "start an attempt" in item.next_action
-    assert "brief" in item.next_action
+    assert item.brief_ready is False
+    assert "Write the brief" in item.next_action
+    assert "role in the range" in item.next_action
+    assert "graphic archetype" in item.next_action
+
+
+def test_a_briefed_concept_with_no_attempt_is_ready_to_start() -> None:
+    item = _item(concept(brief=brief()))
+
+    assert item.stage == "unstarted"
+    assert item.brief_ready is True
+    assert item.collection_role == "core"
+    assert item.graphic_archetype == "typographic_hero"
+    assert "Start an attempt" in item.next_action
+
+
+def test_a_half_written_brief_names_only_what_is_missing() -> None:
+    item = _item(concept(brief=brief(role=CollectionRole.HERO, archetype=None)))
+
+    assert item.stage == "needs_brief"
+    assert "graphic archetype" in item.next_action
+    assert "role in the range" not in item.next_action
 
 
 def test_an_attempt_with_no_artwork_needs_artwork() -> None:

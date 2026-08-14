@@ -418,6 +418,52 @@ export function workItem(overrides: Record<string, unknown> = {}): Record<string
   };
 }
 
+/** A brief with nothing chosen: the state that blocks an attempt. */
+export function briefView(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    concept_id: "concept-1",
+    garment_category: "",
+    canonical_blank: "",
+    fit_block: "",
+    fabric_weight: "",
+    garment_colour: "",
+    wash: "",
+    production_method: "",
+    intended_use: "",
+    commercial_tier: "",
+    target_release: "",
+    collection_role: null,
+    graphic_archetype: null,
+    layout_archetype: null,
+    archetype_departure_reason: "",
+    zones: {},
+    typography: {},
+    advisor_snapshot: {},
+    notes: "",
+    ready_for_artwork: false,
+    next_action:
+      "Choose a collection role and a graphic archetype. The constitution decides what a " +
+      "product is before any artwork exists, and an attempt cannot open without them.",
+    ...overrides,
+  };
+}
+
+export const ADVICE = {
+  input: "3 words, with a graphic",
+  intent: "both",
+  tradition: "novelty",
+  recommendations: [
+    {
+      field: "scale_role",
+      value: "S2 emblem",
+      evidence: "median coverage 8.1% across 412 measured images",
+      confidence: "corpus",
+    },
+  ],
+  alternatives: ["S1 chest identifier"],
+  not_decided: ["subject matter"],
+};
+
 export const GARMENTS = {
   garment_tee_crew_front: [{ key: "centre_chest", width_mm: 279.4, height_mm: 279.4 }],
 };
@@ -507,6 +553,8 @@ export interface Routes {
   conceptActionStatus?: number;
   conceptActionDetail?: string;
   work?: unknown;
+  brief?: unknown;
+  advice?: unknown;
   rubric?: unknown;
   attemptReview?: unknown;
   garments?: unknown;
@@ -523,8 +571,14 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
     }
     // Before the generic /attempts and /decision branches below: concept URLs
     // share those suffixes, and ordering decides which handler answers.
+    if (input === "/api/design/advise") {
+      return Promise.resolve(new Response(JSON.stringify(routes.advice ?? ADVICE)));
+    }
     if (input.startsWith("/api/concepts")) {
       // Before the /attempts branch: the scorecard endpoints share that path.
+      if (input.endsWith("/brief")) {
+        return Promise.resolve(new Response(JSON.stringify(routes.brief ?? briefView())));
+      }
       if (input === "/api/concepts/work" || input.startsWith("/api/concepts/work?")) {
         return Promise.resolve(new Response(JSON.stringify(routes.work ?? [])));
       }
