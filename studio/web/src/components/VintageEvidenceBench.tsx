@@ -88,7 +88,13 @@ export function VintageEvidenceBench(): React.JSX.Element {
       if (e && r.era_claim !== e) return false;
       if (t && r.tradition !== t) return false;
       if (!q) return true;
-      return `${r.brand} ${r.title} ${r.era_claim} ${r.tradition}`.toLowerCase().includes(q);
+      // Coalesced: an absent field would otherwise interpolate the literal
+      // "undefined" into the haystack, and a search for it would match every
+      // record the collectors left incomplete.
+      const hay = [r.brand, r.title, r.era_claim, r.tradition]
+        .map((value) => value ?? "")
+        .join(" ");
+      return hay.toLowerCase().includes(q);
     });
   }, [records, query, brand, era, tradition]);
 

@@ -101,7 +101,7 @@ export function VintageResearchBench(): React.JSX.Element {
     (key: "era_claim" | "tradition"): Value => {
       const counts = new Map<string, number>();
       for (const record of records) {
-        const value = record[key].trim();
+        const value = (record[key] ?? "").trim();
         if (value) counts.set(value, (counts.get(value) ?? 0) + 1);
       }
       return [...counts.entries()]

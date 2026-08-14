@@ -768,16 +768,28 @@ export async function verifyDesign(
 
 /* ---------------------------------------------------------------- vintage */
 
-/** One cached marketplace listing kept as design evidence. */
+/**
+ * One cached marketplace listing kept as design evidence.
+ *
+ * Almost every field is optional because the API genuinely does not guarantee
+ * it: the endpoint returns each collector's record.json merged as-is, and the
+ * collectors disagree. 233 of 3,639 records carry no era_claim and no
+ * tradition at all, and `sold` arrives as a boolean from the eBay agents and a
+ * string from the archive adapter.
+ *
+ * Declaring these required once cost a blank screen -- the type said they were
+ * always there, the lint rule believed it and removed the guard, and the first
+ * record without a tradition threw on .trim() and unmounted the bench.
+ */
 export interface EvidenceRecord {
   listing_id: string;
-  title: string;
-  brand: string;
-  tradition: string;
-  era_claim: string;
+  title?: string;
+  brand?: string;
+  tradition?: string;
+  era_claim?: string;
   marketplace?: string;
   source_url?: string;
-  sold?: string;
+  sold?: string | boolean;
   images: string[];
 }
 

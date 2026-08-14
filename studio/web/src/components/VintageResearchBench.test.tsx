@@ -247,6 +247,46 @@ describe("VintageResearchBench", () => {
     });
   });
 
+  it("survives records that carry no era or tradition at all", async () => {
+    // 233 of 3,639 live records have neither field -- newer eBay agent output
+    // with a different shape. Calling .trim() on those threw and unmounted the
+    // whole bench, which is what a blank page was.
+    const fetchMock = vi.fn((url: string) => {
+      if (url.includes("/api/vintage-evidence")) {
+        return Promise.resolve({
+          ok: true,
+          status: 200,
+          json: () =>
+            Promise.resolve({
+              manifest: {},
+              records: [
+                { listing_id: "406847192188", images: ["/a.jpg"] },
+                {
+                  listing_id: "900000000000001",
+                  era_claim: "1990s",
+                  tradition: "skate",
+                  images: ["/b.jpg"],
+                },
+              ],
+            }),
+        });
+      }
+      if (url.includes("design-concepts")) {
+        return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([]) });
+      }
+      return Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve([run()]) });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    renderWithBase(<VintageResearchBench />);
+
+    await waitFor(() => {
+      expect(screen.getByText("All eras")).toBeInTheDocument();
+    });
+    // Rendered rather than blank, and the one usable value is still offered.
+    expect(screen.getByText(/Vintage Research/i)).toBeInTheDocument();
+  });
+
   it("hides the pipeline while a concept is still pending", async () => {
     stubRoutes([run()]);
 
