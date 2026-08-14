@@ -155,11 +155,28 @@ writing a migration, `ls studio/app/db/migrations/versions/` against current
 **The full gate before every commit**, both sides:
 
 ```
-cd studio && ruff check . && ruff format --check . && mypy --platform linux app && pytest tests/unit
+cd studio && ruff check . && ruff format --check . && mypy --platform linux app && pytest
 cd web && npx eslint . && npx prettier --check . && npx tsc --noEmit && npx vitest run && npm run build
 ```
 
 `mypy` needs `--platform linux` because `os.killpg` does not exist on win32.
+
+**`pytest`, not `pytest tests/unit`** — corrected 14 August, the hard way. The
+working agreement said `tests/unit`, and `studio-ci.yml` runs bare `pytest`
+against a real PostgreSQL container. Phase 4's brief gate broke eleven
+integration tests that the documented gate does not run, and CI caught it one
+step after it should have been caught.
+
+Integration tests skip themselves without `TEST_DATABASE_URL`, so running the
+whole suite locally is free when there is no database and correct when there
+is. Point it at one:
+
+```
+TEST_DATABASE_URL=postgresql+psycopg://user@127.0.0.1:5432/shirtfaced_test pytest
+```
+
+The database must be on **UTC** — `test_timestamps_are_populated_and_utc`
+asserts it, and a throwaway instance inherits the host's timezone.
 
 **Exercise it before claiming it works.** Server checks have passed while a
 React screen was throwing, and a type check has passed while a path resolved to
