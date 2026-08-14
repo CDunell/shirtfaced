@@ -372,3 +372,94 @@ tables later because six moved early.
   head`, so two heads fail the deploy outright rather than subtly.
 - Phase 2 of `DESIGN_FLOW_PLAN.md` is already corrected to a separation inside
   Studio rather than a move of data; this ADR is the reason it stays that way.
+
+## ADR-017 — Two provenances, one `shots` table; Markdown never learns about scenes
+
+**Decided by the owner, 14 August 2026**, completing ADR-016's redraw. The
+question it answers: once campaign and scene sit above `shots`, does
+`SHOTLIST.md` have to express them?
+
+**No. `SHOTLIST.md` is not mutated into a screenplay database.** It was built for
+an authored photography queue and expresses a handful of fields; scene
+hierarchy, character state, temporal continuity, edit anchors and
+forty-angle campaign coverage are not among them and should not be forced into
+it.
+
+Two provenances share one table and one production spine:
+
+| | Markdown-seeded shot | Campaign-native shot |
+|---|---|---|
+| origin | `SHOTLIST.md`, via `world_importer` | the campaign/story workflow |
+| `campaign_id` | NULL | always set |
+| `scene_id` | NULL | usually set, legitimately NULL |
+| `external_id` | from the source | deterministic, e.g. `CAMP01-S03-007` |
+| `source_line` | the line it was parsed from | NULL |
+
+`World → Shot` stays valid for the authored queue.
+`World → Campaign → StoryVersion → Scene → Shot` is the campaign path.
+
+### Why this composes safely, and it is not obvious
+
+**The world importer never prunes.** It iterates the parsed shots and upserts on
+`(world_id, external_id)`; nothing in it deletes or disables a row that the
+Markdown no longer mentions. So a re-import of `SHOTLIST.md` cannot remove,
+disable or overwrite a campaign-native shot sitting in the same table. Without
+that property this design would be a data-loss bug waiting for the first
+re-import, so it is recorded here as load-bearing rather than incidental — if
+pruning is ever added, it must be scoped to `source = 'markdown_import'`.
+
+The importer already refuses to overwrite operational state the workflow owns
+and reports disagreement instead of resolving it silently. Campaign-native rows
+extend that same rule to their whole existence.
+
+### `campaign_id` sits directly on `shots`, and that redundancy is deliberate
+
+Not every campaign shot needs a narrative scene: a product insert, an
+environmental plate, a CCTV cutaway, a title-card source, a transition, a
+generic aftermath still. Inventing a scene to satisfy a hierarchy is database
+theatre. So `campaign_id` is directly present and `scene_id` is nullable
+alongside it.
+
+The agreement rule — *if a shot has a scene, that scene's campaign is the shot's
+campaign* — should be **declarative rather than a trigger or application code**:
+
+- `scenes` carries `UNIQUE (id, campaign_id)` (redundant, legal, and the price
+  of the constraint);
+- `shots` carries `FOREIGN KEY (scene_id, campaign_id) REFERENCES scenes (id, campaign_id)`.
+
+A composite foreign key defaults to `MATCH SIMPLE`, which **skips the check
+entirely when any column is NULL** — exactly right for `scene_id IS NULL`, and
+exactly wrong for the reverse. So it needs one guard beside it:
+`CHECK (scene_id IS NULL OR campaign_id IS NOT NULL)`. Without that, a shot can
+carry a scene and no campaign and nothing complains.
+
+### `external_id` stays non-nullable
+
+Stable human-readable identifiers earn their place in prompts, review, logs and
+regeneration; `CAMP01-S03-007` is worth more in a failure report than a UUID.
+The database UUID remains identity.
+
+One consequence to design to rather than discover: `shots` already carries
+`UniqueConstraint("world_id", "external_id")`. Campaign-native ids share that
+namespace with Markdown ids inside a world, and a world can hold several
+campaigns — so the campaign discriminator has to be *in* the identifier. The
+`CAMP01-` prefix is not a naming preference, it is what satisfies an existing
+constraint.
+
+### `source` is provenance, and it is not nullable
+
+`markdown_import` / `campaign_native` / `manual`, with every existing row
+backfilled to `markdown_import` — which is what they all are. A nullable
+provenance column would make "we do not know where this came from" a
+representable state on the one axis this ADR exists to keep clear.
+
+### Consequence
+
+The model to redraw is:
+
+`World → Campaign → StoryVersion → Scene → Shot → GenerationAttempt →
+MediaAsset → Review → HumanDecision → EditVersion → Social publication →
+Performance`
+
+with `World → Shot` deliberately retained. No migration until that redraw is
+complete and reconciled with ADR-016.
