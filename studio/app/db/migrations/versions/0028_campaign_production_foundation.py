@@ -72,14 +72,10 @@ def upgrade() -> None:
             "target_primary_post_count", sa.Integer(), server_default=sa.text("10"), nullable=False
         ),
         sa.Column("channel_mix", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
-        sa.Column(
-            "presentation_mix", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
-        ),
+        sa.Column("presentation_mix", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
         sa.Column("design_scope", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
         sa.Column("creative_brief", sa.Text(), server_default="", nullable=False),
-        sa.Column(
-            "origin_metadata", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
-        ),
+        sa.Column("origin_metadata", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
         *_timestamps(),
         sa.ForeignKeyConstraint(
             ["world_id"],
@@ -142,9 +138,7 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_story_versions"),
-        sa.UniqueConstraint(
-            "campaign_id", "version", name="uq_story_versions_campaign_id_version"
-        ),
+        sa.UniqueConstraint("campaign_id", "version", name="uq_story_versions_campaign_id_version"),
         sa.UniqueConstraint("id", "campaign_id", name="uq_story_versions_id_campaign_id"),
         sa.CheckConstraint("version > 0", name="story_version_positive"),
         sa.CheckConstraint(
@@ -179,9 +173,7 @@ def upgrade() -> None:
         sa.Column("story_role", sa.String(length=120), nullable=True),
         sa.Column("age_band", sa.String(length=64), nullable=True),
         sa.Column("build_height_intent", sa.Text(), nullable=True),
-        sa.Column(
-            "appearance_spec", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
-        ),
+        sa.Column("appearance_spec", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
         sa.Column("identity_lock", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
         sa.Column("voice_dialogue_notes", sa.Text(), nullable=True),
         sa.Column(
@@ -239,9 +231,7 @@ def upgrade() -> None:
         sa.UniqueConstraint(
             "character_id", "code", name="uq_character_appearances_character_id_code"
         ),
-        sa.UniqueConstraint(
-            "id", "character_id", name="uq_character_appearances_id_character_id"
-        ),
+        sa.UniqueConstraint("id", "character_id", name="uq_character_appearances_id_character_id"),
         sa.CheckConstraint(
             "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR "
             "last_scene_sequence >= first_scene_sequence",
@@ -378,9 +368,7 @@ def upgrade() -> None:
 
     op.add_column(
         "shots",
-        sa.Column(
-            "source", sa.String(length=32), server_default="markdown_import", nullable=False
-        ),
+        sa.Column("source", sa.String(length=32), server_default="markdown_import", nullable=False),
     )
     op.add_column("shots", sa.Column("campaign_id", UUID, nullable=True))
     op.add_column("shots", sa.Column("scene_id", UUID, nullable=True))
@@ -407,9 +395,7 @@ def upgrade() -> None:
         "shots", sa.Column("garment_visibility_class", sa.String(length=32), nullable=True)
     )
     op.add_column("shots", sa.Column("garment_side_visible", sa.String(length=32), nullable=True))
-    op.add_column(
-        "shots", sa.Column("garment_scale_in_frame", sa.String(length=64), nullable=True)
-    )
+    op.add_column("shots", sa.Column("garment_scale_in_frame", sa.String(length=64), nullable=True))
     op.add_column("shots", sa.Column("artwork_legibility_required", sa.Boolean(), nullable=True))
     op.add_column("shots", sa.Column("prop_continuity", JSONB, nullable=True))
     op.add_column("shots", sa.Column("first_frame_requirement", JSONB, nullable=True))
