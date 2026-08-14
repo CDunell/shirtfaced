@@ -822,12 +822,21 @@ export interface ResearchImage {
   image_url: string;
 }
 
+/**
+ * A stored research run.
+ *
+ * concepts is optional for the same reason the evidence fields are: runs are
+ * raw JSON files on disk written by more than one path, and the endpoint hands
+ * them back as found. A required declaration here is a promise the API cannot
+ * keep.
+ */
 export interface ResearchRun {
   id: string;
   created_at?: string;
+  source?: string;
   filters?: Record<string, string>;
   evidence_images?: ResearchImage[];
-  concepts: ResearchConcept[];
+  concepts?: ResearchConcept[];
 }
 
 export interface ManualPrepared {

@@ -214,7 +214,7 @@ export function VintageResearchBench(): React.JSX.Element {
 
   return (
     <>
-      <PageTitle meta={run ? `Run ${run.id.slice(0, 8)}` : `${String(runs.length)} runs`}>
+      <PageTitle meta={run?.id ? `Run ${run.id.slice(0, 8)}` : `${String(runs.length)} runs`}>
         Vintage Research
       </PageTitle>
       <ParagraphXSmall>
@@ -410,7 +410,7 @@ export function VintageResearchBench(): React.JSX.Element {
         </div>
       ) : null}
 
-      {run?.concepts.map((concept: ResearchConcept) => {
+      {(run?.concepts ?? []).map((concept: ResearchConcept) => {
         const prompt =
           drafts[concept.concept_number] ??
           concept.edited_prompt ??
