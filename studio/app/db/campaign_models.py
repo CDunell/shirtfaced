@@ -2,7 +2,7 @@
 
 ADR-016 keeps the existing ``Shot`` / ``GenerationAttempt`` production spine.
 This module therefore owns only the genuinely new campaign-domain tables added
-by migration 0028. ``Shot`` remains mapped in ``app.db.models`` and is extended
+by migration 0029. ``Shot`` remains mapped in ``app.db.models`` and is extended
 there rather than remapped here.
 """
 
@@ -189,7 +189,7 @@ class CharacterAppearance(Base, TimestampMixin):
         CheckConstraint(
             "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR "
             "last_scene_sequence >= first_scene_sequence",
-            name="character_appearance_scene_range_ordered",
+            name="appearance_scene_range_ordered",
         ),
     )
 
