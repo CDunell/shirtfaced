@@ -236,7 +236,7 @@ def upgrade() -> None:
         sa.CheckConstraint(
             "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR "
             "last_scene_sequence >= first_scene_sequence",
-            name="character_appearance_scene_range_ordered",
+            name="appearance_scene_range_ordered",
         ),
     )
 
