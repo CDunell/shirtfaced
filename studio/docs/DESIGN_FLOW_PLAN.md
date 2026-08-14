@@ -372,9 +372,56 @@ front end is Admin or a third app, is a decision that needs making on evidence
 rather than inherited from a sentence in an audit. It is not a prerequisite for
 Phase 3.
 
+### Split into 2a and 2b, 14 August
+
+The concurrent session owns the world screens and asked that the separation wait
+until the campaign UI shape is known (session handover §4.3). So:
+
+- **2a — group what is here.** `App.tsx` only, which is product-owned and which
+  the world session has undertaken not to restructure. Depends on nothing anyone
+  else is building.
+- **2b — relocate.** Waits on the campaign UI shape.
+
 **Exit test:** a person opening Studio can tell which destinations are product
 and which are world without being told, Phase 1 still passes, and nothing has
 moved database.
+
+### 2a — passed 14 August, run in a browser
+
+Desktop navigation:
+
+```
+shirtfaced / studio
+  PRODUCT   EVIDENCE  RESEARCH  DESIGNS  COMPOSE  SCORE
+  WORLD     DASHBOARD  PROMPTS  PRINT  SOCIAL  EMAIL
+                                              ADMIN ↗   DARK THEME
+```
+
+On a phone, each group carries what it is for:
+
+```
+PRODUCT — EVIDENCE TO A PRINTED DESIGN.
+  EVIDENCE  RESEARCH  DESIGNS  COMPOSE  SCORE
+WORLD — CANON TO A PHOTOGRAPH TO A CUSTOMER.
+  DASHBOARD  PROMPTS  PRINT  SOCIAL  EMAIL
+```
+
+Product destinations lead, in the order the work happens, and **Studio now opens
+on Designs rather than Prompts** — it is the product tool, and opening it on a
+world screen was the interleaving this phase exists to stop.
+
+Phase 1 still passes against production, unchanged:
+
+```
+all 5 links intact.
+```
+
+Nothing moved database: the change is `App.tsx` and its test.
+
+**What 2a deliberately does not do.** Nothing is relocated, so a photography
+shot can still be reached from a product tool — the audit's finding is *named*
+rather than resolved. That is the honest limit of a grouping, and 2b is where it
+is fixed.
 
 <details>
 <summary>The original Phase 2, superseded</summary>

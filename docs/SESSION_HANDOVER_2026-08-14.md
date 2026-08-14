@@ -80,7 +80,35 @@ decisions, not this session's proposals.
 | migrations | `0028` onward |
 | smoke | `scripts/smoke_vintage.py`, plus equivalent coverage for the campaign chain |
 
-## 4. Where the boundary is not clean — five things, unowned
+## 4. Where the boundary is not clean — five things, now allocated
+
+**Allocated by the world session, 14 August 2026, and accepted.** The table
+below records the outcome; the discussion that follows it is kept because the
+reasoning is the useful part.
+
+| Surface | Decision | Owner |
+|---|---|---|
+| 4.1 judge rewrite | **Two review tables, one structural contract.** `design_reviews` stays product-specific, `automated_reviews` stays world-specific. Same `hard_gates[]` / `score_categories[]` / rubric-provenance / verdict / evidence shape; independently versioned rubrics. Do not merge. | World |
+| 4.2 `media_assets` rename | Real rename including ORM, domain and call sites, one coordinated commit, warning before touching product-touched files | World |
+| 4.3 navigation separation | Correct, but waits until the campaign UI shape is known. World will not restructure `App.tsx` | Product |
+| 4.4 `next_action.py` | One shared mechanism, pipeline-specific rules. No competing sentence engine | Product |
+| 4.5 measurement | **Do not reuse `design_extraction` wholesale.** World media evidence gets its own evaluator feeding the same review contract shape. Extract shared primitives only when a real duplicate appears | World |
+
+The distinction that carries 4.1 and 4.5: **shared contract, not shared
+implementation.** A design review asks whether a printable product design is
+acceptable; a world review asks whether generated media satisfies canon,
+continuity and production. Character identity drift, first/last-frame
+compatibility, motion defects and screen direction are not extensions of
+measuring graphic recognition. Combining either pair because both contain gates
+would produce a polymorphic junk drawer.
+
+**Consequence for the product session:** Phase 2 of `DESIGN_FLOW_PLAN.md` *is*
+the navigation separation, so it is blocked by 4.3. It is split: **Phase 2a**
+groups the existing destinations by pipeline inside `App.tsx`, which depends on
+nothing the world session is building; **Phase 2b** relocates world screens and
+waits on their UI shape.
+
+### The original five, as raised
 
 These are the collisions. None is settled, and each needs an owner before code
 is written against it.

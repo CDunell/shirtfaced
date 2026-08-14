@@ -29,17 +29,47 @@ type View =
   | "social"
   | "email"
   | "dashboard";
-const VIEWS: { id: View; label: string }[] = [
-  { id: "prompts", label: "Prompts" },
-  { id: "print", label: "Print" },
-  { id: "compose", label: "Compose" },
-  { id: "concepts", label: "Designs" },
-  { id: "design", label: "Score" },
-  { id: "evidence", label: "Evidence" },
-  { id: "research", label: "Research" },
-  { id: "social", label: "Social" },
-  { id: "email", label: "Email" },
-  { id: "dashboard", label: "Dashboard" },
+/** Which pipeline a destination belongs to.
+ *
+ * Phase 2a of DESIGN_FLOW_PLAN.md. The 14 August audit's largest structural
+ * finding was two pipelines interleaved in one interface, and that it is the
+ * first thing a person hits: ten destinations in one row, in no order, with
+ * nothing saying that Prompts and Social are world work and Designs and Score
+ * are product work.
+ *
+ * This does not move anything. Relocating world screens is Phase 2b and waits
+ * on the campaign UI shape (session handover §4.3). Grouping what is already
+ * here depends on nothing anyone else is building, and answers the question a
+ * newcomer actually has.
+ */
+type Pipeline = "product" | "world";
+
+const PIPELINES: { id: Pipeline; label: string; blurb: string }[] = [
+  {
+    id: "product",
+    label: "Product",
+    blurb: "Evidence to a printed design.",
+  },
+  {
+    id: "world",
+    label: "World",
+    blurb: "Canon to a photograph to a customer.",
+  },
+];
+
+const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
+  // Product: evidence → research → concept → design → approved version → print.
+  { id: "evidence", label: "Evidence", pipeline: "product" },
+  { id: "research", label: "Research", pipeline: "product" },
+  { id: "concepts", label: "Designs", pipeline: "product" },
+  { id: "compose", label: "Compose", pipeline: "product" },
+  { id: "design", label: "Score", pipeline: "product" },
+  // World: canon → shot → photograph → decision → social → customer.
+  { id: "dashboard", label: "Dashboard", pipeline: "world" },
+  { id: "prompts", label: "Prompts", pipeline: "world" },
+  { id: "print", label: "Print", pipeline: "world" },
+  { id: "social", label: "Social", pipeline: "world" },
+  { id: "email", label: "Email", pipeline: "world" },
 ];
 const ADMIN_URL = "https://admin.shirtfaced.wtf";
 const MOBILE = "@media screen and (max-width: 760px)";
@@ -66,7 +96,7 @@ const IconClose = () => (
 );
 export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   const [css, theme] = useStyletron();
-  const [view, setView] = useState<View>("prompts");
+  const [view, setView] = useState<View>("concepts");
   const [menuOpen, setMenuOpen] = useState(false);
   const hairline = `1px solid color-mix(in srgb, ${theme.colors.contentPrimary} 10%, transparent)`;
   const item = (active: boolean) =>
@@ -88,6 +118,25 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
     setView(id);
     setMenuOpen(false);
   };
+  // The group label. Quiet on purpose: it names the pipeline without competing
+  // with the destinations, which are what a person is actually aiming at.
+  const groupLabel = css({
+    fontSize: "10px",
+    fontWeight: 700,
+    letterSpacing: "0.12em",
+    textTransform: "uppercase",
+    color: theme.colors.contentTertiary,
+    alignSelf: "center",
+    paddingRight: "2px",
+    whiteSpace: "nowrap",
+  });
+  const divider = css({
+    width: "1px",
+    alignSelf: "stretch",
+    marginTop: "8px",
+    marginBottom: "8px",
+    backgroundColor: `color-mix(in srgb, ${theme.colors.contentPrimary} 14%, transparent)`,
+  });
   return (
     <div className={css({ minHeight: "100vh", backgroundColor: theme.colors.backgroundPrimary })}>
       <header
@@ -111,18 +160,37 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           })}
         >
           <span className="wordmark">shirtfaced / studio</span>
-          <nav className={css({ display: "flex", gap: "4px", [MOBILE]: { display: "none" } })}>
-            {VIEWS.map((v) => (
-              <button
-                key={v.id}
-                onClick={() => {
-                  pick(v.id);
-                }}
-                className={item(view === v.id)}
+          <nav
+            className={css({
+              display: "flex",
+              gap: "4px",
+              alignItems: "center",
+              [MOBILE]: { display: "none" },
+            })}
+          >
+            {PIPELINES.map((pipeline, index) => (
+              <div
+                key={pipeline.id}
+                className={css({ display: "flex", gap: "4px", alignItems: "center" })}
               >
-                {v.label}
-              </button>
+                {index > 0 ? <span className={divider} aria-hidden="true" /> : null}
+                <span className={groupLabel} title={pipeline.blurb}>
+                  {pipeline.label}
+                </span>
+                {VIEWS.filter((v) => v.pipeline === pipeline.id).map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => {
+                      pick(v.id);
+                    }}
+                    className={item(view === v.id)}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
             ))}
+            <span className={divider} aria-hidden="true" />
             <a href={ADMIN_URL} className={item(false)}>
               Admin ↗
             </a>
@@ -159,16 +227,35 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
               borderTop: hairline,
             })}
           >
-            {VIEWS.map((v) => (
-              <button
-                key={v.id}
-                onClick={() => {
-                  pick(v.id);
-                }}
-                className={item(view === v.id)}
+            {PIPELINES.map((pipeline) => (
+              <div
+                key={pipeline.id}
+                className={css({ display: "flex", flexDirection: "column", gap: "4px" })}
               >
-                {v.label}
-              </button>
+                <span
+                  className={css({
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    letterSpacing: "0.12em",
+                    textTransform: "uppercase",
+                    color: theme.colors.contentTertiary,
+                    paddingTop: "8px",
+                  })}
+                >
+                  {pipeline.label} — {pipeline.blurb}
+                </span>
+                {VIEWS.filter((v) => v.pipeline === pipeline.id).map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => {
+                      pick(v.id);
+                    }}
+                    className={item(view === v.id)}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
             ))}
             <a href={ADMIN_URL} className={item(false)}>
               Admin ↗
