@@ -36,7 +36,8 @@ class Campaign(Base, TimestampMixin):
     __table_args__ = (
         Index("ix_campaigns_world_id_status", "world_id", "status"),
         CheckConstraint(
-            "status IN ('draft','developing','preproduction','generating','editing','review','scheduled','live','complete','abandoned')",
+            "status IN ('draft','developing','preproduction','generating','editing',"
+            "'review','scheduled','live','complete','abandoned')",
             name="campaign_status_valid",
         ),
         CheckConstraint(
@@ -188,7 +189,8 @@ class CharacterAppearance(Base, TimestampMixin):
         ),
         UniqueConstraint("id", "character_id", name="uq_character_appearances_id_character_id"),
         CheckConstraint(
-            "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR last_scene_sequence >= first_scene_sequence",
+            "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR "
+            "last_scene_sequence >= first_scene_sequence",
             name="character_appearance_scene_range_ordered",
         ),
     )
