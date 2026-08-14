@@ -184,9 +184,7 @@ class CharacterAppearance(Base, TimestampMixin):
             name="fk_character_appearances_character_same_campaign",
             ondelete="CASCADE",
         ),
-        UniqueConstraint(
-            "character_id", "code", name="uq_character_appearances_character_id_code"
-        ),
+        UniqueConstraint("character_id", "code", name="uq_character_appearances_character_id_code"),
         UniqueConstraint("id", "character_id", name="uq_character_appearances_id_character_id"),
         CheckConstraint(
             "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR "
