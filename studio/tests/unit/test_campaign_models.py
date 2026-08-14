@@ -99,9 +99,7 @@ def test_scene_character_and_shot_character_preserve_character_identity() -> Non
 
 def test_only_one_story_version_can_be_active_approved() -> None:
     indexes = {
-        index.name: index
-        for index in StoryVersion.__table__.indexes
-        if isinstance(index, Index)
+        index.name: index for index in StoryVersion.__table__.indexes if isinstance(index, Index)
     }
     approved = indexes["uq_story_versions_one_approved_per_campaign"]
 
