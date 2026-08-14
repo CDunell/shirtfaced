@@ -31,16 +31,15 @@ from __future__ import annotations
 
 import base64
 from dataclasses import dataclass
-from pathlib import Path
 
 from PIL import Image
-from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStore, AssetStoreError
 from app.archive import garment as garment_module
 from app.archive.svg import num
 from app.db.concept_models import ApprovedDesign
 from app.domain.errors import StudioError
+from app.services.design_composition import GARMENT_DIR
 
 __all__ = [
     "PrintRefused",
@@ -68,19 +67,27 @@ class ZoneChoice:
     height_mm: float
 
 
-def available_garments(assets_root: Path) -> dict[str, list[ZoneChoice]]:
+def available_garments() -> dict[str, list[ZoneChoice]]:
     """Every garment file and the zones it declares.
 
     Read off the SVGs rather than listed in code, so adding a garment is
     dropping a file in. A file that cannot be parsed is skipped rather than
     failing the whole list -- one malformed garment should not empty the menu.
+
+    Garments come from ``GARMENT_DIR`` -- the repository's own ``assets/garments``
+    -- and deliberately not from ``ASSETS_ROOT``. They are checked-in source, the
+    same for every deployment, and ``design_composition`` has always read them
+    from there. ``ASSETS_ROOT`` is the writable store for things this
+    application produced: uploaded artwork, generated photographs, renders. The
+    first version of this module took an ``assets_root`` argument and looked in
+    the wrong place; it passed its test only because the test copied a garment
+    into a scratch root, and it would have found nothing in production.
     """
-    root = assets_root / "garments"
-    if not root.is_dir():
+    if not GARMENT_DIR.is_dir():
         return {}
 
     found: dict[str, list[ZoneChoice]] = {}
-    for path in sorted(root.glob("*.svg")):
+    for path in sorted(GARMENT_DIR.glob("*.svg")):
         try:
             loaded = garment_module.load(path)
         except (garment_module.GarmentError, OSError, ValueError):
@@ -95,9 +102,7 @@ def available_garments(assets_root: Path) -> dict[str, list[ZoneChoice]]:
 
 
 def print_approved(
-    session: Session,
     store: AssetStore,
-    assets_root: Path,
     version: ApprovedDesign,
     *,
     show_zones: bool = False,
@@ -130,7 +135,7 @@ def print_approved(
             "Record them on the approved version before printing it."
         )
 
-    garment_path = assets_root / "garments" / f"{garment_key}.svg"
+    garment_path = GARMENT_DIR / f"{garment_key}.svg"
     if garment_path.name != f"{garment_key}.svg" or not garment_path.is_file():
         raise PrintRefused(f"There is no garment called {garment_key!r}.")
 

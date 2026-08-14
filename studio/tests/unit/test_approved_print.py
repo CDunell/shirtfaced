@@ -8,14 +8,20 @@ from __future__ import annotations
 
 import base64
 from io import BytesIO
-from pathlib import Path
 
 import pytest
 from PIL import Image
 
-from app.services.approved_print import PrintRefused, _as_svg, _svg_height, available_garments
-
-ASSETS = Path(__file__).resolve().parents[3] / "assets"
+from app.db.concept_models import ApprovedDesign, DesignAsset
+from app.domain.enums import DesignAssetKind
+from app.services.approved_print import (
+    PrintRefused,
+    _as_svg,
+    _svg_height,
+    available_garments,
+    print_approved,
+)
+from app.services.design_composition import GARMENT_DIR
 
 
 def png(width: int, height: int) -> bytes:
@@ -83,10 +89,17 @@ def test_bytes_that_are_not_an_image_are_refused_rather_than_placed_blank() -> N
         _as_svg(b"not an image at all", "image/png", 240)
 
 
-@pytest.mark.skipif(not (ASSETS / "garments").is_dir(), reason="no garment files present")
+@pytest.mark.skipif(not GARMENT_DIR.is_dir(), reason="no garment files present")
 def test_garments_declare_their_zones_and_are_read_off_the_files() -> None:
-    """Adding a garment is dropping a file in, not editing a list."""
-    found = available_garments(ASSETS)
+    """Adding a garment is dropping a file in, not editing a list.
+
+    Read from the repository's own assets/garments, the same directory
+    design_composition uses. An earlier version took an assets_root argument and
+    passed this test only because the test handed it a directory it had just
+    copied a garment into -- which is precisely how a path bug survives a green
+    suite and fails in production.
+    """
+    found = available_garments()
 
     assert found, "expected at least one garment SVG with zones"
     assert "garment_tee_crew_front" in found
@@ -95,5 +108,89 @@ def test_garments_declare_their_zones_and_are_read_off_the_files() -> None:
     assert all(zone.width_mm > 0 and zone.height_mm > 0 for zone in found["garment_tee_crew_front"])
 
 
-def test_a_missing_garments_directory_is_empty_rather_than_an_error(tmp_path: Path) -> None:
-    assert available_garments(tmp_path) == {}
+def test_the_garment_directory_is_the_repository_one_not_the_asset_store() -> None:
+    """The bug this pins: ASSETS_ROOT is writable output, garments are source."""
+    assert GARMENT_DIR.name == "garments"
+    assert GARMENT_DIR.parent.name == "assets"
+    assert (GARMENT_DIR.parent.parent / "studio").is_dir(), "should be the repo root"
+
+
+class _Store:
+    """The asset store, reduced to the one thing print_approved asks of it."""
+
+    def __init__(self, data: bytes) -> None:
+        self.data = data
+
+    def load(self, key: str) -> bytes:
+        return self.data
+
+
+def _version(spec: dict[str, object], mime: str = "image/png") -> ApprovedDesign:
+    """A transient approved version. No session: printing reads the row only."""
+    master = DesignAsset(
+        kind=DesignAssetKind.ARTWORK,
+        relative_path="a.png",
+        sha256="0" * 64,
+        mime_type=mime,
+        byte_size=1,
+    )
+    version = ApprovedDesign(version=1, approved_by="owner", production_spec=spec)
+    version.master_asset = master
+    return version
+
+
+def test_an_approved_version_renders_onto_a_real_garment() -> None:
+    """The whole production path, against a checked-in garment.
+
+    This is the test that would have caught the path bug: it names a garment
+    that exists in the repository and never creates a directory for it.
+    """
+    document = print_approved(
+        _Store(png(1200, 1200)),
+        _version(
+            {
+                "garment_key": "garment_tee_crew_front",
+                "zone_key": "centre_chest",
+                "print_width_mm": 180,
+            }
+        ),
+    )
+
+    assert document.startswith("<svg")
+    assert "<path" in document, "the garment outline should be drawn"
+    assert "data:image/png;base64," in document, "the artwork should be embedded"
+    assert "translate(" in document, "the design should be placed into its zone"
+
+
+def test_a_print_too_large_for_its_zone_is_refused_rather_than_shrunk() -> None:
+    """centre_chest is 200x240mm. A 400mm print does not quietly become 200."""
+    with pytest.raises(PrintRefused, match="Reduce the print width"):
+        print_approved(
+            _Store(png(1000, 1000)),
+            _version(
+                {
+                    "garment_key": "garment_tee_crew_front",
+                    "zone_key": "centre_chest",
+                    "print_width_mm": 400,
+                }
+            ),
+        )
+
+
+def test_a_zone_the_garment_does_not_have_lists_the_ones_it_does() -> None:
+    with pytest.raises(PrintRefused, match="cap_front"):
+        print_approved(
+            _Store(png(100, 100)),
+            _version(
+                {
+                    "garment_key": "garment_tee_crew_front",
+                    "zone_key": "cap_front",
+                    "print_width_mm": 80,
+                }
+            ),
+        )
+
+
+def test_a_version_with_no_print_spec_names_all_three_missing_things() -> None:
+    with pytest.raises(PrintRefused, match="garment and no print zone and no print width"):
+        print_approved(_Store(png(100, 100)), _version({}))

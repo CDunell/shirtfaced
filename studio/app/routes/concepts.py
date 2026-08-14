@@ -514,8 +514,12 @@ def get_rubric() -> dict[str, Any]:
 
 
 @router.get("/garments", summary="Garments and the zones they declare")
-def get_garments(settings: SettingsDependency) -> dict[str, list[dict[str, Any]]]:
-    """What an approval can choose from, read off the garment files themselves."""
+def get_garments() -> dict[str, list[dict[str, Any]]]:
+    """What an approval can choose from, read off the garment files themselves.
+
+    Garments are checked-in source under the repository's ``assets/garments``,
+    not writable state under ``ASSETS_ROOT``, so this takes no settings.
+    """
     return {
         key: [
             {
@@ -525,7 +529,7 @@ def get_garments(settings: SettingsDependency) -> dict[str, list[dict[str, Any]]
             }
             for zone in zones
         ]
-        for key, zones in available_garments(settings.assets_root_resolved).items()
+        for key, zones in available_garments().items()
     }
 
 
@@ -940,9 +944,7 @@ def get_printed_version(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="no such version")
     store = FilesystemAssetStore(settings.assets_root_resolved)
     try:
-        document = print_approved(
-            session, store, settings.assets_root_resolved, version, show_zones=show_zones
-        )
+        document = print_approved(store, version, show_zones=show_zones)
     except PrintRefused as error:
         raise _invalid_message(str(error)) from error
     return Response(content=document, media_type="image/svg+xml")
