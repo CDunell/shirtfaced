@@ -290,6 +290,10 @@ export interface ReviewView {
   measurements: Record<string, unknown>;
   evaluation: ReviewEvaluation;
   frozen: boolean;
+  /** Gate ids the brief answers. Shown with their evidence, never offered as a
+   * choice: a person ticking "product and blank defined" when no blank is
+   * recorded is the assertion the scorecard exists to prevent. */
+  derived_gates: string[];
   next_action: string;
 }
 
@@ -484,4 +488,28 @@ export async function fetchAdvice(
     method: "POST",
     body: JSON.stringify({ phrase, has_graphic: hasGraphic, tradition }),
   });
+}
+
+/** Everything that leaves the building with one attempt: the words, the product
+ * definition, the prompt and the evidence images. Composed on the server so the
+ * text a person takes and the record of what they took cannot differ. */
+export interface BriefPackage {
+  text: string;
+  evidence_images: string[];
+  evidence_listing_ids: string[];
+  research_run_id: string;
+  evidence_count: number;
+}
+
+export async function fetchBriefPackage(attemptId: string): Promise<BriefPackage> {
+  return await json<BriefPackage>(
+    `/api/concepts/attempts/${encodeURIComponent(attemptId)}/brief-package`,
+  );
+}
+
+export async function recordBriefTaken(attemptId: string): Promise<unknown> {
+  return await json<unknown>(
+    `/api/concepts/attempts/${encodeURIComponent(attemptId)}/brief-taken`,
+    { method: "POST", body: "{}" },
+  );
 }

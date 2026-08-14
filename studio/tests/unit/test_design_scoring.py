@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import pytest
 
+from app.db.concept_models import DesignBrief
 from app.domain.design_review import (
     APPROVAL_PERCENTAGE,
     CATEGORY_LIMITS,
@@ -31,9 +32,11 @@ from app.domain.design_review import (
     can_transition,
     points_floor,
 )
+from app.domain.enums import CollectionRole, GraphicArchetype, LayoutArchetype
 from app.services.design_scoring import (
     empty_review,
     evaluate_review,
+    gates_from_brief,
     next_status_for_review,
     rubric,
 )
@@ -355,3 +358,87 @@ def test_the_rubric_renders_every_gate_and_category_into_three_groups() -> None:
     assert len(shape["ratingMeanings"]) == 6
     assert shape["approvalPercentage"] == APPROVAL_PERCENTAGE
     assert shape["productionPercentage"] == PRODUCTION_PERCENTAGE
+
+
+# --- The brief answers two gates as fact -------------------------------------
+
+
+def _brief(**overrides: object) -> DesignBrief:
+    fields: dict[str, object] = {
+        "garment_category": "tee",
+        "canonical_blank": "AS Colour 5026",
+        "fit_block": "regular",
+        "fabric_weight": "220gsm",
+        "garment_colour": "black",
+        "production_method": "screen print",
+        "collection_role": CollectionRole.CORE,
+        "graphic_archetype": GraphicArchetype.TYPOGRAPHIC_HERO,
+        "layout_archetype": LayoutArchetype.A3_FRONT_HERO_CLEAN_BACK,
+    }
+    fields.update(overrides)
+    return DesignBrief(**fields)  # type: ignore[arg-type]
+
+
+def test_no_brief_fails_both_derived_gates_rather_than_leaving_them_untested() -> None:
+    """The question has been asked and the database answered it. `not_tested`
+    would mean nobody looked."""
+    gates = gates_from_brief(None)
+
+    assert gates["product_blank_defined"].result is ReviewResult.FAIL
+    assert gates["collection_role_defined"].result is ReviewResult.FAIL
+    assert "no brief exists" in gates["product_blank_defined"].evidence
+
+
+def test_a_complete_brief_passes_and_names_the_blank() -> None:
+    gates = gates_from_brief(_brief())
+
+    assert gates["product_blank_defined"].result is ReviewResult.PASS
+    assert "AS Colour 5026" in gates["product_blank_defined"].evidence
+    assert "screen print" in gates["product_blank_defined"].evidence
+    assert gates["collection_role_defined"].result is ReviewResult.PASS
+    assert "core" in gates["collection_role_defined"].evidence
+
+
+def test_a_missing_blank_field_fails_and_names_which() -> None:
+    """Constitution section 3: artwork without a defined blank is exploratory
+    only and cannot receive production approval."""
+    gates = gates_from_brief(_brief(canonical_blank="", fabric_weight=""))
+
+    gate = gates["product_blank_defined"]
+    assert gate.result is ReviewResult.FAIL
+    assert "canonical blank" in gate.evidence
+    assert "fabric weight" in gate.evidence
+    assert "garment colour" not in gate.evidence
+
+
+def test_no_layout_and_no_written_reason_fails_the_architecture() -> None:
+    """Section 6: departure from the library requires a written reason."""
+    gate = gates_from_brief(_brief(layout_archetype=None))["collection_role_defined"]
+
+    assert gate.result is ReviewResult.FAIL
+    assert "no written reason" in gate.evidence
+
+
+def test_a_written_departure_is_accepted_in_place_of_a_layout() -> None:
+    gate = gates_from_brief(
+        _brief(
+            layout_archetype=None,
+            archetype_departure_reason="The joke needs the back and the sleeve at once.",
+        )
+    )["collection_role_defined"]
+
+    assert gate.result is ReviewResult.PASS
+    assert "departure: The joke needs the back" in gate.evidence
+
+
+def test_a_derived_gate_blocks_approval_the_same_as_any_other() -> None:
+    """It is a hard gate, so an incomplete brief cannot be averaged away."""
+    gates = passing_gates()
+    derived = gates_from_brief(None)
+    merged = [derived.get(gate.id, gate) for gate in gates]
+
+    result = evaluate_review(review(hard_gates=merged, score_categories=score_categories(100)))
+
+    assert result.percentage == 100
+    assert result.eligible_for_design_approval is False
+    assert any("Product and blank defined failed" in blocker for blocker in result.blockers)

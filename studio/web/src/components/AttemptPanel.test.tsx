@@ -58,6 +58,35 @@ describe("AttemptPanel", () => {
     expect(screen.queryByRole("button", { name: /Generate/i })).not.toBeInTheDocument();
   });
 
+  it("carries the evidence with the brief, because the brief is what leaves", async () => {
+    // Phase 6, restated. There is no generator here to send evidence to, so it
+    // travels with the thing a person actually carries to a paid interface.
+    stubApi({});
+
+    renderWithBase(panel());
+
+    expect(await screen.findByText(/2 reference image\(s\)/)).toBeInTheDocument();
+    expect(screen.getByText(/2 evidence images travel with this brief/)).toBeInTheDocument();
+  });
+
+  it("shows the gates the brief answers as facts, not as choices", async () => {
+    // A person ticking "product and blank defined" when no blank is recorded is
+    // the assertion the scorecard exists to prevent.
+    stubApi({});
+
+    renderWithBase(panel());
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Is the garment, blank, fit, colour and production method/),
+      ).toBeInTheDocument();
+    });
+    expect(
+      screen.queryByRole("button", { name: "Product and blank defined: Pass" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText(/from the brief:/).length).toBeGreaterThan(0);
+  });
+
   it("gives the artwork somewhere to land", async () => {
     // uploadAsset existed with zero call sites, which meant every attempt was
     // stuck in `planned` and could never be submitted, decided or approved.

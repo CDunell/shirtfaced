@@ -38,14 +38,17 @@ import {
   approveDesignWithSpec,
   assetUrl,
   decideAttempt,
+  fetchBriefPackage,
   fetchGarments,
   fetchReview,
   fetchRubric,
   measureAttempt,
   printedVersionUrl,
+  recordBriefTaken,
   saveReview,
   submitAttempt,
   uploadAsset,
+  type BriefPackage,
   type CategoryAnswer,
   type ConceptDetailView,
   type DesignAttemptView,
@@ -146,17 +149,21 @@ export function AttemptPanel({
     [concept.versions, attempt.id],
   );
 
-  const brief = useMemo(() => {
-    const lines = [
-      `${concept.title} — Shirtfaced concept #${String(concept.external_number)}`,
-      "",
-      concept.concept_text,
-    ];
-    if (concept.garments.length) lines.push("", `Garments: ${concept.garments.join(", ")}`);
-    if (concept.treatment_lanes.length)
-      lines.push(`Treatment: ${concept.treatment_lanes.join(", ")}`);
-    return lines.join("\n");
-  }, [concept]);
+  // Composed on the server, so the words taken away and the record of what was
+  // taken cannot differ -- and so the evidence travels with them. Phase 6.
+  const [brief, setBrief] = useState<BriefPackage | null>(null);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchBriefPackage(attempt.id)
+        .then(setBrief)
+        .catch(() => {
+          setBrief(null);
+        });
+    }, 0);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [attempt.id]);
 
   const run = useCallback(
     async (label: string, work: () => Promise<unknown>) => {
@@ -289,8 +296,15 @@ export function AttemptPanel({
             color: theme.colors.contentPrimary,
           })}
         >
-          {brief}
+          {brief?.text ?? "Composing the brief…"}
         </pre>
+        {brief && brief.evidence_count > 0 ? (
+          <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+            {brief.evidence_count} evidence image
+            {brief.evidence_count === 1 ? "" : "s"} travel with this brief. Attach them alongside it
+            — they are what the era is read from.
+          </ParagraphXSmall>
+        ) : null}
         {attempt.method === "image_generation" ? (
           <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
             This attempt carries a researched prompt. Copy the brief, paste it into a paid
@@ -300,8 +314,10 @@ export function AttemptPanel({
         <Button
           size={SIZE.compact}
           kind={BUTTON_KIND.secondary}
+          disabled={!brief}
           onClick={() => {
-            void navigator.clipboard.writeText(brief).then(
+            if (!brief) return;
+            void navigator.clipboard.writeText(brief.text).then(
               () => {
                 setCopied(true);
                 setTimeout(() => {
@@ -312,6 +328,9 @@ export function AttemptPanel({
                 setError("The clipboard is not available. Select the brief and copy it.");
               },
             );
+            // What went out, and when. The surviving half of Phase 6's original
+            // exit test now that there is no generator here to send it to.
+            void recordBriefTaken(attempt.id).catch(() => undefined);
           }}
         >
           {copied ? "Copied" : "Copy brief"}
@@ -441,6 +460,34 @@ export function AttemptPanel({
                 {gates.map((gate) => {
                   const answered = review.gates.find((item) => item.id === gate.id);
                   const result = answered?.result ?? "not_tested";
+                  // The brief answers some gates as fact. They are shown with
+                  // their evidence and never offered as a choice.
+                  if (review.derived_gates.includes(gate.id)) {
+                    return (
+                      <div
+                        key={gate.id}
+                        className={css({
+                          borderTop: `1px solid ${theme.colors.backgroundSecondary}`,
+                          paddingTop: "10px",
+                          marginTop: "10px",
+                        })}
+                      >
+                        <ParagraphSmall marginTop={0} marginBottom="2px">
+                          {gate.question}
+                        </ParagraphSmall>
+                        <ParagraphXSmall marginTop={0} marginBottom={0}>
+                          <strong
+                            className={css({
+                              color: result === "pass" ? theme.colors.contentPrimary : CORAL,
+                            })}
+                          >
+                            {result === "pass" ? "Pass" : "Fail"}
+                          </strong>{" "}
+                          — from the brief: {answered?.evidence ?? "not recorded"}
+                        </ParagraphXSmall>
+                      </div>
+                    );
+                  }
                   return (
                     <div
                       key={gate.id}

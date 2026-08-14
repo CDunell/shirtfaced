@@ -448,6 +448,22 @@ export function briefView(overrides: Record<string, unknown> = {}): Record<strin
   };
 }
 
+/** What leaves the building with an attempt. */
+export const BRIEF_PACKAGE = {
+  text: [
+    "SECOND BREAKFAST — Shirtfaced concept #1",
+    "",
+    "A type-led chest lockup.",
+    "",
+    "EVIDENCE",
+    "2 reference image(s) from the vintage corpus.",
+  ].join("\n"),
+  evidence_images: ["listing-1/0.jpg", "listing-1/2.jpg"],
+  evidence_listing_ids: ["listing-1"],
+  research_run_id: "run-9",
+  evidence_count: 2,
+};
+
 export const ADVICE = {
   input: "3 words, with a graphic",
   intent: "both",
@@ -476,8 +492,10 @@ export function reviewView(overrides: Record<string, unknown> = {}): Record<stri
     gates: RUBRIC.gates.map((gate) => ({
       id: gate.id,
       label: gate.label,
-      result: "not_tested",
-      evidence: "",
+      // The two the brief answers arrive already decided, with their evidence.
+      result: gate.id === "product_blank_defined" ? "fail" : "not_tested",
+      evidence:
+        gate.id === "product_blank_defined" ? "the brief does not state the canonical blank" : "",
     })),
     categories: [],
     rationale: "",
@@ -504,6 +522,9 @@ export function reviewView(overrides: Record<string, unknown> = {}): Record<stri
       blockers: ["3 gates not answered", "2 categories not rated"],
     },
     frozen: false,
+    // The brief answers these two; the panel shows them as facts rather than
+    // offering them as choices.
+    derived_gates: ["product_blank_defined", "collection_role_defined"],
     next_action: "Artwork attached. Measure it, then answer the gates and rate the categories.",
     ...overrides,
   };
@@ -554,6 +575,7 @@ export interface Routes {
   conceptActionDetail?: string;
   work?: unknown;
   brief?: unknown;
+  briefPackage?: unknown;
   advice?: unknown;
   rubric?: unknown;
   attemptReview?: unknown;
@@ -576,6 +598,14 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
     }
     if (input.startsWith("/api/concepts")) {
       // Before the /attempts branch: the scorecard endpoints share that path.
+      if (input.includes("/brief-package")) {
+        return Promise.resolve(new Response(JSON.stringify(routes.briefPackage ?? BRIEF_PACKAGE)));
+      }
+      if (input.includes("/brief-taken")) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ taken_at: "now", evidence_count: 2 })),
+        );
+      }
       if (input.endsWith("/brief")) {
         return Promise.resolve(new Response(JSON.stringify(routes.brief ?? briefView())));
       }

@@ -37,7 +37,12 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.concept_models import DesignAttempt, DesignDecision, DesignReviewRecord
+from app.db.concept_models import (
+    DesignAttempt,
+    DesignBrief,
+    DesignDecision,
+    DesignReviewRecord,
+)
 from app.domain.design_review import (
     APPROVAL_PERCENTAGE,
     CATEGORY_LIMITS,
@@ -62,6 +67,7 @@ __all__ = [
     "ReviewFrozen",
     "ScoredReview",
     "evaluate_review",
+    "gates_from_brief",
     "guard_decision",
     "load_review",
     "next_status_for_review",
@@ -393,3 +399,114 @@ def rubric() -> dict[str, Any]:
         "productionPercentage": PRODUCTION_PERCENTAGE,
         "bands": [band.value for band in ApprovalBand],
     }
+
+
+# The two gates the brief answers. They stop being human-tickable: a person
+# ticking "product and blank defined" when no blank is recorded is exactly the
+# assertion the scorecard exists to prevent, and both are facts the database
+# holds rather than judgements a reviewer makes.
+DERIVED_GATES: tuple[str, ...] = ("product_blank_defined", "collection_role_defined")
+
+# Constitution section 3's required fields. "Artwork created without a defined
+# blank is exploratory only and cannot receive production approval" -- so these
+# gate approval, not the opening of an attempt. Intended use, commercial tier
+# and target release are section 3 fields too, but they describe where a product
+# is going rather than what it is, and a gate named product_blank_defined should
+# fail on a missing blank rather than on a missing release date.
+BLANK_FIELDS: tuple[tuple[str, str], ...] = (
+    ("garment_category", "garment category"),
+    ("canonical_blank", "canonical blank"),
+    ("fit_block", "fit block"),
+    ("fabric_weight", "fabric weight"),
+    ("garment_colour", "garment colour"),
+    ("production_method", "production method"),
+)
+
+
+def _text(brief: DesignBrief, field: str) -> str:
+    """A brief field as text, treating NULL as absent.
+
+    ``str(None)`` is ``"None"``, which is truthy -- so reading these with a bare
+    ``str()`` made a missing blank *pass* the gate that exists to catch it. The
+    columns carry a server default of empty string, so a row loaded from the
+    database is never None; a transient one is, and that is what the tests
+    build.
+    """
+    return (getattr(brief, field, None) or "").strip()
+
+
+def gates_from_brief(brief: DesignBrief | None) -> dict[str, HardGate]:
+    """The two hard gates the brief answers, as facts rather than opinions.
+
+    Returned as ``fail`` with the gap named when the brief cannot support them,
+    never ``not_tested``: the question has been asked and the database has
+    answered it. An untested gate means nobody looked; this looked.
+    """
+    product = _blank_gate(brief)
+    role = _role_gate(brief)
+    return {gate.id: gate for gate in (product, role)}
+
+
+def _blank_gate(brief: DesignBrief | None) -> HardGate:
+    label = GATE_LABELS["product_blank_defined"]
+    if brief is None:
+        return HardGate(
+            id="product_blank_defined",
+            label=label,
+            result=ReviewResult.FAIL,
+            evidence="no brief exists, so no blank is defined",
+        )
+    missing = [name for field, name in BLANK_FIELDS if not _text(brief, field)]
+    if missing:
+        return HardGate(
+            id="product_blank_defined",
+            label=label,
+            result=ReviewResult.FAIL,
+            evidence=f"the brief does not state the {', '.join(missing)}",
+        )
+    return HardGate(
+        id="product_blank_defined",
+        label=label,
+        result=ReviewResult.PASS,
+        evidence=", ".join(_text(brief, field) for field, _name in BLANK_FIELDS),
+    )
+
+
+def _role_gate(brief: DesignBrief | None) -> HardGate:
+    label = GATE_LABELS["collection_role_defined"]
+    if brief is None or brief.collection_role is None:
+        return HardGate(
+            id="collection_role_defined",
+            label=label,
+            result=ReviewResult.FAIL,
+            evidence="the brief records no role in the range",
+        )
+
+    # Section 6: a departure from the approved layout library requires a written
+    # reason. Recorded on the same gate because both are the product's declared
+    # architecture, and a design with neither a layout nor a reason for not
+    # having one is undeclared in exactly the way the gate is checking for.
+    departure = _text(brief, "archetype_departure_reason")
+    if brief.layout_archetype is None and not departure:
+        return HardGate(
+            id="collection_role_defined",
+            label=label,
+            result=ReviewResult.FAIL,
+            evidence=(
+                f"role is {brief.collection_role.value}, but no layout archetype is chosen "
+                "and no written reason is given for departing from the library"
+            ),
+        )
+
+    layout = (
+        brief.layout_archetype.value
+        if brief.layout_archetype is not None
+        else f"departure: {departure}"
+    )
+    graphic = "" if brief.graphic_archetype is None else f", {brief.graphic_archetype.value}"
+    return HardGate(
+        id="collection_role_defined",
+        label=label,
+        result=ReviewResult.PASS,
+        evidence=f"{brief.collection_role.value}, {layout}{graphic}",
+    )

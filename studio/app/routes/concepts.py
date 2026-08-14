@@ -69,6 +69,7 @@ from app.domain.enums import (
     ZoneState,
 )
 from app.services.approved_print import PrintRefused, available_garments, print_approved
+from app.services.brief_package import compose_brief
 from app.services.design_extraction import measure, to_review
 from app.services.design_pipeline import (
     DesignPipelineConflict,
@@ -81,10 +82,12 @@ from app.services.design_pipeline import (
     submit_attempt,
 )
 from app.services.design_scoring import (
+    DERIVED_GATES,
     NotEligible,
     ReviewFrozen,
     empty_review,
     evaluate_review,
+    gates_from_brief,
     guard_decision,
     load_review,
     rubric,
@@ -437,6 +440,9 @@ class ReviewView(BaseModel):
     measurements: dict[str, Any]
     evaluation: dict[str, Any]
     frozen: bool
+    # Gate ids the brief answers. The screen shows them with their evidence and
+    # does not offer them as choices.
+    derived_gates: list[str]
     next_action: str
 
 
@@ -914,14 +920,29 @@ def _review_view(
         measurements={} if record is None else record.measurements,
         evaluation=evaluation.to_dict(),
         frozen=attempt.decision is not None,
+        derived_gates=list(DERIVED_GATES),
         next_action=next_action(attempt, evaluation),
     )
 
 
 def _stored_input(attempt: DesignAttempt, record: DesignReviewRecord | None) -> DesignReviewInput:
+    # The brief answers two gates as fact, and they overlay whatever is stored.
+    # A reviewer cannot tick "product and blank defined" when the brief names no
+    # blank -- that is the assertion the scorecard exists to prevent, and both
+    # questions have answers in the database rather than in somebody's head.
+    derived = gates_from_brief(attempt.concept.brief)
     if record is None:
-        return empty_review(str(attempt.id))
+        blank = empty_review(str(attempt.id))
+        return DesignReviewInput(
+            design_id=blank.design_id,
+            reviewer_id=blank.reviewer_id,
+            hard_gates=[derived.get(gate.id, gate) for gate in blank.hard_gates],
+            score_categories=blank.score_categories,
+            decision=blank.decision,
+            rationale=blank.rationale,
+        )
     answered = {gate["id"]: HardGate.of(gate) for gate in record.hard_gates}
+    answered.update(derived)
     return DesignReviewInput(
         design_id=str(attempt.id),
         reviewer_id=record.reviewer,
@@ -938,6 +959,47 @@ def _stored_input(attempt: DesignAttempt, record: DesignReviewRecord | None) -> 
         decision=ReviewDecision(record.requested_decision),
         rationale=record.rationale,
     )
+
+
+@router.get(
+    "/attempts/{attempt_id}/brief-package",
+    summary="Everything that leaves the building with this attempt",
+)
+def get_brief_package(attempt_id: uuid.UUID, session: SessionDependency) -> dict[str, Any]:
+    """The brief as text, with the evidence it refers to.
+
+    Composed on the server so the words a person takes away and the record of
+    what they took cannot differ.
+    """
+    attempt = _attempt(session, attempt_id)
+    return compose_brief(attempt).to_dict()
+
+
+@router.post(
+    "/attempts/{attempt_id}/brief-taken",
+    summary="Record that the brief and its evidence left the building",
+)
+def post_brief_taken(attempt_id: uuid.UUID, session: SessionDependency) -> dict[str, Any]:
+    """What went out, and when.
+
+    The surviving half of Phase 6's original exit test -- "an attempt records
+    which evidence images were sent" -- now that there is no generator here to
+    send them to. Written to ``reference_inputs`` beside the evidence itself
+    rather than to a new column: it is provenance about this attempt's inputs,
+    which is what that field already holds.
+    """
+    attempt = _attempt(session, attempt_id)
+    package = compose_brief(attempt)
+    attempt.reference_inputs = {
+        **dict(attempt.reference_inputs or {}),
+        "brief_taken_at": dt.datetime.now(dt.UTC).isoformat(),
+        "brief_evidence_images": package.evidence_images,
+    }
+    session.commit()
+    return {
+        "taken_at": attempt.reference_inputs["brief_taken_at"],
+        "evidence_count": len(package.evidence_images),
+    }
 
 
 @router.get(
@@ -975,12 +1037,18 @@ def put_review(attempt_id: uuid.UUID, body: ReviewIn, session: SessionDependency
             ),
         )
 
-    answered = {gate.id: gate for gate in body.gates}
+    # Derived gates are not the client's to send. Silently ignored rather than
+    # refused: a screen that renders the whole rubric will post the whole
+    # rubric back, and failing the save over a field it was shown is unhelpful.
+    answered = {gate.id: gate for gate in body.gates if gate.id not in DERIVED_GATES}
+    derived = gates_from_brief(attempt.concept.brief)
     review = DesignReviewInput(
         design_id=str(attempt.id),
         reviewer_id=body.reviewer,
         hard_gates=[
-            HardGate(
+            derived[gate_id]
+            if gate_id in derived
+            else HardGate(
                 id=gate_id,
                 label=GATE_LABELS[gate_id],
                 result=(
