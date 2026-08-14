@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import datetime as dt
 from dataclasses import dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
@@ -28,19 +27,22 @@ from sqlalchemy.orm import Session
 from app.archive.design_composer import Brief, DesignComposer, DesignOption
 from app.archive.garment import Garment, GarmentError
 from app.archive.garment import load as load_garment
+from app.config import GARMENTS_DIR, PROJECT_ROOT
 from app.db.archive_models import ComposedDesign
 from app.domain.enums import AttemptState
 
 if TYPE_CHECKING:
     from app.db.concept_models import DesignAttempt
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-GARMENT_DIR = REPO_ROOT / "assets" / "garments"
+# Both resolved from the application's own root rather than by walking up past
+# it: the deploy syncs studio/'s contents to the box, so a repo-root walk lands
+# outside the deployment and finds nothing. See config._garments_dir.
+GARMENT_DIR = GARMENTS_DIR
 
 # Where approvals are remembered for the composer's own confidence weighting.
 # Separate from the database on purpose: it is the composer's learning, not the
 # record of what was decided, and that record is the table.
-APPROVALS_PATH = REPO_ROOT / "studio" / "var" / "approvals.json"
+APPROVALS_PATH = PROJECT_ROOT / "var" / "approvals.json"
 
 
 class CompositionRefused(Exception):

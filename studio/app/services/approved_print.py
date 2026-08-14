@@ -37,9 +37,9 @@ from PIL import Image
 from app.adapters.asset_store import AssetStore, AssetStoreError
 from app.archive import garment as garment_module
 from app.archive.svg import num
+from app.config import GARMENTS_DIR as GARMENT_DIR
 from app.db.concept_models import ApprovedDesign
 from app.domain.errors import StudioError
-from app.services.design_composition import GARMENT_DIR
 
 __all__ = [
     "PrintRefused",

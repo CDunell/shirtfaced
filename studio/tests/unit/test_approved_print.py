@@ -12,6 +12,7 @@ from io import BytesIO
 import pytest
 from PIL import Image
 
+from app.config import GARMENTS_DIR as GARMENT_DIR
 from app.db.concept_models import ApprovedDesign, DesignAsset
 from app.domain.enums import DesignAssetKind
 from app.services.approved_print import (
@@ -21,7 +22,6 @@ from app.services.approved_print import (
     available_garments,
     print_approved,
 )
-from app.services.design_composition import GARMENT_DIR
 
 
 def png(width: int, height: int) -> bytes:
@@ -108,11 +108,17 @@ def test_garments_declare_their_zones_and_are_read_off_the_files() -> None:
     assert all(zone.width_mm > 0 and zone.height_mm > 0 for zone in found["garment_tee_crew_front"])
 
 
-def test_the_garment_directory_is_the_repository_one_not_the_asset_store() -> None:
-    """The bug this pins: ASSETS_ROOT is writable output, garments are source."""
-    assert GARMENT_DIR.name == "garments"
-    assert GARMENT_DIR.parent.name == "assets"
-    assert (GARMENT_DIR.parent.parent / "studio").is_dir(), "should be the repo root"
+def test_the_garment_directory_resolves_to_files_that_exist() -> None:
+    """Two bugs pinned at once.
+
+    ASSETS_ROOT is writable output and garments are checked-in source, so they
+    are not there. And the location differs between a checkout and the box --
+    the deploy syncs studio/'s contents, so walking up to a repository root
+    lands outside the deployment. Asserting a *shape* let the second bug
+    through; asserting that real files are found does not.
+    """
+    assert GARMENT_DIR.is_dir(), f"{GARMENT_DIR} does not exist"
+    assert list(GARMENT_DIR.glob("garment_*.svg")), f"no garment SVGs in {GARMENT_DIR}"
 
 
 class _Store:

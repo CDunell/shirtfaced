@@ -39,6 +39,7 @@ from pathlib import Path
 
 from app.archive.garment import Garment, GarmentError, Zone
 from app.archive.garment import load as load_garment
+from app.config import GARMENTS_DIR
 from app.services.composition_engine import (
     Brief,
     Composition,
@@ -48,7 +49,7 @@ from app.services.composition_engine import (
 )
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
-GARMENT_DIR = REPO_ROOT / "assets" / "garments"
+GARMENT_DIR = GARMENTS_DIR
 
 # The smallest a printed element can usefully be.
 #

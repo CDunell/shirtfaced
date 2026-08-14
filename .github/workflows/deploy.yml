@@ -119,6 +119,22 @@ jobs:
             docs/design/ \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/docs/design/
 
+      # Garment SVGs are checked-in source that Compose, the range view and
+      # printing all read, and they live at the repository root — outside the
+      # studio/ tree that gets rsynced, and excluded from it in any case. So
+      # three modules resolved them by walking up past studio/, which works in a
+      # checkout and lands on /home/ubuntu here. All three found zero garments
+      # in production until the design chain smoke check said so.
+      #
+      # Synced beside the application, which is where config._garments_dir looks
+      # first — the same shape as docs/design/ above.
+      - name: Sync garments into Studio
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            assets/garments/ \
+            ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/assets/garments/
+
       - name: Bootstrap Studio
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \

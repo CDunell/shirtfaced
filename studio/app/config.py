@@ -21,6 +21,35 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 
+def _garments_dir() -> Path:
+    """Where the garment SVGs are, in a checkout and on the box.
+
+    They are checked-in source the application reads and never writes, so they
+    do not belong in ``ASSETS_ROOT`` -- that is the writable store for what this
+    application produces. But they are not in the same place in both layouts,
+    and three modules independently assumed the checkout layout:
+    ``REPO_ROOT / "assets" / "garments"``, where ``REPO_ROOT`` walked up past
+    ``studio/``.
+
+    The deploy rsyncs the *contents* of ``studio/`` to
+    ``/home/ubuntu/shirtfaced-studio/``, so on the box that walk lands on
+    ``/home/ubuntu`` and the directory does not exist. Compose, the range view
+    and printing all silently found zero garments in production; the design
+    chain smoke check is what finally said so out loud.
+
+    So: prefer the deployed location beside the application, fall back to the
+    checkout's repository root. The same shape the deploy already uses for
+    ``docs/design/``.
+    """
+    deployed = PROJECT_ROOT / "assets" / "garments"
+    if deployed.is_dir():
+        return deployed
+    return PROJECT_ROOT.parent / "assets" / "garments"
+
+
+GARMENTS_DIR = _garments_dir()
+
+
 class AssetStoreKind(StrEnum):
     """Supported asset store back ends."""
 
