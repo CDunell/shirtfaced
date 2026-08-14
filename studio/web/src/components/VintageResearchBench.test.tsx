@@ -311,6 +311,29 @@ describe("VintageResearchBench", () => {
     });
   });
 
+  it("shows an import failure beside the button, not at the top of the page", async () => {
+    // The prepared block is about a screen and a half tall. An error rendered
+    // above it is an error nobody reading the import box will ever see, which
+    // is what "pressed the button and nothing happened" actually was.
+    stubRoutes([run()]);
+
+    renderWithBase(<VintageResearchBench />);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Prepare manual run/ })).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByRole("button", { name: /Prepare manual run/ }));
+
+    const box = await screen.findByPlaceholderText('{"concepts": [...]}');
+    await userEvent.type(box, "not json");
+    await userEvent.click(screen.getByRole("button", { name: "Import concepts" }));
+
+    const message = await screen.findByText(/not valid JSON/);
+    // The message must sit inside the prepared block, with the button.
+    const button = screen.getByRole("button", { name: "Import concepts" });
+    const block = button.closest("div")?.parentElement;
+    expect(block?.contains(message)).toBe(true);
+  });
+
   it("hides the pipeline while a concept is still pending", async () => {
     stubRoutes([run()]);
 

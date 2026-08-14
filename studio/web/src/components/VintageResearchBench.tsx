@@ -229,7 +229,7 @@ export function VintageResearchBench(): React.JSX.Element {
         Two passes over the selected evidence: ten concepts, then the same ten in depth.
       </ParagraphXSmall>
 
-      {error ? (
+      {error && !prepared ? (
         <Notification
           kind={NOTIFICATION_KIND.negative}
           overrides={{ Body: { style: { width: "auto" } } }}
@@ -373,6 +373,14 @@ export function VintageResearchBench(): React.JSX.Element {
           >
             Import concepts
           </Button>
+          {error ? (
+            <Notification
+              kind={NOTIFICATION_KIND.negative}
+              overrides={{ Body: { style: { width: "auto", marginTop: "10px" } } }}
+            >
+              {error}
+            </Notification>
+          ) : null}
         </div>
       ) : null}
 
