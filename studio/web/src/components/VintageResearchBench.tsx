@@ -22,19 +22,21 @@ import { Tag, KIND as TAG_KIND } from "baseui/tag";
 import { Textarea } from "baseui/textarea";
 import { LabelSmall, ParagraphXSmall } from "baseui/typography";
 
-import { PageTitle } from "./chrome";
+import { CopyButton, PasteButton, PageTitle } from "./chrome";
 
 import {
   ApiError,
   importManualRun,
   prepareManualRun,
   fetchDesignConceptTargets,
+  fetchEvidence,
   fetchResearchRun,
   fetchResearchRuns,
   sendConceptToPipeline,
   startResearchRun,
   updateResearchConcept,
   type DesignConceptTarget,
+  type EvidenceRecord,
   type ManualPrepared,
   type ResearchConcept,
   type ResearchRun,
@@ -54,8 +56,13 @@ export function VintageResearchBench(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [query, setQuery] = useState("");
-  const [era, setEra] = useState("");
-  const [tradition, setTradition] = useState("");
+  // Era and tradition are picked, never typed. filter_evidence matches them by
+  // exact equality, so a typed "90s" or "1990" returns nothing and says nothing
+  // about why. The options carry their counts for the same reason the Evidence
+  // bench does: the filter can state what it will return before it is chosen.
+  const [era, setEra] = useState<Value>([]);
+  const [tradition, setTradition] = useState<Value>([]);
+  const [records, setRecords] = useState<EvidenceRecord[]>([]);
   const [imageLimit, setImageLimit] = useState("16");
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [pipelineTarget, setPipelineTarget] = useState<Value>([]);
@@ -73,10 +80,12 @@ export function VintageResearchBench(): React.JSX.Element {
     void Promise.all([
       fetchResearchRuns(controller.signal),
       fetchDesignConceptTargets(controller.signal),
+      fetchEvidence(controller.signal),
     ])
-      .then(([loadedRuns, loadedTargets]) => {
+      .then(([loadedRuns, loadedTargets, evidence]) => {
         setRuns(loadedRuns);
         setTargets(loadedTargets);
+        setRecords(evidence.records);
         if (loadedRuns.length > 0 && loadedRuns[0]) setRun(loadedRuns[0]);
       })
       .catch((cause: unknown) => {
@@ -88,14 +97,28 @@ export function VintageResearchBench(): React.JSX.Element {
     };
   }, []);
 
+  const optionsFor = useCallback(
+    (key: "era_claim" | "tradition"): Value => {
+      const counts = new Map<string, number>();
+      for (const record of records) {
+        const value = record[key].trim();
+        if (value) counts.set(value, (counts.get(value) ?? 0) + 1);
+      }
+      return [...counts.entries()]
+        .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+        .map(([id, n]) => ({ id, label: `${id} (${String(n)})` }));
+    },
+    [records],
+  );
+
   const start = useCallback(() => {
     setBusy(true);
     setError(null);
     const limit = Number.parseInt(imageLimit, 10);
     startResearchRun({
       query,
-      era,
-      tradition,
+      era: String(era[0]?.id ?? ""),
+      tradition: String(tradition[0]?.id ?? ""),
       image_limit: Number.isFinite(limit) ? limit : 16,
     })
       .then((created) => {
@@ -114,8 +137,8 @@ export function VintageResearchBench(): React.JSX.Element {
     const limit = Number.parseInt(imageLimit, 10);
     prepareManualRun({
       query,
-      era,
-      tradition,
+      era: String(era[0]?.id ?? ""),
+      tradition: String(tradition[0]?.id ?? ""),
       image_limit: Number.isFinite(limit) ? limit : 16,
     })
       .then((result) => {
@@ -222,27 +245,36 @@ export function VintageResearchBench(): React.JSX.Element {
           }}
           placeholder="Search evidence"
         />
-        <Input
+        <Select
+          options={optionsFor("era_claim")}
           value={era}
-          onChange={(event) => {
-            setEra(event.currentTarget.value);
+          onChange={(params) => {
+            setEra(params.value);
           }}
-          placeholder="Era, e.g. 1990s"
+          placeholder="All eras"
         />
-        <Input
+        <Select
+          options={optionsFor("tradition")}
           value={tradition}
-          onChange={(event) => {
-            setTradition(event.currentTarget.value);
+          onChange={(params) => {
+            setTradition(params.value);
           }}
-          placeholder="Tradition"
+          placeholder="All traditions"
         />
-        <Input
-          value={imageLimit}
-          onChange={(event) => {
-            setImageLimit(event.currentTarget.value);
-          }}
-          placeholder="Images"
-        />
+        <div>
+          <LabelSmall overrides={{ Block: { style: { marginBottom: "4px", marginTop: 0 } } }}>
+            Images per run
+          </LabelSmall>
+          <Input
+            value={imageLimit}
+            type="number"
+            min={1}
+            max={24}
+            onChange={(event) => {
+              setImageLimit(event.currentTarget.value);
+            }}
+          />
+        </div>
       </div>
 
       <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap" })}>
@@ -280,13 +312,44 @@ export function VintageResearchBench(): React.JSX.Element {
               />
             ))}
           </div>
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: "4px",
+            })}
+          >
+            <LabelSmall>Pass 1</LabelSmall>
+            <CopyButton text={prepared.pass1_prompt} label="pass 1 prompt" />
+          </div>
           <Textarea value={prepared.pass1_prompt} rows={6} readOnly />
-          <div className={css({ marginTop: "6px" })}>
+          <div className={css({ marginTop: "10px" })}>
+            <div
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "4px",
+              })}
+            >
+              <LabelSmall>Pass 2</LabelSmall>
+              <CopyButton text={prepared.pass2_prompt} label="pass 2 prompt" />
+            </div>
             <Textarea value={prepared.pass2_prompt} rows={3} readOnly />
           </div>
-          <LabelSmall overrides={{ Block: { style: { marginTop: "10px" } } }}>
-            Paste the concepts JSON
-          </LabelSmall>
+          <div
+            className={css({
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginTop: "12px",
+              marginBottom: "4px",
+            })}
+          >
+            <LabelSmall>Paste the concepts JSON</LabelSmall>
+            <PasteButton onPaste={setPasted} label="Paste JSON" />
+          </div>
           <Textarea
             value={pasted}
             rows={6}
@@ -372,6 +435,17 @@ export function VintageResearchBench(): React.JSX.Element {
               </Tag>
             </div>
             <ParagraphXSmall>{concept.idea}</ParagraphXSmall>
+            <div
+              className={css({
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "4px",
+              })}
+            >
+              <LabelSmall>Generation prompt</LabelSmall>
+              <CopyButton text={prompt} label={`prompt ${String(concept.concept_number)}`} />
+            </div>
             <Textarea
               value={prompt}
               rows={7}

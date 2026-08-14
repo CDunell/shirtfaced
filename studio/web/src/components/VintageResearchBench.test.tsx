@@ -76,6 +76,28 @@ function stubRoutes(runs: ResearchRun[], onPost?: (url: string, body: unknown) =
           }),
       });
     }
+    if (url.includes("/api/vintage-evidence")) {
+      // The bench builds its era and tradition options from the evidence, so a
+      // stub that does not answer this leaves it with nothing to pick from.
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () =>
+          Promise.resolve({
+            manifest: { image_count: 4 },
+            records: [
+              {
+                listing_id: "406847192188",
+                title: "Vintage 1993 tour tee",
+                brand: "",
+                tradition: "band-merch",
+                era_claim: "1990s",
+                images: ["/vintage-evidence/image/406847192188/image-01.jpg"],
+              },
+            ],
+          }),
+      });
+    }
     if (url.includes("design-concepts")) {
       return Promise.resolve({
         ok: true,
@@ -199,6 +221,30 @@ describe("VintageResearchBench", () => {
     expect(posted.at(-1)?.url).toContain("/manual/prepare");
     // Nothing went to the endpoint that spends money.
     expect(posted.every((p) => !p.url.endsWith("/runs"))).toBe(true);
+  });
+
+  it("offers eras as options with counts, not a free-text box", async () => {
+    stubRoutes([run()]);
+
+    renderWithBase(<VintageResearchBench />);
+
+    // filter_evidence matches era_claim by exact equality, so a typed "90s"
+    // returns nothing and explains nothing. The picker cannot be wrong.
+    await waitFor(() => {
+      expect(screen.getByText("All eras")).toBeInTheDocument();
+    });
+    expect(screen.getByText("All traditions")).toBeInTheDocument();
+    expect(screen.queryByPlaceholderText("Era, e.g. 1990s")).not.toBeInTheDocument();
+  });
+
+  it("labels the image count instead of showing a bare number", async () => {
+    stubRoutes([run()]);
+
+    renderWithBase(<VintageResearchBench />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Images per run")).toBeInTheDocument();
+    });
   });
 
   it("hides the pipeline while a concept is still pending", async () => {
