@@ -172,9 +172,116 @@ Phase 4's business, with the owner, not a thing to invent mid-port.
 
 That is the audit's Hot List #1, met for the first time.
 
+### Exit test — run 14 August 2026, in a browser
+
+Against a throwaway PostgreSQL 16 with migrations applied from empty, a fixture
+research run, and the tee garment. Every step below was a click or a drop in
+the interface; nothing was done from a terminal.
+
+```
+Research    "Create a design concept"
+            → Created #1 SECOND BREAKFAST, attempt 1. Open the attempt in
+              Designs, copy the brief, make the artwork in a paid interface,
+              and bring the file back to the drop zone.
+
+Designs     #001 SECOND BREAKFAST · VINTAGE RESEARCH · 1 attempt · EXPLORING
+            → "Open this attempt"
+
+Attempt     DO THIS NEXT — Copy the brief, make the artwork in ChatGPT, Gemini
+                           or Claude, then bring the file back to the drop zone
+                           below. Nothing is generated here and nothing is billed.
+            [artwork dropped on the drop zone]
+            DO THIS NEXT — Artwork attached. Measure it, then answer the
+                           thirteen gates and rate the nine categories.
+            [Measure this artwork]
+            Measured: 7.0% coverage, 3 ink colours, thumbnail pass, blur pass,
+                      greyscale pass
+            DO THIS NEXT — Answer the 11 gates and 8 categories still
+                           outstanding. Then submit it for a decision.
+            [13 gates answered, 9 categories rated, in three groups]
+            SCORECARD 80/100 Strong, revise selectively
+                      Every gate answered, every floor met. This design can be
+                      approved.
+            DO THIS NEXT — Answered in full and passing at 80/100. Submit it
+                           for a decision.
+            [Submit for a decision] → [Approve]
+            DO THIS NEXT — Approved. Record it as a version, choosing the
+                           garment, the print zone and the print width --
+                           Print needs all three.
+            [garment_tee_crew_front · centre_chest 200x240mm · 180mm]
+            [Record approved design v1]
+            DO THIS NEXT — Approved as v1. Print it at 180mm in the centre
+                           chest zone on garment tee crew front.
+            PRINTED — the garment, rendered, with the artwork in its zone.
+```
+
+Persisted, read back out of PostgreSQL:
+
+```
+concept        #1 SECOND BREAKFAST | library=vintage_research | status=approved
+               | attempts=1 | approved versions=1
+
+design_reviews reviewer owner | 80.0% | band revise_selectively | eligible True
+               13 gates answered, 9 categories rated
+               measured coverage 0.0705, 3 inks
+               all 13 gates: pass
+
+decision       approved by owner
+
+approved       v1 by owner
+               production_spec {"garment_key": "garment_tee_crew_front",
+                                "zone_key": "centre_chest",
+                                "print_width_mm": 180.0}
+```
+
+And the gate is real in both directions — a second attempt, submitted with no
+review answered:
+
+```
+POST /decision {"decision":"approved"}  → 422
+  this attempt has no review. Answer the thirteen gates and rate the nine
+  categories before approving it -- the scorecard cannot be skipped by
+  approving straight from the queue.
+
+POST /decision {"decision":"rejected"}  → 200, rejected by owner
+```
+
+**Three defects were found by running it**, each of which had passed ruff, mypy,
+eslint, tsc and 1,045 tests: the scorecard endpoint was unreachable behind
+route ordering, the backlog listed one library so a concept created from
+Research was invisible, and a passing review was told it had scored below the
+threshold. All three are fixed, and `scripts/smoke_design_chain.py` now runs as
+a deploy step so the next one is caught by CI rather than by a person.
+
 **Known limitation, stated deliberately:** a design completed in Phase 1 is
 mechanically complete, not constitutionally complete. Steps 1–4 of the sequence
 arrive in Phase 4. Phase 1 buys a working chain, not a compliant one.
+
+The exit test above shows exactly that limit. Two of the thirteen gates —
+*product and blank defined* and *collection role defined* — were answered
+`pass` by a person with nothing in the software to answer them *from*. There is
+no blank, no fit, no collection role recorded anywhere on the concept or the
+attempt, because those are constitution steps 1–4 and they arrive in Phase 4.
+Until then those two gates are an honest question asked of a person who is
+holding the answer in their head. That is better than the previous state, where
+the question could not be asked at all — and it is not the same as the
+constitution being implemented.
+
+### Found while running Phase 1, for the phase each belongs to
+
+- **`printing.py` is world-side.** It puts a design on a *photograph* — a
+  product shot for socials. Phase 2 moves it to Admin. Phase 1 left it alone
+  rather than wiring `approved_designs` into a router about to emigrate.
+- **`admin` has no tests now.** `workflow.test.ts` was its only test file, so
+  `npm test` there matches nothing. Not in the deploy path. Phase 2's business,
+  when the world pipeline moves in.
+- **`Score` is now a second, worse door to measurement.** `/api/design/score`
+  still takes a loose file that attaches to no attempt. The attempt panel
+  measures the attempt's own artwork and persists it. Phase 5 folds Score into
+  Designs; until then the navigation offers both and only one of them keeps
+  what it finds.
+- **The scorecard's HF list and the enforced gate ids are not the same list.**
+  HF-10 *Collection Redundancy* has no gate id at all. Phase 4, with the owner.
 
 ## Phase 2 — separate the two pipelines
 
@@ -268,7 +375,7 @@ customer.
 |---|---|
 | 0.1 — what "generated by this app" means | **decided 14 Aug** — app owns all but the pixels |
 | 0.2 — where the scorecard lives | **decided 14 Aug** — moves to studio, as Python |
-| 1 — make the chain continuous | in progress |
+| 1 — make the chain continuous | **passed 14 Aug** — exit test run and pasted above |
 | 2 — separate the pipelines | not started |
 | 3 — one record, one screen | not started |
 | 4 — the constitution's first four steps | not started |
