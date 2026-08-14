@@ -68,15 +68,24 @@ def upgrade() -> None:
         sa.Column("cycle_start_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("cycle_end_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("target_platforms", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
-        sa.Column("target_primary_post_count", sa.Integer(), server_default=sa.text("10"), nullable=False),
+        sa.Column(
+            "target_primary_post_count", sa.Integer(), server_default=sa.text("10"), nullable=False
+        ),
         sa.Column("channel_mix", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
-        sa.Column("presentation_mix", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "presentation_mix", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
+        ),
         sa.Column("design_scope", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
         sa.Column("creative_brief", sa.Text(), server_default="", nullable=False),
-        sa.Column("origin_metadata", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "origin_metadata", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
+        ),
         *_timestamps(),
         sa.ForeignKeyConstraint(
-            ["world_id"], ["worlds.id"], name="fk_campaigns_world_id_worlds", ondelete="CASCADE"
+            ["world_id"],
+            ["worlds.id"],
+            name="fk_campaigns_world_id_worlds",
+            ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_campaigns"),
         sa.UniqueConstraint("slug", name="uq_campaigns_slug"),
@@ -85,7 +94,8 @@ def upgrade() -> None:
             name="campaign_status_valid",
         ),
         sa.CheckConstraint(
-            "target_primary_post_count >= 0", name="campaign_target_primary_post_count_nonnegative"
+            "target_primary_post_count >= 0",
+            name="campaign_target_primary_post_count_nonnegative",
         ),
         sa.CheckConstraint(
             "cycle_end_at IS NULL OR cycle_start_at IS NULL OR cycle_end_at >= cycle_start_at",
@@ -110,31 +120,48 @@ def upgrade() -> None:
         sa.Column("aftermath", sa.Text(), server_default="", nullable=False),
         sa.Column("mechanism", sa.Text(), server_default="", nullable=False),
         sa.Column("ending_callback", sa.Text(), server_default="", nullable=False),
-        sa.Column("directing_language_plan", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "directing_language_plan",
+            JSONB,
+            server_default=sa.text("'{}'::jsonb"),
+            nullable=False,
+        ),
         sa.Column("story_json", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
-        sa.Column("prompt_provenance", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "prompt_provenance", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
+        ),
         sa.Column("state", sa.String(length=32), server_default="draft", nullable=False),
         sa.Column("rejection_reason", sa.Text(), nullable=True),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
         *_timestamps(),
         sa.ForeignKeyConstraint(
-            ["campaign_id"], ["campaigns.id"], name="fk_story_versions_campaign_id_campaigns", ondelete="CASCADE"
-        ),
-        sa.ForeignKeyConstraint(
-            ["parent_story_version_id"],
-            ["story_versions.id"],
-            name="fk_story_versions_parent_story_version_id_story_versions",
-            ondelete="SET NULL",
+            ["campaign_id"],
+            ["campaigns.id"],
+            name="fk_story_versions_campaign_id_campaigns",
+            ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_story_versions"),
-        sa.UniqueConstraint("campaign_id", "version", name="uq_story_versions_campaign_id_version"),
+        sa.UniqueConstraint(
+            "campaign_id", "version", name="uq_story_versions_campaign_id_version"
+        ),
+        sa.UniqueConstraint("id", "campaign_id", name="uq_story_versions_id_campaign_id"),
         sa.CheckConstraint("version > 0", name="story_version_positive"),
         sa.CheckConstraint(
             "state IN ('draft','review','approved','rejected','superseded')",
             name="story_version_state_valid",
         ),
     )
-    op.create_index("ix_story_versions_campaign_id_state", "story_versions", ["campaign_id", "state"])
+    op.create_foreign_key(
+        "fk_story_versions_parent_same_campaign",
+        "story_versions",
+        "story_versions",
+        ["parent_story_version_id", "campaign_id"],
+        ["id", "campaign_id"],
+        ondelete="RESTRICT",
+    )
+    op.create_index(
+        "ix_story_versions_campaign_id_state", "story_versions", ["campaign_id", "state"]
+    )
     op.create_index(
         "uq_story_versions_one_approved_per_campaign",
         "story_versions",
@@ -151,19 +178,27 @@ def upgrade() -> None:
         sa.Column("story_role", sa.String(length=120), nullable=True),
         sa.Column("age_band", sa.String(length=64), nullable=True),
         sa.Column("build_height_intent", sa.Text(), nullable=True),
-        sa.Column("appearance_spec", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "appearance_spec", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
+        ),
         sa.Column("identity_lock", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
         sa.Column("voice_dialogue_notes", sa.Text(), nullable=True),
-        sa.Column("reference_asset_ids", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
+        sa.Column(
+            "reference_asset_ids", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False
+        ),
         sa.Column("allowed_variation", sa.Text(), nullable=True),
         sa.Column("forbidden_drift", sa.Text(), nullable=True),
         sa.Column("active", sa.Boolean(), server_default=sa.text("true"), nullable=False),
         *_timestamps(),
         sa.ForeignKeyConstraint(
-            ["campaign_id"], ["campaigns.id"], name="fk_characters_campaign_id_campaigns", ondelete="CASCADE"
+            ["campaign_id"],
+            ["campaigns.id"],
+            name="fk_characters_campaign_id_campaigns",
+            ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_characters"),
         sa.UniqueConstraint("campaign_id", "handle", name="uq_characters_campaign_id_handle"),
+        sa.UniqueConstraint("id", "campaign_id", name="uq_characters_id_campaign_id"),
     )
 
     op.create_table(
@@ -183,16 +218,29 @@ def upgrade() -> None:
         sa.Column("mutable_state", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
         sa.Column("allowed_changes", sa.Text(), nullable=True),
         sa.Column("forbidden_changes", sa.Text(), nullable=True),
-        sa.Column("reference_asset_ids", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
+        sa.Column(
+            "reference_asset_ids", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False
+        ),
         *_timestamps(),
         sa.ForeignKeyConstraint(
-            ["character_id"], ["characters.id"], name="fk_character_appearances_character_id_characters", ondelete="CASCADE"
+            ["campaign_id"],
+            ["campaigns.id"],
+            name="fk_character_appearances_campaign_id_campaigns",
+            ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
-            ["campaign_id"], ["campaigns.id"], name="fk_character_appearances_campaign_id_campaigns", ondelete="CASCADE"
+            ["character_id", "campaign_id"],
+            ["characters.id", "characters.campaign_id"],
+            name="fk_character_appearances_character_same_campaign",
+            ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_character_appearances"),
-        sa.UniqueConstraint("character_id", "code", name="uq_character_appearances_character_id_code"),
+        sa.UniqueConstraint(
+            "character_id", "code", name="uq_character_appearances_character_id_code"
+        ),
+        sa.UniqueConstraint(
+            "id", "character_id", name="uq_character_appearances_id_character_id"
+        ),
         sa.CheckConstraint(
             "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR last_scene_sequence >= first_scene_sequence",
             name="character_appearance_scene_range_ordered",
@@ -207,18 +255,26 @@ def upgrade() -> None:
         sa.Column("name", sa.String(length=200), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("environment_intent", sa.Text(), nullable=True),
-        sa.Column("reference_asset_ids", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
+        sa.Column(
+            "reference_asset_ids", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False
+        ),
         sa.Column("spatial_json", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
-        sa.Column("lighting_defaults", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "lighting_defaults", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
+        ),
         sa.Column("fixed_props", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
         sa.Column("allowed_variation", sa.Text(), nullable=True),
         sa.Column("forbidden_drift", sa.Text(), nullable=True),
         *_timestamps(),
         sa.ForeignKeyConstraint(
-            ["campaign_id"], ["campaigns.id"], name="fk_locations_campaign_id_campaigns", ondelete="CASCADE"
+            ["campaign_id"],
+            ["campaigns.id"],
+            name="fk_locations_campaign_id_campaigns",
+            ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_locations"),
         sa.UniqueConstraint("campaign_id", "code", name="uq_locations_campaign_id_code"),
+        sa.UniqueConstraint("id", "campaign_id", name="uq_locations_id_campaign_id"),
     )
 
     op.create_table(
@@ -233,33 +289,51 @@ def upgrade() -> None:
         sa.Column("story_purpose", sa.Text(), server_default="", nullable=False),
         sa.Column("time_state", sa.String(length=120), nullable=True),
         sa.Column("lighting_state", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
-        sa.Column("environment_state", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "environment_state", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
+        ),
         sa.Column("action_beats", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
-        sa.Column("dialogue_audio_intent", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "dialogue_audio_intent",
+            JSONB,
+            server_default=sa.text("'{}'::jsonb"),
+            nullable=False,
+        ),
         sa.Column("props", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
         sa.Column("continuity_in", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
         sa.Column("continuity_out", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
-        sa.Column("candidate_post_roles", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False),
-        sa.Column("directing_language", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False),
+        sa.Column(
+            "candidate_post_roles", JSONB, server_default=sa.text("'[]'::jsonb"), nullable=False
+        ),
+        sa.Column(
+            "directing_language", JSONB, server_default=sa.text("'{}'::jsonb"), nullable=False
+        ),
         sa.Column("state", sa.String(length=32), server_default="draft", nullable=False),
         sa.Column("review_reason", sa.Text(), nullable=True),
         sa.Column("approved_at", sa.DateTime(timezone=True), nullable=True),
         *_timestamps(),
         sa.ForeignKeyConstraint(
-            ["campaign_id"], ["campaigns.id"], name="fk_scenes_campaign_id_campaigns", ondelete="CASCADE"
+            ["campaign_id"],
+            ["campaigns.id"],
+            name="fk_scenes_campaign_id_campaigns",
+            ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
-            ["story_version_id"],
-            ["story_versions.id"],
-            name="fk_scenes_story_version_id_story_versions",
+            ["story_version_id", "campaign_id"],
+            ["story_versions.id", "story_versions.campaign_id"],
+            name="fk_scenes_story_version_same_campaign",
             ondelete="RESTRICT",
         ),
         sa.ForeignKeyConstraint(
-            ["location_id"], ["locations.id"], name="fk_scenes_location_id_locations", ondelete="SET NULL"
+            ["location_id", "campaign_id"],
+            ["locations.id", "locations.campaign_id"],
+            name="fk_scenes_location_same_campaign",
+            ondelete="RESTRICT",
         ),
         sa.PrimaryKeyConstraint("id", name="pk_scenes"),
         sa.UniqueConstraint("campaign_id", "scene_code", name="uq_scenes_campaign_id_scene_code"),
         sa.UniqueConstraint("campaign_id", "sequence", name="uq_scenes_campaign_id_sequence"),
+        sa.UniqueConstraint("id", "campaign_id", name="uq_scenes_id_campaign_id"),
         sa.CheckConstraint("sequence > 0", name="scene_sequence_positive"),
         sa.CheckConstraint(
             "state IN ('draft','review','approved','rejected','superseded')",
@@ -271,6 +345,7 @@ def upgrade() -> None:
     op.create_table(
         "scene_characters",
         sa.Column("scene_id", UUID, nullable=False),
+        sa.Column("campaign_id", UUID, nullable=False),
         sa.Column("character_id", UUID, nullable=False),
         sa.Column("appearance_id", UUID, nullable=True),
         sa.Column("role_in_scene", sa.String(length=120), nullable=True),
@@ -279,30 +354,37 @@ def upgrade() -> None:
         sa.Column("blocking_notes", sa.Text(), nullable=True),
         sa.Column("performance_notes", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(
-            ["scene_id"], ["scenes.id"], name="fk_scene_characters_scene_id_scenes", ondelete="CASCADE"
+            ["scene_id", "campaign_id"],
+            ["scenes.id", "scenes.campaign_id"],
+            name="fk_scene_characters_scene_same_campaign",
+            ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
-            ["character_id"], ["characters.id"], name="fk_scene_characters_character_id_characters", ondelete="CASCADE"
+            ["character_id", "campaign_id"],
+            ["characters.id", "characters.campaign_id"],
+            name="fk_scene_characters_character_same_campaign",
+            ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
-            ["appearance_id"],
-            ["character_appearances.id"],
-            name="fk_scene_characters_appearance_id_character_appearances",
-            ondelete="SET NULL",
+            ["appearance_id", "character_id"],
+            ["character_appearances.id", "character_appearances.character_id"],
+            name="fk_scene_characters_appearance_same_character",
+            ondelete="RESTRICT",
         ),
         sa.PrimaryKeyConstraint("scene_id", "character_id", name="pk_scene_characters"),
     )
 
-    # ADR-017: extend the one existing shots table. Defaults make every legacy
-    # row a Markdown-seeded still without rewriting its authored identity.
     op.add_column(
         "shots",
-        sa.Column("source", sa.String(length=32), server_default="markdown_import", nullable=False),
+        sa.Column(
+            "source", sa.String(length=32), server_default="markdown_import", nullable=False
+        ),
     )
     op.add_column("shots", sa.Column("campaign_id", UUID, nullable=True))
     op.add_column("shots", sa.Column("scene_id", UUID, nullable=True))
     op.add_column(
-        "shots", sa.Column("media_intent", sa.String(length=16), server_default="still", nullable=False)
+        "shots",
+        sa.Column("media_intent", sa.String(length=16), server_default="still", nullable=False),
     )
     op.add_column("shots", sa.Column("intended_duration_ms", sa.Integer(), nullable=True))
     op.add_column("shots", sa.Column("target_aspect", sa.String(length=32), nullable=True))
@@ -319,9 +401,13 @@ def upgrade() -> None:
     op.add_column("shots", sa.Column("background_action", sa.Text(), nullable=True))
     op.add_column("shots", sa.Column("focus_depth_intent", sa.Text(), nullable=True))
     op.add_column("shots", sa.Column("lighting_spec", JSONB, nullable=True))
-    op.add_column("shots", sa.Column("garment_visibility_class", sa.String(length=32), nullable=True))
+    op.add_column(
+        "shots", sa.Column("garment_visibility_class", sa.String(length=32), nullable=True)
+    )
     op.add_column("shots", sa.Column("garment_side_visible", sa.String(length=32), nullable=True))
-    op.add_column("shots", sa.Column("garment_scale_in_frame", sa.String(length=64), nullable=True))
+    op.add_column(
+        "shots", sa.Column("garment_scale_in_frame", sa.String(length=64), nullable=True)
+    )
     op.add_column("shots", sa.Column("artwork_legibility_required", sa.Boolean(), nullable=True))
     op.add_column("shots", sa.Column("prop_continuity", JSONB, nullable=True))
     op.add_column("shots", sa.Column("first_frame_requirement", JSONB, nullable=True))
@@ -341,13 +427,14 @@ def upgrade() -> None:
         ondelete="CASCADE",
     )
     op.create_foreign_key(
-        "fk_shots_scene_id_scenes",
+        "fk_shots_scene_same_campaign",
         "shots",
         "scenes",
-        ["scene_id"],
-        ["id"],
+        ["scene_id", "campaign_id"],
+        ["id", "campaign_id"],
         ondelete="RESTRICT",
     )
+    op.create_unique_constraint("uq_shots_id_campaign_id", "shots", ["id", "campaign_id"])
     op.create_check_constraint(
         "shot_source_valid",
         "shots",
@@ -384,6 +471,7 @@ def upgrade() -> None:
     op.create_table(
         "shot_characters",
         sa.Column("shot_id", UUID, nullable=False),
+        sa.Column("campaign_id", UUID, nullable=False),
         sa.Column("character_id", UUID, nullable=False),
         sa.Column("appearance_id", UUID, nullable=True),
         sa.Column("prominence", sa.String(length=64), nullable=True),
@@ -392,16 +480,22 @@ def upgrade() -> None:
         sa.Column("eyeline", sa.String(length=160), nullable=True),
         sa.Column("continuity_notes", sa.Text(), nullable=True),
         sa.ForeignKeyConstraint(
-            ["shot_id"], ["shots.id"], name="fk_shot_characters_shot_id_shots", ondelete="CASCADE"
+            ["shot_id", "campaign_id"],
+            ["shots.id", "shots.campaign_id"],
+            name="fk_shot_characters_shot_same_campaign",
+            ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
-            ["character_id"], ["characters.id"], name="fk_shot_characters_character_id_characters", ondelete="CASCADE"
+            ["character_id", "campaign_id"],
+            ["characters.id", "characters.campaign_id"],
+            name="fk_shot_characters_character_same_campaign",
+            ondelete="CASCADE",
         ),
         sa.ForeignKeyConstraint(
-            ["appearance_id"],
-            ["character_appearances.id"],
-            name="fk_shot_characters_appearance_id_character_appearances",
-            ondelete="SET NULL",
+            ["appearance_id", "character_id"],
+            ["character_appearances.id", "character_appearances.character_id"],
+            name="fk_shot_characters_appearance_same_character",
+            ondelete="RESTRICT",
         ),
         sa.PrimaryKeyConstraint("shot_id", "character_id", name="pk_shot_characters"),
     )
@@ -418,7 +512,8 @@ def downgrade() -> None:
     op.drop_constraint("campaign_shot_requires_campaign", "shots", type_="check")
     op.drop_constraint("shot_media_intent_valid", "shots", type_="check")
     op.drop_constraint("shot_source_valid", "shots", type_="check")
-    op.drop_constraint("fk_shots_scene_id_scenes", "shots", type_="foreignkey")
+    op.drop_constraint("uq_shots_id_campaign_id", "shots", type_="unique")
+    op.drop_constraint("fk_shots_scene_same_campaign", "shots", type_="foreignkey")
     op.drop_constraint("fk_shots_campaign_id_campaigns", "shots", type_="foreignkey")
 
     for column in (
@@ -464,6 +559,9 @@ def downgrade() -> None:
     op.drop_table("characters")
     op.drop_index("uq_story_versions_one_approved_per_campaign", table_name="story_versions")
     op.drop_index("ix_story_versions_campaign_id_state", table_name="story_versions")
+    op.drop_constraint(
+        "fk_story_versions_parent_same_campaign", "story_versions", type_="foreignkey"
+    )
     op.drop_table("story_versions")
     op.drop_index("ix_campaigns_world_id_status", table_name="campaigns")
     op.drop_table("campaigns")
