@@ -14,9 +14,11 @@ from typing import Any
 
 from sqlalchemy import (
     Boolean,
+    CheckConstraint,
     DateTime,
     Enum,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     Integer,
     String,
@@ -108,11 +110,39 @@ class World(Base, TimestampMixin):
 
 
 class Shot(Base, TimestampMixin):
-    """One planned photograph, imported from ``SHOTLIST.md``."""
+    """One persisted directing unit, for Markdown photography or campaign media."""
 
     __tablename__ = "shots"
     __table_args__ = (
         UniqueConstraint("world_id", "external_id", name="uq_shots_world_id_external_id"),
+        UniqueConstraint("id", "campaign_id", name="uq_shots_id_campaign_id"),
+        ForeignKeyConstraint(
+            ["scene_id", "campaign_id"],
+            ["scenes.id", "scenes.campaign_id"],
+            name="fk_shots_scene_same_campaign",
+            ondelete="RESTRICT",
+        ),
+        CheckConstraint(
+            "source IN ('markdown_import','campaign_native')", name="shot_source_valid"
+        ),
+        CheckConstraint(
+            "media_intent IN ('still','video','either')", name="shot_media_intent_valid"
+        ),
+        CheckConstraint(
+            "source <> 'campaign_native' OR campaign_id IS NOT NULL",
+            name="campaign_shot_requires_campaign",
+        ),
+        CheckConstraint(
+            "source <> 'markdown_import' OR (campaign_id IS NULL AND scene_id IS NULL)",
+            name="markdown_shot_has_no_campaign_scene",
+        ),
+        CheckConstraint(
+            "scene_id IS NULL OR campaign_id IS NOT NULL", name="shot_scene_requires_campaign"
+        ),
+        CheckConstraint(
+            "intended_duration_ms IS NULL OR intended_duration_ms >= 0",
+            name="shot_duration_nonnegative",
+        ),
         # Supports the deterministic selector: eligible shots for a world, in
         # priority then sequence order.
         Index(
@@ -122,6 +152,8 @@ class Shot(Base, TimestampMixin):
             "priority",
             "sequence",
         ),
+        Index("ix_shots_campaign_id_sequence", "campaign_id", "sequence"),
+        Index("ix_shots_scene_id_sequence", "scene_id", "sequence"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -134,7 +166,7 @@ class Shot(Base, TimestampMixin):
         ForeignKey("worlds.id", ondelete="CASCADE"),
         nullable=False,
     )
-    # The human-facing identifier from the shotlist, such as W01-011.
+    # The human-facing identifier from the shotlist or campaign planner.
     external_id: Mapped[str] = mapped_column(String(64), nullable=False)
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
     priority: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("100"))
@@ -153,8 +185,50 @@ class Shot(Base, TimestampMixin):
         Boolean, nullable=False, default=False, server_default=text("false")
     )
     blocked_reason: Mapped[str | None] = mapped_column(Text)
-    # Line in SHOTLIST.md this shot came from, so a problem can be pointed at.
+    # Line in SHOTLIST.md this shot came from. Campaign-native rows keep it null.
     source_line: Mapped[int | None] = mapped_column(Integer)
+
+    # ADR-017 provenance. Existing rows are migrated as Markdown-seeded stills.
+    source: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="markdown_import", server_default="markdown_import"
+    )
+    campaign_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("campaigns.id", ondelete="CASCADE")
+    )
+    scene_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    media_intent: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="still", server_default="still"
+    )
+
+    # Video-capable directing grammar. Nullable fields remain absent for legacy
+    # photography unless that requirement is useful to the shot.
+    intended_duration_ms: Mapped[int | None] = mapped_column(Integer)
+    target_aspect: Mapped[str | None] = mapped_column(String(32))
+    safe_crop: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    shot_size: Mapped[str | None] = mapped_column(String(24))
+    camera_height: Mapped[str | None] = mapped_column(String(80))
+    camera_angle: Mapped[str | None] = mapped_column(String(80))
+    focal_length_intent: Mapped[str | None] = mapped_column(String(120))
+    camera_movement: Mapped[str | None] = mapped_column(String(120))
+    blocking_json: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    eyeline: Mapped[str | None] = mapped_column(String(160))
+    foreground_action: Mapped[str | None] = mapped_column(Text)
+    midground_action: Mapped[str | None] = mapped_column(Text)
+    background_action: Mapped[str | None] = mapped_column(Text)
+    focus_depth_intent: Mapped[str | None] = mapped_column(Text)
+    lighting_spec: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    garment_visibility_class: Mapped[str | None] = mapped_column(String(32))
+    garment_side_visible: Mapped[str | None] = mapped_column(String(32))
+    garment_scale_in_frame: Mapped[str | None] = mapped_column(String(64))
+    artwork_legibility_required: Mapped[bool | None] = mapped_column(Boolean)
+    prop_continuity: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    first_frame_requirement: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    last_frame_requirement: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    intended_edit_in: Mapped[str | None] = mapped_column(Text)
+    intended_edit_out: Mapped[str | None] = mapped_column(Text)
+    still_extraction_potential: Mapped[bool | None] = mapped_column(Boolean)
+    negative_constraints: Mapped[str | None] = mapped_column(Text)
+    locked_reference_manifest: Mapped[list[dict[str, Any]] | None] = mapped_column(JSONB)
 
     world: Mapped[World] = relationship(back_populates="shots")
     attempts: Mapped[list[GenerationAttempt]] = relationship(
