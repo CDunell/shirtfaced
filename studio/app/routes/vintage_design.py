@@ -12,8 +12,8 @@ from sqlalchemy.orm import Session
 from app.config import Settings, get_settings
 from app.db.concept_models import DesignConcept
 from app.db.session import get_db_session
-from app.domain.enums import DesignAttemptMethod
-from app.services.design_pipeline import create_attempt
+from app.domain.enums import ConceptLibrary, DesignAttemptMethod
+from app.services.design_pipeline import InvalidDesignAction, create_attempt, create_concept
 from app.services.vintage_research import (
     VintageResearchError,
     execute_research,
@@ -43,7 +43,19 @@ class ConceptReviewIn(BaseModel):
 
 
 class PipelineIn(BaseModel):
-    design_concept_id: uuid.UUID
+    """Where the research concept lands.
+
+    ``design_concept_id`` adds the attempt to an idea that already exists.
+    Omitting it creates a new numbered concept from the research itself, which
+    is the path that did not exist before Phase 1: the backlog was only
+    reachable through ``concept_importer`` reading a Markdown file, so ten
+    researched concepts could not become ten backlog concepts.
+    """
+
+    design_concept_id: uuid.UUID | None = None
+    # Only read when creating. Empty falls back to the research concept's own
+    # title, which is what the bench shows and what the owner just approved.
+    title: str = Field(default="", max_length=200)
 
 
 def _fail(error: Exception, code: int = 422) -> HTTPException:
@@ -115,10 +127,37 @@ def send_to_pipeline(
         raise HTTPException(status_code=404, detail="Research concept not found.")
     if research.get("status") != "approved":
         raise HTTPException(status_code=422, detail="Approve the research concept first.")
-    target = session.get(DesignConcept, body.design_concept_id)
-    if target is None:
-        raise HTTPException(status_code=404, detail="Design concept not found.")
+
     prompt = research.get("edited_prompt") or research.get("pass2_prompt")
+
+    if body.design_concept_id is not None:
+        target = session.get(DesignConcept, body.design_concept_id)
+        if target is None:
+            raise HTTPException(status_code=404, detail="Design concept not found.")
+        created = False
+    else:
+        # The research becomes a numbered concept in its own library. Not the
+        # tee library: concept_importer matches on (library, external_number)
+        # and would overwrite this row's title and text the day
+        # TSHIRT_CONCEPT_LIBRARY.md grew to the same number.
+        title = body.title.strip() or str(research.get("title") or "").strip()
+        if not title:
+            title = f"Research concept {concept_number} from run {run_id}"
+        try:
+            target = create_concept(
+                session,
+                ConceptLibrary.VINTAGE_RESEARCH,
+                title,
+                str(research.get("concept") or research.get("summary") or prompt or ""),
+                source_path=f"vintage-research/{run_id}#{concept_number}",
+                parsed_json={
+                    "vintage_research_run_id": run_id,
+                    "research_concept_number": concept_number,
+                },
+            )
+        except InvalidDesignAction as error:
+            raise _fail(error) from error
+        created = True
     attempt = create_attempt(
         session,
         target,
@@ -139,9 +178,18 @@ def send_to_pipeline(
     session.commit()
     payload = {
         "design_concept_id": str(target.id),
+        "design_concept_number": target.external_number,
+        "design_concept_title": target.title,
+        "design_concept_library": target.library.value,
+        "concept_created": created,
         "attempt_id": str(attempt.id),
         "attempt_number": attempt.attempt_number,
         "state": attempt.state.value,
+        # What to do next, in words, rather than left for a screen to infer.
+        "next_action": (
+            "Open the attempt in Designs, copy the brief, make the artwork in a paid "
+            "interface, and bring the file back to the drop zone."
+        ),
     }
     mark_pipeline(run_id, concept_number, payload)
     return payload

@@ -22,6 +22,7 @@ this module only reads it.
 from __future__ import annotations
 
 import datetime as dt
+import re
 import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -59,6 +60,7 @@ __all__ = [
     "InvalidDesignAction",
     "approve_design",
     "create_attempt",
+    "create_concept",
     "decide_attempt",
     "next_concept",
     "record_asset",
@@ -100,6 +102,76 @@ def next_concept(
         if concept is not None:
             return concept
     return None
+
+
+def create_concept(
+    session: Session,
+    library: ConceptLibrary,
+    title: str,
+    concept_text: str,
+    *,
+    source_path: str,
+    source_document_hash: str = "",
+    garments: Sequence[str] = (),
+    treatment_lanes: Sequence[str] = (),
+    parsed_json: dict[str, Any] | None = None,
+    notes: str = "",
+) -> DesignConcept:
+    """Put a new idea into the backlog and give it a permanent number.
+
+    Until this existed the only way into the backlog was ``concept_importer``
+    reading a Markdown file, so ten researched concepts could not become ten
+    backlog concepts -- the gap the 14 August audit names. The research bench
+    could only ever bind its output to an idea somebody had already written
+    down.
+
+    The number is ``max + 1`` within the library and permanent from here on,
+    the same contract the importer honours: nothing is ever renumbered and a
+    retired entry keeps its number. Callers must pass a library the importer
+    does not read -- ``VINTAGE_RESEARCH`` -- because the importer matches on
+    ``(library, external_number)`` and would overwrite the authored fields of
+    anything holding a number its document later reaches.
+    """
+    title = title.strip()
+    if not title:
+        raise InvalidDesignAction("a concept with no title cannot be found again")
+
+    number = (
+        session.execute(
+            select(func.coalesce(func.max(DesignConcept.external_number), 0)).where(
+                DesignConcept.library == library
+            )
+        ).scalar_one()
+        + 1
+    )
+
+    concept = DesignConcept(
+        library=library,
+        external_number=number,
+        slug=_slug(title, number),
+        title=title[:200],
+        concept_text=concept_text,
+        garments=list(garments),
+        round=0,
+        round_label="",
+        source_path=source_path,
+        source_document_hash=source_document_hash,
+        parsed_json=parsed_json or {},
+        status=ConceptStatus.BACKLOG,
+        treatment_lanes=list(treatment_lanes),
+        notes=notes,
+    )
+    session.add(concept)
+    session.flush()
+    return concept
+
+
+def _slug(title: str, number: int) -> str:
+    """``0261-a-title-like-this``. The number leads because titles repeat --
+    "shirtfaced" appears three times in the tee library -- and the slug is
+    unique on its own."""
+    words = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    return f"{number:04d}-{words}"[:160].rstrip("-")
 
 
 def create_attempt(
