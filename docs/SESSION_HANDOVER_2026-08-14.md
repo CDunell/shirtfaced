@@ -1,5 +1,10 @@
 # Session handover — 14 August 2026
 
+> **Closed 15 August 2026. The world session is finished.** What it landed, what
+> it did not, and what reverts to unowned is recorded at the end under
+> *Handback*. The ownership split below is kept because it is the record of how
+> the two sessions ran, not because it is still live.
+
 Two implementation sessions are working this repository at once: this one on the
 **product design pipeline**, and a concurrent one on **AI social/world
 production**. `WORKING_AGREEMENT.md` divides creative direction from
@@ -205,3 +210,68 @@ to itself passes while the endpoint is unreachable.
   them without waiting on the product side.
 - Phase 2 is not started and will not start without agreement on 4.3.
 - Nothing in the product pipeline reads or writes any world table.
+
+
+---
+
+## Handback — 15 August 2026
+
+The world session is done. `origin/main` carries its work and the two pipelines
+coexist: single alembic head, 1,242 tests against a real PostgreSQL, all six
+live design-chain smoke links intact with `0029` deployed.
+
+### What it landed
+
+**`0029_campaign_production_foundation`**, merged as PR #3, taking the slot the
+protocol reserved for it. `campaigns`, `story_versions`, `characters` and the
+rest, with **`shots` extended rather than a parallel `social_shots`** — ADR-016
+and ADR-017 honoured exactly. `campaign_models.py` holds the ORM.
+
+That is the hard part of the redraw, and it is right.
+
+### What it did not
+
+Three of the five allocated surfaces are untouched, and one promise is unkept.
+None of this is a criticism of a session that shipped the foundation; it is what
+the next person needs to know rather than discover.
+
+| | State |
+|---|---|
+| **4.1 judge rewrite** | **Not done.** `automated_reviews` is still column-per-gate — `mood_score`, `vehicle_compliant`, `structurally_sound`. ADR-016 has it adopting `design_reviews`' data shape, and it has not. Every video dimension is still a schema migration away. |
+| **4.2 `media_assets` rename** | **Not done.** `image_assets` / `ImageAsset` throughout; no file mentions `media_assets`. |
+| **4.5 world measurement** | **Not started.** No evaluator, which follows from 4.1 not having a contract to feed. |
+| **campaign chain smoke** | **Not written.** Promised explicitly — *"'endpoint returned 200' is officially about as reassuring as a dashboard warning light painted green"* — and the two smoke scripts are still `smoke_vintage` and `smoke_design_chain`. |
+
+### The finding that matters
+
+**The campaign foundation is deployed and unreachable.** Migration `0029` is
+applied to production and `campaign_models.py` defines the tables, but **no
+route and no service reads any of them**, and nothing in the web client mentions
+a campaign.
+
+That is the audit's own oldest finding, repeated in a new place: `design_advisor`
+answered constitution steps 3 and 4 from a corpus and *nothing called it* for
+weeks. A table nobody can reach is in exactly that condition — correct, tested,
+migrated, and doing nothing.
+
+It also cannot be smoke-tested yet, which is why the promised campaign chain
+check does not exist: there is no chain to walk. The check becomes possible the
+moment the first route does.
+
+### What this means for ownership
+
+Everything in §3's world column reverts to **unowned**. Nothing in the product
+pipeline reads or writes a campaign table, so nothing is blocked by leaving them
+alone — but nothing else will pick them up either.
+
+If the world pipeline is resumed, the order that costs least is: routes over the
+new tables first (so there is something to smoke), then 4.1, then 4.2, then 4.5.
+4.1 before 4.2 because the judge's shape decides what a media asset has to carry.
+
+### Phase 2b
+
+Closed as superseded rather than done — see `studio/docs/DESIGN_FLOW_PLAN.md`.
+It was *relocate the world screens*, and the Phase 2 correction removed the place
+to relocate them to: Admin is the storefront, and world data lives in Studio.
+Phase 2a delivered Phase 2's actual exit test. No campaign UI was built, so the
+collision §4.3 was protecting against never arrived.
