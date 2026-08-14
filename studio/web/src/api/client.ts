@@ -849,9 +849,17 @@ export interface ManualPrepared {
 
 export interface PipelineResult {
   design_concept_id: string;
+  design_concept_number: number;
+  design_concept_title: string;
+  design_concept_library: string;
+  /** True when this call created the concept rather than adding to one. */
+  concept_created: boolean;
   attempt_id: string;
   attempt_number: number;
   state: string;
+  /** What to do next, in a sentence, composed by the server so every screen
+   * says the same thing about the same situation. */
+  next_action: string;
 }
 
 export interface DesignConceptTarget {
@@ -983,14 +991,16 @@ export async function updateResearchConcept(
 export async function sendConceptToPipeline(
   runId: string,
   number: number,
-  designConceptId: string,
+  /** An existing design concept, or null to create a new numbered one from
+   * the research itself. Null is the path that did not exist before Phase 1. */
+  designConceptId: string | null,
   signal?: AbortSignal,
 ): Promise<PipelineResult> {
   return request<PipelineResult>(
     `/api/vintage-design/runs/${runId}/concepts/${String(number)}/pipeline`,
     "POST",
     signal,
-    { design_concept_id: designConceptId },
+    designConceptId === null ? {} : { design_concept_id: designConceptId },
   );
 }
 

@@ -39,6 +39,7 @@ import {
   type DesignConceptTarget,
   type EvidenceRecord,
   type ManualPrepared,
+  type PipelineResult,
   type ResearchConcept,
   type ResearchRun,
 } from "../api/client";
@@ -47,6 +48,28 @@ function statusKind(status: string | undefined): (typeof TAG_KIND)[keyof typeof 
   if (status === "approved") return TAG_KIND.positive;
   if (status === "rejected") return TAG_KIND.negative;
   return TAG_KIND.neutral;
+}
+
+/** Where a research concept landed, and what to do about it.
+ *
+ * A click that reports nothing is a click somebody repeats. This says which
+ * numbered concept now exists and carries the server's own next-action
+ * sentence, so the reader is not left to go and find out. */
+function Landed({ result }: { result: PipelineResult | undefined }): React.JSX.Element | null {
+  const [, theme] = useStyletron();
+  if (!result) return null;
+  return (
+    <ParagraphXSmall
+      overrides={{
+        Block: {
+          style: { margin: 0, flexBasis: "100%", color: theme.colors.contentSecondary },
+        },
+      }}
+    >
+      {result.concept_created ? "Created " : "Added to "}#{String(result.design_concept_number)}{" "}
+      {result.design_concept_title}, attempt {String(result.attempt_number)}. {result.next_action}
+    </ParagraphXSmall>
+  );
 }
 
 export function VintageResearchBench(): React.JSX.Element {
@@ -70,6 +93,9 @@ export function VintageResearchBench(): React.JSX.Element {
   // Attempt number per concept, so the button reports what it created
   // rather than leaving a click with nothing to show for it.
   const [queued, setQueued] = useState<Record<number, number>>({});
+  // Where each research concept landed, so the bench can say what happened and
+  // what to do about it rather than leaving the reader to go and look.
+  const [landed, setLanded] = useState<Record<number, PipelineResult>>({});
   // The manual path: prepare hands over the prompt and the images, you run both
   // passes in a subscription UI, then paste the JSON back. No metered API call
   // on either side of it.
@@ -222,14 +248,24 @@ export function VintageResearchBench(): React.JSX.Element {
     [run],
   );
 
+  /** Send an approved research concept into the design pipeline.
+   *
+   * With a target, it becomes another attempt on an idea that already exists.
+   * Without one it becomes a *new* numbered design concept -- the path that
+   * did not exist before Phase 1, when the backlog was only reachable through
+   * concept_importer reading a Markdown file and ten researched concepts could
+   * not become ten backlog concepts.
+   */
   const toPipeline = useCallback(
-    (number: number) => {
+    (number: number, createNew: boolean) => {
       const target = pipelineTarget[0]?.id;
-      if (!run || target === undefined) return;
-      sendConceptToPipeline(run.id, number, String(target))
+      if (!run) return;
+      if (!createNew && target === undefined) return;
+      sendConceptToPipeline(run.id, number, createNew ? null : String(target))
         .then((result) => {
           setError(null);
           setQueued((previous) => ({ ...previous, [number]: result.attempt_number }));
+          setLanded((previous) => ({ ...previous, [number]: result }));
         })
         .catch((cause: unknown) => {
           setError(cause instanceof ApiError ? cause.message : "Could not queue that concept.");
@@ -549,33 +585,49 @@ export function VintageResearchBench(): React.JSX.Element {
                 Save edit
               </Button>
             </div>
-            {concept.status === "approved" && targets.length > 0 ? (
+            {concept.status === "approved" ? (
               <div
                 className={css({ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" })}
               >
-                <div className={css({ minWidth: "220px" })}>
-                  <Select
-                    size={SIZE.compact}
-                    options={targets.map((t) => ({
-                      id: t.id,
-                      label: `#${String(t.number)} ${t.title}`,
-                    }))}
-                    value={pipelineTarget}
-                    onChange={(params) => {
-                      setPipelineTarget(params.value);
-                    }}
-                    placeholder="Design concept"
-                  />
-                </div>
+                {/* The primary path, and the one that was missing: a
+                    researched concept becomes a numbered concept of its own. */}
                 <Button
                   size={SIZE.compact}
-                  disabled={pipelineTarget.length === 0}
                   onClick={() => {
-                    toPipeline(concept.concept_number);
+                    toPipeline(concept.concept_number, true);
                   }}
                 >
-                  Send to design pipeline
+                  Create a design concept
                 </Button>
+                {targets.length > 0 ? (
+                  <div className={css({ minWidth: "220px" })}>
+                    <Select
+                      size={SIZE.compact}
+                      options={targets.map((t) => ({
+                        id: t.id,
+                        label: `#${String(t.number)} ${t.title}`,
+                      }))}
+                      value={pipelineTarget}
+                      onChange={(params) => {
+                        setPipelineTarget(params.value);
+                      }}
+                      placeholder="…or add to an existing one"
+                    />
+                  </div>
+                ) : null}
+                {targets.length > 0 ? (
+                  <Button
+                    size={SIZE.compact}
+                    kind={BUTTON_KIND.secondary}
+                    disabled={pipelineTarget.length === 0}
+                    onClick={() => {
+                      toPipeline(concept.concept_number, false);
+                    }}
+                  >
+                    Add to that concept
+                  </Button>
+                ) : null}
+                <Landed result={landed[concept.concept_number]} />
                 <ParagraphXSmall
                   overrides={{
                     Block: {

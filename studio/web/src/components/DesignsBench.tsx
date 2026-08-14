@@ -24,7 +24,6 @@ import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError } from "../api/client";
 import {
-  approveDesign,
   assetUrl,
   decideAttempt,
   fetchConcept,
@@ -37,6 +36,7 @@ import {
   type DesignAttemptView,
   type DesignDecisionKind,
 } from "../api/concepts";
+import { AttemptPanel } from "./AttemptPanel";
 import { PageTitle, SectionTitle, StatusChip } from "./chrome";
 import { CREAM, INK, LIME, PAPER } from "../tokens";
 
@@ -66,6 +66,10 @@ export function DesignsBench(): React.JSX.Element {
   const [concepts, setConcepts] = useState<ConceptView[]>([]);
   const [filter, setFilter] = useState("");
   const [selected, setSelected] = useState<ConceptDetailView | null>(null);
+  // Which attempt is open. The attempt panel is the whole flow -- brief,
+  // artwork, measurement, scorecard, decision -- so it opens in place rather
+  // than becoming an eleventh top-level destination.
+  const [openAttemptId, setOpenAttemptId] = useState<string | null>(null);
   const [decider, setDecider] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -123,25 +127,14 @@ export function DesignsBench(): React.JSX.Element {
     [decider, refresh, selected, open],
   );
 
-  const onApproveDesign = useCallback(
+  /** Take the reviewer to the attempt, which is the only place it can be
+   * judged. The queue answers "what is waiting"; the attempt answers "why". */
+  const openAttempt = useCallback(
     async (attempt: DesignAttemptView) => {
-      if (!decider.trim()) {
-        setError("A version needs a name against it.");
-        return;
-      }
-      setBusy(true);
-      setError(null);
-      try {
-        await approveDesign(attempt.id, decider.trim());
-        await refresh();
-        if (selected && selected.id === attempt.concept_id) await open(attempt.concept_id);
-      } catch (cause) {
-        setError(describe(cause));
-      } finally {
-        setBusy(false);
-      }
+      await open(attempt.concept_id);
+      setOpenAttemptId(attempt.id);
     },
-    [decider, refresh, selected, open],
+    [open],
   );
 
   const preview = (attempt: DesignAttemptView) => {
@@ -225,15 +218,19 @@ export function DesignsBench(): React.JSX.Element {
                 <span className={metaLine}>
                   attempt {attempt.attempt_number} · {attempt.method.replace(/_/g, " ")}
                 </span>
+                {/* No Approve here. Approval needs the scorecard answered and
+                    the queue has nowhere to answer it, so the queue's job is
+                    to get you to the attempt. Rejecting and asking for a
+                    variation need no rubric and stay. */}
                 <div className={css({ display: "flex", gap: "6px", marginTop: "10px" })}>
                   <Button
                     size={SIZE.mini}
                     disabled={busy}
                     onClick={() => {
-                      void onDecide(attempt, "approved");
+                      void openAttempt(attempt);
                     }}
                   >
-                    Approve
+                    Judge it
                   </Button>
                   <Button
                     size={SIZE.mini}
@@ -573,18 +570,32 @@ export function DesignsBench(): React.JSX.Element {
                           {attempt.decision.instruction ? ` — ${attempt.decision.instruction}` : ""}
                         </ParagraphXSmall>
                       ) : null}
-                      {attempt.state === "approved" && attempt.approved_version === null ? (
-                        <div className={css({ marginTop: "8px" })}>
-                          <Button
-                            size={SIZE.mini}
-                            kind={BUTTON_KIND.secondary}
-                            disabled={busy}
-                            onClick={() => {
-                              void onApproveDesign(attempt);
+                      <div className={css({ marginTop: "8px" })}>
+                        <Button
+                          size={SIZE.mini}
+                          kind={
+                            openAttemptId === attempt.id
+                              ? BUTTON_KIND.primary
+                              : BUTTON_KIND.secondary
+                          }
+                          onClick={() => {
+                            setOpenAttemptId(openAttemptId === attempt.id ? null : attempt.id);
+                          }}
+                        >
+                          {openAttemptId === attempt.id ? "Close" : "Open this attempt"}
+                        </Button>
+                      </div>
+                      {openAttemptId === attempt.id ? (
+                        <div className={css({ marginTop: "12px" })}>
+                          <AttemptPanel
+                            concept={selected}
+                            attempt={attempt}
+                            actor={decider}
+                            onChanged={async () => {
+                              await refresh();
+                              await open(selected.id);
                             }}
-                          >
-                            Record approved design v{selected.approved_versions + 1}
-                          </Button>
+                          />
                         </div>
                       ) : null}
                     </div>

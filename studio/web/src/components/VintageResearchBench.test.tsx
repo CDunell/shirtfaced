@@ -169,11 +169,15 @@ describe("VintageResearchBench", () => {
     renderWithBase(<VintageResearchBench />);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Send to design pipeline" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Create a design concept" })).toBeInTheDocument();
     });
   });
 
-  it("sends to the endpoint that creates the attempt, and says which", async () => {
+  it("turns a research concept into a numbered design concept of its own", async () => {
+    // The path that did not exist before Phase 1: the backlog was only
+    // reachable through concept_importer reading a Markdown file, so ten
+    // researched concepts could not become ten backlog concepts. Creating is
+    // the primary button; binding to an existing concept is the secondary.
     const posted: { url: string; body: unknown }[] = [];
     stubRoutes([run({ concepts: [concept({ status: "approved" })] })], (url, body) =>
       posted.push({ url, body }),
@@ -181,17 +185,37 @@ describe("VintageResearchBench", () => {
 
     renderWithBase(<VintageResearchBench />);
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Send to design pipeline" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Create a design concept" })).toBeInTheDocument();
     });
-    await userEvent.click(screen.getByText("Design concept"));
-    await userEvent.click(await screen.findByText(/#7 Ibis/));
-    await userEvent.click(screen.getByRole("button", { name: "Send to design pipeline" }));
+    await userEvent.click(screen.getByRole("button", { name: "Create a design concept" }));
 
     await waitFor(() => {
       expect(screen.getByText(/Attempt 3 created/)).toBeInTheDocument();
     });
     // vintage_design creates the DesignAttempt; vintage_research only records it.
     expect(posted.at(-1)?.url).toContain("/api/vintage-design/runs/");
+    // No design_concept_id: that is what tells the server to create one.
+    expect(posted.at(-1)?.body).toEqual({});
+  });
+
+  it("still binds to an existing concept when one is chosen", async () => {
+    const posted: { url: string; body: unknown }[] = [];
+    stubRoutes([run({ concepts: [concept({ status: "approved" })] })], (url, body) =>
+      posted.push({ url, body }),
+    );
+
+    renderWithBase(<VintageResearchBench />);
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Add to that concept" })).toBeInTheDocument();
+    });
+    await userEvent.click(screen.getByText("…or add to an existing one"));
+    await userEvent.click(await screen.findByText(/#7 Ibis/));
+    await userEvent.click(screen.getByRole("button", { name: "Add to that concept" }));
+
+    await waitFor(() => {
+      expect(posted.at(-1)?.url).toContain("/api/vintage-design/runs/");
+    });
+    expect(posted.at(-1)?.body).toMatchObject({ design_concept_id: expect.any(String) });
   });
 
   it("offers a manual path that costs nothing, alongside the billed one", async () => {

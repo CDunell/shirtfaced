@@ -83,6 +83,23 @@ describe("DesignsBench", () => {
     });
   });
 
+  it("does not offer approval from the queue at all", async () => {
+    // Approval needs the scorecard answered, and the queue has nowhere to
+    // answer it. Offering an Approve button that the server would refuse is
+    // worse than not offering one.
+    stubApi({
+      concepts: [],
+      conceptQueue: [designAttemptView()],
+    });
+
+    renderWithBase(<DesignsBench />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Judge it" })).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+  });
+
   it("refuses an unsigned decision without calling the server", async () => {
     const spy = stubApi({
       concepts: [],
@@ -92,9 +109,9 @@ describe("DesignsBench", () => {
     renderWithBase(<DesignsBench />);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
     });
-    await userEvent.click(screen.getByRole("button", { name: "Approve" }));
+    await userEvent.click(screen.getByRole("button", { name: "Reject" }));
 
     expect(screen.getByText("A decision needs a name against it.")).toBeInTheDocument();
     const decisionCalls = spy.mock.calls.filter(([url]) => String(url).includes("/decision"));
@@ -107,7 +124,7 @@ describe("DesignsBench", () => {
       conceptQueue: [designAttemptView()],
       conceptAction: {
         id: "decision-1",
-        decision: "approved",
+        decision: "rejected",
         reason: null,
         note: null,
         instruction: null,
@@ -119,10 +136,10 @@ describe("DesignsBench", () => {
     renderWithBase(<DesignsBench />);
 
     await waitFor(() => {
-      expect(screen.getByRole("button", { name: "Approve" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Reject" })).toBeInTheDocument();
     });
     await userEvent.type(screen.getByPlaceholderText("your name"), "owner");
-    await userEvent.click(screen.getByRole("button", { name: "Approve" }));
+    await userEvent.click(screen.getByRole("button", { name: "Reject" }));
 
     await waitFor(() => {
       const decisionCalls = spy.mock.calls.filter(([url]) =>

@@ -320,6 +320,122 @@ export function conceptDetailView(overrides: Partial<ConceptDetailView> = {}): C
   };
 }
 
+/* --- The scorecard -----------------------------------------------------------
+ *
+ * Deliberately small: three gates and two categories rather than the real
+ * thirteen and nine. The panel renders whatever the rubric endpoint sends, so
+ * a stub that mirrored the full rubric would be testing the fixture rather
+ * than the screen -- and would have to be edited every time the scorecard
+ * changed, which is exactly the second copy the port removed.
+ */
+
+export const RUBRIC = {
+  groups: [
+    { id: "validate_recognition", label: "Validate recognition", blurb: "Constitution step 7." },
+    { id: "validate_production", label: "Validate production", blurb: "Constitution step 8." },
+    {
+      id: "review_against_collection",
+      label: "Review against the collection",
+      blurb: "Constitution step 9.",
+    },
+  ],
+  gates: [
+    {
+      id: "dominant_proposition_clear",
+      label: "Dominant proposition is clear",
+      question: "Within three seconds, is the main visual idea identifiable?",
+      group: "validate_recognition",
+    },
+    {
+      id: "product_blank_defined",
+      label: "Product and blank defined",
+      question: "Is the garment, blank, fit, colour and production method decided?",
+      group: "validate_production",
+    },
+    {
+      id: "rights_cleared_for_sale",
+      label: "Rights cleared for sale",
+      question: "Are the rights to every source cleared for sale?",
+      group: "review_against_collection",
+    },
+  ],
+  categories: [
+    {
+      id: "dominant_proposition",
+      label: "Dominant Proposition",
+      prompt: "One clear primary idea.",
+      maximum: 10,
+      ratingFloor: 4,
+      minimumRequired: 8,
+      group: "validate_recognition",
+    },
+    {
+      id: "production_integrity",
+      label: "Production Integrity",
+      prompt: "Line and gap integrity.",
+      maximum: 15,
+      ratingFloor: 4,
+      minimumRequired: 12,
+      group: "validate_production",
+    },
+  ],
+  ratingMeanings: [
+    "absent or structurally failed",
+    "materially weak",
+    "below release standard",
+    "competent and acceptable",
+    "strong",
+    "exceptional and clearly intentional",
+  ],
+  approvalPercentage: 75,
+  productionPercentage: 85,
+};
+
+export const GARMENTS = {
+  garment_tee_crew_front: [{ key: "centre_chest", width_mm: 279.4, height_mm: 279.4 }],
+};
+
+/** A review that blocks, which is the honest default: nothing answered yet. */
+export function reviewView(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    attempt_id: "attempt-1",
+    reviewer: "",
+    gates: RUBRIC.gates.map((gate) => ({
+      id: gate.id,
+      label: gate.label,
+      result: "not_tested",
+      evidence: "",
+    })),
+    categories: [],
+    rationale: "",
+    decision: "design_approved",
+    measurements: {},
+    evaluation: {
+      hardGatePassed: false,
+      failedHardGates: [],
+      untestedHardGates: RUBRIC.gates.map((gate) => ({
+        id: gate.id,
+        label: gate.label,
+        result: "not_tested",
+        evidence: "",
+      })),
+      totalScore: 0,
+      maximumScore: 0,
+      percentage: 0,
+      failedCategoryMinimums: [],
+      unratedCategories: ["dominant_proposition", "production_integrity"],
+      eligibleForDesignApproval: false,
+      eligibleForProductionApproval: false,
+      band: "reject_or_rebuild",
+      bandLabel: "Reject or rebuild",
+      blockers: ["3 gates not answered", "2 categories not rated"],
+    },
+    frozen: false,
+    next_action: "Artwork attached. Measure it, then answer the gates and rate the categories.",
+    ...overrides,
+  };
+}
+
 export function designAttemptView(overrides: Partial<DesignAttemptView> = {}): DesignAttemptView {
   return {
     id: "attempt-1",
@@ -363,6 +479,9 @@ export interface Routes {
   conceptAction?: unknown;
   conceptActionStatus?: number;
   conceptActionDetail?: string;
+  rubric?: unknown;
+  attemptReview?: unknown;
+  garments?: unknown;
 }
 
 /** Install a fetch stub answering the endpoints the app uses. */
@@ -377,6 +496,16 @@ export function stubApi(routes: Routes = {}): ReturnType<typeof vi.fn> {
     // Before the generic /attempts and /decision branches below: concept URLs
     // share those suffixes, and ordering decides which handler answers.
     if (input.startsWith("/api/concepts")) {
+      // Before the /attempts branch: the scorecard endpoints share that path.
+      if (input === "/api/concepts/rubric") {
+        return Promise.resolve(new Response(JSON.stringify(routes.rubric ?? RUBRIC)));
+      }
+      if (input === "/api/concepts/garments") {
+        return Promise.resolve(new Response(JSON.stringify(routes.garments ?? GARMENTS)));
+      }
+      if (input.includes("/review") || input.includes("/measure")) {
+        return Promise.resolve(new Response(JSON.stringify(routes.attemptReview ?? reviewView())));
+      }
       if (input === "/api/concepts/queue") {
         return Promise.resolve(new Response(JSON.stringify(routes.conceptQueue ?? [])));
       }
