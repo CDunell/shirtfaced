@@ -297,6 +297,21 @@ export function VintageResearchBench(): React.JSX.Element {
       {prepared ? (
         <div className={card}>
           <LabelSmall>Run these yourself, then paste the result back</LabelSmall>
+          <ol
+            className={css({
+              margin: "8px 0 12px",
+              paddingLeft: "20px",
+              fontSize: "13px",
+              lineHeight: "1.6",
+              color: theme.colors.contentSecondary,
+            })}
+          >
+            <li>Save the images below — right-click, or long-press on a phone.</li>
+            <li>Copy Pass 1 and send it with those images to ChatGPT or Gemini.</li>
+            <li>Send Pass 2 to the same chat to deepen the same ten.</li>
+            <li>Copy the JSON it returns and paste it into the box at the bottom.</li>
+            <li>Import concepts — ten cards appear here to approve, reject or edit.</li>
+          </ol>
           <ParagraphXSmall>
             {String(prepared.evidence_images.length)} images selected. Save them, paste them into
             the model you already pay for with the prompt below, then bring the JSON back.
@@ -526,6 +541,20 @@ export function VintageResearchBench(): React.JSX.Element {
                 >
                   Send to design pipeline
                 </Button>
+                <ParagraphXSmall
+                  overrides={{
+                    Block: {
+                      style: {
+                        margin: 0,
+                        flexBasis: "100%",
+                        color: theme.colors.contentTertiary,
+                      },
+                    },
+                  }}
+                >
+                  Opens a design attempt against that concept. No image is generated — make it
+                  wherever you make images, then upload it to the attempt.
+                </ParagraphXSmall>
                 {queued[concept.concept_number] !== undefined ? (
                   <Tag closeable={false} kind={TAG_KIND.positive}>
                     Attempt {String(queued[concept.concept_number])} created
