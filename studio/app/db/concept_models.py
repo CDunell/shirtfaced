@@ -52,6 +52,7 @@ from app.db import archive_models  # noqa: F401  # registers archive_elements/el
 from app.db.base import Base, TimestampMixin
 from app.db.models import SHA256_HEX_LENGTH, _enum
 from app.domain.enums import (
+    CollectionRole,
     ConceptKind,
     ConceptLibrary,
     ConceptStatus,
@@ -60,6 +61,8 @@ from app.domain.enums import (
     DesignAttemptState,
     DesignDecisionKind,
     FailureCode,
+    GraphicArchetype,
+    LayoutArchetype,
     SyncState,
 )
 
@@ -68,6 +71,7 @@ __all__ = [
     "DesignAsset",
     "DesignAttempt",
     "DesignAttemptElement",
+    "DesignBrief",
     "DesignConcept",
     "DesignDecision",
     "DesignReviewRecord",
@@ -194,9 +198,98 @@ class DesignConcept(Base, TimestampMixin):
         cascade="all, delete-orphan",
         order_by="ApprovedDesign.version",
     )
+    # At most one. What the product is, decided before artwork exists.
+    brief: Mapped[DesignBrief | None] = relationship(
+        back_populates="concept", cascade="all, delete-orphan", uselist=False
+    )
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<DesignConcept #{self.external_number} {self.slug!r} {self.status.value!r}>"
+
+
+class DesignBrief(Base, TimestampMixin):
+    """What the product is, decided before any artwork exists.
+
+    Constitution steps 1-4 and 6, which had no representation in software at
+    all: define the product, define its role in the range, select the garment
+    architecture, select the graphic architecture, integrate typography. The
+    14 August audit's finding was that the research bench produced a graphic
+    idea and jumped straight to artwork, "which is why output arrives as
+    competent generic work with no collection role and no declared archetype".
+
+    One brief per concept. A concept is the long-lived product idea, and §3's
+    required fields -- blank, fit, weight, colour, wash, method -- describe that
+    idea rather than one execution of it. ``create_attempt`` snapshots this into
+    ``brief_snapshot`` so an attempt stays explicable after the brief changes.
+
+    Two of the scorecard's thirteen hard gates finally have a source of truth
+    here: ``product_blank_defined`` and ``collection_role_defined`` were being
+    answered by a person with nothing in the software to answer them from.
+    """
+
+    __tablename__ = "design_briefs"
+    __table_args__ = (UniqueConstraint("concept_id", name="uq_design_briefs_concept_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    concept_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("design_concepts.id", ondelete="CASCADE"), nullable=False
+    )
+
+    # --- Step 1: define the product. Constitution §3's required fields. ------
+    garment_category: Mapped[str] = mapped_column(String(60), nullable=False, server_default="")
+    canonical_blank: Mapped[str] = mapped_column(String(120), nullable=False, server_default="")
+    fit_block: Mapped[str] = mapped_column(String(60), nullable=False, server_default="")
+    fabric_weight: Mapped[str] = mapped_column(String(60), nullable=False, server_default="")
+    garment_colour: Mapped[str] = mapped_column(String(60), nullable=False, server_default="")
+    wash: Mapped[str] = mapped_column(String(60), nullable=False, server_default="")
+    production_method: Mapped[str] = mapped_column(String(60), nullable=False, server_default="")
+    intended_use: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    commercial_tier: Mapped[str] = mapped_column(String(60), nullable=False, server_default="")
+    target_release: Mapped[str] = mapped_column(String(120), nullable=False, server_default="")
+
+    # --- Steps 2 and 4: the two the exit test gates an attempt on. ----------
+    # Nullable because a brief is filled in over time; the gate is that an
+    # attempt cannot open until both are set, not that a draft cannot exist.
+    collection_role: Mapped[CollectionRole | None] = mapped_column(
+        _enum(CollectionRole, "collection_role")
+    )
+    graphic_archetype: Mapped[GraphicArchetype | None] = mapped_column(
+        _enum(GraphicArchetype, "graphic_archetype")
+    )
+    layout_archetype: Mapped[LayoutArchetype | None] = mapped_column(
+        _enum(LayoutArchetype, "layout_archetype")
+    )
+    # A departure from the approved library needs a written reason (§6).
+    archetype_departure_reason: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+
+    # --- Step 3: garment architecture. zone key -> ZoneState (§5). ----------
+    # JSONB because the zones available depend on the garment: a cap has three
+    # panels and a hoodie has a pocket, and a column per zone would be a table
+    # that grows every time a blank is added.
+    zones: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+    # --- Step 6: typography, by function (§10). identity/display/information.
+    typography: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+
+    # What the advisor recommended when these were chosen, and on what evidence.
+    # Kept so a decision can be read back against the advice it was given --
+    # including where the owner went the other way, which is the interesting case.
+    advisor_snapshot: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    notes: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+
+    concept: Mapped[DesignConcept] = relationship(back_populates="brief")
+
+    @property
+    def ready_for_artwork(self) -> bool:
+        """The plan's exit test, as one property.
+
+        Deliberately narrower than the constitution: §3 requires eleven fields
+        before artwork, and this gates on two. Widening it is a decision about
+        how much ceremony precedes a first sketch, and that is the owner's.
+        """
+        return self.collection_role is not None and self.graphic_archetype is not None
 
 
 class DesignAttempt(Base, TimestampMixin):

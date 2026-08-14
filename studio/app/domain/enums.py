@@ -488,3 +488,75 @@ class DesignAssetKind(StrEnum):
     SEPARATION = "separation"
     SOURCE = "source"
     MOCKUP = "mockup"
+
+
+class CollectionRole(StrEnum):
+    """A product's role in the range, ``SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION``
+    §4.
+
+    The constitution's five, not ``domain.ts``'s six. That file carried
+    ``staple`` and ``capsule`` and lacked ``anchor``; the constitution is the
+    governing document and §4 names Anchor, Core, Expression, Hero and
+    Collaboration. The discrepancy is recorded in ADR-018 rather than split the
+    difference, because a role nobody can point to in the constitution is a
+    role nobody can defend in a review.
+
+    A collection must not consist entirely of hero or expression products
+    (§4's closing rule). Nothing enforces that yet -- it is a property of a
+    collection, and collections are not modelled.
+    """
+
+    ANCHOR = "anchor"
+    CORE = "core"
+    EXPRESSION = "expression"
+    HERO = "hero"
+    COLLABORATION = "collaboration"
+
+
+class LayoutArchetype(StrEnum):
+    """The approved layout library, constitution §6 — A1 through A8.
+
+    "Every product must select one archetype before final artwork development.
+    Departure from the library requires a written reason and additional
+    review."
+    """
+
+    A1_SMALL_FRONT_LARGE_BACK = "a1_small_front_large_back"
+    A2_FRONT_HERO_REAR_SIGNATURE = "a2_front_hero_rear_signature"
+    A3_FRONT_HERO_CLEAN_BACK = "a3_front_hero_clean_back"
+    A4_MICRO_FRONT_BACK_HERO = "a4_micro_front_back_hero"
+    A5_UNEQUAL_FRONT_AND_BACK = "a5_unequal_front_and_back"
+    A6_IMAGE_LANGUAGE_SPLIT = "a6_image_language_split"
+    A7_MULTI_ZONE = "a7_multi_zone"
+    A8_JUMBO_FIELD = "a8_jumbo_field"
+
+
+class GraphicArchetype(StrEnum):
+    """The dominant graphic family, constitution §8.
+
+    "A design may contain supporting elements, but it must have one dominant
+    archetype and one dominant proposition."
+    """
+
+    IMAGE_LED_HERO = "image_led_hero"
+    TYPOGRAPHIC_HERO = "typographic_hero"
+    EMBLEM_OR_BADGE = "emblem_or_badge"
+    IMAGE_AND_TITLE_LOCKUP = "image_and_title_lockup"
+    POSTER_OR_EDITORIAL = "poster_or_editorial"
+    SYMBOLIC_ICON_SYSTEM = "symbolic_icon_system"
+    COLLAGE_CONTROLLED_FRAME = "collage_controlled_frame"
+    CHARACTER_OR_OBJECT_PORTRAIT = "character_or_object_portrait"
+    ALL_OVER_OR_JUMBO_FIELD = "all_over_or_jumbo_field"
+
+
+class ZoneState(StrEnum):
+    """What a garment zone is for, constitution §5.
+
+    "Each available zone must be assigned one state." Blank space is valid only
+    when chosen deliberately, which is why ``NEGATIVE_SPACE`` is a state a
+    person selects rather than the absence of a record.
+    """
+
+    ACTIVE_GRAPHIC = "active_graphic"
+    PERMANENT_IDENTITY = "permanent_identity"
+    NEGATIVE_SPACE = "negative_space"
