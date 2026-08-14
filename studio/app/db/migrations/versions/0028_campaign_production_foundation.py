@@ -22,6 +22,7 @@ world_id, external_id and source_line unchanged.
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Any
 
 import sqlalchemy as sa
 from alembic import op
@@ -36,7 +37,7 @@ JSONB = postgresql.JSONB(astext_type=sa.Text())
 UUID = postgresql.UUID(as_uuid=True)
 
 
-def _timestamps() -> tuple[sa.Column[object], sa.Column[object]]:
+def _timestamps() -> tuple[sa.Column[Any], sa.Column[Any]]:
     return (
         sa.Column(
             "created_at",
