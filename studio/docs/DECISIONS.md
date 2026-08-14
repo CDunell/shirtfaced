@@ -253,3 +253,122 @@ Only the tee library is imported today. The schema carries a `library`
 discriminator and namespaced asset keys (`designs/{library}/{number}/…`) so the
 headwear and brand-garment libraries arrive as a data change, not a schema
 change.
+
+## ADR-016 — One production spine, still and video, and the judge stops being columns
+
+**Decided by the owner, 14 August 2026**, reconciling this branch's Phase 1 work
+with the concurrent AI social production model
+(`docs/stage-2/social-ai-production/POSTGRES_DATA_MODEL.md`, on main at
+`8c0c9b44`). That document proposed `social_shots`, `social_generation_attempts`,
+`social_assets` and `social_continuity_checks` beside the existing `shots`,
+`generation_attempts`, `image_assets` and `automated_reviews`.
+
+**The existing world production model is upgraded into a unified still + video
+media-production model. AI social production must not create parallel shot,
+generation, asset, automated-review or human-decision systems.** Campaign,
+narrative, cast, scene, edit and performance entities extend that spine.
+
+### Why the proposal looked reasonable and still had to change
+
+It was not simple duplication. `shots` holds eleven columns built for
+stills — sequence, title, description, `hero_product`, `camera_position`,
+`lighting_source`, status — and the proposed `social_shots` held roughly
+thirty-five built for video: duration, aspect and safe-crop, shot size, camera
+height and angle, focal length, movement, blocking, eyeline, fore/mid/background
+action, garment visibility and scale, artwork legibility, first- and last-frame
+anchors, edit-in and edit-out, still-extraction potential.
+
+That is the audit's own named gap — *"no video path"* — answered properly. The
+error was answering it beside the existing spine rather than in it.
+`GenerationAttempt` already carries attempt numbering, parentage, the exact
+prompt, model settings, provider request id, three source-document hashes,
+failure state, its assets, its automated review and its human decision. A second
+copy of that would be the largest piece of duplicated machinery in the
+repository.
+
+**A still is a shot with no temporal requirement.** `shots` gains `scene_id`, a
+media intent, and the video grammar above; the eleven existing columns are the
+thin v1 of the larger specification, not obsolete. `generation_attempts`
+generalises rather than forks: `image_model` / `image_size` / `image_quality` /
+`image_format` are real columns on that table today and become model, output
+spec, quality preset and format, joined by provider, modality, duration, FPS,
+seed, reference asset ids, first/last-frame inputs and generation source
+(manual paid UI / API / local / imported). Existing image attempts stay valid
+records.
+
+### `image_assets` becomes `media_assets`, as a real rename
+
+Still, generated video, extracted frame, reference image, frame anchors, edit
+master, audio, proxy. Fifteen Python files reference `ImageAsset` or
+`image_assets`, four of them migrations. Renaming the domain abstraction while
+leaving the table named for one of the media types it holds is how a database
+acquires an archaeology department; the rename is a migration, done once the
+call sites are known.
+
+### The judge is reused — and its gates have to stop being columns
+
+`AutomatedReview` separates automated judgement from human decision, and that
+separation survives. But **every gate it applies is physically a column**:
+`mood_score`, `australian_authenticity_score`, `product_visibility_score`,
+`documentary_credibility_score`, `story_score`, `branding_compliant`,
+`vehicle_compliant`, `structurally_sound`. A gate about utes is in the schema.
+
+So "the judge reviews different dimensions according to shot type" is not a
+small change in this shape. The nine new dimensions — character continuity,
+wardrobe continuity, garment artwork fidelity, location continuity,
+screen-direction, temporal continuity, first/last-frame compatibility, motion
+defects, story compliance — would be nine more columns, video-only ones NULL on
+every still, and each future gate another migration.
+
+**The world judge adopts the shape the product judge was just given.**
+`design_reviews` (migration 0027) stores `hard_gates` and `score_categories` as
+arrays of `{id, label, result, evidence}` and `{id, score, maximum,
+minimumRequired}`, with the rubric served from one place and rendered rather
+than restated. Adding a gate is data. Gates carry the shot type they apply to,
+so a still is not marked NOT_TESTED against a motion-defect gate it could never
+fail — and `NOT_TESTED` keeps blocking, exactly as it does on the product side.
+
+`HumanDecision` stays one human decision. Not one for photography and another
+because the pixels move.
+
+### What is genuinely new, and protected
+
+Campaigns as the production root. Story versions, because story development
+needs revision history rather than a mutated blob. Characters — converting the
+cast from prose into something the planner can read, which is the audit's
+*"no code reads `CHARACTERS.md`"*. Wardrobe and appearances. Locations. Scenes,
+the missing level between a world and a shot. Edit versions, because a generated
+shot and a finished cut are different things. Performance, so directing choices
+eventually learn from outcomes.
+
+### Placement follows from supersede
+
+**The work is built in Studio**, because the spine being extended is already
+there: `worlds`, `shots`, `generation_attempts`, `image_assets`,
+`automated_reviews`, `human_decisions`, `canon_proposals`, `reference_frames`,
+and the social publication stack. Studio is also the most database-dependent
+application in the repository — thirty-two tables, twenty-seven migrations, and
+ten of twenty route modules taking a live session per request.
+
+This is not a ruling that world work lives in Studio forever. It is a refusal to
+split one transactional domain across two databases for the sake of a division
+that has not been executed. Admin today is the storefront: twelve tables of
+products, colours, stock and page copy on its own `shirtfaced_shop` database,
+with no world code in it. Moving six new tables there while nineteen dependencies
+stayed behind — including `social_posts`, which the model needs a real foreign
+key into — would be worse architecture than tolerating the present placement.
+
+**If the Studio/Admin split is executed later, the whole world-production domain
+moves as one bounded migration**, old tables and new together, not nineteen
+tables later because six moved early.
+
+### Consequences
+
+- `POSTGRES_DATA_MODEL.md` is requirements, not placement, until its shot,
+  attempt, asset and continuity-check layer is redrawn onto the existing spine.
+  **No migration is written before that redraw.**
+- Alembic revision `0027` is `design_reviews` on this branch; the first
+  migration of this work is `0028`. `deploy-studio.sh` runs `alembic upgrade
+  head`, so two heads fail the deploy outright rather than subtly.
+- Phase 2 of `DESIGN_FLOW_PLAN.md` is already corrected to a separation inside
+  Studio rather than a move of data; this ADR is the reason it stays that way.

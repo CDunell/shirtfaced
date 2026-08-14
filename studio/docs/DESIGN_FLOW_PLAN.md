@@ -333,10 +333,27 @@ lineage in the shop's database beside the returns-page copy.
 Its table names are `social_`-prefixed throughout and collide with nothing in
 the photography pipeline or the design pipeline.
 
+**Settled by the owner on 14 August as ADR-016** — see `DECISIONS.md`. The
+model's campaign, story, cast, scene, edit and performance layers are genuinely
+new and are kept. Its `social_shots`, `social_generation_attempts`,
+`social_assets` and `social_continuity_checks` are not: they supersede the
+existing `shots`, `generation_attempts`, `image_assets` and `automated_reviews`
+by extending them into a unified still-and-video spine, rather than running
+beside them. A still becomes a shot with no temporal requirement.
+
+One finding from that reconciliation lands back on this side of the fence:
+**`AutomatedReview` keeps every gate as a physical column** — `mood_score`,
+`vehicle_compliant`, `structurally_sound` and the rest — so adding the nine
+continuity dimensions video needs would be nine more columns and a migration per
+future gate. The world judge therefore adopts the shape `design_reviews` was
+given in migration 0027: gates as data carrying their own ids and applicability,
+not as schema. The product port turns out to have been the rehearsal.
+
 **One coordination item:** both that work and this branch's
 `0027_design_reviews` descend from `0026`. `studio/deploy/deploy-studio.sh:53`
 runs `alembic upgrade head`, so two heads fails the deploy outright rather than
-subtly. `0027` is taken; the social production migration is `0028`.
+subtly. `0027` is taken; the first migration of the social production work is
+`0028`, and it is not written until the model is redrawn.
 
 ### What Phase 2 becomes
 
