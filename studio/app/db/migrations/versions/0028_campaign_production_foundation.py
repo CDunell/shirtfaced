@@ -90,7 +90,8 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name="pk_campaigns"),
         sa.UniqueConstraint("slug", name="uq_campaigns_slug"),
         sa.CheckConstraint(
-            "status IN ('draft','developing','preproduction','generating','editing','review','scheduled','live','complete','abandoned')",
+            "status IN ('draft','developing','preproduction','generating','editing',"
+            "'review','scheduled','live','complete','abandoned')",
             name="campaign_status_valid",
         ),
         sa.CheckConstraint(
@@ -242,7 +243,8 @@ def upgrade() -> None:
             "id", "character_id", name="uq_character_appearances_id_character_id"
         ),
         sa.CheckConstraint(
-            "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR last_scene_sequence >= first_scene_sequence",
+            "last_scene_sequence IS NULL OR first_scene_sequence IS NULL OR "
+            "last_scene_sequence >= first_scene_sequence",
             name="character_appearance_scene_range_ordered",
         ),
     )
