@@ -51,6 +51,7 @@ from app.domain.enums import (
     DesignAttemptMethod,
     DesignAttemptState,
     DesignDecisionKind,
+    FailureCode,
 )
 from app.domain.errors import StudioError
 
@@ -58,6 +59,7 @@ __all__ = [
     "DesignPipelineConflict",
     "ElementUse",
     "InvalidDesignAction",
+    "abandon_attempt",
     "approve_design",
     "create_attempt",
     "create_concept",
@@ -332,6 +334,63 @@ def record_asset(
 
     session.flush()
     return asset
+
+
+def abandon_attempt(session: Session, attempt: DesignAttempt, reason: str) -> DesignAttempt:
+    """Close an attempt that will never be worked, with the reason recorded.
+
+    The hole this fills: ``decide_attempt`` only accepts ``awaiting_decision``,
+    and an attempt only reaches that state by having artwork submitted. So an
+    attempt opened in error -- the wrong concept, a prompt that belongs to
+    another idea, a path that no longer exists -- had no exit at all. It sat in
+    ``planned`` forever, at the top of the queue, and the only way to remove it
+    was to delete the row.
+
+    Deleting is the wrong answer in a system whose whole argument is that
+    decisions are recorded rather than erased. This settles it the way
+    everything else here is settled: a terminal state, a reason, an audit event,
+    and the row intact so the mistake stays legible.
+
+    Not a decision: ``design_decisions`` is the owner's judgement on artwork, and
+    there is no artwork here. Abandoning is bookkeeping about a row that should
+    not have been made.
+    """
+    reason = reason.strip()
+    if not reason:
+        raise InvalidDesignAction("an attempt abandoned for no stated reason is just a gap")
+    if attempt.state in (
+        DesignAttemptState.APPROVED,
+        DesignAttemptState.REJECTED,
+        DesignAttemptState.VARIATION_REQUESTED,
+    ):
+        raise InvalidDesignAction(
+            f"attempt is {attempt.state.value}; a decided attempt is already settled and "
+            "abandoning it would overwrite the decision"
+        )
+    if attempt.approved_design is not None:
+        raise DesignPipelineConflict(
+            "this attempt is an approved version of its concept and cannot be abandoned"
+        )
+
+    attempt.state = DesignAttemptState.FAILED
+    attempt.failure_code = FailureCode.CONFIGURATION
+    attempt.failure_message = reason
+
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.DESIGN_DECISION_RECORDED,
+            actor="owner",
+            payload_json={
+                "concept_id": str(attempt.concept_id),
+                "attempt_id": str(attempt.id),
+                "attempt_number": attempt.attempt_number,
+                "decision": "abandoned",
+                "reason": reason,
+            },
+        )
+    )
+    session.flush()
+    return attempt
 
 
 def submit_attempt(session: Session, attempt: DesignAttempt) -> DesignAttempt:

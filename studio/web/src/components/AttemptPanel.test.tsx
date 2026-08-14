@@ -128,6 +128,32 @@ describe("AttemptPanel", () => {
     expect(screen.getByText("0/100")).toBeInTheDocument();
   });
 
+  it("lets an attempt with no artwork be closed, with a reason", async () => {
+    // decide_attempt only accepts awaiting_decision, and an attempt only gets
+    // there by having artwork submitted. Two rows in production sat at the top
+    // of the queue with no exit but deletion.
+    const spy = stubApi({});
+
+    renderWithBase(panel(designAttemptView({ state: "planned", assets: [] })));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "Abandon this attempt" })).toBeInTheDocument();
+    });
+    // A row closed for no stated reason is just a gap.
+    await userEvent.click(screen.getByRole("button", { name: "Abandon this attempt" }));
+    expect(screen.getByText(/Say why this attempt is being abandoned/)).toBeInTheDocument();
+
+    await userEvent.type(
+      screen.getByPlaceholderText("Why, in your own words"),
+      "the prompt belongs to another concept",
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Abandon this attempt" }));
+
+    await waitFor(() => {
+      expect(spy.mock.calls.some(([url]) => String(url).includes("/abandon"))).toBe(true);
+    });
+  });
+
   it("refuses approval until the scorecard supports it, and says so", async () => {
     stubApi({ attemptReview: reviewView() });
 

@@ -74,6 +74,7 @@ from app.services.design_extraction import measure, to_review
 from app.services.design_pipeline import (
     DesignPipelineConflict,
     InvalidDesignAction,
+    abandon_attempt,
     approve_design,
     create_attempt,
     decide_attempt,
@@ -281,6 +282,10 @@ class AttemptIn(BaseModel):
     execution_rules: dict[str, Any] = Field(default_factory=dict)
     brief_overrides: dict[str, Any] = Field(default_factory=dict)
     parent_attempt_id: uuid.UUID | None = None
+
+
+class AbandonIn(BaseModel):
+    reason: str = Field(min_length=1, max_length=2000)
 
 
 class DecisionIn(BaseModel):
@@ -813,6 +818,30 @@ def post_submit(attempt_id: uuid.UUID, session: SessionDependency) -> AttemptVie
     attempt = _attempt(session, attempt_id)
     try:
         submit_attempt(session, attempt)
+    except InvalidDesignAction as error:
+        raise _invalid(error) from error
+    session.commit()
+    return AttemptView.of(attempt)
+
+
+@router.post(
+    "/attempts/{attempt_id}/abandon",
+    response_model=AttemptView,
+    summary="Close an attempt that will never be worked",
+)
+def post_abandon(attempt_id: uuid.UUID, body: AbandonIn, session: SessionDependency) -> AttemptView:
+    """For a row that should not have been made.
+
+    An attempt reaches ``awaiting_decision`` only by having artwork submitted,
+    so one opened in error had no exit and no way off the queue but deletion.
+    This settles it with a reason, keeps the row, and leaves the mistake
+    legible.
+    """
+    attempt = _attempt(session, attempt_id)
+    try:
+        abandon_attempt(session, attempt, body.reason)
+    except DesignPipelineConflict as error:
+        raise _conflict(error) from error
     except InvalidDesignAction as error:
         raise _invalid(error) from error
     session.commit()

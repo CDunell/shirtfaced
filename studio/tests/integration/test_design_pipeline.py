@@ -29,6 +29,7 @@ from app.services.concept_loader import parse_concept_library
 from app.services.design_pipeline import (
     DesignPipelineConflict,
     InvalidDesignAction,
+    abandon_attempt,
     approve_design,
     create_attempt,
     decide_attempt,
@@ -124,6 +125,45 @@ def test_a_briefed_concept_opens_an_attempt(session: Session, concept: DesignCon
     # The brief travels with the attempt, so it stays explicable if the brief
     # changes afterwards.
     assert attempt.brief_snapshot["title"] == concept.title
+
+
+# --- Abandoning a row that should not have been made -------------------------
+
+
+def test_an_attempt_with_no_artwork_can_still_be_settled(
+    session: Session, concept: DesignConcept
+) -> None:
+    """The hole this fills: decide_attempt only accepts awaiting_decision, and
+    an attempt only gets there by having artwork submitted. Two rows in
+    production sat at the top of the queue carrying a prompt that belonged to
+    another concept, and the only way to remove them was to delete them."""
+    attempt = create_attempt(session, concept, DesignAttemptMethod.MANUAL_IMPORT)
+
+    abandon_attempt(session, attempt, "the prompt belongs to another concept")
+
+    assert attempt.state is DesignAttemptState.FAILED
+    assert attempt.failure_message == "the prompt belongs to another concept"
+    # The row survives, so the mistake stays legible.
+    assert attempt.id is not None
+
+
+def test_abandoning_needs_a_reason(session: Session, concept: DesignConcept) -> None:
+    attempt = create_attempt(session, concept, DesignAttemptMethod.MANUAL_IMPORT)
+
+    with pytest.raises(InvalidDesignAction, match="no stated reason"):
+        abandon_attempt(session, attempt, "   ")
+
+
+def test_a_decided_attempt_cannot_be_abandoned(
+    session: Session, store: FilesystemAssetStore, concept: DesignConcept
+) -> None:
+    """Abandoning is bookkeeping about a row that should not exist. Overwriting
+    a decision with it would lose the judgement."""
+    attempt = _submitted(session, store, concept)
+    decide_attempt(session, attempt, DesignDecisionKind.REJECTED, "owner", reason="no")
+
+    with pytest.raises(InvalidDesignAction, match="already settled"):
+        abandon_attempt(session, attempt, "tidying up")
 
 
 # --- The queue ---------------------------------------------------------------

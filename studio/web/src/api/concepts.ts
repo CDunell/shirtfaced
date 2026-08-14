@@ -165,6 +165,21 @@ export async function uploadAsset(
   );
 }
 
+/** Close an attempt that will never be worked, with the reason recorded.
+ *
+ * An attempt only reaches `awaiting_decision` by having artwork submitted, so
+ * one opened in error had no exit and no way off the queue but deletion. This
+ * settles it and keeps the row, so the mistake stays legible. */
+export async function abandonAttempt(
+  attemptId: string,
+  reason: string,
+): Promise<DesignAttemptView> {
+  return await json<DesignAttemptView>(
+    `/api/concepts/attempts/${encodeURIComponent(attemptId)}/abandon`,
+    { method: "POST", body: JSON.stringify({ reason }) },
+  );
+}
+
 export async function submitAttempt(attemptId: string): Promise<DesignAttemptView> {
   return await json<DesignAttemptView>(
     `/api/concepts/attempts/${encodeURIComponent(attemptId)}/submit`,

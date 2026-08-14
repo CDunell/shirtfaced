@@ -35,6 +35,7 @@ import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError } from "../api/client";
 import {
+  abandonAttempt,
   approveDesignWithSpec,
   assetUrl,
   decideAttempt,
@@ -587,6 +588,51 @@ export function AttemptPanel({
       {review?.frozen ? null : (
         <div className={panel}>
           <SectionTitle>Decision</SectionTitle>
+          {/* One box, above both paths. Abandoning needs a reason as much as a
+              rejection does, and a control that points at a field which is not
+              on screen is worse than no instruction at all. */}
+          <FormControl label="A note, a reason, or an instruction">
+            <Textarea
+              value={note}
+              placeholder="Why, in your own words"
+              onChange={(event) => {
+                setNote(event.currentTarget.value);
+              }}
+            />
+          </FormControl>
+
+          {/* An attempt with no artwork has no other way out: decisions need
+              something to look at. Kept beside Submit rather than hidden, so a
+              row opened in error can be closed by whoever notices it. */}
+          {attempt.state === "planned" ||
+          attempt.state === "generating" ||
+          attempt.state === "generated" ? (
+            <div className={css({ marginBottom: "10px" })}>
+              <Button
+                size={SIZE.compact}
+                kind={BUTTON_KIND.tertiary}
+                disabled={busy !== null}
+                onClick={() => {
+                  const reason = note.trim();
+                  if (!reason) {
+                    setError(
+                      "Say why this attempt is being abandoned. A row closed for no stated " +
+                        "reason is just a gap.",
+                    );
+                    return;
+                  }
+                  void run("abandon", () => abandonAttempt(attempt.id, reason));
+                }}
+              >
+                Abandon this attempt
+              </Button>
+              <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
+                For a row that should not have been made — the wrong concept, a prompt that belongs
+                to another idea. Put the reason in the box above; the row is kept.
+              </ParagraphXSmall>
+            </div>
+          ) : null}
+
           {attempt.state === "generated" ? (
             <Button
               size={SIZE.compact}
@@ -601,15 +647,6 @@ export function AttemptPanel({
 
           {attempt.state === "awaiting_decision" ? (
             <>
-              <FormControl label="A note, a reason, or an instruction">
-                <Textarea
-                  value={note}
-                  placeholder="Why, in your own words"
-                  onChange={(event) => {
-                    setNote(event.currentTarget.value);
-                  }}
-                />
-              </FormControl>
               <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
                 <Button
                   size={SIZE.compact}
