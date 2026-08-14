@@ -29,6 +29,7 @@ import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError } from "../api/client";
 import {
+  createAttempt,
   fetchAdvice,
   fetchBrief,
   saveBrief,
@@ -237,6 +238,32 @@ export function BriefPanel({
           {brief.ready_for_artwork ? "The product is defined" : "Before any artwork"}
         </span>
         <p className={css({ margin: 0, fontSize: "15px", lineHeight: 1.5 })}>{brief.next_action}</p>
+        {/* The button the sentence has been asking for. createAttempt existed
+            with no call site anywhere — the same defect the 14 August audit
+            found in uploadAsset — so a briefed concept said "start an attempt"
+            and offered no way to start one. */}
+        {brief.ready_for_artwork ? (
+          <div className={css({ marginTop: "12px" })}>
+            <Button
+              size={SIZE.compact}
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                setError(null);
+                createAttempt(conceptId, "manual_import")
+                  .then(() => onChanged())
+                  .catch((cause: unknown) => {
+                    setError(describe(cause));
+                  })
+                  .finally(() => {
+                    setBusy(false);
+                  });
+              }}
+            >
+              {busy ? "Opening…" : "Start an attempt"}
+            </Button>
+          </div>
+        ) : null}
       </section>
 
       {error ? (

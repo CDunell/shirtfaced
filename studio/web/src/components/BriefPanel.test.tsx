@@ -32,6 +32,17 @@ describe("BriefPanel", () => {
     expect(screen.getByText(/an attempt cannot open without them/)).toBeInTheDocument();
   });
 
+  it("offers no way to start an attempt until the brief supports one", async () => {
+    stubApi({});
+
+    renderWithBase(panel());
+
+    await waitFor(() => {
+      expect(screen.getByText("Before any artwork")).toBeInTheDocument();
+    });
+    expect(screen.queryByRole("button", { name: "Start an attempt" })).not.toBeInTheDocument();
+  });
+
   it("offers the constitution's five collection roles, not domain.ts's six", async () => {
     stubApi({});
 
@@ -94,8 +105,8 @@ describe("BriefPanel", () => {
     });
   });
 
-  it("says the product is defined once both gating choices are made", async () => {
-    stubApi({
+  it("says the product is defined once both gating choices are made, and opens one", async () => {
+    const spy = stubApi({
       brief: briefView({
         collection_role: "core",
         graphic_archetype: "typographic_hero",
@@ -107,6 +118,19 @@ describe("BriefPanel", () => {
     renderWithBase(panel());
 
     expect(await screen.findByText("The product is defined")).toBeInTheDocument();
-    expect(screen.getByText(/Start an attempt/)).toBeInTheDocument();
+    // The button, not just the sentence asking for it. createAttempt had zero
+    // call sites, so a briefed concept was a dead end: the screen said start an
+    // attempt and offered no way to.
+    const start = screen.getByRole("button", { name: "Start an attempt" });
+    await userEvent.click(start);
+    await waitFor(() => {
+      expect(
+        spy.mock.calls.some(
+          ([url, init]) =>
+            String(url).endsWith("/attempts") &&
+            (init as RequestInit | undefined)?.method === "POST",
+        ),
+      ).toBe(true);
+    });
   });
 });
