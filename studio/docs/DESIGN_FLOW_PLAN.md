@@ -602,16 +602,118 @@ stay where they are — the duplicate is the journey, not the code.
 **Exit test:** two navigation entries removed, no capability lost, Phase 1 still
 passes.
 
+### Passed 14 August, run against the live application
+
+```
+nav   Work  Evidence  Research  Designs | Dashboard  Prompts  Print  Social  Email
+      Compose: gone      Score: gone
+
+Designs
+  + COMPOSE ARTWORK       The deterministic composer: a garment, some words,
+                          a seed. Same seed, same bytes.        aria-expanded=false
+  + MEASURE A LOOSE FILE  For something that is not a concept yet. An attempt
+                          measures its own artwork.             aria-expanded=false
+
+  [opened]  COMPOSE - Garment tee_crew_front, Placement centre_chest, Seed ...
+  [opened]  DESIGN REVIEW - Measured against DESIGN_REVIEW_SCORECARD.md ...
+
+all 6 links intact.
+```
+
+Both panels are closed by default and mount nothing until opened, so a screen
+whose job is the backlog does not fetch three benches' worth of data to show it.
+
+**Nothing moved but the journey.** `ComposeBench` and `DesignBench` are the same
+components, unchanged, and every service behind them is untouched. The
+duplication was three destinations each knowing part of one sequence, not three
+implementations.
+
+### The audit that mattered was not this one
+
+Opening the browser for this exit test is how the blank page was found. Phase 4
+added the `needs_brief` stage on the server; `WorkBench`'s stage map still held
+Phase 3's seven; `STAGES[stage].label` threw; and because Work is the default
+view **the entire application rendered white in production** from the moment
+Phase 4 deployed.
+
+The API was correct. The design chain smoke passed all six links. Studio CI
+passed. The deploy passed. Every one of those looks at the server, and the
+server was fine.
+
+This plan already said *"nothing ships without being exercised in a browser --
+server checks have passed while a screen was throwing, more than once."* It
+happened again, one deploy after that line was written into the session
+handover. The fix makes the shape impossible rather than absent: the stage
+lookup is total, and `WorkStage` stopped being a closed union that told the
+compiler an index was safe when it was not.
+
+**The rule that follows: a phase is not audited until its screens have been
+opened in the deployed application.** Not locally, not against a fixture -- the
+thing that is live.
+
 ## Phase 6 — evidence reaches generation
 
-Vintage evidence informs the prompt text and never reaches the image generator;
-it is stored on the attempt as provenance only. The `ReferenceImageStore`
-adapter exists and runs in production for photography.
+> **Blocked on a decision, not on work. Its premise was removed by 0.1 and it
+> needs restating before anything is built against it.**
 
-Depends on 0.1: doing this without a metered API means local generation.
+As written:
 
-**Exit test:** an attempt records which evidence images were sent, and the
-output carries the era rather than a generic reading of it.
+> Vintage evidence informs the prompt text and never reaches the image
+> generator; it is stored on the attempt as provenance only. The
+> `ReferenceImageStore` adapter exists and runs in production for photography.
+>
+> Depends on 0.1: doing this without a metered API means local generation.
+>
+> **Exit test:** an attempt records which evidence images were sent, and the
+> output carries the era rather than a generic reading of it.
+
+### Why it cannot be built as written
+
+**There is no image generator for the product pipeline to reach.** Decision 0.1
+settled that the app owns the brief, the record, the measurement, the judgement
+and the decision, and does not own the pixels: artwork is made in a paid
+interface and brought back. The plan's own escape hatch — *"doing this without
+a metered API means local generation"* — was the branch 0.1 declined.
+
+`generation_orchestrator` and `ReferenceImageStore` do run in production, but
+they are the **photography** pipeline: world-side, and by the session handover's
+ownership split they belong to the concurrent session. Wiring the product
+pipeline into them would be building a second generator inside the tool that
+just decided not to have one.
+
+The exit test's second half compounds it: *"the output carries the era rather
+than a generic reading of it"* is a judgement about artwork. Since 0.1 that
+judgement is a person's, made in the paid interface and assessed afterwards by
+the scorecard. No automated check can stand in for it.
+
+### What is already true
+
+The research path records provenance today. An attempt created from a research
+concept carries `reference_inputs` with the run id, the research concept number,
+`evidence_listing_ids` and `evidence_images` — so *"an attempt records which
+evidence images were sent"* is half-met already, and was met in Phase 1 rather
+than Phase 6.
+
+### The restatement, proposed and not decided
+
+**Evidence reaches the brief, because the brief is what leaves the building.**
+
+- The attempt's `Copy brief` includes the evidence images — links or a
+  downloadable set — so they can be attached in the paid interface alongside the
+  prompt. The app hands over everything the generation needs; the generation
+  happens elsewhere.
+- The attempt records which evidence went out with which brief, extending the
+  provenance already stored.
+- Era fidelity is judged where every other judgement is judged: the nine
+  categories, by a person, against the artwork that came back.
+
+**Exit test, restated:** a person can take one attempt's brief *and its
+evidence* to a paid interface in one action, and the attempt records exactly
+what went with it.
+
+That is buildable today and costs nothing metered. But it is a different phase
+from the one written, so it is the owner's to accept, amend or reject before
+anything is built. **Nothing in Phase 6 is started.**
 
 ---
 
@@ -643,8 +745,8 @@ customer.
 | 0.1 — what "generated by this app" means | **decided 14 Aug** — app owns all but the pixels |
 | 0.2 — where the scorecard lives | **decided 14 Aug** — moves to studio, as Python |
 | 1 — make the chain continuous | **passed 14 Aug** — exit test run and pasted above |
-| 2 — separate the pipelines | not started |
-| 3 — one record, one screen | not started |
-| 4 — the constitution's first four steps | not started |
-| 5 — consolidate the design journey | not started |
-| 6 — evidence into generation | not started |
+| 2 — separate the pipelines | **2a passed 14 Aug**; 2b waits on the campaign UI shape |
+| 3 — one record, one screen | **passed 14 Aug** |
+| 4 — the constitution's first four steps | **passed 14 Aug** |
+| 5 — consolidate the design journey | **passed 14 Aug** |
+| 6 — evidence into generation | **premise removed by 0.1** — needs restating, see below |
