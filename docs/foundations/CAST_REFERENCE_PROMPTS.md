@@ -201,10 +201,15 @@ different haircut, so nothing is lost by using it when a scene wants it.
 > A twenty-six year old man, solidly built, standing flat-footed and settled, like
 > someone who is on his feet for twelve hours a day. Short practical hair. Forearms
 > marked with faded scars and a burn. Plain navy t-shirt, plain black work trousers,
-> black clogs. A plain steel watch.
+> black Dr Martens boots. A plain steel watch.
 
 The scars are the only thing on this list doing narrative work. A chef's hands
 are the one true detail available.
+
+Black Docs, not clogs. *(Owner, 15 August 2026.)* Clogs are what he stands in
+at work and the reference is not at work — putting him in them makes the job
+the costume. The scars already say chef and they say it whatever is on his
+feet.
 
 ## Emma — 25
 
