@@ -141,20 +141,43 @@ than argued about.
 - **Never ages.** `age_at_reference` is recorded because a world set five years
   on needs a new reference, not a note that the face is wrong.
 
-## 5. What has to be decided before any of this runs
+## 5. What was decided while it ran
 
-From `CAST_REFERENCE_PROMPTS.md`'s closing section: ethnicity and skin tone for
-all fourteen, hair colour for thirteen, and whether anybody has facial hair,
-glasses, tattoos or piercings. Canon states none of it.
+**All fourteen exist.** Both frames each, generated 15 August 2026 in the
+owner's subscription UI. Nothing here is pending any more.
 
-A generator will choose all of it and then hold that choice across the cast. It
-is cheaper to decide once than to discover the cast has been quietly assigned a
-look nobody chose.
+The section this replaces warned that a generator would quietly assign the
+cast a look nobody chose. That is roughly what happened, and it was corrected
+in flight rather than in advance — four decisions came from the owner while
+looking at output, which is faster than deciding fourteen characters' worth of
+appearance from a blank page:
+
+| Decision | Why |
+|---|---|
+| Charlotte is blonde | She was the third dark-haired woman of about the same age with a similar blunt cut, after Emma and Casey |
+| Grace is strawberry blonde, from her mother | She and Emma are half-sisters; the maternal line explains why they differ while both carry Gary's brow |
+| Casey wears white, not black | Black head to toe was SK's silhouette exactly |
+| Mitch wears black Docs, not clogs | Clogs are work footwear and the reference is not at work |
+
+Ethnicity and skin tone were never stated and were left to the generator. It
+produced a uniformly white cast. That is now what the references are, and
+changing it means regenerating, not editing a document.
+
+Two family faces were matched against Gary's frame A — Emma and Grace — and
+Damo was regenerated against it after his background landed. Ethan was
+deliberately not: he is Grace's boyfriend, not blood, and attaching Gary would
+have made him look like her brother.
 
 ## 6. Open, carried from the handoff
 
 - `CHARACTERS_PROPOSED_ADDITIONS.md` — Anh, Josh, Steph — is unapproved and has
   no references here.
+- Damo has a superseded first version in `_superseded/damo-v1`. Scenes shot
+  against that face stay canon, per the never-overwrite rule above.
+- Two prompts drifted from this doc during generation — Brock and Tommy — and
+  were kept because the faces were right. Brock's entry was rewritten to match
+  what was used; Tommy's was not, so his stored hash will not match a
+  regeneration. Both are recorded in their `reference.json`.
 - Lucas's and Tommy's occupations, and anything between either of them and Emma,
   stay undecided. Neither prompt implies anything.
 - Kevin has no reference. He is a device.
