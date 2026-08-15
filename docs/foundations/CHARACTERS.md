@@ -46,13 +46,33 @@ everyone else orbits. Brother to Damo. Father to Emma and Grace.
 something ill-advised happens to or because of Damo every single time.
 Exhausting, beloved, always the first name in the retelling.
 
+A mathematical genius. Ran his own finance company and consulted for some of
+the largest companies in Australia. The chaos is not stupidity — it is a very
+clever man who has stopped performing seriousness. Separated about five years ago
+after eighteen years with the same woman — together from around fifteen, so
+she is most of his life to date. The divorce was messy and ugly, and it is
+where his view comes from: he came out of it having lost years and decided
+not to lose any more. "Living his best life" is not a personality, it is a
+position he arrived at the hard way. No children appear in any world.
+*(Owner, 15 August 2026.)*
+
+**Damo and SK together** — the power couple who are suburban Aussies at
+heart. They swear a lot and laugh more. Neither is impressed by status,
+including their own. *(Owner, 15 August 2026.)*
+
 **SK** — Damo's partner. Former New York/London L'Oréal marketing executive.
 Goes by initials, not a full first name. Sharp, low patience for excuses,
 has run campaigns bigger than this one — which either makes her the
 best-qualified person in the group to say an idea is bad, or the least
 impressed by any of it.
 
-**Grace** — 18+, Gary's daughter, Emma's half-sister. Computer science and
+Born and raised in Brisbane to high school teacher parents. Local girl made
+good — the international career is something she went and did, not something
+she came from, and she wears it lightly. *(Owner, 15 August 2026.)*
+
+**Grace** — 18+, Gary's daughter, Emma's half-sister. Strawberry blonde, from
+her mother's side — she has her father's brow and her mother's colouring.
+*(Owner, 15 August 2026.)* Computer science and
 engineering student. The driest humour in the entire cast. Ethan's
 girlfriend.
 
