@@ -44,7 +44,6 @@ def main(argv: list[str]) -> int:
         return 2
 
     rows: list[dict[str, object]] = []
-    skipped_worn = 0
     refused = 0
     seen = 0
     for brand_dir in sorted(CORPUS_ROOT.iterdir()):
@@ -56,14 +55,9 @@ def main(argv: list[str]) -> int:
         brand = json.loads(brand_file.read_text(encoding="utf-8-sig"))
         tradition = brand.get("design_tradition", "unknown")
 
-        # Same rule as the miner. Without it this file would quietly re-admit
-        # every worn-photography row the miner refuses, and joined.json is the
-        # one design_advisor.py actually reads -- so the refusal has to hold
-        # here or it does not hold anywhere that matters.
-        if brand.get("photography", "flat") == "worn":
-            products = brand_dir / "products"
-            skipped_worn += len(list(products.iterdir())) if products.is_dir() else 0
-            continue
+        # Nothing is skipped for its photography. See mine_design_patterns.py:
+        # the edge test measures a worn garment as readily as a flat one, so the
+        # blanket skip that used to sit here would now be throwing away evidence.
 
         products_dir = brand_dir / "products"
         if not products_dir.is_dir():

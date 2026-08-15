@@ -47,13 +47,28 @@ So the garment is located instead of assumed:
    failure; a bare arm across the chest runs out to the frame edge, stays
    connected to the exterior, and is never filled.
 
-**What it refuses.** Worn full-body photography is not measurable this way and
-the attempt was abandoned on evidence, not taste: across every fabric tolerance
-from 34 to 90, a plain worn tee scored 0.152 to 0.057 while a worn tee with a
-real chest print scored 0.128 to 0.100. The two never separate. Rather than
-infer the photography per image -- tried, and a tan bikini top reads 95% "skin"
--- each source records what it shoots in ``brand.json``'s ``photography`` field,
-and worn sources are skipped and counted rather than quietly averaged in.
+**Ink stops; light falls off.** Colour alone cannot separate a print from a fold,
+and no fabric tolerance from 34 to 90 ever did. But the two edges differ in kind:
+ink is applied to a surface and ends in a step, while a fold is light rolling off
+a curve and ends in a ramp. So every enclosed region is kept or dropped on the
+gradient along its own boundary. This is what a filter on region *size* could not
+do -- a hem is long and soft, a letter is small and hard -- and it takes a plain
+flat-laid hoodie from 1.4% coverage to 0.0% while leaving the twelve separate
+letters of "KCDC BROOKLYN" untouched.
+
+**What it refuses, and why that is not a failure.** Worn full-body photography is
+still refused, and it was refused twice. The first time on colour, where a plain
+worn tee and a printed one never separated. The second time the edge test above
+looked like it had solved them -- six worn images, all six right -- until a
+random six from the same source came back with a model's hair marked as ink, a
+fold on a plain pocket tee called a 4% print, and a back graphic missed outright.
+The threshold had been fitted to the images used to pick it. Six cases is not a
+sample.
+
+So roughly a third of the corpus is refused with a stated reason and counted in
+the report, rather than averaged in. ``brand.json`` still records what a source
+shoots in its ``photography`` field because it is true and worth knowing, but
+nothing reads it: the decision is made per frame, on what is actually in it.
 
 Fine line work sits at the floor: a one-pixel-stroke chest drawing measures
 around 0.05% ink at any resolution, which is real but below anything that can be
@@ -131,11 +146,38 @@ TONAL_HIGH = 1.80
 # How much of the subject may be something other than the garment before the
 # frame is refused. On a flat-lay the garment *is* the subject and this sits at
 # 0.00 to 0.07; a body wearing it puts a head, arms and legs in frame and it runs
-# 0.18 to 0.92. Measured across both, which is how the "US shops shoot flat"
-# assumption was caught being only mostly true -- the surf shops mix worn shots
-# in, and a per-source declaration cannot see that. A two-tone garment can trip
-# this and be refused; refusing a measurable frame is the cheap mistake.
+# 0.18 to 0.92.
+#
+# Raised to 0.80 when the edge test below looked like it had made worn shots
+# measurable, and put back. The edge test was tuned on six worn images and held
+# perfectly on all six; on a random six from the same source it marked a model's
+# hair as ink, called a fold on a plain pocket tee a 4% print, and missed a back
+# graphic outright. Three of six wrong is not a measurement, and six cases is not
+# a sample -- the threshold had been fitted to the images used to choose it.
+#
+# So worn photography is refused, still, and the refusal is counted. This costs
+# all 58 City Beach designs and about a third of the American surf and street
+# ranges, which is the price of the numbers that remain being true.
 MAX_SUBJECT_OUTSIDE_GARMENT = 0.18
+
+# Mean luminance gradient along a region's own boundary, above which the region
+# is ink rather than shading.
+#
+# This is the test that colour could not do. Swept from 34 to 90, no fabric
+# tolerance ever separated a plain worn tee from a printed one -- but they are
+# not the same *kind* of edge. Ink is applied to the surface and stops: its
+# boundary is a step. A fold is light falling off a curve: its boundary is a
+# ramp.
+#
+# It does what filtering by region size could not. Seams, buttons, a hem and the
+# weave of a straw hat are soft gradients and go; the twelve separate letters of
+# "KCDC BROOKLYN" are steps and stay, unchanged at 7.6%, where a size filter took
+# 39% of them. A plain flat-laid hoodie falls from 1.4% coverage to 0.0%.
+#
+# It is not enough to rescue a worn shot -- see MAX_SUBJECT_OUTSIDE_GARMENT.
+# On flat photography, where the only things competing with ink are seams and
+# folds in the fabric itself, it is.
+PRINT_EDGE_SHARPNESS = 150.0
 
 
 def _levelled(pixels: np.ndarray, colour: np.ndarray) -> np.ndarray:
@@ -150,6 +192,46 @@ def _levelled(pixels: np.ndarray, colour: np.ndarray) -> np.ndarray:
     luma = pixels @ LUMA
     scaled = pixels * (reference / np.clip(luma, 1.0, None))[..., None]
     return np.sqrt(((scaled - colour) ** 2).sum(axis=-1))
+
+
+def _sharp_regions(pixels: np.ndarray, candidates: np.ndarray) -> np.ndarray:
+    """Keep the enclosed regions whose boundary is a step, drop the ramps.
+
+    Ink is applied to a surface and stops, so its edge is a step. A fold is light
+    falling off a curve, so its edge is a ramp. This is the difference no colour
+    threshold could find: swept from 34 to 90, a plain worn tee and a printed
+    worn tee never separated on fabric tolerance alone.
+
+    The gradient is computed once for the whole frame and sampled per region,
+    rather than per region, because the corpus runs to thousands of images.
+    """
+    if not candidates.any():
+        return candidates
+
+    luma = pixels @ LUMA
+    magnitude = np.hypot(ndimage.sobel(luma, axis=0), ndimage.sobel(luma, axis=1))
+
+    labels, count = ndimage.label(candidates)
+    if count == 0:
+        return candidates
+
+    # A pixel is on its region's boundary when one of its four neighbours belongs
+    # to a different region. Found by comparing the label image with itself
+    # shifted, which does every region at once -- dilating and eroding each one
+    # separately took longer than the rest of the corpus put together.
+    border = np.zeros_like(candidates)
+    for axis, shift in ((0, 1), (0, -1), (1, 1), (1, -1)):
+        border |= candidates & (np.roll(labels, shift, axis=axis) != labels)
+
+    means = ndimage.mean(magnitude, labels=np.where(border, labels, 0), index=range(1, count + 1))
+    sharp = {
+        index
+        for index, value in enumerate(np.atleast_1d(means), start=1)
+        if np.isfinite(value) and value >= PRINT_EDGE_SHARPNESS
+    }
+    if not sharp:
+        return np.zeros_like(candidates)
+    return np.isin(labels, list(sharp)) & candidates
 
 
 def _analyse(path: Path) -> dict[str, Any] | None:
@@ -239,17 +321,16 @@ def _analyse(path: Path) -> dict[str, Any] | None:
             "detail": f"{outside:.0%} of the subject is not the garment",
         }
 
-    # Deliberately not filtered by region size, though it is the obvious next
-    # move: seams, buttons, drawstrings and the weave of a straw hat all come
-    # through as small holes and inflate coverage a little. Dropping components
-    # under 0.02% of the garment cleans those up and takes 39% of a lettering
-    # print with them -- "KCDC BROOKLYN" is twelve separate letter-shaped
-    # regions, each individually small. A filter that quietly under-measures
-    # typographic work is the wrong trade for a brand whose graphics are mostly
-    # words. Measured before rejecting: at 0.0002 the plain control goes 0.0002
-    # to 0.0000 while the lettering goes 0.0153 to 0.0094.
     if garment_area < ANALYSIS_SIZE * 4:
         return {"refused": "garment too small", "detail": "garment fills too little of the frame"}
+
+    # Keep only the regions whose edges are steps rather than ramps -- ink stops,
+    # light falls off. Filtering by region *size* was tried instead and rejected:
+    # it removes seams and buttons and takes 39% of a lettering print with them,
+    # because "KCDC BROOKLYN" is twelve separate small letters. Sharpness sees
+    # what size cannot -- a letter is small and hard-edged, a hem is long and
+    # soft -- so the lettering survives untouched and the hem goes.
+    print_mask = _sharp_regions(pixels, print_mask)
 
     coverage = float(print_mask.sum() / garment_area)
     result: dict[str, Any] = {
@@ -343,7 +424,6 @@ def main(argv: list[str]) -> int:
     records: list[dict[str, Any]] = []
     # Counted, never silently dropped. A corpus that says what it could not read
     # is worth more than one that quietly averages its own mistakes in.
-    skipped_worn: dict[str, int] = {}
     refusals: dict[str, int] = {}
     seen = 0
     for brand_dir in sorted(CORPUS_ROOT.iterdir()):
@@ -355,12 +435,11 @@ def main(argv: list[str]) -> int:
         brand = json.loads(brand_file.read_text(encoding="utf-8"))
         tradition = brand.get("design_tradition", "unknown")
 
-        # Worn full-body photography is not measurable here, and the source says
-        # which it is rather than the pixels being asked to confess it.
-        if brand.get("photography", "flat") == "worn":
-            products = brand_dir / "products"
-            skipped_worn[brand_dir.name] = len(list(products.iterdir())) if products.is_dir() else 0
-            continue
+        # No source is skipped for its photography any more. Worn full-body shots
+        # were skipped while a plain worn tee and a printed one could not be told
+        # apart on colour; the edge test does tell them apart, so they are
+        # measured like anything else. brand.json still records what a source
+        # shoots, because it is true and worth knowing, but nothing acts on it.
 
         products_dir = brand_dir / "products"
         if not products_dir.is_dir():
@@ -398,7 +477,6 @@ def main(argv: list[str]) -> int:
     report: dict[str, Any] = {
         "designs_analysed": len(records),
         "designs_with_detectable_print": len(printed),
-        "skipped_worn_photography": skipped_worn,
         "refused": dict(sorted(refusals.items(), key=lambda kv: -kv[1])),
         "by_tradition": {},
         "overall": {},
@@ -448,9 +526,6 @@ def main(argv: list[str]) -> int:
 
     overall = report["overall"]
     print(f"\n{len(records)} designs analysed, {len(printed)} with a detectable print")
-    if skipped_worn:
-        named = ", ".join(f"{k} ({v})" for k, v in sorted(skipped_worn.items()))
-        print(f"{sum(skipped_worn.values())} skipped, worn photography: {named}")
     if refusals:
         print(f"{sum(refusals.values())} refused by the measurement:")
         for reason, n in report["refused"].items():

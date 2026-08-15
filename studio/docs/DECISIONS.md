@@ -643,3 +643,44 @@ about a third of their range on models, which is why the worn/flat decision
 moved from a per-source declaration to a per-image check. `brand.json` still
 records `photography`, now as `mixed` for the retailers, but only `worn` skips a
 source outright; everything else is decided per frame.
+
+### ADR-019 postscript — the edge test, and a threshold fitted to its own examples
+
+**15 August 2026.** Asked to fix the box and re-run. The box was already gone —
+segmentation replaced it — so this is about the third of the corpus still being
+refused.
+
+**What was added, and works.** Ink is applied to a surface and ends in a step; a
+fold is light rolling off a curve and ends in a ramp. Every region the garment
+encloses is now kept or dropped on the mean luminance gradient along its own
+boundary. This does what a filter on region *size* could not, and the difference
+is the reason to prefer it: a hem is long and soft, a letter is small and hard.
+A plain flat-laid hoodie falls from 1.4% coverage to 0.0% — its hood seam and
+drawstring were being counted as ink — while "KCDC BROOKLYN" is untouched at
+5,013 pixels of 5,120. 330 of 396 measured frames now carry a print, down from
+388, and the 58 that left were seams.
+
+**What was added, looked right, and was reverted.** The same edge test appeared
+to make worn photography measurable: six worn images, all six correct, plain tees
+falling to near zero while printed ones held. On that evidence the refusal was
+lifted and City Beach admitted — 589 frames measured instead of 398.
+
+Then a random six from the same source: a model's hair marked as ink, a fold on a
+plain pocket tee scored as a 4% print, a back graphic missed outright. Three of
+six wrong.
+
+The threshold had been fitted to the six images used to choose it. That is not a
+subtle statistical point — it is the same mistake as reading a rule off the
+corpus and calling it a finding, and it was caught only by looking at frames that
+had not been used for tuning. **Six cases is not a sample.** Any future attempt
+at worn photography needs a held-out set chosen before the threshold is.
+
+So worn shots are refused, still. 396 measured, 330 with a print, 305 refused —
+288 of them because a body is wearing the garment. That costs all 58 City Beach
+designs and about a third of the American surf and street ranges, and the price
+is that what remains is true.
+
+`brand.json` keeps its `photography` field because it is a true fact about a
+source, but nothing reads it any more. The decision is per frame, on what is
+actually in it — a per-source declaration could not see that the American shops
+mix worn shots into a mostly flat range.
