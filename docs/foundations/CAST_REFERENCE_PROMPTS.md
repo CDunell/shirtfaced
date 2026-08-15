@@ -138,12 +138,16 @@ her. She is a local girl who went and did that.
 
 ## Brock — 29
 
-> A twenty-nine year old man, broad through the shoulders, standing with more
-> energy than the pose asks for. Close-cropped hair. Wide, easy, slightly too-big
-> grin. Plain white t-shirt, plain navy shorts, white trainers that are new. A
-> chunky sports watch.
+> A twenty-nine year old Australian man standing relaxed, weight on one leg,
+> hands loose at his sides. Solid through the shoulders, not gym-built.
+> Close-cropped hair. Wide, easy, slightly too-big grin — an open face that
+> looks like it laughs a lot. Plain mid-grey t-shirt, plain dark denim, plain
+> low black canvas shoes. Nothing on his wrists or neck.
 
-The instigator. He has spent money he did not have on the trainers.
+The instigator. The new white trainers he spent money he did not have on are a
+scene fact, not a reference fact — like all wardrobe, they are stated per scene.
+The reference is base wardrobe only, so he reads as a person rather than an
+outfit.
 
 ## Tommy — 28
 
