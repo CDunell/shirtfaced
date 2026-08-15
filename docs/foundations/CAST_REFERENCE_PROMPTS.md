@@ -82,7 +82,8 @@ the per-character text can be nothing but the person.
 > weight on one leg, hands loose, looking slightly off camera, not posing. Neutral
 > expression with the face at rest. Every garment completely plain — no logos, no
 > graphics, no text, no embroidery, no visible labels. Clothes fit properly.
-> Photographic, not illustrated. One person only.
+> Photographic, not illustrated. One person only. Full length, head to feet in
+> frame, with space above and below.
 
 Frame B is the same prompt with the last line replaced by:
 
