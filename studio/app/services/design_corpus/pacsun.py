@@ -4,7 +4,7 @@ Acquisition only: real catalogue facts, images and provenance. Selection hints a
 used transiently to avoid a first-N sample; they are never persisted as analysis.
 """
 from __future__ import annotations
-import html, json, re, time, urllib.parse, urllib.request
+import html, json, re, time, urllib.error, urllib.parse, urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterable
@@ -12,7 +12,7 @@ from .collector import build_manifest, extension_for, provenance_record, utc_now
 BRAND_SLUG="pacsun"; BRAND_NAME="PacSun"; SITE_URL="https://www.pacsun.com"; DEFAULT_START_URL=f"{SITE_URL}/mens/graphic-tees/"; REQUEST_DELAY=.45
 USER_AGENT="Mozilla/5.0 (compatible; ShirtfacedDesignResearch/1.0; +https://shirtfaced.wtf)"
 NOISE=re.compile(r"\b(pack|solid|blank|basic|polo|rugby|jersey|knit|sweater|hoodie|button[- ]?up|scallop)\b",re.I)
-TEE=re.compile(r"\b(t[- ]?shirt|tee|muscle t[- ]?shirt|oversized t[- ]?shirt|cropped boxy t[- ]?shirt)\b",re.I)
+TEE=re.compile(r"\b(t[- ]?shirts?|tees?|muscle t[- ]?shirts?|oversized t[- ]?shirts?|cropped boxy t[- ]?shirts?)\b",re.I)
 MECHANISMS=(("licensed",re.compile(r"metallica|star wars|godfather|eminem|wwe|ufc|marvel|south park|coca.?cola|ford|formula 1|the met|keith haring",re.I)),("sport",re.compile(r"ufc|wwe|nba|nfl|raiders|racing|formula|champion|rodman",re.I)),("music",re.compile(r"metallica|eminem|tour|metro boomin|band",re.I)),("art",re.compile(r"haring|floral|angel|cherub|art|met|paper wings",re.I)),("dark",re.compile(r"misery|ominous|reaper|skull|bloody|grunge|goth|saint",re.I)),("brand",re.compile(r"pacsun|script|logo|handstyles|field of study|nightlab|huf",re.I)),("character",re.compile(r"cat|cartoon|spider|character|south park",re.I)),("auto",re.compile(r"ford|mustang|formula|race|chopper",re.I)))
 @dataclass
 class Product:
@@ -25,9 +25,23 @@ def canonical_url(url,base=SITE_URL):
     p=urllib.parse.urlsplit(urllib.parse.urljoin(base,html.unescape(url))); return urllib.parse.urlunsplit((p.scheme or "https",p.netloc.lower(),p.path,"",""))
 def page_url(url,base=SITE_URL):
     p=urllib.parse.urlsplit(urllib.parse.urljoin(base,html.unescape(url))); return urllib.parse.urlunsplit((p.scheme or "https",p.netloc.lower(),p.path,p.query,""))
-def _fetch(url):
-    req=urllib.request.Request(url,headers={"User-Agent":USER_AGENT,"Accept":"text/html,application/json,image/*"})
-    with urllib.request.urlopen(req,timeout=35) as r:return r.read(),r.headers.get_content_type()
+def _fetch(url,attempts=3):
+    # PacSun's WAF blocks with 403 intermittently under repeated requests rather
+    # than deterministically -- a category fetch that succeeds in one run can be
+    # blocked seconds later once enough requests have come from the same source.
+    # A short backoff-and-retry survives that without pretending the block never
+    # happens: it still raises on the final attempt.
+    req=urllib.request.Request(url,headers={
+        "User-Agent":USER_AGENT,
+        "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,application/json,image/*;q=0.8,*/*;q=0.7",
+        "Accept-Language":"en-US,en;q=0.9",
+    })
+    for attempt in range(attempts):
+        try:
+            with urllib.request.urlopen(req,timeout=35) as r:return r.read(),r.headers.get_content_type()
+        except urllib.error.HTTPError as error:
+            if error.code not in (403,429) or attempt==attempts-1:raise
+            time.sleep(REQUEST_DELAY*(4**(attempt+1)))
 def _jsonld(markup):
     rows=[]
     for raw in re.findall(r'<script[^>]+type=["\']application/ld\+json["\'][^>]*>(.*?)</script>',markup,re.I|re.S):
