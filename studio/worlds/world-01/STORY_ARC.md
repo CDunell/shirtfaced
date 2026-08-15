@@ -940,6 +940,43 @@ behind it. Nobody in it.
 
 ---
 
+# FIVE-B — WHO IS NAMED IN EACH SCENE
+
+The generation tier available here binds **three character references per
+clip**. Doctrine is `docs/foundations/GENERATION_PIPELINE.md` §7; this is that
+rule applied to these twelve scenes.
+
+Every scene nominates three. Everyone else is crowd, which costs nothing —
+`WORLD.md` Form already writes unnamed people as "one bloke" and "another
+mate". The one rule that cannot bend is that **the hero product's wearer is
+always one of the three**, because an unnamed wearer is a drifting face on the
+garment the post exists to sell.
+
+| # | Scene | Hero worn by | Named | Crowd |
+|---|---|---|---|---|
+| 1 | The extra stool | `PI-01` | gary, damo, casey | brock, emma |
+| 2 | Walking between venues | `PI-02` | damo, brock, casey | gary, emma |
+| 3 | The other door | `PI-04` | brock, damo, emma | gary, casey |
+| 4 | The band | `PI-05` | damo, brock, emma | gary, casey |
+| 5 | The rain | `PI-03` | casey, brock, emma | gary, damo |
+| 6 | The drain | `PI-04` | **still only** | all five |
+| 7 | Ice | `PI-04` → `PI-05` | brock, emma, damo | casey |
+| 8 | Five containers | `PI-02` | damo, brock, casey | emma |
+| 9 | Leave him | `PI-02` | damo, brock, casey | emma |
+| 10 | Brock is cooking | `PI-04` | brock, casey, damo | emma |
+| 11 | Getting light | `PI-05` | emma, brock, casey | damo |
+| 12 | Brought it back | `PI-03` | casey, damo, emma | brock |
+
+**Scene 6 cannot be filmed.** Five people lift a grate and it is the last frame
+in the night containing five — the count has to be legible, which needs five
+bound faces, which the tier does not allow. It stays a photo story, which is
+what §7 already specced it as. Nothing is lost.
+
+**Scene 1 survives with five present** because the two unnamed are stationary
+at the end of the table and never carry a face at size.
+
+---
+
 # SIX — DIRECTING
 
 All technique. No director named anywhere. The COSTUME TEST says the treatment can't
