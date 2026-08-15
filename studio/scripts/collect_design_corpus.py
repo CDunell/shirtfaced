@@ -420,6 +420,44 @@ BRANDS: dict[str, tuple[str, str, str]] = {
     "etnies": ("Etnies", "https://www.etnies.com", "major-skate"),
     "emerica": ("Emerica", "https://www.emerica.com", "major-skate"),
     "jack-wolfskin": ("Jack Wolfskin", "https://www.jackwolfskin.com", "major-outdoor"),
+    # --- USA multi-brand retail: the current-retail tradition's American half.
+    #
+    # City Beach was collected as ``current-retail`` on the owner's instruction --
+    # what is on the shelf now, at volume -- and these are its USA equivalents.
+    # Same tradition, because it is the same question and very nearly the same
+    # shelf: Vans, Thrasher, Champion, adidas, Billabong and Quiksilver turn up in
+    # both. The shop is the directory name, so an Australian-only or American-only
+    # cut is still a filter away.
+    #
+    # These are retailers, which corpus_tiers.py's tier 3 excludes. They are
+    # deliberately exempt for the reason recorded there, and ``retail_brand`` above
+    # carries the label that actually made each design so no brand-level number is
+    # ever filed under a shop.
+    #
+    # Tillys and PacSun are the two closest equivalents by size and are absent:
+    # Tillys answers 403 and PacSun serves a PerimeterX captcha. Both are refusing
+    # automated access, and that refusal is respected rather than worked around --
+    # a known gap, in the same spirit as the majors this file already records as
+    # unreachable.
+    #
+    # Skate.
+    "ccs": ("CCS", "https://www.ccs.com", "current-retail"),
+    "nj-skateshop": ("NJ Skateshop", "https://njskateshop.com", "current-retail"),
+    "kcdc": ("KCDC Skateshop", "https://kcdcskateshop.com", "current-retail"),
+    "black-sheep-skate": (
+        "Black Sheep Skate Shop",
+        "https://blacksheepskateshop.com",
+        "current-retail",
+    ),
+    "35th-north": ("35th North", "https://www.35thnorth.com", "current-retail"),
+    # Surf.
+    "jacks-surfboards": ("Jack's Surfboards", "https://jackssurfboards.com", "current-retail"),
+    "hss-surf": ("Huntington Surf & Sport", "https://www.hsssurf.com", "current-retail"),
+    "val-surf": ("Val Surf", "https://www.valsurf.com", "current-retail"),
+    "cleanline-surf": ("Cleanline Surf", "https://cleanlinesurf.com", "current-retail"),
+    "hansen-surf": ("Hansen Surf", "https://www.hansensurf.com", "current-retail"),
+    # Street.
+    "dtlr": ("DTLR", "https://www.dtlr.com", "current-retail"),
     # --- Vintage resellers. Not brands: no creative direction of their own, and
     # their stock is other people's work from the 70s through the 90s. They are
     # here because they are the only Shopify-shaped route to archive *garments* --
@@ -581,10 +619,20 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
     for product in deduped:
         by_type.setdefault((product.get("product_type") or "unknown").lower(), []).append(product)
 
-    wanted = []
-    while (not PRODUCTS_PER_BRAND or len(wanted) < PRODUCTS_PER_BRAND) and any(by_type.values()):
+    # The two conditions have to agree about what "no cap" means. They did not:
+    # the outer one read PRODUCTS_PER_BRAND=0 as unlimited, the inner one as
+    # ``len(wanted) < 0``, which is never true. So at the documented default this
+    # loop drained no bucket, never emptied by_type, and spun forever collecting
+    # nothing -- which is why the comment above can say the cap was lifted while
+    # 165 of 187 brands still sit at exactly 18 products on disk. Reproduced
+    # before changing: cap 3 terminates with 3, cap 0 spins.
+    def room() -> bool:
+        return not PRODUCTS_PER_BRAND or len(wanted) < PRODUCTS_PER_BRAND
+
+    wanted: list[dict[str, Any]] = []
+    while room() and any(by_type.values()):
         for bucket in by_type.values():
-            if bucket and len(wanted) < PRODUCTS_PER_BRAND:
+            if bucket and room():
                 wanted.append(bucket.pop(0))
 
     brand_dir = CORPUS_ROOT / slug
@@ -659,6 +707,13 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
                 {
                     "product_id": f"{slug}/{handle}",
                     "brand_slug": slug,
+                    # The label that actually made this, from Shopify's own
+                    # ``vendor``. On a single-label store it repeats the shop and
+                    # costs nothing; on a multi-label retailer it is the whole
+                    # difference between evidence and misattribution, which is
+                    # what corpus_tiers.py's tier 3 is about. CCS lists 36
+                    # vendors on one page, NJ Skateshop 45.
+                    "retail_brand": product.get("vendor", ""),
                     "name": product.get("title", ""),
                     "source_url": f"{site_url}/products/{handle}",
                     "category": (product.get("product_type") or "").lower() or "unknown",

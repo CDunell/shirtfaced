@@ -542,3 +542,53 @@ Until then the corpus is real reference imagery to look at — 58 designs across
 26 labels on the first pass — and not a source of medians. Nothing is wired in:
 `var/` is gitignored, and `joined.json` exists only when somebody runs the
 joiner.
+
+### ADR-019 addendum — the USA half, and what flat-lays proved
+
+**15 August 2026, same day.** The owner asked for City Beach's USA equivalents.
+
+**Eleven shops, one tradition.** CCS, NJ Skateshop, KCDC, Black Sheep and 35th
+North on the skate side; Jack's Surfboards, Huntington Surf & Sport, Val Surf,
+Cleanline Surf and Hansen Surf on the surf side; DTLR on the street side. All
+tagged `current-retail`, the same tradition as City Beach, because it is the same
+question and very nearly the same shelf — Vans, Thrasher, Champion, adidas,
+Billabong and Quiksilver appear in both markets. No second tradition was
+invented: the shop is the directory name, so an Australian-only or American-only
+cut stays one filter away, and a tradition that splits on nationality would
+imply a design difference not in evidence.
+
+All eleven are Shopify, so they need no new collector — they are rows in
+`BRANDS`. Shopify's `vendor` field carries the label that actually made each
+design, and `collect_design_corpus.py` now writes it as `retail_brand`, which is
+what makes the tier 3 exemption honest for these the way it already was for City
+Beach. CCS lists 36 vendors on a single page; NJ Skateshop, 45.
+
+**Tillys and PacSun are absent, and they are the two closest equivalents by
+size.** Tillys answers 403; PacSun serves a PerimeterX captcha. Both are
+refusing automated access and the refusal is respected rather than worked
+around. A known gap, recorded, not a silent one — the same treatment this file
+already gives the majors that run custom platforms.
+
+**A bug that made the documented default unusable.** `collect_brand`'s
+round-robin had two conditions disagreeing about what "no cap" meant: the outer
+read `PRODUCTS_PER_BRAND = 0` as unlimited, the inner as `len(wanted) < 0`,
+which is never true. At the default the loop drained no bucket and spun forever
+collecting nothing. Reproduced before changing — cap 3 terminates with 3, cap 0
+spins — which also explains how the comment in that file can say the cap was
+lifted while 165 of 187 brands still sit at exactly 18 products on disk. The
+lift was never runnable.
+
+**And the finding that sharpens ADR-019.** These shops photograph flat-lay on
+white, not worn. Running `_analyse` over them removes the first failure
+completely: no drape, and a plain hoodie correctly reads as no print. What
+remains is the second failure, and it is now confirmed on photography as
+different from City Beach's as it gets — **the fixed torso box sits below a
+chest print**. A CCS tee with a blue skateboard graphic across the chest and a
+Polar raglan with a small chest mark both measured zero, because the box starts
+35% down the frame and the print sits at 28%.
+
+So the box is not wrong for City Beach's framing in particular. It is wrong.
+Moving it cannot fix both, because a flat-laid garment fills the frame and a
+worn one does not — which is the argument for finding the garment and then the
+print, rather than assuming where both are, and the reason the engine is still
+left alone.

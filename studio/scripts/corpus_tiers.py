@@ -86,28 +86,59 @@ RETAILERS: frozenset[str] = frozenset(
     }
 )
 
-# --- The one retailer deliberately not excluded ------------------------------
+# --- The retailers deliberately not excluded ---------------------------------
 #
-# ``city-beach`` is exactly the shape above and is absent from that set on
-# purpose. Do not "fix" it by adding it.
+# These are exactly the shape above and are absent from that set on purpose. Do
+# not "fix" it by adding them.
 #
 # The owner named City Beach on 15 August 2026 as a source of current retail
 # design -- what is on the shelf now, at volume -- and asked for it as its own
-# tradition. Both halves of tier 3's objection are answered by construction:
+# tradition, then asked for the USA equivalents. Both halves of tier 3's
+# objection are answered by construction:
 #
-#   Filed under the shop's name. It is not. ``collect_current_retail.py`` records
-#   the label that actually made each design in ``product.json``'s
-#   ``retail_brand``, so no brand-level number is ever attributed to City Beach.
+#   Filed under the shop's name. It is not. Every product records the label that
+#   actually made it in ``product.json``'s ``retail_brand`` -- from Shopify's
+#   ``vendor`` for the American shops, from the tile payload for City Beach --
+#   so no brand-level number is ever attributed to a retailer.
 #
-#   Wrong for the shop's own tradition. It has no shared one. The tradition is
-#   ``current-retail``, which nothing else writes, so a retailer's stock cannot
-#   move the medians of ``skate``, ``au-surf`` or any other tradition a label
-#   belongs to. ``advise()`` filters on tradition before it takes a median.
+#   Wrong for the shop's own tradition. They have no shared one with any label.
+#   The tradition is ``current-retail``, which only these write, so a retailer's
+#   stock cannot move the medians of ``skate``, ``au-surf`` or any other
+#   tradition a label belongs to. ``advise()`` filters on tradition before it
+#   takes a median.
 #
-# What it can hold evidence about is the thing it is being asked about: how
-# graphic apparel is being presented and sold right now. That is a property of
-# the shelf, and a shop is the only place a shelf exists.
-NOT_EXCLUDED_RETAILER = "city-beach"
+# What they can hold evidence about is the thing being asked: how graphic
+# apparel is presented and sold right now. That is a property of the shelf, and
+# a shop is the only place a shelf exists.
+#
+# The shop is the directory name, so an Australian-only or American-only cut
+# stays a filter away without a second tradition.
+CURRENT_RETAIL: frozenset[str] = frozenset(
+    {
+        # Australia
+        "city-beach",
+        # USA -- skate
+        "ccs",
+        "nj-skateshop",
+        "kcdc",
+        "black-sheep-skate",
+        "35th-north",
+        # USA -- surf
+        "jacks-surfboards",
+        "hss-surf",
+        "val-surf",
+        "cleanline-surf",
+        "hansen-surf",
+        # USA -- street
+        "dtlr",
+    }
+)
+
+# Noted rather than acted on: ``undefeated`` and ``packer-shoes`` sit in BRANDS
+# as ``streetwear`` and are multi-label retailers too, so their tradition is
+# carrying other labels' work. Pre-existing and left alone -- reclassifying
+# somebody else's call is churn, and now that ``retail_brand`` is recorded the
+# attribution is at least recoverable.
 
 # --- Tier 4: licensed reproduction -------------------------------------------
 #
