@@ -50,8 +50,11 @@ A mathematical genius. Ran his own finance company and consulted for some of
 the largest companies in Australia. The chaos is not stupidity — it is a very
 clever man who has stopped performing seriousness. Separated about five years ago
 after eighteen years with the same woman — together from around fifteen, so
-she is most of his life to date. Two kids, late teens. Living his best
-life now with SK. *(Owner, 15 August 2026.)*
+she is most of his life to date. The divorce was messy and ugly, and it is
+where his view comes from: he came out of it having lost years and decided
+not to lose any more. "Living his best life" is not a personality, it is a
+position he arrived at the hard way. Two kids, late teens, who do not appear
+— they are not part of this and are never cast. *(Owner, 15 August 2026.)*
 
 **Damo and SK together** — the power couple who are suburban Aussies at
 heart. They swear a lot and laugh more. Neither is impressed by status,
@@ -100,10 +103,6 @@ reliable. If something's happening, he started it.
 ---
 
 ## 4. Open
-
-**Damo's two kids** — late teens, unnamed, uncast. They put two people of
-Grace's and Ethan's age into the family who appear in no world and have no
-reference. Whether they are characters or simply exist offstage is undecided.
 
 **Lucas** and **Tommy** — Emma's. She brought them into the orbit; whether
 they're mates or something else isn't something Gary asks about, and this
