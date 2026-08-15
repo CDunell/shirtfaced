@@ -3,7 +3,7 @@
 Production-ready standalone HTML email templates.
 
 Built to match the brand visual system shown in the design concepts:
-black header · cream paper (`#F3EFE5`) · acid lime (`#C8FF1A`) · condensed display type · raw mates energy.
+black header · cream paper (`#F3EFE5`) · acid lime (`#B9EC29`) · condensed display type · raw mates energy.
 
 ## Templates
 
@@ -24,7 +24,7 @@ Matching plain-text versions live in `plain-text/`.
 
 ## Visual system
 
-- **Colours**: black `#111111` / `#000000`, warm off-white `#F3EFE5`, acid lime `#C8FF1A`
+- **Colours**: black `#111111` / `#000000`, warm off-white `#F3EFE5`, acid lime `#B9EC29`
 - **Typography**: email-safe condensed stack (`Impact / Haettenschweiler / Arial Black / Arial`)
 - **Layout**: 600–640px desktop shell, single-column mobile, pure tables, Outlook-safe
 - **No web fonts** in the emails (client support is unreliable). The custom `Shirtfaced` typeface lives in the main repo for the website.
