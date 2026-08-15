@@ -187,8 +187,14 @@ The only appearance detail canon actually states — "redhead" — so it leads.
 
 > A twenty-six year old woman with the sharpest haircut in the group, glossy and
 > deliberately cut, because she does this for a living. Confident, direct, slight
-> knowing lift at one corner of the mouth. Plain black long-sleeve top, plain black
+> knowing lift at one corner of the mouth. Plain white long-sleeve top, plain black
 > wide-leg trousers, black ankle boots. Several thin silver rings on one hand.
+
+White or black on top, owner's call. The reference takes white because black
+head to toe is SK's silhouette exactly and the two of them would read as the
+same styling in a group frame. Black remains available per scene — it is the
+uniform of her trade and she is twelve years younger with a completely
+different haircut, so nothing is lost by using it when a scene wants it.
 
 ## Mitch — 26
 
