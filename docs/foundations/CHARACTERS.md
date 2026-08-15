@@ -53,8 +53,8 @@ after eighteen years with the same woman — together from around fifteen, so
 she is most of his life to date. The divorce was messy and ugly, and it is
 where his view comes from: he came out of it having lost years and decided
 not to lose any more. "Living his best life" is not a personality, it is a
-position he arrived at the hard way. Two kids, late teens, who do not appear
-— they are not part of this and are never cast. *(Owner, 15 August 2026.)*
+position he arrived at the hard way. No children appear in any world.
+*(Owner, 15 August 2026.)*
 
 **Damo and SK together** — the power couple who are suburban Aussies at
 heart. They swear a lot and laugh more. Neither is impressed by status,
