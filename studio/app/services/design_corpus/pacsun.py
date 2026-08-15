@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Callable, Iterable
 from .collector import build_manifest, extension_for, provenance_record, utc_now, write_json
 BRAND_SLUG="pacsun"; BRAND_NAME="PacSun"; SITE_URL="https://www.pacsun.com"; DEFAULT_START_URL=f"{SITE_URL}/mens/graphic-tees/"; REQUEST_DELAY=.45
-USER_AGENT="Mozilla/5.0 (compatible; ShirtfacedDesignResearch/1.0; +https://shirtfaced.wtf)"
+USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
 NOISE=re.compile(r"\b(pack|solid|blank|basic|polo|rugby|jersey|knit|sweater|hoodie|button[- ]?up|scallop)\b",re.I)
 TEE=re.compile(r"\b(t[- ]?shirts?|tees?|muscle t[- ]?shirts?|oversized t[- ]?shirts?|cropped boxy t[- ]?shirts?)\b",re.I)
 MECHANISMS=(("licensed",re.compile(r"metallica|star wars|godfather|eminem|wwe|ufc|marvel|south park|coca.?cola|ford|formula 1|the met|keith haring",re.I)),("sport",re.compile(r"ufc|wwe|nba|nfl|raiders|racing|formula|champion|rodman",re.I)),("music",re.compile(r"metallica|eminem|tour|metro boomin|band",re.I)),("art",re.compile(r"haring|floral|angel|cherub|art|met|paper wings",re.I)),("dark",re.compile(r"misery|ominous|reaper|skull|bloody|grunge|goth|saint",re.I)),("brand",re.compile(r"pacsun|script|logo|handstyles|field of study|nightlab|huf",re.I)),("character",re.compile(r"cat|cartoon|spider|character|south park",re.I)),("auto",re.compile(r"ford|mustang|formula|race|chopper",re.I)))
