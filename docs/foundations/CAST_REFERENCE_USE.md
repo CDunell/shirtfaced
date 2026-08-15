@@ -18,14 +18,16 @@ After references, a scene prompt is **the moment, the place, the light and the
 camera**, and the people arrive as images.
 
 That only holds if the reference is stable. A reference regenerated is a
-different person, so the seed and the file are the asset, not the prompt.
+different person, so **the file is the asset** — not the prompt, and not a seed.
+The generators in use expose no reusable seed; continuity is held by supplying
+the reference image itself to every subsequent generation of that character.
 
 ## 2. Where they live
 
 ```
 studio/var/cast/
   <slug>/
-    reference.json          identity, seed, model, prompt hash, date, provenance
+    reference.json          identity, model, prompt hash, date, provenance
     a-full-length.png       frame A
     b-head-shoulders.png    frame B
 ```
@@ -43,8 +45,8 @@ studio/var/cast/
 {
   "slug": "gary",
   "age_at_reference": 43,
-  "seed": 0,
   "model": "",
+  "continuity_method": "reference-image",
   "generated_at": "",
   "generated_in": "ChatGPT | Gemini | Claude",
   "prompt_sha256": "",
@@ -58,6 +60,10 @@ studio/var/cast/
 `CAST_REFERENCE_PROMPTS.md` can be detected against every existing reference
 rather than silently diverging from it.
 
+There is no seed field. An earlier draft had one and told people to record it;
+the generators in use return `seed: null`, so it was a field that could never be
+filled and advice that could never be followed.
+
 `supersedes` points at a previous reference directory when a character is
 regenerated. **A reference is never overwritten** — a new one is written beside
 it and the old one kept, because scenes already shot against the old face are
@@ -69,9 +75,10 @@ Per the standing decision, no metered API. The prompts are taken to a paid
 ChatGPT, Gemini or Claude interface and the files brought back.
 
 Order matters once: **Gary first.** Emma, Grace and Damo are matched to his brow
-and eye set, so his reference is the anchor. Generate his two frames, keep the
-seed, then generate the other three with his frame A supplied as a resemblance
-reference.
+and eye set, so his reference is the anchor. Generate his frame A, then generate
+frame B **in the same conversation with frame A attached** — that is what holds
+the face, since no seed is available. The other three family faces are generated
+the same way, with Gary's frame A supplied as a resemblance reference.
 
 Everyone else is independent and can be generated in any order.
 

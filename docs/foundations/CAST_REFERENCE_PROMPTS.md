@@ -65,8 +65,12 @@ coupled framing.
 
 # The prompts
 
-Fourteen references. Two frames each on one seed: **A** full length, **B** head
-and shoulders, same person, same light, same wardrobe.
+Fourteen references. Two frames each: **A** full length, **B** head and
+shoulders, same person, same light, same wardrobe.
+
+**Generate A first, then generate B in the same conversation with A attached.**
+The generators in use expose no reusable seed, so the image is what holds the
+face. Same rule for every later generation of that character.
 
 Every prompt below is complete on its own — paste it, generate, keep the seed.
 None of them names anybody, per `WORLD.md`'s Form rule. The names are headings
@@ -85,9 +89,12 @@ the per-character text can be nothing but the person.
 > Photographic, not illustrated. One person only. Full length, head to feet in
 > frame, with space above and below.
 
-Frame B is the same prompt with the last line replaced by:
+Frame B, with frame A attached:
 
-> Head and shoulders, same person, same light, same wardrobe, one person only.
+> Head and shoulders crop of this same person, same face, same wardrobe, same
+> plain mid-grey seamless background, same even soft studio light, 85mm, sharp,
+> full colour. Looking slightly off camera, not posing, neutral expression with
+> the face at rest. One person only.
 
 ---
 
