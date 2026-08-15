@@ -200,3 +200,30 @@ def test_a_zone_the_garment_does_not_have_lists_the_ones_it_does() -> None:
 def test_a_version_with_no_print_spec_names_all_three_missing_things() -> None:
     with pytest.raises(PrintRefused, match="garment and no print zone and no print width"):
         print_approved(_Store(png(100, 100)), _version({}))
+
+
+@pytest.mark.parametrize(
+    "garment_key",
+    ["../secrets", "..\\secrets", "sub/dir", "/etc/passwd"],
+    ids=["parent", "windows-parent", "subdirectory", "absolute"],
+)
+def test_a_garment_key_cannot_escape_the_garment_directory(garment_key: str) -> None:
+    """The key reaches this function from a request body.
+
+    It is a file stem and nothing else. This assertion used to live against
+    ``load_design`` in test_print_service.py, guarding the same class of bug on
+    the corner-drag print's design names; that path was deleted on 15 August
+    2026 and the guard here is what is left holding the property, so the test
+    moved rather than went.
+    """
+    with pytest.raises(PrintRefused, match="no garment called"):
+        print_approved(
+            _Store(png(100, 100)),
+            _version(
+                {
+                    "garment_key": garment_key,
+                    "zone_key": "front_chest",
+                    "print_width_mm": 80,
+                }
+            ),
+        )

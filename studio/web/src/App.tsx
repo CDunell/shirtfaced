@@ -5,7 +5,6 @@ import { ParagraphMedium } from "baseui/typography";
 import { WorkBench } from "./components/WorkBench";
 import { DesignsBench } from "./components/DesignsBench";
 import { EmailBench } from "./components/EmailBench";
-import { PrintBench } from "./components/PrintBench";
 import { VintageEvidenceBench } from "./components/VintageEvidenceBench";
 import { VintageResearchBench } from "./components/VintageResearchBench";
 import { PromptWorkbench } from "./components/PromptWorkbench";
@@ -19,15 +18,7 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 type View =
-  | "work"
-  | "prompts"
-  | "print"
-  | "concepts"
-  | "evidence"
-  | "research"
-  | "social"
-  | "email"
-  | "dashboard";
+  "work" | "prompts" | "concepts" | "evidence" | "research" | "social" | "email" | "dashboard";
 /** Which pipeline a destination belongs to.
  *
  * Phase 2a of DESIGN_FLOW_PLAN.md. The 14 August audit's largest structural
@@ -69,7 +60,10 @@ const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
   // World: canon → shot → photograph → decision → social → customer.
   { id: "dashboard", label: "Dashboard", pipeline: "world" },
   { id: "prompts", label: "Prompts", pipeline: "world" },
-  { id: "print", label: "Print", pipeline: "world" },
+  // Print was here. It printed a design onto a photograph by dragging four
+  // corners onto the garment, and the owner's account of it is that it never
+  // got off the ground and was replaced by defined zones. The zone-based print
+  // lives inside Designs and reads the approved version. Removed 15 August 2026.
   { id: "social", label: "Social", pipeline: "world" },
   { id: "email", label: "Email", pipeline: "world" },
 ];
@@ -289,8 +283,6 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           />
         ) : view === "prompts" ? (
           <PromptWorkbench />
-        ) : view === "print" ? (
-          <PrintBench />
         ) : view === "concepts" ? (
           <DesignsBench
             focus={focus}

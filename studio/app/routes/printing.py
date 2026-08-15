@@ -1,19 +1,24 @@
-"""Putting a design on a photograph.
+"""The photograph library.
 
-Separate from the generation API because nothing here generates anything. It lists
-what can be printed on, takes photographs that came from somewhere else, remembers
-where the design goes, and renders. No model is called and nothing is billed, so a
-placement can be nudged as many times as it takes.
+Separate from the generation API because nothing here generates anything. It takes
+photographs that came from somewhere else and hands them back.
+
+This module was called printing, and printed a design onto a photograph through a
+quadrilateral dragged over the garment by hand. That path never got off the ground
+and was replaced by defined zones in real millimetres; the zone-based print reads
+an approved design version and lives in ``app/services/approved_print.py``. The
+drag path, its placement table and its ``/api/designs`` file listing were removed
+on 15 August 2026. What remains is the library the world pipeline actually uses --
+Prompts uploads into it, Social reads from it.
 """
 
 from __future__ import annotations
 
-import io
 import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel
 from sqlalchemy import select, true
 from sqlalchemy.orm import Session, selectinload
 
@@ -23,16 +28,9 @@ from app.db.models import GenerationAttempt, Photo, Shot, World
 from app.db.session import get_db_session
 from app.domain.enums import AssetKind, AttemptState
 from app.services.print_service import (
-    NoSuchDesign,
-    NoSuchPhoto,
     NoSuchPrompt,
     NotAPhoto,
-    NotPlaced,
-    available_designs,
-    print_on_photo,
-    read_placement,
     register_generated,
-    save_placement,
     upload_photo,
 )
 
@@ -52,12 +50,6 @@ MAX_UPLOAD_BYTES = 64 * 1024 * 1024
 IMMUTABLE = "private, max-age=31536000, immutable"
 
 
-class DesignResponse(BaseModel):
-    """A design file that can be printed."""
-
-    name: str
-
-
 class PromptLineage(BaseModel):
     """The prompt a photograph came from."""
 
@@ -66,7 +58,7 @@ class PromptLineage(BaseModel):
 
 
 class PhotoResponse(BaseModel):
-    """A photograph a design can go on, and whether one has been placed."""
+    """A photograph, and where it came from."""
 
     id: uuid.UUID
     url: str
@@ -75,41 +67,11 @@ class PhotoResponse(BaseModel):
     uploaded: bool
     width: int
     height: int
-    placed: bool
     # Null for a photograph nobody attributed to a prompt.
     from_prompt: PromptLineage | None
 
 
-class PlacementBody(BaseModel):
-    """Where the design goes, as fractions of the image."""
-
-    # Clockwise from the top left. Fractions rather than pixels so the placement
-    # survives any resize of the photograph.
-    corners: list[tuple[float, float]] = Field(min_length=4, max_length=4)
-    settings: dict[str, float] = Field(default_factory=dict)
-    design: str | None = None
-
-    @field_validator("corners")
-    @classmethod
-    def _inside_the_photograph(cls, value: list[tuple[float, float]]) -> list[tuple[float, float]]:
-        """A corner outside the frame is a dragging accident, not an intention.
-
-        A little slack is allowed: pulling a corner just past the edge to cover a
-        shoulder that runs off frame is a real thing to want.
-        """
-        for x, y in value:
-            if not (-0.5 <= x <= 1.5 and -0.5 <= y <= 1.5):
-                raise ValueError("A corner is a long way outside the photograph.")
-        return value
-
-
-class PlacementResponse(BaseModel):
-    corners: list[tuple[float, float]]
-    settings: dict[str, float]
-    design: str | None
-
-
-def _photo_response(session: Session, photo: Photo) -> PhotoResponse:
+def _photo_response(photo: Photo) -> PhotoResponse:
     variation = photo.prompt_variation
     return PhotoResponse(
         id=photo.id,
@@ -118,7 +80,6 @@ def _photo_response(session: Session, photo: Photo) -> PhotoResponse:
         uploaded=photo.uploaded,
         width=photo.width,
         height=photo.height,
-        placed=read_placement(session, photo.id) is not None,
         from_prompt=PromptLineage(
             shot_external_id=variation.shot.external_id, variation=variation.variation
         )
@@ -127,16 +88,7 @@ def _photo_response(session: Session, photo: Photo) -> PhotoResponse:
     )
 
 
-@router.get("/designs", summary="Designs that can be printed")
-def list_designs(settings: SettingsDependency) -> list[DesignResponse]:
-    """Empty until artwork exists, which is a state rather than a failure."""
-    return [
-        DesignResponse(name=design.name)
-        for design in available_designs(settings.assets_root_resolved)
-    ]
-
-
-@router.get("/photos", summary="Photographs a design can go on")
+@router.get("/photos", summary="The photograph library")
 def list_photos(session: SessionDependency, world: str | None = None) -> list[PhotoResponse]:
     """Approved frames, and anything uploaded.
 
@@ -178,7 +130,7 @@ def list_photos(session: SessionDependency, world: str | None = None) -> list[Ph
         .all()
     )
 
-    return [_photo_response(session, photo) for photo in [*uploads, *generated]]
+    return [_photo_response(photo) for photo in [*uploads, *generated]]
 
 
 @router.post("/photos", summary="Upload a photograph", status_code=status.HTTP_201_CREATED)
@@ -192,9 +144,9 @@ async def upload(
 ) -> PhotoResponse:
     """Bring in a photograph this application did not make.
 
-    Not every photograph worth printing on comes out of the image model, and a fresh
-    deployment has no approved frames at all -- without this the library is empty and
-    the editor has nothing to open.
+    Not every photograph worth having comes out of the image model, and a fresh
+    deployment has no approved frames at all -- without this the library is empty
+    and Social has nothing to post.
     """
     data = await file.read()
     if len(data) > MAX_UPLOAD_BYTES:
@@ -219,7 +171,7 @@ async def upload(
     except NoSuchPrompt as error:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
 
-    return _photo_response(session, photo)
+    return _photo_response(photo)
 
 
 @router.get("/photos/{photo_id}/image", summary="The photograph itself")
@@ -240,85 +192,3 @@ def get_photo_image(
         ) from error
 
     return Response(content=data, media_type=photo.mime_type, headers={"Cache-Control": IMMUTABLE})
-
-
-@router.get("/photos/{photo_id}/placement", summary="Where the design sits")
-def get_placement(photo_id: uuid.UUID, session: SessionDependency) -> PlacementResponse | None:
-    """Null when nobody has placed one yet."""
-    row = read_placement(session, photo_id)
-    if row is None:
-        return None
-    return PlacementResponse(
-        corners=[(x, y) for x, y in row.corners], settings=row.settings, design=row.design
-    )
-
-
-@router.put("/photos/{photo_id}/placement", summary="Move the design")
-def put_placement(
-    photo_id: uuid.UUID, body: PlacementBody, session: SessionDependency
-) -> PlacementResponse:
-    """Replace the placement. Moving a design is an edit, not a new opinion."""
-    try:
-        row = save_placement(
-            session,
-            photo_id=photo_id,
-            corners=[[x, y] for x, y in body.corners],
-            settings=body.settings,
-            design=body.design,
-        )
-    except NoSuchPhoto as error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
-
-    return PlacementResponse(
-        corners=[(x, y) for x, y in row.corners], settings=row.settings, design=row.design
-    )
-
-
-@router.post("/photos/{photo_id}/print", summary="Print the design onto the photograph")
-def print_photo(
-    photo_id: uuid.UUID,
-    design: str,
-    session: SessionDependency,
-    settings: SettingsDependency,
-) -> Response:
-    """The rendered image itself.
-
-    Returned as bytes rather than stored: this is looked at, adjusted and looked at
-    again, and keeping every intermediate render would fill the disk with rejects.
-    Saving the one that is right is a separate decision.
-    """
-    photo = session.get(Photo, photo_id)
-    if photo is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No such photograph.")
-
-    store = FilesystemAssetStore(settings.assets_root_resolved)
-    try:
-        photo_bytes = store.load(photo.relative_path)
-    except AssetStoreError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="The image file is missing."
-        ) from error
-
-    try:
-        printed = print_on_photo(
-            session,
-            assets_root=settings.assets_root_resolved,
-            photo_bytes=photo_bytes,
-            photo_id=photo_id,
-            design_name=design,
-        )
-    except NotPlaced as error:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(error)
-        ) from error
-    except NoSuchDesign as error:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
-
-    buffer = io.BytesIO()
-    printed.save(buffer, format="PNG")
-    # Never cached: the whole point is that the next render is different.
-    return Response(
-        content=buffer.getvalue(),
-        media_type="image/png",
-        headers={"Cache-Control": "no-store"},
-    )
