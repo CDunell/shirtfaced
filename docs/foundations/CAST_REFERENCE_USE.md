@@ -153,8 +153,6 @@ look nobody chose.
 
 ## 6. Open, carried from the handoff
 
-- Brock is 29 here and 30 in Worlds 02 and 03; World 02 is his thirtieth.
-  Recorded, unresolved.
 - `CHARACTERS_PROPOSED_ADDITIONS.md` — Anh, Josh, Steph — is unapproved and has
   no references here.
 - Lucas's and Tommy's occupations, and anything between either of them and Emma,
