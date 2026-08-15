@@ -135,6 +135,17 @@ This is how a twelve-scene arc becomes films rather than fragments, and it is
 also the answer to §6: the event that cannot be requested becomes the second
 clip.
 
+**Getting the last frame.** `studio/scripts/lastframe.bat` — drag an mp4 onto
+it and it writes `<name>_lastframe.png` alongside, at full resolution. Or:
+
+```
+ffmpeg -sseof -0.5 -i input.mp4 -update 1 -q:v 1 lastframe.png
+```
+
+`-sseof -0.5` seeks half a second from the end and `-update 1` keeps
+overwriting until the final frame. Seeking to exactly zero can land past the
+last keyframe and write nothing.
+
 ---
 
 ## 9. Known gap in our own references
