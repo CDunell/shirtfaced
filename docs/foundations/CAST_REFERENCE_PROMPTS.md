@@ -120,12 +120,18 @@ Emma, Grace and Damo are matched to it.
 ## SK — 38
 
 > A thirty-eight year old woman, composed and entirely still, the only person here
-> who is comfortable being looked at. Dark hair cut precisely to the jaw. Plain
-> black fine-knit long-sleeve top, plain tailored black trousers, flat black
-> leather shoes. One narrow gold ring. Nothing else.
+> who is comfortable being looked at. Long dark hair worn loose, well past the
+> shoulders, slightly undone. Plain black long-sleeve top in a soft drapey knit,
+> plain wide black trousers falling straight from the hip, plain black leather
+> boots. One narrow gold ring. Nothing else.
 
-Fifteen years of international marketing rooms. She should read as the
-best-dressed person in the group without a single visible garment detail.
+Fifteen years of international marketing rooms in New York and London. She reads
+as the coolest person in the group, not the most corporate — everything is black
+and plain and the cut does all the work.
+
+An earlier version had her hair cut to the jaw in tailored trousers and loafers.
+That produced a solicitor, and it took Charlotte's styling signature, which the
+rules forbid. Length and drape are what separate them.
 
 ## Brock — 29
 
