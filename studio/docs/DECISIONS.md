@@ -592,3 +592,54 @@ Moving it cannot fix both, because a flat-laid garment fills the frame and a
 worn one does not — which is the argument for finding the garment and then the
 print, rather than assuming where both are, and the reason the engine is still
 left alone.
+
+### ADR-019 resolved — the garment is found, not assumed
+
+**15 August 2026.** The measurement is fixed. `_analyse` no longer crops a fixed
+rectangle and calls it the torso; it locates the garment and measures what the
+garment encloses.
+
+**How.** The backdrop comes from the four corners, not the border ring, which on
+a worn shot runs through the model. The subject is what differs from the
+backdrop — raw distance, because levelling a black tee to a white ground's
+brightness makes the two look alike, which cost one attempt an 8% garment. The
+fabric colour is read from a ring just inside the silhouette rather than from
+the middle, because a print covering a quarter of the garment *is* the median of
+a middle band, after which the fabric measures as ink and the ink as fabric. The
+garment is what matches that colour once brightness is divided out, so a fold
+stays fabric. And the print is what the garment encloses: filling holes finds
+it, a white print inside a black tee is a hole like any other, and an arm across
+the chest runs out to the frame edge and is never filled.
+
+All three original failures now have a test named for them, in
+`tests/unit/test_design_mining.py`. There were none before, which is why they
+lived so long.
+
+**What it refuses, and why that is the feature.** 245 of 643 frames are refused,
+233 of them because most of what stands out from the backdrop is not the
+garment — a body wearing it. Sampled and looked at: seven of eight were models,
+the eighth a white tee on a white backdrop, which is a real limit and has its
+own test. City Beach's 58 are skipped at source. What is left is 398 measured,
+388 with a detectable print, and a report that states every refusal by reason
+rather than averaging them in.
+
+**Two things learned the hard way, recorded so they are not re-tried.**
+
+A brightness test for prints with no hue of their own — black on grey — was
+abandoned once because without segmentation it caught the backdrop and the model
+and scored a plain worn tee at 15%. Inside a located garment it is safe and
+necessary, because chroma levelling otherwise rescales a black print into a grey
+tee and loses it entirely.
+
+Filtering print regions by size is the obvious way to stop seams, buttons and a
+straw hat's weave inflating coverage. It also removes 39% of a lettering print:
+"KCDC BROOKLYN" is twelve separate letter-shaped regions, each individually
+small. For a brand whose graphics are mostly words that is the wrong trade, so
+the seam noise stays.
+
+**And a correction to this ADR's own addendum.** It said the American shops
+photograph flat-lay. That is only mostly true — the surf and street shops put
+about a third of their range on models, which is why the worn/flat decision
+moved from a per-source declaration to a per-image check. `brand.json` still
+records `photography`, now as `mixed` for the retailers, but only `worn` skips a
+source outright; everything else is decided per frame.

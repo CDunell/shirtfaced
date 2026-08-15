@@ -44,6 +44,8 @@ def main(argv: list[str]) -> int:
         return 2
 
     rows: list[dict[str, object]] = []
+    skipped_worn = 0
+    refused = 0
     seen = 0
     for brand_dir in sorted(CORPUS_ROOT.iterdir()):
         if is_excluded(brand_dir.name):
@@ -53,6 +55,15 @@ def main(argv: list[str]) -> int:
             continue
         brand = json.loads(brand_file.read_text(encoding="utf-8-sig"))
         tradition = brand.get("design_tradition", "unknown")
+
+        # Same rule as the miner. Without it this file would quietly re-admit
+        # every worn-photography row the miner refuses, and joined.json is the
+        # one design_advisor.py actually reads -- so the refusal has to hold
+        # here or it does not hold anywhere that matters.
+        if brand.get("photography", "flat") == "worn":
+            products = brand_dir / "products"
+            skipped_worn += len(list(products.iterdir())) if products.is_dir() else 0
+            continue
 
         products_dir = brand_dir / "products"
         if not products_dir.is_dir():
@@ -69,7 +80,10 @@ def main(argv: list[str]) -> int:
             if not images:
                 continue
             result = _analyse(product_dir / images[0])
-            if result is None or not result.get("has_print"):
+            if result is None or "refused" in result:
+                refused += 1
+                continue
+            if not result.get("has_print"):
                 continue
 
             words = phrase_words(product.get("name", ""))

@@ -520,6 +520,34 @@ BRAND_COLLECTIONS: dict[str, str] = {
 }
 
 
+# brand slug -> what its product photography shows, where it is not "flat".
+#
+# Only the exceptions are listed; everything else defaults to flat-lay, which is
+# what a Shopify graphic-apparel store almost always shoots. This is a property
+# of the source that somebody has looked at, not a guess -- see the note in
+# brand.json's writer for why it is recorded rather than detected.
+#
+# "worn" is the only value that skips a source outright; "mixed" and "flat" both
+# leave it to the per-image check in mine_design_patterns.py, which is the thing
+# that actually decides. The retailers are recorded as mixed because the
+# assumption that they shoot flat turned out to be only mostly true -- the surf
+# and street shops put a third of their range on models, which no per-source
+# declaration can see.
+PHOTOGRAPHY: dict[str, str] = {
+    "ccs": "mixed",
+    "nj-skateshop": "mixed",
+    "kcdc": "mixed",
+    "black-sheep-skate": "mixed",
+    "35th-north": "mixed",
+    "jacks-surfboards": "mixed",
+    "hss-surf": "mixed",
+    "val-surf": "mixed",
+    "cleanline-surf": "mixed",
+    "hansen-surf": "mixed",
+    "dtlr": "mixed",
+}
+
+
 def _now() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
 
@@ -644,6 +672,18 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
                 "brand_name": name,
                 "site_url": site_url,
                 "design_tradition": tradition,
+                # What this source photographs, which decides whether it can be
+                # measured at all. mine_design_patterns.py can read a garment
+                # laid flat and cannot read one worn full-body -- shown by a
+                # sweep where a plain worn tee and a printed worn tee never
+                # separated at any fabric tolerance. Recorded rather than
+                # inferred: telling the two apart from the pixels was tried and
+                # a tan bikini top reads 95% "skin".
+                #
+                # "flat" is right for the Shopify stores here, which shoot on
+                # white. A store that turns out to shoot on models should be
+                # changed to "worn" and its numbers will stop being counted.
+                "photography": PHOTOGRAPHY.get(slug, "flat"),
                 "acquired_at": _now(),
                 "notes": "",
             },

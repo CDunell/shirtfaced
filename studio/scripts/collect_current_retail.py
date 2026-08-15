@@ -263,6 +263,12 @@ def store(products: list[dict[str, Any]]) -> tuple[int, int]:
                 "brand_name": BRAND_NAME,
                 "site_url": SITE_URL,
                 "design_tradition": TRADITION,
+                # City Beach shoots every product worn, full body. That is
+                # what makes this corpus reference imagery rather than a source
+                # of medians: mine_design_patterns.py reads a flat-laid garment
+                # and cannot read a worn one, so it skips these and says how
+                # many it skipped rather than averaging shadow into the numbers.
+                "photography": "worn",
                 "acquired_at": _now(),
                 "notes": (
                     "A multi-label retailer, not a label. Every product records the "
