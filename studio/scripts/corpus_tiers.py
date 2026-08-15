@@ -86,6 +86,29 @@ RETAILERS: frozenset[str] = frozenset(
     }
 )
 
+# --- The one retailer deliberately not excluded ------------------------------
+#
+# ``city-beach`` is exactly the shape above and is absent from that set on
+# purpose. Do not "fix" it by adding it.
+#
+# The owner named City Beach on 15 August 2026 as a source of current retail
+# design -- what is on the shelf now, at volume -- and asked for it as its own
+# tradition. Both halves of tier 3's objection are answered by construction:
+#
+#   Filed under the shop's name. It is not. ``collect_current_retail.py`` records
+#   the label that actually made each design in ``product.json``'s
+#   ``retail_brand``, so no brand-level number is ever attributed to City Beach.
+#
+#   Wrong for the shop's own tradition. It has no shared one. The tradition is
+#   ``current-retail``, which nothing else writes, so a retailer's stock cannot
+#   move the medians of ``skate``, ``au-surf`` or any other tradition a label
+#   belongs to. ``advise()`` filters on tradition before it takes a median.
+#
+# What it can hold evidence about is the thing it is being asked about: how
+# graphic apparel is being presented and sold right now. That is a property of
+# the shelf, and a shop is the only place a shelf exists.
+NOT_EXCLUDED_RETAILER = "city-beach"
+
 # --- Tier 4: licensed reproduction -------------------------------------------
 #
 # The artwork is a property owner's -- a film, a comic, a band's estate -- and

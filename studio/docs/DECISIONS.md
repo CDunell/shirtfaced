@@ -489,3 +489,56 @@ is a pattern here rather than an accident, and each instance gets written down
 when it is met.
 
 Nothing is migrated: no row ever held a collection role before migration 0028.
+
+## ADR-019 — City Beach is a corpus of images, not yet a corpus of numbers
+
+**15 August 2026.** The owner named City Beach as a source of modern design at
+volume, to sit beside the vintage evidence rather than merge into it.
+
+**It is collected as its own tradition, `current-retail`.** Not folded into
+`au-streetwear` with the other Australian shops. `advise()` filters on tradition
+before it takes a median, and the whole reason that parameter exists is that
+averaging two registers produces a design belonging to neither — current retail
+and 1990s archive stock are exactly that distance apart.
+
+**It needed its own collector.** `collect_design_corpus.py` reads Shopify's
+`/products.json`. City Beach runs Salesforce Commerce Cloud and has no such
+endpoint, so adding a row to `BRANDS` would have produced a skip, not a corpus.
+`collect_current_retail.py` reads the SFCC storefront grid, whose product tiles
+carry the same data as structured JSON attributes.
+
+**It is a retailer, and `corpus_tiers.py` excludes retailers.** Deliberately not
+excluded here, and the file says so at the exclusion list so nobody reverses it.
+Tier 3's objection is that a retailer's stock gets filed under the shop's name
+and poisons brand-level numbers. Both halves are answered by construction: every
+product records the label that actually made it in `retail_brand`, and the
+tradition is one nothing else writes, so no label's medians can move. What a
+shop can hold evidence about is what is on the shelf now, which is the question
+being asked.
+
+**The measurement does not work on these photographs, and this is the finding
+that matters.** `mine_design_patterns.py`'s `_analyse` was written for flat-lays
+and torso crops. City Beach shoots every product worn and full-body. Painting
+the print mask back over the image shows three failures: fold shadows measure as
+ink (a plain tee scored 31% coverage), the fixed torso box lands under chest
+prints and over arms, hair and background, and a light print on a dark garment
+trips the off-garment cut-off and measures as no print at all (a full-front
+Formula 1 graphic scored 0.3%).
+
+Only the first is a threshold problem. Rescaling each pixel to the garment's own
+luminance before measuring collapses drape to nothing — verified — because a
+fold is the garment colour times a scalar while ink has its own hue. The other
+two need the garment located in the frame and the print located within it,
+rather than both assumed by a fixed crop. That is a piece of work, not an edit,
+and it is not done.
+
+**So the engine was left alone.** Changing a shared measurement to suit one
+source, when two of its three failures would remain, would buy a number that
+looks better and is still wrong. `_analyse` has no test coverage at all, which
+is why none of this surfaced earlier and is the first thing to fix if anyone
+picks this up.
+
+Until then the corpus is real reference imagery to look at — 58 designs across
+26 labels on the first pass — and not a source of medians. Nothing is wired in:
+`var/` is gitignored, and `joined.json` exists only when somebody runs the
+joiner.
