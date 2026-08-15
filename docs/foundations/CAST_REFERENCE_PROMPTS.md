@@ -220,10 +220,14 @@ feet.
 
 ## Charlotte — 25
 
-> A twenty-five year old woman, upright, precise, hands still at her sides. Dark
-> hair, blunt cut, tucked behind one ear. A measured expression that gives nothing
-> away for free. Plain white shirt, plain navy trousers, plain flat leather loafers.
-> A slim watch on a leather strap.
+> A twenty-five year old woman, upright, precise, hands still at her sides.
+> Blonde hair, blunt cut, tucked behind one ear. A measured expression that gives
+> nothing away for free. Plain white shirt, plain navy trousers, plain flat leather
+> loafers. A slim watch on a leather strap.
+
+Blonde. *(Owner, 15 August 2026.)* It also separates her from Emma and Casey,
+who are both dark and near her age — she was the third woman in the cast
+sharing that colouring and the same blunt-cut silhouette.
 
 ## Ethan — 20
 
