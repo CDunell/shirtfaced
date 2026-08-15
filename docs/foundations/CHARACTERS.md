@@ -48,8 +48,9 @@ Exhausting, beloved, always the first name in the retelling.
 
 A mathematical genius. Ran his own finance company and consulted for some of
 the largest companies in Australia. The chaos is not stupidity — it is a very
-clever man who has stopped performing seriousness. Divorced about five years
-ago after an eighteen-year marriage; two kids, late teens. Living his best
+clever man who has stopped performing seriousness. Separated about five years ago
+after eighteen years with the same woman — together from around fifteen, so
+she is most of his life to date. Two kids, late teens. Living his best
 life now with SK. *(Owner, 15 August 2026.)*
 
 **Damo and SK together** — the power couple who are suburban Aussies at
@@ -103,10 +104,6 @@ reliable. If something's happening, he started it.
 **Damo's two kids** — late teens, unnamed, uncast. They put two people of
 Grace's and Ethan's age into the family who appear in no world and have no
 reference. Whether they are characters or simply exist offstage is undecided.
-
-**Damo's age against the marriage.** He is 38 in the cast table, divorced five
-years ago after eighteen years married — which puts the wedding at fifteen.
-One of the three numbers is wrong. Recorded, not guessed at.
 
 **Lucas** and **Tommy** — Emma's. She brought them into the orbit; whether
 they're mates or something else isn't something Gary asks about, and this
