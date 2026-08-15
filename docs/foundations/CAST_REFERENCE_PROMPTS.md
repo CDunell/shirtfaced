@@ -144,10 +144,9 @@ her. She is a local girl who went and did that.
 > looks like it laughs a lot. Plain mid-grey t-shirt, plain dark denim, plain
 > low black canvas shoes. Nothing on his wrists or neck.
 
-The instigator. The new white trainers he spent money he did not have on are a
-scene fact, not a reference fact — like all wardrobe, they are stated per scene.
-The reference is base wardrobe only, so he reads as a person rather than an
-outfit.
+The instigator. He finds the other door, goes down the drain after the phone,
+and gives away the only warm thing he owns. That is the whole character and it
+needs no money attached to it.
 
 ## Tommy — 28
 

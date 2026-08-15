@@ -398,9 +398,12 @@ cohort at 25–27 and Mitch at 29 as that cohort's ceiling, so Brock sits on the
 ceiling at **29** — as old as he can be and still be Mitch's mate.
 
 That is also where his stated character works hardest. *"Loud, generous, financially
-unreliable, otherwise completely reliable"* at 25 is an ordinary skint
-twenty-something and carries nothing; at 29 it is a trait, and the declined card in
-scene 5 of `STORY_ARC.md` is sharp. Settled.
+unreliable, otherwise completely reliable"* at 25 is an ordinary twenty-something
+and carries nothing; at 29 it is a trait. Settled.
+
+The money spine this paragraph originally leant on — a declined card in scene 5 —
+was cut from `STORY_ARC.md` and the citation removed with it. Canon's
+"financially unreliable" is a trait he has, not a thread anything hangs off.
 
 ## 8.5 — What the cast now looks like
 
