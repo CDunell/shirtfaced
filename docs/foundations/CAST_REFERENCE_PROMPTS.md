@@ -241,10 +241,18 @@ The politeness is the whole joke. It has to read in the posture.
 ## Grace — 19
 
 > A nineteen year old woman. Deep-set eyes under a heavy brow, the same as her
-> father's and her half-sister's. Dark hair, straight, pushed back off her face. A
-> completely flat, unimpressed expression — the driest face in the cast, entirely
-> deliberate. Plain oversized dark-grey sweatshirt, plain black jeans, black
-> trainers.
+> father's and her half-sister's. Strawberry blonde hair, straight, pushed back off
+> her face. A completely flat, unimpressed expression — the driest face in the
+> cast, entirely deliberate. Plain oversized dark-grey sweatshirt, plain black
+> jeans, black trainers.
+
+Strawberry blonde, from her mother's side. *(Owner, 15 August 2026.)* It does
+real work: she and Emma are half-sisters, so the hair coming from the mother is
+exactly why they do not match while both still carry Gary's brow. The
+resemblance and the difference now have the same explanation.
+
+Not Sophie's colour. Sophie is vivid natural red; Grace is strawberry blonde
+and eight years younger.
 
 ---
 
