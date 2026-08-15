@@ -744,25 +744,53 @@ def collect_brand(slug: str, name: str, site_url: str, tradition: str) -> dict[s
     }
 
 
-def write_manifest(results: list[dict[str, Any]]) -> None:
-    """Built once, after collection — never by a collector, to avoid racing writers."""
+def write_manifest(results: list[dict[str, Any]] | None = None) -> None:
+    """Built by walking the corpus, never from one run's results.
+
+    It used to be built from ``results``, which meant every brand the run did not
+    touch was silently dropped from the index. That was survivable while one
+    collector wrote this root. It is not now: ``collect_current_retail.py``
+    writes City Beach here from its SFCC storefront, and the first Shopify run
+    afterwards rebuilt a manifest of eleven brands with City Beach absent, while
+    its 58 designs sat on disk untouched.
+
+    Walking the tree is what DESIGN_CORPUS_SCHEMA.md describes -- "built after
+    collection, not written by individual collectors" -- and it cannot disagree
+    with what is actually there, whoever put it there or how long ago.
+
+    ``results`` is still read, for the one thing disk cannot show: which brands
+    were attempted and skipped, and why.
+    """
     CORPUS_ROOT.mkdir(parents=True, exist_ok=True)
+
+    brands: list[dict[str, Any]] = []
+    for brand_dir in sorted(CORPUS_ROOT.iterdir()):
+        if not (brand_dir / "brand.json").is_file():
+            continue
+        products = sorted((brand_dir / "products").glob("*/product.json"))
+        images = 0
+        for product_file in products:
+            try:
+                record = json.loads(product_file.read_text(encoding="utf-8-sig"))
+            except ValueError:
+                continue
+            images += len(record.get("images") or [])
+        brands.append(
+            {
+                "brand_slug": brand_dir.name,
+                "product_count": len(products),
+                "image_count": images,
+            }
+        )
+
     (CORPUS_ROOT / "manifest.json").write_text(
         json.dumps(
             {
                 "generated_at": _now(),
-                "brands": [
-                    {
-                        "brand_slug": r["brand_slug"],
-                        "product_count": r["product_count"],
-                        "image_count": r["image_count"],
-                    }
-                    for r in results
-                    if r["status"] == "collected"
-                ],
+                "brands": brands,
                 "skipped": [
                     {"brand_slug": r["brand_slug"], "reason": r["reason"]}
-                    for r in results
+                    for r in results or []
                     if r["status"] == "skipped"
                 ],
             },

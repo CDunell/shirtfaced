@@ -76,6 +76,7 @@ from collect_design_corpus import (
     WANTED_TYPE_PATTERN,
     _fetch,
     _now,
+    write_manifest,
 )
 
 BRAND_SLUG = "city-beach"
@@ -365,6 +366,12 @@ def main(argv: list[str]) -> int:
 
     print(f"\n{len(found)} designs found. Downloading images...")
     products, images = store(found)
+
+    # Rebuilt from the tree, so this run indexes itself without dropping the
+    # Shopify brands it never touched -- and the reverse, which is what happened
+    # the first time the Shopify collector ran after City Beach existed.
+    write_manifest()
+
     print(f"\n{products} products, {images} images -> {CORPUS_ROOT / BRAND_SLUG}")
     print(f"tradition: {TRADITION}")
     return 0
