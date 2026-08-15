@@ -119,19 +119,22 @@ Emma, Grace and Damo are matched to it.
 
 ## SK — 38
 
-> A thirty-eight year old woman, composed and entirely still, the only person here
-> who is comfortable being looked at. Long dark hair worn loose, well past the
-> shoulders, slightly undone. Plain black long-sleeve top in a soft drapey knit,
-> plain wide black trousers falling straight from the hip, plain black leather
-> boots. One narrow gold ring. Nothing else.
+> A thirty-eight year old Australian woman, composed and completely at ease, the
+> only person here who is comfortable being looked at. Long dark hair worn loose,
+> well past the shoulders, slightly undone. Skin with some sun in it, faint
+> freckling across the nose, minimal make-up. Warm and direct rather than cool.
+> Plain black long-sleeve top in a soft drapey knit, plain wide black trousers
+> falling straight from the hip, plain black leather boots. One narrow gold ring.
+> Nothing else.
 
-Fifteen years of international marketing rooms in New York and London. She reads
-as the coolest person in the group, not the most corporate — everything is black
-and plain and the cut does all the work.
+Brisbane, to high school teacher parents, then fifteen years of marketing rooms
+in New York and London. The polish is earned and worn lightly — she is the
+coolest person in the group and none of it is armour.
 
-An earlier version had her hair cut to the jaw in tailored trousers and loafers.
-That produced a solicitor, and it took Charlotte's styling signature, which the
-rules forbid. Length and drape are what separate them.
+Two earlier versions were wrong. The first cut her hair to the jaw and put her in
+tailored trousers and loafers, which produced a solicitor and took Charlotte's
+styling signature. The second read as an international transplant with no sun on
+her. She is a local girl who went and did that.
 
 ## Brock — 29
 

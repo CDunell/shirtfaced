@@ -52,6 +52,10 @@ has run campaigns bigger than this one — which either makes her the
 best-qualified person in the group to say an idea is bad, or the least
 impressed by any of it.
 
+Born and raised in Brisbane to high school teacher parents. Local girl made
+good — the international career is something she went and did, not something
+she came from, and she wears it lightly. *(Owner, 15 August 2026.)*
+
 **Grace** — 18+, Gary's daughter, Emma's half-sister. Computer science and
 engineering student. The driest humour in the entire cast. Ethan's
 girlfriend.
