@@ -1,0 +1,6 @@
+{
+  "scene": "pub-1105",
+  "candidates": 1,
+  "purpose": "first live paid seed after JPEG response-format fix",
+  "manual_gate": "seed_review_required_before_video"
+}
