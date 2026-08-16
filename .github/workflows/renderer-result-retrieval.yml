@@ -1,0 +1,49 @@
+name: Renderer result retrieval
+on:
+  push:
+    branches: [main]
+    paths: ["studio/retrieval-triggers/*.json"]
+jobs:
+  retrieve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: "${{ github.sha }}"}
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Find latest localized Damo result
+        id: find
+        run: |
+          set -euo pipefail
+          result_dir=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'python3 - <<'"'"'PY'"'"'
+import json
+from pathlib import Path
+root=Path("/home/ubuntu/shirtfaced-studio/var/renderer-validation/pub-1105")
+found=[]
+for m in root.glob("*/manifest.json"):
+    try: d=json.loads(m.read_text())
+    except Exception: continue
+    if d.get("experiment")=="damo-localized-crop-identity-edit":
+        found.append((m.stat().st_mtime,m.parent))
+if not found: raise SystemExit(1)
+print(max(found,key=lambda x:x[0])[1])
+PY')
+          test -n "$result_dir"
+          echo "result_dir=$result_dir" >> "$GITHUB_OUTPUT"
+      - name: Retrieve package
+        run: |
+          mkdir -p renderer-result
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.find.outputs.result_dir }}/." renderer-result/
+          test -s renderer-result/manifest.json
+          test -s renderer-result/prompt.txt
+          test -s renderer-result/seed-1.jpg
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pub-1105-localized-damo-result
+          path: renderer-result/
+          if-no-files-found: error
+          retention-days: 7
