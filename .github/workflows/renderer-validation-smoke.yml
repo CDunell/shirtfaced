@@ -4,14 +4,28 @@ on:
   workflow_run:
     workflows: ["Deploy"]
     types: [completed]
+  workflow_dispatch:
 
 jobs:
   smoke:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
-      - name: Smoke renderer validation contract
-        run: python studio/scripts/smoke_renderer_validation.py --base https://studio.shirtfaced.wtf
+
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Smoke renderer validation contract on production host
+        run: |
+          scp -i ~/.ssh/deploy_key \
+            studio/scripts/smoke_renderer_validation.py \
+            ubuntu@${{ secrets.ORACLE_HOST }}:/tmp/smoke_renderer_validation.py
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'python3 /tmp/smoke_renderer_validation.py --base http://127.0.0.1:8010'
