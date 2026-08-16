@@ -8,12 +8,9 @@ without rewriting scene logic.
 from __future__ import annotations
 
 import base64
-import io
 import time
 from dataclasses import dataclass
 from pathlib import Path
-
-from PIL import Image, ImageFile, ImageOps
 
 from app.adapters.reference_images import ReferenceImage
 
@@ -54,54 +51,6 @@ class GoogleVideoResult:
     operation_name: str | None
 
 
-def _normalise_reference_for_gemini(ref: ReferenceImage) -> tuple[str, str]:
-    """Return a clean base64 JPEG for Gemini's inline image input.
-
-    The first production cast bootstrap exposed that some legacy JPEGs are truncated:
-    browsers display them, but strict decoders and Gemini reject them. Pillow can salvage
-    those streams when explicitly allowed. We immediately re-encode the decoded pixels
-    to a fresh baseline RGB JPEG, so the provider never receives the damaged source bytes.
-
-    This is a compatibility bridge for legacy references, not permission to keep creating
-    damaged assets. New canonical files should pass strict decode before storage.
-    """
-
-    previous = ImageFile.LOAD_TRUNCATED_IMAGES
-    ImageFile.LOAD_TRUNCATED_IMAGES = True
-    try:
-        with Image.open(io.BytesIO(ref.data)) as source:
-            source.load()
-            image = ImageOps.exif_transpose(source)
-            if image.mode in {"RGBA", "LA"} or (
-                image.mode == "P" and "transparency" in image.info
-            ):
-                rgba = image.convert("RGBA")
-                background = Image.new("RGB", rgba.size, "white")
-                background.paste(rgba, mask=rgba.getchannel("A"))
-                image = background
-            else:
-                image = image.convert("RGB")
-
-            max_side = 2048
-            if max(image.size) > max_side:
-                image.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
-
-            output = io.BytesIO()
-            image.save(
-                output,
-                format="JPEG",
-                quality=92,
-                optimize=True,
-                progressive=False,
-            )
-    except Exception as exc:
-        raise GoogleMediaError(f"Reference image {ref.name!r} cannot be decoded") from exc
-    finally:
-        ImageFile.LOAD_TRUNCATED_IMAGES = previous
-
-    return base64.b64encode(output.getvalue()).decode("ascii"), "image/jpeg"
-
-
 class GoogleImageClient:
     def __init__(self, *, api_key: str, model: str) -> None:
         if not api_key or not model:
@@ -114,8 +63,13 @@ class GoogleImageClient:
     def generate(self, request: GoogleImageRequest) -> GoogleImageResult:
         inputs: list[dict[str, str]] = []
         for ref in request.references:
-            data, mime_type = _normalise_reference_for_gemini(ref)
-            inputs.append({"type": "image", "data": data, "mime_type": mime_type})
+            inputs.append(
+                {
+                    "type": "image",
+                    "data": base64.b64encode(ref.data).decode("ascii"),
+                    "mime_type": ref.mime_type,
+                }
+            )
         inputs.append({"type": "text", "text": request.prompt})
 
         interaction = self._client.interactions.create(
