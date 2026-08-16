@@ -9,7 +9,7 @@ jobs:
     concurrency: {group: renderer-veo-coverage, cancel-in-progress: false}
     steps:
       - uses: actions/checkout@v4
-        with: {ref: "${{ github.sha }}"}
+        with: {ref: "${{ github.sha }}", fetch-depth: 2}
       - name: Install ffmpeg
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - name: Set up deploy key
@@ -25,7 +25,10 @@ jobs:
         id: run
         run: |
           set -euo pipefail
-          trigger=$(ls studio/veo-coverage-triggers/*.json | sort | tail -1)
+          mapfile -t triggers < <(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'studio/veo-coverage-triggers/*.json')
+          test "${#triggers[@]}" -eq 1
+          trigger="${triggers[0]}"
+          test -s "$trigger"
           seed_path=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["seed_relative_path"])' "$trigger")
           seed_sha=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["seed_sha256"])' "$trigger")
           shot=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["shot"])' "$trigger")
@@ -43,6 +46,7 @@ jobs:
           ffmpeg -y -i veo-result/video-generated.mp4 -map 0:v:0 -c:v copy -an veo-result/video-1.mp4
           test -s veo-result/video-1.mp4
           ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 veo-result/video-1.mp4 | test ! -s /dev/stdin
+          ffprobe -v error -show_entries stream=width,height,r_frame_rate -show_entries format=duration -of json veo-result/probe.json > /dev/null 2>&1 || true
           ffprobe -v error -show_entries stream=width,height,r_frame_rate -show_entries format=duration -of json veo-result/video-1.mp4 > veo-result/probe.json
           sha256sum veo-result/video-1.mp4 > veo-result/video-1.sha256
       - uses: actions/upload-artifact@v4
