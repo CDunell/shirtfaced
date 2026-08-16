@@ -1,0 +1,7 @@
+{
+  "scene": "pub-1105",
+  "candidates": 1,
+  "approved_by_user": true,
+  "purpose": "first paid Nano renderer validation seed",
+  "manual_gate_after": "seed review before any Veo spend"
+}
