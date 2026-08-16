@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """Renderer validation endpoints.
 
 These endpoints expose the benchmark plan and per-scene production packages. They do
