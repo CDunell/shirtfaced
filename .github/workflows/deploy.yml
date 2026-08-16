@@ -111,8 +111,8 @@ jobs:
             assets/garments/ \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/assets/garments/
 
-      # Seed only missing runtime refs. Once present, var/cast remains the authority and
-      # future deploys must never overwrite a deliberately replaced canonical image.
+      # Runtime refs remain authoritative when they are valid. A corrupt/truncated file
+      # is not a deliberate replacement, so repair it from the checked-in bootstrap.
       - name: Seed canonical cast references
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '
@@ -127,8 +127,22 @@ jobs:
               src="$root/cast-bootstrap/$rel"
               dst="$root/var/cast/$rel"
               test -s "$src"
-              if [ ! -s "$dst" ]; then cp "$src" "$dst"; fi
+              repair=0
+              if [ ! -s "$dst" ]; then
+                repair=1
+              elif [ -x "$root/.venv/bin/python" ]; then
+                if ! "$root/.venv/bin/python" -c "from PIL import Image; import sys; im=Image.open(sys.argv[1]); im.load()" "$dst" >/dev/null 2>&1; then
+                  repair=1
+                fi
+              fi
+              if [ "$repair" -eq 1 ]; then
+                cp "$src" "$dst"
+                echo "Repaired canonical cast reference: $rel"
+              fi
               test -s "$dst"
+              if [ -x "$root/.venv/bin/python" ]; then
+                "$root/.venv/bin/python" -c "from PIL import Image; import sys; im=Image.open(sys.argv[1]); im.load()" "$dst"
+              fi
             done
           '
 
