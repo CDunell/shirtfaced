@@ -1,0 +1,51 @@
+name: Paid renderer validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/validation-triggers/*.json"
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: renderer-paid-validation
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Run one approved paid pub seed
+        id: generate
+        run: |
+          set -euo pipefail
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            '/home/ubuntu/shirtfaced-studio/.venv/bin/python /home/ubuntu/shirtfaced-studio/scripts/run_renderer_seed.py --scene pub-1105 --candidates 1')
+          printf '%s\n' "$output"
+          result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1)
+          test -n "$result_dir"
+          echo "result_dir=$result_dir" >> "$GITHUB_OUTPUT"
+
+      - name: Retrieve generated seed package
+        run: |
+          mkdir -p renderer-result
+          scp -i ~/.ssh/deploy_key -r \
+            ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.generate.outputs.result_dir }}/." \
+            renderer-result/
+          test -s renderer-result/manifest.json
+          test -s renderer-result/prompt.txt
+          ls renderer-result/seed-* >/dev/null
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pub-1105-seed
+          path: renderer-result/
+          if-no-files-found: error
+          retention-days: 7
