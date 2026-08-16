@@ -15,17 +15,17 @@ jobs:
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
-      - name: Retrieve localized Damo package
+      - name: Retrieve Damo canonical references
         run: |
           set -euo pipefail
-          mkdir -p renderer-result
-          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/renderer-validation/pub-1105/20260816T125421Z/. renderer-result/
-          test -s renderer-result/manifest.json
-          test -s renderer-result/prompt.txt
-          test -s renderer-result/seed-1.jpg
+          mkdir -p renderer-result/damo
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/cast/damo/a-full-length.png renderer-result/damo/
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/cast/damo/b-head-shoulders.png renderer-result/damo/
+          test -s renderer-result/damo/a-full-length.png
+          test -s renderer-result/damo/b-head-shoulders.png
       - uses: actions/upload-artifact@v4
         with:
-          name: pub-1105-localized-damo-result
-          path: renderer-result/
+          name: damo-canonical-refs
+          path: renderer-result/damo/
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 1
