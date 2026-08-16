@@ -78,7 +78,9 @@ async def _read_png(slot: str, upload: UploadFile) -> tuple[bytes, dict[str, obj
                 raise HTTPException(status_code=400, detail=f"{slot}: source must be a real PNG")
             width, height = image.size
             if width < 256 or height < 256:
-                raise HTTPException(status_code=400, detail=f"{slot}: implausibly small image {width}x{height}")
+                raise HTTPException(
+                    status_code=400, detail=f"{slot}: implausibly small image {width}x{height}"
+                )
     except HTTPException:
         raise
     except Exception as exc:
