@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate one scene-first Nano Pro pub master from the persistent GPT composition reference."""
+"""Generate one master-locked Nano Pro pub candidate from the persistent GPT scene master."""
 from __future__ import annotations
 import hashlib, io, json, sys
 from datetime import UTC, datetime
@@ -10,37 +10,35 @@ from app.adapters.google_media import GoogleImageClient, GoogleImageRequest
 from app.adapters.reference_images import ReferenceImage
 from app.config import get_settings
 
-PROMPT="""IMAGE 1 IS THE LOCKED MASTER EVENT REFERENCE. Edit/reframe IMAGE 1 into a vertical 9:16 documentary photograph. Do not redesign the event and do not turn the central man into a hero portrait.
+PROMPT="""IMAGE 1 IS THE MASTER. PRESERVE IT. DO NOT REDESIGN, REINTERPRET, RESTAGE, REGENERATE OR IMPROVE THE SCENE.
 
-PRIMARY GOAL: preserve the WHOLE ROOM GOING OFF. The central man's pool-table incident is only one event inside an already-chaotic Friday-night Australian pub. The scene must have distributed energy and multiple simultaneous stories that would still exist if the central man were removed.
+This is a MASTER-LOCKED EDIT, not a fresh generation.
 
-PRESERVE FROM IMAGE 1:
-- packed crowd density and layered depth from bodies close to camera through the pool table to the rear of the room;
-- people colliding, leaning, shouting, laughing, moving and looking in different directions independently;
-- foreground heads, shoulders and bodies blocking inconvenient parts of the frame;
-- multiple independent social clusters and secondary/tertiary actions unrelated to the central man;
-- the sense that the photographer is trapped inside the crowd and did not compose a clean shot;
-- dark ceiling, deep black areas, localized practical light, red back-bar spill, uneven face exposure, motion/exposure imperfection;
-- pool table, wooden stool and full beer as incidental real objects, not display props;
-- central man's unstable/asymmetric body geometry, another person physically steadying him, cue horizontal overhead in both fists, head back, eyes shut, mouth open;
-- accidental cropping, occlusion, competing focal events and visual mess.
+The event already exists correctly in IMAGE 1. Every person is already doing their own thing. The camera merely happened to observe this part of the room. Named characters do not cause the world to arrange itself around them.
 
-ATTENTION RULES — CRITICAL:
-- do NOT create clean negative space around the central man;
-- do NOT arrange people in a semicircle around him;
-- do NOT make the crowd look at him, sing to him, cheer for him or treat him as the performer;
-- do NOT make him the brightest, sharpest or most isolated person by design;
-- do NOT simplify the room to make his pose easier to read;
-- do NOT remove foreground obstruction or independent crowd action;
-- the real band/performance is elsewhere in the room; the central man is an audience member/punter singing along, not the singer or leader.
+ABSOLUTE PRESERVATION CONTRACT:
+- preserve every existing person and crowd position;
+- preserve every existing body pose, interaction, collision, gaze direction and social cluster;
+- preserve foreground obstruction, awkward crops, occlusions and all depth planes;
+- preserve crowd density and attention distribution exactly;
+- preserve pool table geometry and position;
+- preserve the wooden pub stool and full beer exactly as incidental objects;
+- preserve lighting, shadows, red practical spill, dark areas, exposure imperfections and photographic ugliness;
+- preserve camera viewpoint, perspective, framing relationships and accidental documentary character;
+- preserve the central man's action geometry as present in the master;
+- preserve all secondary and tertiary events;
+- do not add supporters, cheerers, spectators or reactions to the central man;
+- do not remove, duplicate, relocate or invent people;
+- do not create a semicircle, audience formation, protected silhouette, clean negative space or hero lighting;
+- do not make anyone acknowledge the camera;
+- do not turn the central man into a performer or organising principle.
 
-VERTICAL REFRAME:
-Extend/reframe naturally to 9:16 while keeping the frame FULL of event information. Do not create a large empty ceiling or empty floor merely to reach portrait format. Use additional overlapping crowd bodies, room texture and depth where extension is required. Keep the essential pool-table incident within a central 4:5-safe region but do not centre or spotlight it unnaturally.
+CHANGE ONLY THIS:
+Produce a vertical 9:16 output while retaining as much of the original master pixels/composition as possible. Where portrait canvas extension is unavoidable, extend only peripheral room/crowd texture in a way that is visually subordinate and does not alter the existing event. Do not reconstruct the central scene to achieve the aspect ratio. Cropping is preferable to redesigning the event. Do not duplicate or stitch any portion of the original scene.
 
-IDENTITY:
-This pass is NOT an identity pass. Preserve the people from IMAGE 1 as they are. Do not beautify faces or spend composition authority making the central man more recognisable. Character identity will be handled surgically later only if this full-scene master passes scene-richness review.
+This is NOT an identity pass. Do not change faces, wardrobe, bodies or character identity. Do not beautify or clarify anyone.
 
-Photographic premise: accidental handheld documentary capture in a genuinely packed pub at 11:05pm. Nobody poses. Nobody acknowledges the camera. The photograph should feel difficult to take, not designed.
+Success means the output feels like the same photograph/camera observation, merely delivered on a 9:16 canvas. If preservation conflicts with making a cleaner or more legible image, PRESERVATION WINS.
 
 Return one 9:16 image."""
 
@@ -57,6 +55,6 @@ def main():
  model='gemini-3-pro-image'; client=GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(),model=model)
  result=client.generate(GoogleImageRequest(prompt=PROMPT,references=(ref,),aspect_ratio='9:16',image_size='2K'))
  suffix='.png' if result.mime_type=='image/png' else '.jpg'; output=out/('seed-1'+suffix); output.write_bytes(result.data)
- manifest={'scene':'pub-1105','experiment':'scene-first-richness-master-v1','generated_at':stamp,'model':model,'aspect_ratio':'9:16','image_size':'2K','composition_reference_used':True,'source_master':str(p.relative_to(ROOT)),'source_master_sha256':hashlib.sha256(raw).hexdigest(),'source_dimensions':list(dims),'source_format':fmt,'continuity_layer':'scene','attention_hierarchy':['room-going-off','accidental-crowd-photograph','multiple-simultaneous-interactions','damo-pool-table-incident','damo-identity'],'preserve':['crowd_density','distributed_independent_action','foreground_obstruction','secondary_tertiary_events','depth','lighting_distribution','camera_accident','pool_table','stool','beer','central_action_geometry'],'change':['vertical_reframe_only_where_required'],'candidate_count':1,'manual_gate':'scene_richness_review_before_identity'}
+ manifest={'scene':'pub-1105','experiment':'master-locked-scene-preservation-v2','generated_at':stamp,'model':model,'aspect_ratio':'9:16','image_size':'2K','composition_reference_used':True,'source_master':str(p.relative_to(ROOT)),'source_master_sha256':hashlib.sha256(raw).hexdigest(),'source_dimensions':list(dims),'source_format':fmt,'continuity_layer':'scene','preservation_contract':'master_locked','preserve':['all_existing_people','positions','poses','interactions','gazes','crowd_density','attention_distribution','foreground_obstruction','occlusion','depth','lighting','camera_viewpoint','pool_table','stool','beer','central_action_geometry','secondary_tertiary_events'],'change':['9:16_canvas_only','peripheral_extension_only_if_unavoidable'],'candidate_count':1,'manual_gate':'scene_richness_review_before_identity'}
  (out/'manifest.json').write_text(json.dumps(manifest,indent=2)); (out/'prompt.txt').write_text(PROMPT); print(f'RESULT_DIR={out}')
 if __name__=='__main__': main()
