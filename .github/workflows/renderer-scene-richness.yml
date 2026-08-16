@@ -1,0 +1,41 @@
+name: Paid scene-richness validation
+on:
+  push:
+    branches: [main]
+    paths: ["studio/scene-richness-triggers/*.json"]
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    concurrency: {group: renderer-scene-richness, cancel-in-progress: false}
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: "${{ github.sha }}"}
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Sync exact triggering Studio code
+        run: |
+          set -euo pipefail
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv --exclude=web/node_modules --exclude=web/dist --exclude=__pycache__ --exclude=.pytest_cache studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
+      - name: Verify persistent GPT scene master
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -e; count=$(find /home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105 -maxdepth 1 -type f -name "composition-gpt.*" | wc -l); test "$count" -eq 1'
+      - name: Run one scene-first Nano Pro candidate
+        id: generate
+        run: |
+          set -euo pipefail
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '/home/ubuntu/shirtfaced-studio/.venv/bin/python /home/ubuntu/shirtfaced-studio/scripts/run_pub_scene_richness.py')
+          printf '%s\n' "$output"
+          result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1); test -n "$result_dir"; echo "result_dir=$result_dir" >> "$GITHUB_OUTPUT"
+      - name: Retrieve scene-richness package
+        run: |
+          mkdir -p renderer-result
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.generate.outputs.result_dir }}/." renderer-result/
+          test -s renderer-result/manifest.json; test -s renderer-result/prompt.txt; ls renderer-result/seed-* >/dev/null
+          grep -q '"experiment": "scene-first-richness-master-v1"' renderer-result/manifest.json
+          grep -q '"manual_gate": "scene_richness_review_before_identity"' renderer-result/manifest.json
+      - uses: actions/upload-artifact@v4
+        with: {name: pub-1105-scene-richness, path: renderer-result/, if-no-files-found: error, retention-days: 7}
