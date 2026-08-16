@@ -38,7 +38,7 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/deploy-admin.sh'
 
-      # Studio holds the world documents and the OpenAI key, and it writes canon
+      # Studio holds the world documents and provider keys, and it writes canon
       # when a shot is approved. That makes the box the source of truth for
       # worlds/, so it is synced with --ignore-existing: new files arrive, and
       # nothing written on the box is ever overwritten from here.
@@ -54,11 +54,6 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
 
-      # Rebuild from the canonical brand vectors on every deploy. Keep the SVGs as
-      # editable source outputs, but rasterise V3 to transparent PNGs for Social
-      # Studio. Android/WebView has repeatedly loaded the SVG successfully and then
-      # drawn it transparent when used as a canvas image; PNG removes that entire
-      # browser-specific rasterisation path.
       - name: Build Social assets
         run: |
           node scripts/prepare-social-brand-sources.mjs
@@ -95,9 +90,6 @@ jobs:
             exit 1
           }
 
-      # Social assets are generated at repository level because the storefront and
-      # Studio share the same brand source. Studio is deployed as a standalone tree,
-      # so copy those freshly generated files into its own public directory explicitly.
       - name: Sync Social assets into Studio
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
@@ -107,11 +99,6 @@ jobs:
             public/social-assets/ \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/public/social-assets/
 
-      # The concept libraries seed the design backlog (ADR-015). They live at
-      # repository level because the libraries are brand documents, not Studio
-      # code; Studio is deployed as a standalone tree, so they are copied in
-      # explicitly — after the Studio sync above, whose --delete would remove
-      # them from studio/docs.
       - name: Sync concept libraries into Studio
         run: |
           rsync -az --delete \
@@ -119,15 +106,6 @@ jobs:
             docs/design/ \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/docs/design/
 
-      # Garment SVGs are checked-in source that Compose, the range view and
-      # printing all read, and they live at the repository root — outside the
-      # studio/ tree that gets rsynced, and excluded from it in any case. So
-      # three modules resolved them by walking up past studio/, which works in a
-      # checkout and lands on /home/ubuntu here. All three found zero garments
-      # in production until the design chain smoke check said so.
-      #
-      # Synced beside the application, which is where config._garments_dir looks
-      # first — the same shape as docs/design/ above.
       - name: Sync garments into Studio
         run: |
           rsync -az --delete \
@@ -141,9 +119,6 @@ jobs:
             'chmod +x /home/ubuntu/shirtfaced-studio/deploy/*.sh &&
              bash /home/ubuntu/shirtfaced-studio/deploy/bootstrap-studio.sh'
 
-      # Placed only into an empty slot, so rotating the key is done on the box and
-      # a missing secret can never blank a working one. Without a key Studio runs
-      # its deterministic fakes: the page works and nothing is billed.
       - name: Place the OpenAI key
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -152,8 +127,6 @@ jobs:
             echo "No OPENAI_API_KEY secret. Studio will run its fakes and bill nothing."
             exit 0
           fi
-          # Sent over stdin rather than on the command line, so the key never
-          # appears in the box's process list.
           printf '%s\n' "$OPENAI_API_KEY" | ssh -i ~/.ssh/deploy_key \
             ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/shirtfaced-studio/deploy/set-openai-key.sh'
@@ -189,20 +162,8 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/deploy-site.sh'
 
-      # Runs after everything is live. A green deploy has repeatedly meant
-      # nothing: images 400'd behind a correct listing count, research was
-      # unusable behind rendering benches, an endpoint returned 400 while its
-      # page was being described. This walks the chain a person actually uses
-      # and fails the deploy if any link is broken, so the check does not
-      # depend on anyone remembering to look.
       - name: Smoke the vintage chain
         run: python studio/scripts/smoke_vintage.py --base https://studio.shirtfaced.wtf
 
-      # The product design chain, for the same reason. Phase 1 shipped two
-      # defects that every unit test, type check and lint pass was happy with:
-      # a scorecard endpoint made unreachable by route ordering, and a backlog
-      # that listed one library so a concept created from Research was
-      # invisible. Both were found by opening the app; this is that check,
-      # automated, so the next one is found by a deploy.
       - name: Smoke the design chain
         run: python studio/scripts/smoke_design_chain.py --base https://studio.shirtfaced.wtf
