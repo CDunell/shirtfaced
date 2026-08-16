@@ -21,10 +21,10 @@ jobs:
           set -euo pipefail
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv --exclude=web/node_modules --exclude=web/dist --exclude=__pycache__ --exclude=.pytest_cache studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
           printf '%s\n' '${{ github.sha }}' | ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'cat > /home/ubuntu/shirtfaced-studio/var/renderer-validation/paid-code-sha'
-      - name: Verify persistent scene and Damo references
+      - name: Verify persistent approved scene and Damo reference
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -e; count=$(find /home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105 -maxdepth 1 -type f -name "composition-gpt.*" | wc -l); test "$count" -eq 1; test -s /home/ubuntu/shirtfaced-studio/var/cast/damo/b-head-shoulders.png'
-      - name: Run one scene-first Nano Banana Pro candidate
+      - name: Run one surgical Damo identity candidate
         id: generate
         run: |
           set -euo pipefail
@@ -38,6 +38,6 @@ jobs:
           test -s renderer-result/manifest.json; test -s renderer-result/prompt.txt; test -s renderer-result/seed-1.jpg
           grep -q '"aspect_ratio": "9:16"' renderer-result/manifest.json
           grep -q '"model": "gemini-3-pro-image"' renderer-result/manifest.json
-          grep -q '"experiment": "scene-first-richness-plus-damo-identity"' renderer-result/manifest.json
+          grep -q '"experiment": "approved-master-damo-surgical-identity"' renderer-result/manifest.json
       - uses: actions/upload-artifact@v4
-        with: {name: pub-1105-scene-first-nano-pro, path: renderer-result/, if-no-files-found: error, retention-days: 7}
+        with: {name: pub-1105-damo-surgical-identity, path: renderer-result/, if-no-files-found: error, retention-days: 7}
