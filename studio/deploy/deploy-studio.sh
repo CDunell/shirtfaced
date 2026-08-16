@@ -52,10 +52,17 @@ sudo -u postgres psql -d "$DB_NAME" -qc 'CREATE EXTENSION IF NOT EXISTS vector'
 say "Applying migrations"
 ./.venv/bin/alembic upgrade head
 
-say "Importing worlds"
+say "Importing complete worlds"
 for world in worlds/*/; do
   slug=$(basename "$world")
-  [ -f "$world/WORLD.md" ] || continue
+  missing=()
+  for document in WORLD.md CONTINUITY.md SHOTLIST.md; do
+    [ -f "$world/$document" ] || missing+=("$document")
+  done
+  if [ "${#missing[@]}" -gt 0 ]; then
+    echo "Skipping draft world $slug; missing: ${missing[*]}"
+    continue
+  fi
   ./.venv/bin/python -m app.cli import-world "$slug"
 done
 
