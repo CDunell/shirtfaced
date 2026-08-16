@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq ffmpeg
       - name: Set up deploy key
         run: |
           mkdir -p ~/.ssh
@@ -24,7 +26,7 @@ jobs:
           test -s veo-result/video-generated.mp4
           ffmpeg -y -i veo-result/video-generated.mp4 -map 0:v:0 -c:v copy -an veo-result/video-1.mp4
           test -s veo-result/video-1.mp4
-          ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 veo-result/video-1.mp4 | test ! -s /dev/stdin
+          test -z "$(ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 veo-result/video-1.mp4)"
           sha256sum veo-result/video-1.mp4 > veo-result/video-1.sha256
           printf '%s\n' '{"scene":"pub-1105","shot":"1C-whip-pan-damo-to-emma-brock","experiment":"wide-master-spatial-whip-pan-silent-veo","model":"veo-3.1-lite-generate-preview","aspect_ratio":"9:16","resolution":"720p","seed_sha256":"81290e2f235fea134e6bcf6d40bab79a475474f544925bd6b87d4bb46b615963","audio":"stripped_for_post","recovered_after_server_ffmpeg_missing":true}' > veo-result/manifest.json
       - uses: actions/upload-artifact@v4
