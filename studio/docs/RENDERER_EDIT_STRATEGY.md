@@ -12,9 +12,10 @@ Treat the approved/master image as the owner of scene truth. Later image calls a
 
 1. **Master image owns** camera position, framing, perspective, depth, lighting distribution, environment geometry, crowd/object placement, pose, physical contact, occlusion, accidental photographic character and overall realism.
 2. **Head identity reference owns** face, hairline, hair, facial proportions, stubble and recognisable identity only.
-3. **Full-body identity reference owns** build/body proportions only when a body correction is genuinely required. Do not include it during a head-only edit.
-4. **Scene text owns** only facts missing from or demonstrably wrong in the current master.
-5. **Approved output becomes the next master.** Do not regenerate from scratch after a successful stage.
+3. **Expression-matched identity bridge owns identity in the target expression/head pose** when the neutral canonical headshot is too far from the scene performance.
+4. **Full-body identity reference owns** build/body proportions only when a body correction is genuinely required. Do not include it during a head-only edit.
+5. **Scene text owns** only facts missing from or demonstrably wrong in the current master.
+6. **Approved output becomes the next master.** Do not regenerate from scratch after a successful stage.
 
 ## Staged pipeline
 
@@ -24,7 +25,7 @@ Each image stage must declare:
 
 - `preserve`: properties that must not change.
 - `change`: the smallest permitted edit class.
-- reference roles, e.g. `locked-master-image`, `head-identity-only`, `body-build-only`.
+- reference roles, e.g. `locked-master-image`, `head-identity-only`, `body-build-only`, `expression-matched-identity`.
 - exact input checksums.
 - manual gate after the output.
 
@@ -44,22 +45,38 @@ Prefer one narrow edit per call. If identity transfer fails, narrow further befo
 1. Master only: prove the model can preserve/reframe the source.
 2. Master + head reference: replace face/head identity only.
 3. If identity is still too weak, expand the permitted identity boundary deliberately (for example entire head + visible neck) while locking geometry below that boundary.
-4. Add full-body reference only if build is still wrong and a body edit is genuinely necessary.
-5. Add additional cast one character at a time.
+4. If the target expression is extreme and canonical identity is neutral, create an **expression bridge** from the canonical headshot: same person, target head pose/expression, neutral studio context. Use that bridge as the identity authority in the scene edit.
+5. Add full-body reference only if build is still wrong and a body edit is genuinely necessary.
+6. Add additional cast one character at a time.
 
 Do not supply unrelated character references to a call that is editing only one person.
+
+### Expression-matched identity bridges
+
+A neutral canonical headshot can become weak identity evidence when the target scene has an extreme expression, severe head tilt, closed eyes, open mouth or partial occlusion. The model may preserve the source face because the pose mismatch is too large.
+
+When that happens:
+
+1. Derive a temporary identity bridge from the canonical headshot only.
+2. Change only head pose/expression to match the target performance.
+3. Preserve identity, age, hair, stubble, skin and wardrobe in the bridge.
+4. Review the bridge itself before using it downstream.
+5. Use the bridge as the authoritative identity reference in the bounded scene edit.
+6. Keep the original canonical image untouched; the bridge is a cached derivative with provenance/checksum.
+
+This pattern is reusable for shouting, laughing, sleeping, profile views, head-back poses, down-looking poses and other identity-hostile expressions.
 
 ### Bounded edit authority
 
 When the model over-preserves the source identity, define a hard edit boundary instead of relaxing the entire image:
 
 - outside the boundary: master image has full authority;
-- inside the boundary: canonical identity reference has full authority;
+- inside the boundary: canonical/bridge identity reference has full authority;
 - explicitly state that preserving the source face inside the boundary is a failure;
 - preserve expression/head angle/performance separately from identity;
 - never broaden authority to body, wardrobe, lighting or scene geometry unless that class is the next deliberate edit stage.
 
-This preserves event realism while giving the model enough freedom to perform a real identity replacement rather than a mild facial blend.
+For especially difficult identity edits, a localized crop can be sent to the model and feather-composited back into the untouched master. This guarantees that the wider crowd, props, camera geometry and lighting cannot drift during the identity edit.
 
 ## Documentary realism rules
 
@@ -105,7 +122,9 @@ Track model, resolution, attempts, rejection reason, provider operation ID, inpu
 - Composition reference + six identities in one call diluted both composition fidelity and identity.
 - Master-only preservation worked strongly.
 - Master + Damo full-body + head preserved the event but identity remained weak.
-- Head-only identity replacement preserved the event strongly but still retained too much of the source face.
-- Therefore identity authority should be increased inside a bounded head/neck edit region before adding more references or relaxing scene preservation.
+- Head-only and bounded head/neck edits preserved the event but the neutral reference still allowed too much source-identity retention.
+- Local crop editing successfully froze the wider scene but did not materially improve identity by itself.
+- A Damo expression bridge generated from the canonical headshot preserved Damo strongly while matching the target head-back / eyes-closed / mouth-open performance.
+- Using that expression-matched bridge as the local identity authority produced the strongest scene-level Damo match so far without sacrificing scene realism.
 
 The exact pub pose, lighting and props are scene-specific. The staged ownership/edit strategy is pipeline-wide and should be applied to ute-0341, takeaway-0230, side-street-2126 and continuity-bridge.
