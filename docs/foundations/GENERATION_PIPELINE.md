@@ -1,175 +1,153 @@
 # Generation pipeline — how a scene actually gets made
 
-**Status:** Production doctrine. Universe-wide, all worlds.
-**Date:** 15 August 2026.
-**Companions:** `CAST_REFERENCE_PROMPTS.md` holds the fourteen prompts,
-`CAST_REFERENCE_USE.md` holds storage and scene use. This holds the tools.
+**Status:** SUPERSEDED as active doctrine on 16 August 2026.  
+**Historical date:** 15 August 2026.  
+**Active production contracts:**
 
-Written after generating World 01 scene 9 three times and scene 4 four times.
-Every rule below cost a failed generation to learn.
+- `docs/stage-2/social-ai-production/AI_GENERATION_PIPELINE.md`
+- `docs/stage-2/social-ai-production/FLOW_SCENE_PRODUCTION_SPEC.md`
+- `docs/stage-2/social-ai-production/SEED_IMAGE_REQUEST_RECIPE.md`
+- `docs/stage-2/social-ai-production/CHARACTER_CONTINUITY.md`
+- `docs/foundations/CAST_REFERENCE_USE.md`
 
----
-
-## 1. The constraint that shapes everything
-
-Per the standing decision, no metered API. Generation happens in paid
-subscription interfaces and the result comes back. That has not changed and is
-not a limitation to route around — it decides the shape of everything here.
-
-What it means in practice is **two tools, not one**, and they do different jobs:
-
-| | Tool | Owns |
-|---|---|---|
-| **Still** | A generator that accepts multiple reference images | Everything you can see |
-| **Motion** | Grok Imagine, seeded with that still | Only what changes |
-
-They are not interchangeable and the split is not a preference.
+This file is retained because it records useful empirical lessons from earlier Grok-based testing. **Do not treat its model limits, reference counts, resolution claims, prompt formulas or Grok workflow as current universal production rules.**
 
 ---
 
-## 2. The seed carries the look. Full stop.
+## 1. Why it was superseded
 
-Grok does not read look from text. This was tested directly: a prompt stating
-*the room is dark, no overhead lighting, the ceiling is lost in black, crushed
-blacks, underexposed* returned a brightly lit room with a visible ceiling and
-daylight in the windows. The same scene seeded from a dark still came back
-dark.
+The original document hard-coded a two-tool pipeline:
 
-**Therefore every visible property belongs in the still and nowhere else:**
+`multi-reference still generator -> Grok Imagine motion`
 
-- Darkness, exposure, crushed blacks
-- Colour temperature and which practical is where
-- Wardrobe, every item
-- Framing, tilt, what crops the near edge
-- Grain, focus, who is sharp and who is blurred
-- Who is standing where, and what is on the table
+That is no longer the production assumption. Current work is centred on Google Flow with Nano Banana / Veo where appropriate, and Flow exposes multiple generation modes whose prompting requirements differ.
 
-Repeating any of it in the motion prompt does not reinforce it. It dilutes the
-motion signal, which is the only thing that prompt can actually control.
+The old file also elevated observations from one provider/tier into permanent universe-wide constraints. Examples included:
 
-## 3. Without a seed, references do not bind
+- exactly three named character references
+- a permanent 720p reference-video ceiling
+- a universal four-line motion prompt
+- the claim that models cannot initiate a physics event from an upright/stable source
+- the claim that text-to-video can never hold characters
+- Grok-specific negative-prompt behaviour
 
-A text-to-video generation naming three saved character references returned
-three strangers. The same three names seeded from a still held across the whole
-clip with no drift.
-
-**No seed, no faces.** There is no version of this where a scene is filmed
-straight from text.
+Those may have described particular tests at the time. They are **not provider-independent facts** and must not constrain current production without current evidence.
 
 ---
 
-## 4. What the motion prompt contains
+## 2. Historical lessons that remain useful
 
-Four lines, in this order, and nothing else:
+The following principles survived the provider change and are now expressed more carefully in the active contracts.
 
-```
-Use all references exactly. Maintain character consistency.
+### 2.1 Build visible state in the source image when using image-to-video
 
-<who does what, in order, two or three physical events>
+When a source image drives video, it already carries identity, composition, scene geography, lighting, wardrobe and visual treatment. Current image-to-video prompting should focus mainly on **what changes through time** rather than redundantly redescribing the source.
 
-Camera: <one move>
+See `FLOW_SCENE_PRODUCTION_SPEC.md`.
 
-Audio: <named sounds>
-```
+### 2.2 A defective source image is expensive downstream
 
-**"Use all references exactly"** is the documented binding phrase. It was
-missing from every early attempt.
+If identity, anatomy, blocking, props or scene geometry are already wrong in the first still, do not waste video generations trying to rescue it.
 
-**One camera move.** Early prompts stacked five — swings, overshoots, bumps,
-drops, recovers — competing inside six seconds. Name one.
+See `SEED_IMAGE_REQUEST_RECIPE.md` acceptance/rejection gates.
 
-**Always name the audio.** Audio generates natively and in sync, and a prompt
-with no audio cue produces a weaker clip, not just a silent one. An early
-prompt said `no music`, which is both a negative and the removal of the cue.
+### 2.3 Character identity is an asset, not a prose paragraph
 
-**Front-load.** The first twenty to thirty words carry disproportionate weight.
+The strongest durable lesson from the old tests remains binding:
 
-## 5. Negative prompts do not work
+**a recurring character must resolve to approved identity references and persisted production identity before generation.**
 
-Grok responds to positive directives only. `no slow motion, no smooth push, no
-drift, no colour grade` did nothing at best, and naming those concepts may have
-invoked them.
+See `CHARACTERS.md`, `CAST_REFERENCE_USE.md` and `CHARACTER_CONTINUITY.md`.
 
-State what you want to see. If the camera should be violent, describe violence,
-do not prohibit smoothness.
+### 2.4 Motion prompts should be economical
 
-## 6. Models animate what is in the frame. They do not invent events.
+Short clips work best when they have one primary narrative event. Add ordered physical beats only where order/trajectory genuinely needs control. Do not bury the motion signal under repeated static description.
 
-Scene 4 asked for a stool to tip and a beer to go over. It never happened in any
-generation, because the still had the stool upright and stable and the model
-animates the frame it is given.
+### 2.5 Sequential continuity should be deliberate
 
-**A physics event needs its own clip, seeded from a frame where it has already
-started.** Tipping, falling, spilling, breaking — none of it can be requested,
-only continued.
+Extracted/generated frames may become next-shot anchors, but only after deliberate review/approval. Never silently chain whatever final frame happened to be emitted.
+
+See `AI_GENERATION_PIPELINE.md` and `FLOW_SCENE_PRODUCTION_SPEC.md`.
 
 ---
 
-## 7. Three named characters. That is the ceiling.
+## 3. Historical Grok observations — NON-BINDING
 
-The tier available here caps at three character references per generation.
-Seven-image multi-reference and 1080p exist on higher paid tiers and are not
-being bought.
+The statements below are preserved as experiment notes only.
 
-**This is a permanent production constraint, not a workaround.** Design against
-it:
+### 3.1 Source-image look dominated Grok motion attempts
 
-- Every scene nominates three. Everyone else is crowd, which the `WORLD.md`
-  Form rule already supports — unnamed people are "one bloke", "another mate".
-- **Whoever wears the hero product must be one of the three.** That garment is
-  why the post exists; an unnamed wearer is a drifting face on the product.
-- Any scene needing four or more legible faces is a still, not a clip.
+Earlier tests found that dark/exposure/camera characteristics held more reliably when present in the source image than when re-described in Grok motion prose.
 
-Reference-to-video is also capped at 720p where text and image-to-video reach
-1080p. Using references costs resolution. Accept it — the faces are worth more
-than the pixels.
+Useful observation; not a universal model law.
 
-## 8. Six seconds is not the ceiling
+### 3.2 Saved character names did not bind reliably in one text-to-video test
 
-Copy the last frame of a clip, paste it as the seed of the next, continue.
-Twelve, eighteen, sixty seconds. Add `maintain character consistency`, and keep
-everyone inside the frame — anyone who walks out cannot come back in the next
-segment.
+One Grok test returned strangers when asked to use saved character references without a source still. That result justified reference-driven continuity in that workflow. It does **not** prove that current Flow/Veo text/reference modes can never maintain identity.
 
-This is how a twelve-scene arc becomes films rather than fragments, and it is
-also the answer to §6: the event that cannot be requested becomes the second
-clip.
+### 3.3 Three-character limit was tier/provider-specific
 
-**Getting the last frame.** `studio/scripts/lastframe.bat` — drag an mp4 onto
-it and it writes `<name>_lastframe.png` alongside, at full resolution. Or:
+The earlier subscription tier exposed a three-character-reference ceiling. The old wording called this a permanent production constraint. That was inaccurate.
 
-```
-ffmpeg -sseof -0.5 -i input.mp4 -update 1 -q:v 1 lastframe.png
-```
+Current rule: check the selected provider/model/tier's present documented limits and design the shot accordingly.
 
-`-sseof -0.5` seeks half a second from the end and `-update 1` keeps
-overwriting until the final frame. Seeking to exactly zero can land past the
-last keyframe and write nothing.
+### 3.4 Resolution statements were tier/provider-specific
 
----
+The earlier 720p/1080p comparison was tied to the then-current Grok workflow. Do not reuse it as current Flow documentation.
 
-## 9. Known gap in our own references
+### 3.5 `Use all references exactly` was provider-specific wording
 
-Optimal character binding wants three to five references each: one face
-close-up, one profile, two full-body in key poses.
+It may have helped that tested provider. It is not a universal binding phrase and should not be inserted automatically into every model prompt.
 
-**We have two each, both front-on. There is no profile frame for anybody.**
-That is the cheapest available improvement to consistency and it is not done.
+### 3.6 Negative-prompt behaviour was provider-specific
 
-What is already right, by luck rather than judgement: poor lighting in
-references causes most consistency failures, and all twenty-eight of ours are
-evenly lit on grey seamless.
+The claim `negative prompts do not work` came from Grok tests. Current provider handling varies by model/interface. Active Flow guidance defaults to positive desired-state wording, but this is not the same as claiming that all negative mechanisms are ineffective.
+
+### 3.7 Physics-event claim was too absolute
+
+The old rule said models animate what is already in frame and `do not invent events`, with tipping/spilling cited as examples. The practical lesson is narrower:
+
+**complex contact/physics events are higher risk and often become more reliable when the source frame already contains a physically plausible trajectory.**
+
+Do not turn one failed test into a universal impossibility claim.
 
 ---
 
-## 10. The order of operations
+## 4. Current order of operations
 
-1. Write the still prompt. Everything visible goes here. Attach up to five
-   references — for the character whose face carries the shot, attach both
-   their frames.
-2. Generate the still. Judge it as a photograph. If the composition or the
-   light is wrong, fix it here — it cannot be fixed later.
-3. Seed Grok with it. Name three characters.
-4. Write four lines of motion.
-5. For anything longer or for any event the still cannot contain, take the last
-   frame and go again.
+Active workflow:
+
+`scene canon -> canonical cast resolution -> current appearance state -> capture premise -> reference architecture -> still purpose -> seed still -> still QC -> choose Flow/video mode -> mode-specific motion prompt -> video QC -> approved continuity asset`
+
+Detailed procedure lives in `FLOW_SCENE_PRODUCTION_SPEC.md`.
+
+For the first still, use `SEED_IMAGE_REQUEST_RECIPE.md`.
+
+For attempt/reference provenance, use `AI_GENERATION_PIPELINE.md`.
+
+---
+
+## 5. Provider capability rule
+
+No reference-count, duration, resolution, model availability, audio capability, credit cost or generation-mode statement becomes permanent doctrine merely because it is true today.
+
+When a production decision depends on a provider capability:
+
+1. verify the current provider/model/tier capability;
+2. record the selected mode/settings with the attempt;
+3. do not back-port that temporary product limit into universe canon.
+
+---
+
+## 6. Historical value
+
+Keep this document because failed generations are evidence. It explains why the system moved toward:
+
+- canonical character assets
+- source-still QC
+- motion-focused I2V prompts
+- explicit continuity anchors
+- provider/version provenance
+- failure classification instead of blind retries
+
+Those lessons remain useful. The obsolete provider-specific absolutes do not.
