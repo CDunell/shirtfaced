@@ -158,6 +158,18 @@ jobs:
             ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/shirtfaced-studio/deploy/set-openai-key.sh'
 
+      - name: Place the Gemini renderer key
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "No GEMINI_API_KEY secret. Google renderer remains disabled and bills nothing."
+            exit 0
+          fi
+          printf '%s\n' "$GEMINI_API_KEY" | ssh -i ~/.ssh/deploy_key \
+            ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/shirtfaced-studio/deploy/set-gemini-key.sh'
+
       - name: Build and restart Studio
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
