@@ -1,0 +1,53 @@
+name: Pub coverage Veo validation
+on:
+  push:
+    branches: [main]
+    paths: ["studio/veo-coverage-triggers/*.json"]
+jobs:
+  video:
+    runs-on: ubuntu-latest
+    concurrency: {group: renderer-veo-coverage, cancel-in-progress: false}
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: "${{ github.sha }}"}
+      - name: Install ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Install exact runner on Studio
+        run: |
+          scp -i ~/.ssh/deploy_key studio/scripts/run_pub_coverage_veo.py ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/scripts/run_pub_coverage_veo.py
+      - name: Resolve exact coverage frame and run one Lite test
+        id: run
+        run: |
+          set -euo pipefail
+          trigger=$(ls studio/veo-coverage-triggers/*.json | sort | tail -1)
+          seed_path=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["seed_relative_path"])' "$trigger")
+          seed_sha=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["seed_sha256"])' "$trigger")
+          shot=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["shot"])' "$trigger")
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "set -euo pipefail; root=/home/ubuntu/shirtfaced-studio; seed=\"\$root/$seed_path\"; test -s \"\$seed\"; actual=\$(sha256sum \"\$seed\" | awk '{print \$1}'); test \"\$actual\" = '$seed_sha'; result=\$(\$root/.venv/bin/python \$root/scripts/run_pub_coverage_veo.py --seed \"\$seed\" --expected-sha256 '$seed_sha' --shot '$shot'); dir=\$(printf '%s\\n' \"\$result\" | sed -n 's/^RESULT_DIR=//p' | tail -1); test -n \"\$dir\"; echo RESULT_DIR=\$dir")
+          printf '%s\n' "$output"
+          echo "result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1)" >> "$GITHUB_OUTPUT"
+      - name: Retrieve raw generation and strip audio
+        run: |
+          set -euo pipefail
+          mkdir -p veo-result
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.run.outputs.result_dir }}/." veo-result/
+          test -s veo-result/video-generated.mp4
+          test -s veo-result/manifest.json
+          test -s veo-result/motion-prompt.txt
+          ffmpeg -y -i veo-result/video-generated.mp4 -map 0:v:0 -c:v copy -an veo-result/video-1.mp4
+          test -s veo-result/video-1.mp4
+          ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 veo-result/video-1.mp4 | test ! -s /dev/stdin
+          ffprobe -v error -show_entries stream=width,height,r_frame_rate -show_entries format=duration -of json veo-result/video-1.mp4 > veo-result/probe.json
+          sha256sum veo-result/video-1.mp4 > veo-result/video-1.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pub-1105-coverage-veo-lite
+          path: veo-result/
+          if-no-files-found: error
+          retention-days: 7
