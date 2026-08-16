@@ -43,10 +43,23 @@ Prefer one narrow edit per call. If identity transfer fails, narrow further befo
 
 1. Master only: prove the model can preserve/reframe the source.
 2. Master + head reference: replace face/head identity only.
-3. Add full-body reference only if build is still wrong and a body edit is necessary.
-4. Add additional cast one character at a time.
+3. If identity is still too weak, expand the permitted identity boundary deliberately (for example entire head + visible neck) while locking geometry below that boundary.
+4. Add full-body reference only if build is still wrong and a body edit is genuinely necessary.
+5. Add additional cast one character at a time.
 
 Do not supply unrelated character references to a call that is editing only one person.
+
+### Bounded edit authority
+
+When the model over-preserves the source identity, define a hard edit boundary instead of relaxing the entire image:
+
+- outside the boundary: master image has full authority;
+- inside the boundary: canonical identity reference has full authority;
+- explicitly state that preserving the source face inside the boundary is a failure;
+- preserve expression/head angle/performance separately from identity;
+- never broaden authority to body, wardrobe, lighting or scene geometry unless that class is the next deliberate edit stage.
+
+This preserves event realism while giving the model enough freedom to perform a real identity replacement rather than a mild facial blend.
 
 ## Documentary realism rules
 
@@ -92,6 +105,7 @@ Track model, resolution, attempts, rejection reason, provider operation ID, inpu
 - Composition reference + six identities in one call diluted both composition fidelity and identity.
 - Master-only preservation worked strongly.
 - Master + Damo full-body + head preserved the event but identity remained weak.
-- Therefore head-only identity replacement is the next controlled test.
+- Head-only identity replacement preserved the event strongly but still retained too much of the source face.
+- Therefore identity authority should be increased inside a bounded head/neck edit region before adding more references or relaxing scene preservation.
 
 The exact pub pose, lighting and props are scene-specific. The staged ownership/edit strategy is pipeline-wide and should be applied to ute-0341, takeaway-0230, side-street-2126 and continuity-bridge.
