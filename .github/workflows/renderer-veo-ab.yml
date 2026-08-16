@@ -1,0 +1,36 @@
+name: Veo direct-vs-Nano A-B
+on:
+  push:
+    branches: [main]
+    paths: ["studio/veo-ab-triggers/*.json"]
+jobs:
+  ab:
+    runs-on: ubuntu-latest
+    concurrency: {group: renderer-veo-ab, cancel-in-progress: false}
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: "${{ github.sha }}"}
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Sync code
+        run: rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv --exclude=web/node_modules --exclude=web/dist --exclude=__pycache__ --exclude=.pytest_cache studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
+      - name: Run matched A/B
+        id: run
+        run: |
+          set -euo pipefail
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -euo pipefail; root=/home/ubuntu/shirtfaced-studio; master=$(find "$root/var/scene-references/pub-1105" -maxdepth 1 -type f -size +0c -printf "%T@ %p\n" | sort -nr | head -1 | cut -d" " -f2-); test -s "$master"; nano_manifest=$(find "$root/var/renderer-validation/pub-1105" -type f -name manifest.json -exec grep -l '\''"experiment": "approved-master-damo-surgical-identity"'\'' {} \; -printf "%T@ %p\n" | sort -nr | head -1 | cut -d" " -f2-); test -n "$nano_manifest"; nano_dir=$(dirname "$nano_manifest"); nano=$(find "$nano_dir" -maxdepth 1 -type f \( -name "seed-1.jpg" -o -name "seed-1.png" \) | head -1); test -s "$nano"; echo MASTER=$master; echo NANO=$nano; a=$($root/.venv/bin/python $root/scripts/run_pub_veo_ab.py --seed "$master" --arm direct-master); adir=$(printf "%s\n" "$a" | sed -n "s/^RESULT_DIR=//p" | tail -1); b=$($root/.venv/bin/python $root/scripts/run_pub_veo_ab.py --seed "$nano" --arm nano-copy); bdir=$(printf "%s\n" "$b" | sed -n "s/^RESULT_DIR=//p" | tail -1); echo A_DIR=$adir; echo B_DIR=$bdir')
+          printf '%s\n' "$output"
+          echo "a_dir=$(printf '%s\n' "$output" | sed -n 's/^A_DIR=//p' | tail -1)" >> "$GITHUB_OUTPUT"
+          echo "b_dir=$(printf '%s\n' "$output" | sed -n 's/^B_DIR=//p' | tail -1)" >> "$GITHUB_OUTPUT"
+      - name: Retrieve both arms
+        run: |
+          mkdir -p veo-ab/direct-master veo-ab/nano-copy
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.run.outputs.a_dir }}/." veo-ab/direct-master/
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.run.outputs.b_dir }}/." veo-ab/nano-copy/
+          test -s veo-ab/direct-master/video-1.mp4; test -s veo-ab/nano-copy/video-1.mp4
+      - uses: actions/upload-artifact@v4
+        with: {name: pub-1105-veo-direct-vs-nano, path: veo-ab/, if-no-files-found: error, retention-days: 7}
