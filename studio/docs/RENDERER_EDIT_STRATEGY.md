@@ -16,6 +16,8 @@ Character development is required per scene, but it is a continuity layer inside
 
 A scene must remain compelling if the named character is mentally removed from it. The world is already happening; the character incident is discovered inside that world.
 
+**Hard promotion gate:** character improvement can never compensate for scene degradation. If an identity/edit pass makes the named character more dominant, simplifies the room, removes competing actions, reduces occlusion, creates protected negative space, or turns surrounding people into an audience/supporting cast, reject it and return to the last scene-rich master. Never continue identity refinement from a scene-degraded working master.
+
 ## Two continuity layers
 
 Every candidate must preserve and score two independent layers:
@@ -41,7 +43,7 @@ For crowd/event scenes, require:
 - secondary people may be cropped, blurred, turned away, partially hidden or doing something unrelated;
 - the named character must not become the implied source of everyone else's emotion unless explicitly required by the scene.
 
-Add **attention distribution / scene richness** as a manual QC dimension alongside identity, action, geometry and lighting.
+Add **attention distribution / scene richness** as a hard manual QC dimension alongside identity, action, geometry and lighting.
 
 For `pub-1105`, the required hierarchy is:
 
@@ -175,5 +177,6 @@ Track model, resolution, attempts, rejection reason, provider operation ID, inpu
 - Expression-matched bridges remain valuable, but only as surgical identity tools inside a scene master that continues to pass attention-distribution QC.
 - Veo amplifies semantic hierarchy present in the still. A hero-centric seed caused the crowd to behave as if Damo were the performer. Fix the hierarchy in the still rather than trying to repair it only in the motion prompt.
 - The target pub master must feel like a room already going off, with Damo's pool-table incident discovered inside it.
+- Do not continue identity refinement from a scene-degraded working master. Return to the richest approved scene master and reapply identity surgically.
 
 The exact pub pose, lighting and props are scene-specific. The scene-first ownership/edit strategy is pipeline-wide and should be applied to ute-0341, takeaway-0230, side-street-2126 and continuity-bridge.
