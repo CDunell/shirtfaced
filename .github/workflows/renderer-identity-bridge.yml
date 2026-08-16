@@ -1,0 +1,44 @@
+name: Paid identity bridge validation
+on:
+  push:
+    branches: [main]
+    paths: ["studio/identity-triggers/*.json"]
+jobs:
+  bridge:
+    runs-on: ubuntu-latest
+    concurrency: {group: renderer-identity-bridge, cancel-in-progress: false}
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: "${{ github.sha }}"}
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Sync exact triggering Studio code
+        run: |
+          set -euo pipefail
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv --exclude=web/node_modules --exclude=web/dist --exclude=__pycache__ --exclude=.pytest_cache studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
+      - name: Run one Damo expression bridge candidate
+        id: generate
+        run: |
+          set -euo pipefail
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '/home/ubuntu/shirtfaced-studio/.venv/bin/python /home/ubuntu/shirtfaced-studio/scripts/run_damo_expression_bridge.py')
+          printf '%s\n' "$output"
+          result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1)
+          test -n "$result_dir"
+          echo "result_dir=$result_dir" >> "$GITHUB_OUTPUT"
+      - name: Retrieve bridge package
+        run: |
+          mkdir -p identity-bridge-result
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.generate.outputs.result_dir }}/." identity-bridge-result/
+          test -s identity-bridge-result/manifest.json
+          test -s identity-bridge-result/prompt.txt
+          ls identity-bridge-result/bridge-* >/dev/null
+      - uses: actions/upload-artifact@v4
+        with:
+          name: damo-expression-bridge
+          path: identity-bridge-result/
+          if-no-files-found: error
+          retention-days: 7
