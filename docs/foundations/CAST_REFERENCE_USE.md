@@ -94,21 +94,35 @@ Family resemblance is a deliberate visual requirement for Gary, Damo, Emma and G
 
 ## 5. Using references in a scene
 
-### 5.1 Production identity vs literal prompt wording
+### 5.1 Canonical names are allowed
 
-The production system **must** know the character by canonical slug/name. The literal provider-facing prompt does not need to use that name as a visual instruction.
+The retired rule that recurring characters must be anonymous in provider-facing generation prose no longer applies.
 
-Example production manifest:
+Use the canonical name/slug when it makes role assignment clearer. Examples:
+
+```text
+Damo = identity reference 1 + body reference 2
+Brock = identity reference 3
+Emma = identity reference 4
+```
+
+A production prompt may then say:
+
+> Damo stands on the pool table with the cue horizontal above his head. Brock is beside the table. Emma is deeper in the crowd.
+
+This is preferable to `one bloke`, `another bloke`, `a woman` when those labels make a multi-character prompt easier to confuse.
+
+The name itself does **not** carry visual identity. The approved reference still does. Naming and reference binding work together:
 
 ```text
 character: damo
 identity reference: studio/var/cast/damo/a-full-length.png
 face reference: studio/var/cast/damo/b-head-shoulders.png
 scene appearance: W01-NIGHT-01
-provider role: "the man from reference 1"
+provider label: Damo
 ```
 
-This preserves the world convention that generation prose can remain anonymous while eliminating the old ambiguity where `one bloke` could quietly become a different bloke.
+If a provider or mode responds more reliably to `the man from reference 1`, that wording is also allowed. Provider-specific clarity wins. There is no requirement to anonymise the prompt.
 
 ### 5.2 Which frame to supply
 
@@ -172,7 +186,7 @@ A scene may deliberately change mutable things such as a hat, layer, wetness or 
 
 ### 1. Scene from a story arc
 
-The story arc names its cast internally. Resolve the slugs and scene appearance. Supply only the references that the provider needs for the shot, then write provider prose around moment/place/light/camera/action.
+The story arc names its cast. Resolve the slugs and scene appearance. Supply only the references that the provider needs for the shot, then write provider prose around moment/place/light/camera/action. Use the canonical names directly when they improve role clarity.
 
 ### 2. Shot specification
 
