@@ -32,24 +32,25 @@ Examples of unauthorised identity drift include invented tattoos, scars, piercin
 
 Natural scene effects such as sweat, flushed skin, wet hair, rumpled clothing, dirt or fatigue are allowed only when the story/scene makes them plausible and they do not rewrite identity.
 
-### 0.2 Names: story language vs production language
+### 0.2 Character names in production prompts
 
-The repo has a longstanding rule that literal provider-facing generation prose should not rely on character names as visual instructions. That rule remains useful, but it must not be misread as "production does not know who the character is."
+The old rule that recurring characters must never be named in provider-facing generation prompts is **retired**.
 
-There are two separate layers:
+Use canonical names/slugs freely throughout planning, orchestration, production prompts and review when they make the instruction clearer. For example, `Damo stands on the pool table` is preferable to an ambiguous `one bloke stands on the pool table` when the attached reference manifest already resolves Damo's identity.
 
-**Story/planning/orchestration layer**
-- Use canonical names/slugs freely (`damo`, `brock`, `emma`, etc.).
-- Persist exactly which character a scene/shot contains.
-- Resolve the correct canonical reference and current appearance before generation.
-- Review the returned asset against that same resolved identity.
+Names are labels for role resolution and continuity. They are **not** a substitute for visual references. The model should not be expected to know what `Damo` looks like from the name alone.
 
-**Provider-facing visual prompt layer**
-- The literal prose may describe the attached identity as `the man in reference 1`, `the woman from the supplied reference`, `one bloke`, etc. where that is more robust or required by the world prompt convention.
-- The attached/reference manifest still resolves that anonymous prose to the canonical character slug.
-- The name is therefore not the visual mechanism; the **approved reference asset is**.
+Production must still:
 
-The old blanket wording that characters are "not for prompt construction" is superseded by this distinction. Character canon is absolutely upstream of generation; it is simply translated into provider-readable references and anonymous role language rather than asking the model to infer a face from the name `Damo`.
+- persist exactly which canonical character a scene/shot contains;
+- resolve the correct approved identity reference/version;
+- resolve the current appearance/wardrobe state;
+- attach or otherwise bind the relevant reference assets where the provider supports them; and
+- review the returned asset against that same identity.
+
+Provider-facing prose may use whichever wording is clearest for the selected model and reference mode: `Damo`, `Damo from reference 1`, `the man from reference 1`, etc. There is no stylistic prize for anonymising a character we already know.
+
+The retired anonymous-name rule must not be reintroduced through old World 01 prompt templates, handover notes or archived generation doctrine.
 
 ### 0.3 Canonical visual identity is the file, not a re-description
 
@@ -161,7 +162,7 @@ studio/var/cast/<slug>/
 
 The files are gitignored production assets; `CAST_REFERENCE_USE.md` defines their handling and provenance.
 
-A scene/shot must resolve the canonical slug before generation. The literal provider prompt may remain anonymous, but the production record may not.
+A scene/shot must resolve the canonical slug before generation. Character names may be used directly in provider prompts; reference assets remain the identity authority.
 
 ---
 
