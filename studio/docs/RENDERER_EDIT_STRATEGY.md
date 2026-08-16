@@ -10,6 +10,12 @@ Treat the approved/master image as the owner of scene truth. Later image calls a
 
 **World 01 is scene-first, not hero-first.** A named character's action happens inside a fully realised event. Character fidelity must never cause the room, crowd, geography, secondary action or photographic accident to collapse into supporting scenery.
 
+### Hard invariant: character work may not change scene hierarchy
+
+Character development is required per scene, but it is a continuity layer inside the scene, never the organising principle of the scene. Identity work that improves a face while reducing room detail, crowd entropy, competing actions, occlusion, depth or incidental behaviour is a failed edit.
+
+A scene must remain compelling if the named character is mentally removed from it. The world is already happening; the character incident is discovered inside that world.
+
 ## Two continuity layers
 
 Every candidate must preserve and score two independent layers:
@@ -31,7 +37,9 @@ For crowd/event scenes, require:
 - no clean halo or protected negative space around the hero;
 - no crowd semicircle, audience formation or supporting-cast arrangement around the hero;
 - independent social clusters and reactions;
-- scene energy that would still exist if the hero were removed from the frame.
+- scene energy that would still exist if the hero were removed from the frame;
+- secondary people may be cropped, blurred, turned away, partially hidden or doing something unrelated;
+- the named character must not become the implied source of everyone else's emotion unless explicitly required by the scene.
 
 Add **attention distribution / scene richness** as a manual QC dimension alongside identity, action, geometry and lighting.
 
@@ -39,7 +47,7 @@ For `pub-1105`, the required hierarchy is:
 
 `ROOM GOING OFF > ACCIDENTAL CROWD PHOTOGRAPH > MULTIPLE SIMULTANEOUS INTERACTIONS > DAMO POOL-TABLE INCIDENT > DAMO IDENTITY`
 
-Damo is not the singer, leader, performer or gravitational centre of the room. He is a punter doing something ridiculous inside an already-chaotic Friday-night pub.
+Damo is not the singer, leader, performer or gravitational centre of the room. He is a punter doing something ridiculous inside an already-chaotic Friday-night pub. The crowd must not appear to sing to him, cheer for him, watch him as a performance, or form an audience around him. Some people can notice him; many should remain occupied with their own Friday-night interactions.
 
 ## Ownership hierarchy
 
