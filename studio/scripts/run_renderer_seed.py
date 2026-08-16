@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E501, I001
 """Run one explicitly-approved paid renderer seed on the production box.
 
 Canonical cast originals live only in persistent Studio storage under ``var/cast``.
@@ -12,7 +13,7 @@ import hashlib
 import io
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from PIL import Image, ImageOps
@@ -163,7 +164,7 @@ def main() -> None:
         model=settings.google_image_model,
     )
 
-    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     out_dir = PROJECT_ROOT / "var" / "renderer-validation" / args.scene / stamp
     out_dir.mkdir(parents=True, exist_ok=True)
 
