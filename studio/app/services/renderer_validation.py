@@ -31,7 +31,12 @@ SCENES: tuple[BenchmarkScene, ...] = (
         (
             "Damo stands on the pool table with both boots on it, cue horizontal "
             "overhead in both fists, head back, eyes shut, roaring the chorus, facing "
-            "away from the stage; stool and full beer remain on the table."
+            "away from the stage; stool and full beer remain on the table. The back "
+            "room is genuinely dark at 11:05pm: expose for a dim late-night pub, with "
+            "the pool-table lamp and low stage/practical spill providing local pools "
+            "of light while corners and much of the crowd fall into shadow. Faces must "
+            "remain readable, but there is no broad bright room fill, no evenly lit "
+            "community-hall ambience, and no bingo-night brightness."
         ),
         ("damo:identity", "damo:body", "brock:identity", "emma:identity"),
         (
@@ -41,6 +46,7 @@ SCENES: tuple[BenchmarkScene, ...] = (
             "no_invented_identity_marks",
             "stool_and_beer",
             "camera_premise",
+            "late_night_pub_exposure",
         ),
         (
             "Damo keeps the cue overhead and rocks with the chorus; the crowd and "
