@@ -38,15 +38,13 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/deploy-admin.sh'
 
-      # Studio holds the world documents and provider keys, and it writes canon
-      # when a shot is approved. That makes the box the source of truth for
-      # worlds/, so it is synced with --ignore-existing: new files arrive, and
-      # nothing written on the box is ever overwritten from here.
+      # Studio owns mutable runtime/canon state on the box. Never let rsync --delete
+      # erase var/ (cast references, renderer results, etc.) or worlds/.
       - name: Sync Studio
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
-            --exclude=worlds --exclude=assets --exclude=.env --exclude=.venv \
+            --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv \
             --exclude=web/node_modules --exclude=web/dist \
             --exclude=__pycache__ --exclude=.pytest_cache \
             studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
@@ -112,6 +110,27 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             assets/garments/ \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/assets/garments/
+
+      # Seed only missing runtime refs. Once present, var/cast remains the authority and
+      # future deploys must never overwrite a deliberately replaced canonical image.
+      - name: Seed canonical cast references
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '
+            set -e
+            root=/home/ubuntu/shirtfaced-studio
+            for slug in damo brock emma; do mkdir -p "$root/var/cast/$slug"; done
+            for rel in \
+              damo/a-full-length.jpg \
+              damo/b-head-shoulders.jpg \
+              brock/a-full-length.jpg \
+              emma/a-full-length.jpg; do
+              src="$root/cast-bootstrap/$rel"
+              dst="$root/var/cast/$rel"
+              test -s "$src"
+              if [ ! -s "$dst" ]; then cp "$src" "$dst"; fi
+              test -s "$dst"
+            done
+          '
 
       - name: Bootstrap Studio
         run: |
