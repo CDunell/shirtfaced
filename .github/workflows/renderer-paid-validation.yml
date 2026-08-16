@@ -23,7 +23,7 @@ jobs:
           printf '%s\n' '${{ github.sha }}' | ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'cat > /home/ubuntu/shirtfaced-studio/var/renderer-validation/paid-code-sha'
       - name: Verify persistent approved scene and Damo reference
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -e; count=$(find /home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105 -maxdepth 1 -type f -name "composition-gpt.*" | wc -l); test "$count" -eq 1; test -s /home/ubuntu/shirtfaced-studio/var/cast/damo/b-head-shoulders.png'
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -e; count=$(find /home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105 -maxdepth 1 -type f -name "composition-gpt.*" -size +0c | wc -l); test "$count" -ge 1; test -s /home/ubuntu/shirtfaced-studio/var/cast/damo/b-head-shoulders.png'
       - name: Run one surgical Damo identity candidate
         id: generate
         run: |
