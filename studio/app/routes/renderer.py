@@ -3,6 +3,7 @@
 These endpoints expose the benchmark plan and per-scene production packages. They do
 not initiate billable calls; generation remains behind explicit manual action.
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
