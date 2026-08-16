@@ -42,10 +42,10 @@ The result must feel like a real Australian pub photograph somebody found in the
 
 REFERENCE_PATHS = {
     "pub-1105": (
-        ("damo-full", Path("var/cast/damo/a-full-length.png")),
-        ("damo-head", Path("var/cast/damo/b-head-shoulders.png")),
-        ("brock-full", Path("var/cast/brock/a-full-length.png")),
-        ("emma-full", Path("var/cast/emma/a-full-length.png")),
+        ("damo-full", Path("var/cast/damo/a-full-length.jpg")),
+        ("damo-head", Path("var/cast/damo/b-head-shoulders.jpg")),
+        ("brock-full", Path("var/cast/brock/a-full-length.jpg")),
+        ("emma-full", Path("var/cast/emma/a-full-length.jpg")),
     )
 }
 
@@ -71,7 +71,6 @@ def main() -> None:
     if args.scene not in REFERENCE_PATHS:
         raise SystemExit(f"paid seed runner is not enabled for {args.scene!r}")
 
-    # Resolve the package first so a stale/unknown benchmark cannot call a provider.
     scene_package(args.scene)
 
     missing = [str(PROJECT_ROOT / p) for _, p in REFERENCE_PATHS[args.scene] if not (PROJECT_ROOT / p).is_file()]
