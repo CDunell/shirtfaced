@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Smoke the deployed renderer validation contract without spending money."""
+
 from __future__ import annotations
 
 import argparse
