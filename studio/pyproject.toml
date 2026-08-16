@@ -23,6 +23,7 @@ dependencies = [
   "google-genai>=1.0",
   "pillow>=10.4",
   "numpy>=2.0",
+  "scipy>=1.14",
   "pgvector>=0.3",
   "fonttools>=4.50",
 ]
