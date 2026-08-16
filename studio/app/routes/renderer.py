@@ -22,6 +22,14 @@ def validation_manifest() -> dict[str, object]:
         image_model=settings.google_image_model,
         video_model=settings.google_video_model,
     ) | {
+        "google_execution": {
+            "enabled_requested": settings.google_media_enabled,
+            "key_configured": settings.gemini_api_key is not None,
+            "image_size": settings.google_image_size,
+            "video_resolution": settings.google_video_resolution,
+            "video_poll_seconds": settings.google_video_poll_seconds,
+            "video_timeout_seconds": settings.google_video_timeout_seconds,
+        },
         "budgets_usd": {
             "scene": settings.renderer_scene_budget_usd,
             "validation": settings.renderer_validation_budget_usd,
