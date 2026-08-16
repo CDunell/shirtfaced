@@ -25,6 +25,7 @@ from app.routes import (
     email,
     health,
     printing,
+    renderer,
     social,
     vintage_agents,
     vintage_api,
@@ -47,7 +48,6 @@ def _social_assets_root() -> Path | None:
 
 
 def create_app() -> FastAPI:
-    """Build the application."""
     settings = get_settings()
 
     application = FastAPI(
@@ -59,6 +59,7 @@ def create_app() -> FastAPI:
 
     application.include_router(health.router)
     application.include_router(api.router)
+    application.include_router(renderer.router)
     application.include_router(printing.router)
     application.include_router(assets.router)
     application.include_router(design.router)
