@@ -131,11 +131,26 @@ Kevin has no character reference and must not be promoted into a recurring perso
 
 ## 6. Production identity registry
 
-The stable production slugs are:
+The stable production slugs and current reference-state notes are below. **Reference age is production metadata, not permission to overwrite narrative canon where this document deliberately uses a broader/open age statement.**
 
-`gary`, `damo`, `sk`, `brock`, `tommy`, `lucas`, `oliver`, `sophie`, `casey`, `mitch`, `emma`, `charlotte`, `ethan`, `grace`.
+| Canonical | Slug | Reference age/state | Canonical relationship / role | Visual-reference note |
+|---|---|---:|---|---|
+| Gary | `gary` | 43 | Damo's brother; Emma + Grace's father; dry centre | Family resemblance anchor; approved A/B files |
+| Damo | `damo` | 38 | Gary's younger brother; SK's partner; chaos agent | Current approved version is the later leaner, multi-day-stubble reference; no invented tattoos/marks |
+| SK | `sk` | 38 | Damo's partner | Approved A/B files; scene wardrobe may differ from base reference |
+| Brock | `brock` | 29 reference state | Mitch's mate; instigator | Approved A/B files |
+| Tommy | `tommy` | 28 reference state | In Emma's orbit; exact relationship/occupation open | Approved A/B files do not resolve open story facts |
+| Lucas | `lucas` | 27 reference state | In Emma's orbit; exact relationship/occupation open | Approved A/B files do not resolve open story facts |
+| Oliver | `oliver` | 27 reference state | Sophie's boyfriend | Approved A/B files |
+| Sophie | `sophie` | 26 reference state | Emma + Charlotte's school friend; Oliver's girlfriend | Canon redhead; approved visual file is identity authority |
+| Casey | `casey` | 26 reference state | Emma's best mate; salon manager | Approved A/B files; base styling is not permanent wardrobe |
+| Mitch | `mitch` | 26 | Chef; Brock's mate | Approved A/B files; deliberate chef-related scars/burn are reference characteristics, not licence for extra marks |
+| Emma | `emma` | 25 reference state | Gary's eldest; Grace's half-sister; Casey's best mate | Family brow/eye resemblance; approved A/B files |
+| Charlotte | `charlotte` | 25 | Solicitor; Emma + Sophie's school friend | Blonde owner-approved; approved A/B files |
+| Ethan | `ethan` | 20 reference state | Grace's boyfriend; IT/uni | Approved A/B files |
+| Grace | `grace` | 19 reference / 18+ canon | Gary's daughter; Emma's half-sister; Ethan's girlfriend | Strawberry blonde from mother's side; family brow/eye resemblance |
 
-The approved visual reference convention is:
+Approved visual reference convention:
 
 ```text
 studio/var/cast/<slug>/
