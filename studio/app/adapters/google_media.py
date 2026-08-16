@@ -10,7 +10,6 @@ import base64
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from app.adapters.reference_images import ReferenceImage
 
@@ -138,7 +137,6 @@ class GoogleVideoClient:
         self._client.files.download(file=video)
         raw = getattr(video, "video_bytes", None)
         if raw is None:
-            # The SDK's save() is the stable fallback across releases.
             import tempfile
 
             with tempfile.TemporaryDirectory() as td:
