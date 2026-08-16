@@ -8,9 +8,12 @@ without rewriting scene logic.
 from __future__ import annotations
 
 import base64
+import io
 import time
 from dataclasses import dataclass
 from pathlib import Path
+
+from PIL import Image, ImageOps
 
 from app.adapters.reference_images import ReferenceImage
 
@@ -51,6 +54,44 @@ class GoogleVideoResult:
     operation_name: str | None
 
 
+def _normalise_reference_for_gemini(ref: ReferenceImage) -> tuple[str, str]:
+    """Return a clean base64 JPEG for Gemini's inline image input.
+
+    Reference files come from several production paths and may contain colour profiles,
+    EXIF orientation, progressive encoding or format/extension mismatches that ordinary
+    image viewers tolerate but the Interactions API can reject as an unprocessable input
+    image. Decode with Pillow first, apply orientation, flatten alpha, and re-encode to a
+    plain RGB JPEG without metadata. This also proves locally that the bytes are a real
+    decodable image before a paid provider call is attempted.
+    """
+
+    try:
+        with Image.open(io.BytesIO(ref.data)) as source:
+            source.load()
+            image = ImageOps.exif_transpose(source)
+            if image.mode in {"RGBA", "LA"} or (
+                image.mode == "P" and "transparency" in image.info
+            ):
+                rgba = image.convert("RGBA")
+                background = Image.new("RGB", rgba.size, "white")
+                background.paste(rgba, mask=rgba.getchannel("A"))
+                image = background
+            else:
+                image = image.convert("RGB")
+
+            # Keep identity detail while avoiding unnecessarily huge inline payloads.
+            max_side = 2048
+            if max(image.size) > max_side:
+                image.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
+
+            output = io.BytesIO()
+            image.save(output, format="JPEG", quality=92, optimize=True)
+    except Exception as exc:  # Pillow raises several format-specific exception classes.
+        raise GoogleMediaError(f"Reference image {ref.name!r} cannot be decoded") from exc
+
+    return base64.b64encode(output.getvalue()).decode("ascii"), "image/jpeg"
+
+
 class GoogleImageClient:
     def __init__(self, *, api_key: str, model: str) -> None:
         if not api_key or not model:
@@ -61,23 +102,21 @@ class GoogleImageClient:
         self._model = model
 
     def generate(self, request: GoogleImageRequest) -> GoogleImageResult:
-        inputs: list[dict[str, str]] = [{"type": "text", "text": request.prompt}]
+        inputs: list[dict[str, str]] = []
         for ref in request.references:
-            inputs.append(
-                {
-                    "type": "image",
-                    "data": base64.b64encode(ref.data).decode("ascii"),
-                    "mime_type": ref.mime_type,
-                }
-            )
-        # Gemini's current Interactions image endpoint accepts JPEG as the response
-        # format. Do not request PNG here: the live API rejects it before generation.
+            data, mime_type = _normalise_reference_for_gemini(ref)
+            inputs.append({"type": "image", "data": data, "mime_type": mime_type})
+        inputs.append({"type": "text", "text": request.prompt})
+
+        # Follow Google's documented Interactions image-generation contract. Do not
+        # force an output MIME type: the service chooses the generated image format and
+        # reports it on output_image. aspect_ratio and image_size are the supported
+        # response-format controls.
         interaction = self._client.interactions.create(
             model=self._model,
             input=inputs,
             response_format={
                 "type": "image",
-                "mime_type": "image/jpeg",
                 "aspect_ratio": request.aspect_ratio,
                 "image_size": request.image_size,
             },
@@ -87,7 +126,7 @@ class GoogleImageClient:
             raise GoogleMediaError("Gemini returned no image")
         return GoogleImageResult(
             data=base64.b64decode(output.data),
-            mime_type=getattr(output, "mime_type", None) or "image/jpeg",
+            mime_type=getattr(output, "mime_type", None) or "image/png",
             model=self._model,
         )
 
