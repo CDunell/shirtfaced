@@ -38,7 +38,7 @@ class GoogleImageResult:
 class GoogleVideoRequest:
     prompt: str
     first_frame: bytes
-    first_frame_mime: str = "image/png"
+    first_frame_mime: str = "image/jpeg"
     aspect_ratio: str = "16:9"
     resolution: str = "1080p"
 
@@ -70,12 +70,14 @@ class GoogleImageClient:
                     "mime_type": ref.mime_type,
                 }
             )
+        # Gemini's current Interactions image endpoint accepts JPEG as the response
+        # format. Do not request PNG here: the live API rejects it before generation.
         interaction = self._client.interactions.create(
             model=self._model,
             input=inputs,
             response_format={
                 "type": "image",
-                "mime_type": "image/png",
+                "mime_type": "image/jpeg",
                 "aspect_ratio": request.aspect_ratio,
                 "image_size": request.image_size,
             },
@@ -85,7 +87,7 @@ class GoogleImageClient:
             raise GoogleMediaError("Gemini returned no image")
         return GoogleImageResult(
             data=base64.b64decode(output.data),
-            mime_type=getattr(output, "mime_type", None) or "image/png",
+            mime_type=getattr(output, "mime_type", None) or "image/jpeg",
             model=self._model,
         )
 
