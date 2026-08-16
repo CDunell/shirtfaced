@@ -1,0 +1,1 @@
+{"scene":"pub-1105","model":"gemini-3-pro-image","candidate_count":1,"strategy":"approved-master-damo-surgical-identity","retry_reason":"approved master re-upload may coexist across png/jpg extensions; resolve newest non-empty master","manual_gate":"scene preservation + identity review before Veo"}
