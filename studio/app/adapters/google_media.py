@@ -4,6 +4,7 @@ The adapters are inert unless a Gemini key is configured. They intentionally kee
 provider calls behind small request/response contracts so Studio can swap models
 without rewriting scene logic.
 """
+
 from __future__ import annotations
 
 import base64
