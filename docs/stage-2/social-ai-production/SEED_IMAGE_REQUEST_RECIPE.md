@@ -2,9 +2,23 @@
 
 **Status:** ACTIVE production contract  
 **Scope:** Initial scene stills / seed images  
-**Companion:** `FLOW_SCENE_PRODUCTION_SPEC.md`
+**Companions:** `FLOW_SCENE_PRODUCTION_SPEC.md`, `CHARACTERS.md`, `CAST_REFERENCE_USE.md`, `CHARACTER_CONTINUITY.md`
 
 Use this recipe whenever requesting an initial SHIRTFACED scene image. It separates locked canon, reference authority and permitted environmental invention.
+
+## 0. Mandatory authority resolution
+
+Before writing or generating the image, resolve these sources in order:
+
+1. `docs/foundations/CHARACTERS.md` — canonical identity/story facts.
+2. `docs/foundations/CAST_REFERENCE_USE.md` + current approved `studio/var/cast/<slug>/` files — canonical visual identity.
+3. `docs/stage-2/social-ai-production/CHARACTER_CONTINUITY.md` — current scene appearance/wardrobe state.
+4. Scene/story/shot canon — exact event, blocking, props, geography and camera.
+5. This recipe — generation procedure.
+
+**Authority order:** owner-set canon > approved visual reference > approved scene appearance > shot instruction > generator interpretation.
+
+Do not use an old prompt paragraph as a substitute for an approved current character image. If the required visual asset is not actually available to the generation tool/session, stop and request/resolve it rather than recasting the character.
 
 ## 1. Scene
 
@@ -27,29 +41,32 @@ Describe the exact frozen instant, not what happens before or afterwards.
 
 ### Hero
 
-- **Name:**
-- **Reference image(s):** attach
-- **Wardrobe for this scene:**
+- **Canonical slug/name:**
+- **Canonical identity reference:** attach/resolve
+- **Face reference if needed:** attach/resolve
+- **Wardrobe/appearance state for this scene:**
 - **Exact position/action:**
 
-Use supplied references as authority for identity, face, hair, apparent age, build/body proportions and distinguishing physical characteristics.
+Use supplied approved references as authority for identity, face, hair, apparent age, build/body proportions and distinguishing physical characteristics.
+
+The provider-facing prompt may refer to the person anonymously (`the man from reference 1`, etc.); the production record must still resolve the canonical slug.
 
 ### Other established characters
 
 For each:
 
-- **Name:**
-- **Reference image(s):** attach
-- **Wardrobe:**
+- **Canonical slug/name:**
+- **Reference image(s):** attach/resolve
+- **Wardrobe/appearance state:**
 - **Position/action:**
 
 ### Background people
 
-Describe generally: density, type and behaviour. They do not require established identities unless specifically named.
+Describe generally: density, type and behaviour. They do not require established identities unless specifically promoted into canon.
 
 ## 4. Character integrity — LOCKED
 
-For every referenced character, do not invent identity-changing features absent from both supplied references and scene canon, including:
+For every referenced character, do not invent identity-changing features absent from approved canon/reference/scene state, including:
 
 - tattoos
 - scars
@@ -58,22 +75,22 @@ For every referenced character, do not invent identity-changing features absent 
 - facial-hair changes
 - different hairstyle/hair colour
 - glasses
-- hats
+- hats/headwear not in scene state
 - body-shape changes
 - distinctive accessories
 
-unless explicitly requested for the scene.
+unless explicitly authorised for the scene.
 
-Natural scene-dependent changes such as sweat, wet hair, flushed skin, rumpled clothing or dirt are permitted where appropriate.
+Natural scene-dependent changes such as sweat, wet hair, flushed skin, rumpled clothing, dirt or fatigue are permitted only where appropriate.
 
-**Authority order:** canon > supplied visual references > scene-specific instructions > generator interpretation.
+**Omission is not permission.** If the canonical reference has no tattoo, the generator does not get one because the prompt forgot to say `no tattoos`.
 
 ## 5. Hero geometry
 
 - **Position in scene:**
 - **Body orientation:**
-- **Feet:**
-- **Hands:**
+- **Feet/support:**
+- **Hands/grip:**
 - **Head:**
 - **Eyes:**
 - **Expression:**
@@ -162,9 +179,10 @@ Unless specifically stated otherwise, nobody acknowledges the photographer, nobo
 
 ### LOCKED — DO NOT CHANGE
 
-- referenced character identities
+- canonical recurring-character identity
 - established physical characteristics
-- specified wardrobe
+- current approved character-reference version
+- specified scene wardrobe/appearance state
 - exact hero action/state
 - specified character positions
 - important props and their state
@@ -183,41 +201,53 @@ Unless specifically stated otherwise, nobody acknowledges the photographer, nobo
 
 **Freedom exists to make the world believable, not to rewrite the scene or characters.**
 
-## 14. Generation instruction
+## 14. Pre-generation gate
 
-Before generating:
+Before generation:
 
-1. Identify every attached reference and its role.
-2. Preserve all LOCKED information.
-3. Check the requested frozen instant against scene canon.
-4. Do not substitute a visually similar but different action.
-5. Do not invent distinguishing features on established characters.
-6. Allow realistic incidental environmental detail where permitted.
-7. Compose from the specified physical camera position.
-8. Generate only when the requirements are internally consistent.
+1. Resolve every recurring character to canonical slug.
+2. Identify the exact approved visual reference/version for each identity-critical character.
+3. Verify those images are actually available to the generation tool/session.
+4. Resolve current appearance/wardrobe state.
+5. Resolve the exact frozen instant from scene canon.
+6. Identify every attached reference and its role.
+7. Preserve all LOCKED information.
+8. Do not substitute a visually similar but different action.
+9. Do not invent distinguishing features on established characters.
+10. Allow realistic incidental environmental detail where permitted.
+11. Compose from the specified physical camera position.
+12. Generate only when these requirements are internally consistent.
 
-After generation, reject the result if any of these occur:
+If a required identity reference is missing from the active generation context, **do not generate a substitute person**.
+
+## 15. Post-generation rejection gate
+
+Reject the result before presenting it as acceptable if any of these occur:
 
 - wrong established character
+- material identity drift
 - invented distinguishing character feature
+- missing approved distinguishing feature
+- unexplained build/hair/facial-hair change
+- wrong scene wardrobe/appearance state
 - wrong hero action
 - wrong hero position
 - wrong important prop
 - wrong camera premise
 - major continuity violation
 
-Do not present a failed image as an acceptable result.
+A strong pub/location/composition does not rescue a wrong hero.
 
 ## Shorthand invocation
 
 The user does not need to reproduce this document every time. They may say:
 
 > **Use SHIRTFACED Seed Image Recipe.**  
-> Scene: [scene].  
+> Scene: [scene / canonical scene ID].  
 > Exact instant: [locked instant].  
-> Characters: [attached reference assignments]. Preserve identities exactly.  
+> Characters: [canonical slugs + attached/resolved references]. Preserve identities exactly.  
 > Camera: [capture premise].  
 > Environment: [required environment plus permitted incidental freedom].  
 > Generate the seed still.
 
-Established canon and this recipe supply the remaining constraints.
+If the scene, character identities, current references and wardrobe state already exist in the repo/current conversation, resolve them instead of asking the user to restate them. Ask only for genuinely unavailable required assets or an unresolved owner decision.
