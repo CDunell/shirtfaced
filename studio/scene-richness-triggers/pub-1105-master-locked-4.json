@@ -1,0 +1,1 @@
+{"scene":"pub-1105","model":"gemini-3-pro-image","candidates":1,"strategy":"master-locked-scene-preservation-v2","goal":"preserve original GPT event exactly; 9:16 canvas only; no crowd regeneration","manual_gate":"scene-richness-review","retry_reason":"workflow artifact assertion updated for master-locked manifest"}
