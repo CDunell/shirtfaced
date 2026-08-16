@@ -8,7 +8,7 @@ import urllib.request
 
 
 def get_json(url: str) -> dict[str, object]:
-    with urllib.request.urlopen(url, timeout=15) as response:  # noqa: S310 - controlled URL
+    with urllib.request.urlopen(url, timeout=15) as response:
         return json.loads(response.read())
 
 
