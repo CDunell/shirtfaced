@@ -24,6 +24,9 @@ def accepted_clip_cost(inputs: CostInputs) -> float:
     )
 
 
-def monthly_projection(inputs: CostInputs, clip_counts: tuple[int, ...] = (10, 25, 50, 100)) -> dict[int, float]:
+def monthly_projection(
+    inputs: CostInputs,
+    clip_counts: tuple[int, ...] = (10, 25, 50, 100),
+) -> dict[int, float]:
     unit = accepted_clip_cost(inputs)
     return {count: round(unit * count, 2) for count in clip_counts}
