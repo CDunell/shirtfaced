@@ -1,0 +1,36 @@
+name: Diagnose Studio jobs file
+on:
+  push:
+    branches: [main]
+    paths: [".github/diagnose-studio-jobs/*.json"]
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Inspect checkout before install
+        run: |
+          set -euo pipefail
+          echo BEFORE_BEGIN
+          git status --short
+          find studio/app -maxdepth 1 -type f -printf '%f\n' | sort
+          test -e studio/app/jobs.py && { echo JOBS_BEFORE=yes; sed -n '650,680p' studio/app/jobs.py; } || echo JOBS_BEFORE=no
+          grep -R "structlog.get_logger" -n studio/app studio/tests || true
+          echo BEFORE_END
+      - name: Install exactly as Studio CI
+        working-directory: studio
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Inspect checkout after install
+        run: |
+          set -euo pipefail
+          echo AFTER_BEGIN
+          git status --short --untracked-files=all
+          find studio/app -maxdepth 1 -type f -printf '%f\n' | sort
+          test -e studio/app/jobs.py && { echo JOBS_AFTER=yes; ls -l studio/app/jobs.py; sed -n '640,685p' studio/app/jobs.py; } || echo JOBS_AFTER=no
+          grep -R "structlog.get_logger" -n studio/app studio/tests || true
+          echo AFTER_END
