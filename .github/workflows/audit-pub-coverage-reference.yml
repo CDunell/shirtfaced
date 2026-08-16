@@ -1,0 +1,46 @@
+name: Audit pub coverage reference
+on:
+  push:
+    branches: [main]
+    paths: ["studio/coverage-ref-audit-triggers/*.json"]
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Find known 16:9-ish pub master by SHA or dimensions
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'python3 - <<"PY"
+          from pathlib import Path
+          import hashlib
+          from PIL import Image
+          root=Path("/home/ubuntu/shirtfaced-studio")
+          wanted="d1351825d785e1d59e45d045f032d65d55d6f06b4ea77dea2b1d771cc8794b55"
+          scopes=[root/"var/scene-references/pub-1105", root/"var/renderer-validation/pub-1105"]
+          found=[]
+          for scope in scopes:
+              if not scope.exists():
+                  continue
+              for p in scope.rglob("*"):
+                  if not p.is_file() or p.suffix.lower() not in {".png",".jpg",".jpeg"}:
+                      continue
+                  try:
+                      data=p.read_bytes(); sha=hashlib.sha256(data).hexdigest()
+                      with Image.open(p) as im: w,h=im.size
+                  except Exception:
+                      continue
+                  if sha==wanted or (w>=1400 and 900<=h<=1100):
+                      found.append((sha,w,h,str(p.relative_to(root))))
+          print("MATCHES_BEGIN")
+          for row in found: print("|".join(map(str,row)))
+          print("MATCHES_END")
+          if any(r[0]==wanted for r in found): print("EXACT_SHA_FOUND=yes")
+          else: print("EXACT_SHA_FOUND=no")
+          PY'
