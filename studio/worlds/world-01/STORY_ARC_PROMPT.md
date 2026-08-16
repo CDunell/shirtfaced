@@ -86,7 +86,7 @@ The whole night does not ship on the night. A small number of assets earn real-t
 
 These come from the repo. I'm restating the ones most likely to get quietly broken:
 
-- **Nobody is named in a generation prompt.** Ever. The prompt says "one bloke," "a woman," "another mate." The screenplay may and should use the canon names — that's what `CHARACTERS.md` exists for — but anything downstream that a model will read is anonymous. Bridge the two with a stable production identity per character as `CHARACTER_CONTINUITY.md` requires: fixed appearance, wardrobe state, relationships, carried objects. "One bloke" in scene two and "one bloke" in scene nine must be resolvable to the same person without a name ever entering the prompt.
+- **Canonical cast names are allowed in generation prompts.** The old anonymity rule is retired. Use Damo, Brock, Emma, Gary, etc. when names make multi-character role assignment clearer. Names do not replace references: every recurring character must still resolve to the approved identity reference/version and current appearance state before generation. `Damo from reference 1` is valid and often clearer than `one bloke`.
 - **Supporting cast can be new, and usually stays unnamed.** The night is full of people who aren't in `CHARACTERS.md` — the bloke behind the bar, the woman who ends up in the kick-ons, the two mates already at the table when the group arrives. Write them freely and give them behaviour, but identify them by role and action rather than by name: "the barman," "someone's workmate," "the woman with the esky." A supporting figure only earns a name if the story genuinely cannot work without one, and if that happens, flag it to me as a proposed addition to canon rather than quietly writing it in.
 - **Use the smallest ensemble that makes the story work.** Do not deploy all fifteen canon characters to prove you read the document. Density comes from background strangers and ordinary clutter, never from a bigger named cast.
 - **Lucas and Tommy stay open.** Section 4 of `CHARACTERS.md` leaves their ages, occupations and relationship to Emma undecided. Do not decide them. Kevin is a held device, not a character you may introduce.
@@ -137,9 +137,9 @@ Map each assignment to its presentation class so the cycle audit works: most of 
 
 **One — The Arc.** Two pages at most. What happens across the night, what changes from the first frame to the last, who it happens to, and where the tension and the joke live. The human truth underneath the whole thing, stated once, plainly. If the arc needs a paragraph of explanation to land, it's the wrong arc. Then run it against the nine story quality gates in `STORY_ENGINE.md` §5 and tell me the results in a line each.
 
-**Two — Cast and wardrobe.** Which of the canon cast are in this night and which aren't, and why. Any new supporting figures, listed by role, with what each is there to do, marked clearly as new rather than mixed in with the canon list. Then the production identity table that bridges names to anonymous prompts:
+**Two — Cast and wardrobe.** Which of the canon cast are in this night and which aren't, and why. Any new supporting figures, listed by role, with what each is there to do, marked clearly as new rather than mixed in with the canon list. Then the production identity table that binds names to canonical references:
 
-| Screenplay name | Production identity | Fixed appearance | Starting wardrobe | Relationship behaviour |
+| Screenplay name | Production identity | Canonical reference/version | Fixed appearance | Starting wardrobe | Relationship behaviour |
 
 Garment allocation per person, with continuity changes across the night — the jumper that gets borrowed, the hoodie that ends up tied around a waist, the shoes that come off. Hero product rotation across scenes, checked against the rotation state in `CONTINUITY.md`.
 
@@ -204,5 +204,3 @@ YEAH, I GUESS is a rejection.
 Write it to a new file at `studio/worlds/world-01/STORY_ARC.md`. Do not edit `WORLD.md`, `CONTINUITY.md`, `SHOTLIST.md` or any other canon or production-state file. Where those files conflict or lack state you need, record the problem in your new document rather than resolving it silently.
 
 Then tell me, in one paragraph, the single thing about this arc you're least sure of.
-
-
