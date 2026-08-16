@@ -4,6 +4,7 @@ Provider price inputs are runtime/config data; this module never claims a perman
 price. It answers the production question: given measured acceptance/retry behaviour,
 what does an accepted clip cost at scale?
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
