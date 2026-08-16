@@ -1,0 +1,1 @@
+{"target":"studio/app/routes/coverage.py","purpose":"rerun clean CI after confirming jobs.py is absent before and after editable install","diagnostic_run":31977797566}
