@@ -1,0 +1,17 @@
+name: Renderer validation smoke
+
+on:
+  workflow_run:
+    workflows: ["Deploy"]
+    types: [completed]
+
+jobs:
+  smoke:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Smoke renderer validation contract
+        run: python studio/scripts/smoke_renderer_validation.py --base https://studio.shirtfaced.wtf

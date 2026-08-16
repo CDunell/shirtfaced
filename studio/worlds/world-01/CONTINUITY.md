@@ -9,7 +9,7 @@ This ledger records approved reference frames, rejected generation attempts and 
 
 ---
 
-# Status model
+# Status Key
 
 Scene/shot status and generation-attempt status are different things.
 
@@ -45,7 +45,12 @@ Scene/shot status and generation-attempt status are different things.
 
 ## Next Rotation Priority
 
-Follow `SHOTLIST.md` planned order unless continuity requires otherwise, while rotating hero products and camera positions.
+- Black heavyweight t-shirt
+- Hoodie tied around waist
+- Black heavyweight hoodie
+- Black cap from a lower or side-front camera angle
+
+`SHOTLIST.md` still determines which planned scene is next; this list is product-rotation intent, not a second scene backlog.
 
 ---
 
@@ -178,47 +183,51 @@ Current approved scene state is recorded in `SHOTLIST.md`.
 
 ---
 
-# Rejected Generation Attempts
+# Rejected Drift
 
-These are rejected **attempts**, not scene-status declarations unless `SHOTLIST.md` also marks the scene rejected.
+These are rejected **attempts** unless `SHOTLIST.md` separately marks the scene rejected. A rejected attempt never silently changes scene status.
 
-### W01-015 — Sunrise balcony attempt
+## W01-015 — Sunrise balcony attempt
 
 **Attempt status:** REJECTED  
 **Scene status:** PLANNED
 
 **Reason:** Phantom hand gripping a forearm and implausibly rested appearance after an all-nighter.
 
-The rejected frame must not be used as a reference. W01-015 remains available for a new attempt.
+**Permanent lesson:** Reject malformed human contact and implausibly refreshed post-all-nighter appearance; W01-015 remains available for a new attempt.
 
-### W01-012 — Apartment lobby earlier attempt
+## W01-012 — Apartment lobby earlier attempt
 
 **Attempt status:** REJECTED  
 **Scene status:** APPROVED via a later attempt
 
 **Reason:** A man pressed an entry intercom from inside the lobby for a lift not in frame; everyone was individually occupied rather than socially interacting.
 
-### W01-008 — Bottle shop after close
+**Permanent lesson:** Operated objects need their context in frame, and the group should read as socially connected rather than parallel isolated tasks.
+
+## Closed Bottle Shop
 
 **Scene status:** REJECTED
 
-The group looked stranded and indecisive. Standing still without a clear next action read as the end of the night rather than momentum.
+**Reason:** The group looked stranded and indecisive. Standing still without a clear next action read as the end of the night rather than momentum.
 
-### W01-010B — Lookout alternate, pickup tub
+**Permanent lesson:** Standing still without a clear next action often reads as the end of the night. World 01 scenes should show movement, a new plan, a shared discovery or visible social momentum.
+
+## Lookout Alternate — Pickup Tub
 
 **Attempt status:** REJECTED
 
-The vehicle became an American-style pickup body rather than an Australian tray-back ute.
+**Reason:** The vehicle became an American-style pickup body rather than an Australian tray-back ute.
 
-**Continuity lesson:** When a tray-back ute is required, explicitly require an open aluminium/alloy tray and prohibit an enclosed pickup tub.
+**Permanent lesson:** When a tray-back ute is required, explicitly require an open aluminium/alloy tray and prohibit an enclosed pickup tub.
 
-### House-party attempt — distracting commercial branding
+## House-party attempt — distracting commercial branding
 
 **Attempt status:** REJECTED AS REFERENCE
 
-Commercial graphics/packaging became visually prominent and competed with the scene.
+**Reason:** Commercial graphics/packaging became visually prominent and competed with the scene.
 
-**Current rule:** Shirtfaced products must use the approved Shirtfaced garment/artwork state or be deliberately blank when the shot calls for a blank. Non-Shirtfaced objects may retain incidental real-world branding where legally/operationally acceptable, but it must remain background texture: not centred, presented, heroed or visually dominant. This supersedes the old blanket `all packaging must be generic and unbranded` rule.
+**Permanent lesson:** Shirtfaced products follow the approved Shirtfaced garment/artwork state. Non-Shirtfaced objects may retain incidental real-world branding when contextually appropriate, but it stays background texture: not centred, presented, heroed or visually dominant. This supersedes the old blanket `all packaging must be generic and unbranded` rule.
 
 ---
 
@@ -238,14 +247,18 @@ Commercial graphics/packaging became visually prominent and competed with the sc
 - Vehicles are props unless a shot brief explicitly says otherwise.
 - Australian tray-back utes require the correct body logic: bonnet ahead of cab and open tray rather than an American pickup tub.
 - Foreground obstruction must belong to the photographer's plausible position and scene.
-- Shirtfaced garments must preserve approved garment/artwork identity, placement and continuity state.
-- Black clothing is common but not universal; non-product clothing varies naturally.
+- Anything Shirtfaced sells is blank always unless the approved Shirtfaced artwork/placement state for that garment is explicitly resolved; accidental third-party garment graphics are never accepted.
 - Non-Shirtfaced branding may exist incidentally as background texture but must not become the subject.
+- Black clothing is common but not universal; non-product clothing varies naturally.
 - Incidental Shirtfaced environmental easter eggs remain permitted where current brand rules allow them.
 - Character identity resolves through canonical cast plus approved references; prompt anonymity is never required as a brand rule.
 
 ---
 
-# Next Production State
+# Next Prompt Brief
 
-Do not maintain a duplicate `Next Prompt Brief` here. `SHOTLIST.md` is the production backlog and determines the next planned scene. This ledger records continuity and attempt history only.
+`SHOTLIST.md` is the authoritative production backlog. Do not duplicate a scene brief here and allow it to go stale.
+
+**Current next planned scene:** W01-015 — Sunrise balcony.  
+**Status:** PLANNED.  
+**Instruction:** Resolve the current scene brief from `SHOTLIST.md`, `WORLD.md`, current character/appearance canon and the active generation contracts at execution time.
