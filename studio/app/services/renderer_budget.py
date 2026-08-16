@@ -3,6 +3,7 @@
 Budget values are workflow policy. They prevent an API integration from turning a
 creative retry loop into an unbounded spend loop.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
