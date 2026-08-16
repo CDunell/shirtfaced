@@ -20,6 +20,7 @@ from app.routes import (
     assets,
     compose,
     concepts,
+    coverage,
     design,
     design_advisor,
     email,
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     application.include_router(health.router)
     application.include_router(api.router)
     application.include_router(renderer.router)
+    application.include_router(coverage.router)
     application.include_router(printing.router)
     application.include_router(assets.router)
     application.include_router(design.router)
