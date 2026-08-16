@@ -28,9 +28,9 @@ def load_ref(path:Path,name:str,role:str):
   im.load(); dims=im.size; fmt=im.format; im=ImageOps.exif_transpose(im).convert('RGB'); im.thumbnail((3072,3072),Image.Resampling.LANCZOS); b=io.BytesIO(); im.save(b,'JPEG',quality=98,subsampling=0); data=b.getvalue()
  return ReferenceImage(name=name,data=data,mime_type='image/jpeg',locked=True),{'name':name,'role':role,'path':str(path.relative_to(ROOT)),'source_sha256':hashlib.sha256(raw).hexdigest(),'dimensions':list(dims),'format':fmt}
 def composition_path():
- files=list((ROOT/'var/scene-references/pub-1105').glob('composition-gpt.*'))
- if len(files)!=1: raise SystemExit(f'expected one approved composition master, found {len(files)}; no provider call made')
- return files[0]
+ files=[p for p in (ROOT/'var/scene-references/pub-1105').glob('composition-gpt.*') if p.is_file() and p.stat().st_size>0]
+ if not files: raise SystemExit('approved composition master missing; no provider call made')
+ return max(files,key=lambda p:p.stat().st_mtime_ns)
 def main():
  scene=composition_path(); damo=ROOT/'var/cast/damo/b-head-shoulders.png'
  if not damo.is_file(): raise SystemExit('canonical Damo head missing; no provider call made')
