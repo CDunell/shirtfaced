@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-shot Pro edit: preserve GPT pub master and replace only central man's identity with Damo."""
+"""One-shot Pro edit: preserve GPT pub master and replace only central man's head identity with Damo."""
 from __future__ import annotations
 import hashlib, io, json, sys
 from datetime import UTC, datetime
@@ -10,19 +10,19 @@ from app.adapters.google_media import GoogleImageClient, GoogleImageRequest
 from app.adapters.reference_images import ReferenceImage
 from app.config import get_settings
 
-PROMPT="""IMAGE 1 IS THE LOCKED MASTER IMAGE. This is a surgical identity edit, NOT a new scene generation.
+PROMPT="""IMAGE 1 IS THE LOCKED MASTER PHOTOGRAPH. IMAGE 2 is the canonical head-and-shoulders reference for DAMO.
 
-Images 2 and 3 are the same person: DAMO. Image 2 is Damo full length and controls body/build/proportions. Image 3 is Damo head/shoulders and controls face, hair, stubble and identity. Replace ONLY the central man standing on the pool table in IMAGE 1 with canonical Damo from Images 2 and 3.
+Perform ONE surgical edit only: replace the FACE / HEAD IDENTITY of the central man standing on the pool table in IMAGE 1 so he unmistakably matches DAMO in IMAGE 2.
 
-Everything else in IMAGE 1 is locked and must remain the same photographed event. Preserve camera position, perspective, framing, crop logic, crowd density, every body pose around Damo, physical contact, the man holding/steadying him, foreground heads and shoulders, occlusion, pool-table geometry, cue geometry and exact overhead position, stool position, full beer position, band/bar geography, lighting distribution, deep shadows, red stage/bar spill, motion blur, accidental phone-camera character and uncontrolled energy.
+Do not regenerate the scene. Do not redesign the man. Do not reinterpret the event. Keep the central man's existing body, clothing, pose, hands, arms, cue, torso, hips, legs and feet exactly as photographed in IMAGE 1. The only allowed visual changes are those necessary to make his face, hairline, hair, facial proportions and stubble match DAMO. Blend the replacement naturally into the existing head angle, expression, skin exposure, motion, lighting and grain of IMAGE 1.
 
-Do NOT rearrange the crowd. Do NOT clean up the photograph. Do NOT improve composition. Do NOT isolate Damo. Do NOT brighten the room. Do NOT alter the pose. Do NOT alter wardrobe except where required to make the central man recognisably Damo while keeping the same clothing category and fit. Do NOT move his arms, hands, cue, torso, hips, legs or feet. Do NOT change where other people touch him. Do NOT add tattoos, jewellery, scars, piercings or other marks. Damo has no tattoos.
+EVERYTHING ELSE IS LOCKED: camera position, perspective, 9:16 crop, crowd density, every other person's identity and pose, the man physically holding Damo, foreground obstruction, occlusion, pool-table geometry, both feet positions, asymmetric stance, cue horizontal above his head in both fists, stool, full beer, band/bar geography, dark ceiling, practical lighting, red background spill, shadow depth, motion blur, photographic imperfections and uncontrolled crowd energy.
 
-The central man's pose is LOCKED from IMAGE 1: both feet stay where they are on the pool table; one knee remains bent; torso remains twisted; another man remains physically holding him; cue remains horizontal above his head in both hands; head stays back, eyes shut, mouth open. He is a punter singing along, not the band singer.
+Do NOT alter body build or proportions in this pass. Do NOT use IMAGE 2 to influence clothing, pose, lighting, framing or scene geometry. Do NOT clean up the photo, brighten faces, isolate Damo, move people, fix awkward overlaps, improve composition or create a hero portrait. Do NOT add tattoos, jewellery, scars, piercings or other marks. Damo has no tattoos.
 
-Identity replacement priority: make the central man's FACE, HAIR, STUBBLE, BUILD and BODY PROPORTIONS match Damo from Images 2 and 3 while preserving the exact event geometry from IMAGE 1. If identity and scene geometry conflict, preserve scene geometry and change only facial/identity characteristics necessary to make him Damo.
+Preserve the exact head pose and expression from IMAGE 1: head back, eyes shut, mouth open, roaring along as an audience member. Change identity, not performance.
 
-The result succeeds only if it looks like IMAGE 1 itself was edited so that the central man was always Damo. A viewer should not perceive a regenerated crowd or newly composed photograph."""
+The result succeeds only if IMAGE 1 still reads as the same photograph at the same instant and the central man's head now clearly reads as canonical Damo. If any requested identity change would require changing scene geometry, preserve scene geometry instead."""
 
 def ref(name,path,role,quality=95):
  p=ROOT/path; raw=p.read_bytes()
@@ -33,18 +33,16 @@ def ref(name,path,role,quality=95):
 def main():
  scene=list((ROOT/"var/scene-references/pub-1105").glob("composition-gpt.*"))
  if len(scene)!=1: raise SystemExit(f"expected one persistent master reference; found {len(scene)}; no provider call made")
- damo_full=ROOT/"var/cast/damo/a-full-length.png"; damo_head=ROOT/"var/cast/damo/b-head-shoulders.png"
- missing=[str(p) for p in (damo_full,damo_head) if not p.is_file()]
- if missing: raise SystemExit("missing canonical Damo refs; no provider call made: "+", ".join(missing))
+ damo_head=ROOT/"var/cast/damo/b-head-shoulders.png"
+ if not damo_head.is_file(): raise SystemExit(f"missing canonical Damo head ref: {damo_head}; no provider call made")
  ordered=[
   ("gpt-master",str(scene[0].relative_to(ROOT)),"locked-master-image"),
-  ("damo-full",str(damo_full.relative_to(ROOT)),"identity-body-only"),
-  ("damo-head",str(damo_head.relative_to(ROOT)),"identity-face-only"),
+  ("damo-head",str(damo_head.relative_to(ROOT)),"head-identity-only"),
  ]
  prepared=[ref(*x) for x in ordered]; refs=tuple(x[0] for x in prepared); meta=[x[1] for x in prepared]
  settings=get_settings()
  if not settings.google_media_live or settings.gemini_api_key is None: raise SystemExit("Google media not live; no provider call made")
  model="gemini-3-pro-image"; stamp=datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ"); out=ROOT/"var/renderer-validation/pub-1105"/stamp; out.mkdir(parents=True,exist_ok=True)
- manifest={"scene":"pub-1105","experiment":"gpt-master-plus-damo-identity-only","generated_at":stamp,"model":model,"aspect_ratio":"9:16","image_size":"2K","composition_reference_used":True,"master_reference_only":False,"identity_edit":"damo-only","references":meta,"candidate_count":1,"manual_gate":"seed_review_required_before_video"}; (out/"manifest.json").write_text(json.dumps(manifest,indent=2)); (out/"prompt.txt").write_text(PROMPT)
+ manifest={"scene":"pub-1105","experiment":"gpt-master-plus-damo-head-only","generated_at":stamp,"model":model,"aspect_ratio":"9:16","image_size":"2K","composition_reference_used":True,"master_reference_only":False,"identity_edit":"damo-head-only","preserve":["composition","camera","lighting","crowd","pose","body","wardrobe","props","geography"],"change":["damo_head_identity"],"references":meta,"candidate_count":1,"manual_gate":"seed_review_required_before_video"}; (out/"manifest.json").write_text(json.dumps(manifest,indent=2)); (out/"prompt.txt").write_text(PROMPT)
  client=GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(),model=model); result=client.generate(GoogleImageRequest(prompt=PROMPT,references=refs,aspect_ratio="9:16",image_size="2K")); suffix=".png" if result.mime_type=="image/png" else ".jpg"; (out/("seed-1"+suffix)).write_bytes(result.data); print(f"RESULT_DIR={out}")
 if __name__=="__main__": main()
