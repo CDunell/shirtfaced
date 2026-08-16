@@ -1,0 +1,6 @@
+{
+  "scene": "pub-1105",
+  "candidate_count": 1,
+  "reason": "first paid validation after canonical Damo/Brock/Emma reference sync",
+  "manual_gate_after": "seed_review_required_before_video"
+}
