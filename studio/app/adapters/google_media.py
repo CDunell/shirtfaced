@@ -13,7 +13,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from PIL import Image, ImageOps
+from PIL import Image, ImageFile, ImageOps
 
 from app.adapters.reference_images import ReferenceImage
 
@@ -57,14 +57,17 @@ class GoogleVideoResult:
 def _normalise_reference_for_gemini(ref: ReferenceImage) -> tuple[str, str]:
     """Return a clean base64 JPEG for Gemini's inline image input.
 
-    Reference files come from several production paths and may contain colour profiles,
-    EXIF orientation, progressive encoding or format/extension mismatches that ordinary
-    image viewers tolerate but the Interactions API can reject as an unprocessable input
-    image. Decode with Pillow first, apply orientation, flatten alpha, and re-encode to a
-    plain RGB JPEG without metadata. This also proves locally that the bytes are a real
-    decodable image before a paid provider call is attempted.
+    The first production cast bootstrap exposed that some legacy JPEGs are truncated:
+    browsers display them, but strict decoders and Gemini reject them. Pillow can salvage
+    those streams when explicitly allowed. We immediately re-encode the decoded pixels
+    to a fresh baseline RGB JPEG, so the provider never receives the damaged source bytes.
+
+    This is a compatibility bridge for legacy references, not permission to keep creating
+    damaged assets. New canonical files should pass strict decode before storage.
     """
 
+    previous = ImageFile.LOAD_TRUNCATED_IMAGES
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
     try:
         with Image.open(io.BytesIO(ref.data)) as source:
             source.load()
@@ -79,15 +82,22 @@ def _normalise_reference_for_gemini(ref: ReferenceImage) -> tuple[str, str]:
             else:
                 image = image.convert("RGB")
 
-            # Keep identity detail while avoiding unnecessarily huge inline payloads.
             max_side = 2048
             if max(image.size) > max_side:
                 image.thumbnail((max_side, max_side), Image.Resampling.LANCZOS)
 
             output = io.BytesIO()
-            image.save(output, format="JPEG", quality=92, optimize=True)
-    except Exception as exc:  # Pillow raises several format-specific exception classes.
+            image.save(
+                output,
+                format="JPEG",
+                quality=92,
+                optimize=True,
+                progressive=False,
+            )
+    except Exception as exc:
         raise GoogleMediaError(f"Reference image {ref.name!r} cannot be decoded") from exc
+    finally:
+        ImageFile.LOAD_TRUNCATED_IMAGES = previous
 
     return base64.b64encode(output.getvalue()).decode("ascii"), "image/jpeg"
 
@@ -108,10 +118,6 @@ class GoogleImageClient:
             inputs.append({"type": "image", "data": data, "mime_type": mime_type})
         inputs.append({"type": "text", "text": request.prompt})
 
-        # Follow Google's documented Interactions image-generation contract. Do not
-        # force an output MIME type: the service chooses the generated image format and
-        # reports it on output_image. aspect_ratio and image_size are the supported
-        # response-format controls.
         interaction = self._client.interactions.create(
             model=self._model,
             input=inputs,
