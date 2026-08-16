@@ -18,6 +18,9 @@ sys.path.insert(0, str(ROOT))
 from app.adapters.google_media import GoogleVideoClient, GoogleVideoRequest
 from app.config import get_settings
 
+DEV_MODEL = "veo-3.1-lite-generate-preview"
+DEV_RESOLUTION = "720p"
+
 PROMPT = """Continue this exact supplied pub image as one piece of accidental handheld vertical phone footage from inside the same packed Australian pub at the same instant. Preserve the existing room, red-lit back bar, pool table, hanging lamp, stool and full beer, crowd density, lighting, wardrobe, faces, body positions and spatial relationships.
 
 CAMERA MOVE: begin from the existing Damo side of the scene for only a fraction of a second, then make one fast, physically plausible handheld whip-pan to camera-right across the existing crowd. The pan itself should contain natural directional motion blur and imperfect phone-camera movement. Land on the woman who is ALREADY elevated at camera-right with both arms up, together with the man ALREADY beneath/carrying her. Hold on that existing pair briefly after the pan settles while they simply continue the action already present in the source frame.
@@ -53,7 +56,7 @@ def main() -> None:
     mime = "image/png" if source_format == "PNG" else "image/jpeg"
     client = GoogleVideoClient(
         api_key=settings.gemini_api_key.get_secret_value(),
-        model=settings.google_video_model,
+        model=DEV_MODEL,
         poll_seconds=settings.google_video_poll_seconds,
         timeout_seconds=settings.google_video_timeout_seconds,
     )
@@ -68,7 +71,7 @@ def main() -> None:
             first_frame=data,
             first_frame_mime=mime,
             aspect_ratio="9:16",
-            resolution=settings.google_video_resolution,
+            resolution=DEV_RESOLUTION,
         )
     )
 
@@ -91,7 +94,7 @@ def main() -> None:
         "generated_at": stamp,
         "model": result.model,
         "aspect_ratio": "9:16",
-        "resolution": settings.google_video_resolution,
+        "resolution": DEV_RESOLUTION,
         "seed_path": str(seed),
         "seed_sha256": actual_sha,
         "source_dimensions": source_dimensions,
