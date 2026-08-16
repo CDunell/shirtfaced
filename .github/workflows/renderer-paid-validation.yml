@@ -14,6 +14,8 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
       - name: Set up deploy key
         run: |
@@ -21,6 +23,31 @@ jobs:
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync exact triggering Studio code before paid call
+        run: |
+          set -euo pipefail
+          # Paid validation must never race production deploy and execute stale renderer
+          # code. Sync only immutable Studio code from this exact checkout. Persistent
+          # canon/runtime assets remain untouched.
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv \
+            --exclude=web/node_modules --exclude=web/dist \
+            --exclude=__pycache__ --exclude=.pytest_cache \
+            studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
+          printf '%s\n' '${{ github.sha }}' | ssh -i ~/.ssh/deploy_key \
+            ubuntu@${{ secrets.ORACLE_HOST }} \
+            'cat > /home/ubuntu/shirtfaced-studio/var/renderer-validation/paid-code-sha'
+
+      - name: Verify paid runner is vertical-first
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            "grep -q 'aspect_ratio=\"9:16\"' /home/ubuntu/shirtfaced-studio/scripts/run_renderer_seed.py"
+          remote_sha=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'cat /home/ubuntu/shirtfaced-studio/var/renderer-validation/paid-code-sha')
+          test "$remote_sha" = '${{ github.sha }}'
 
       - name: Run one approved paid pub seed
         id: generate
@@ -42,6 +69,7 @@ jobs:
           test -s renderer-result/manifest.json
           test -s renderer-result/prompt.txt
           ls renderer-result/seed-* >/dev/null
+          grep -q '"aspect_ratio": "9:16"' renderer-result/manifest.json
 
       - uses: actions/upload-artifact@v4
         with:
