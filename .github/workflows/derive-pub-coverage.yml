@@ -1,0 +1,42 @@
+name: Derive pub 9x16 coverage
+on:
+  push:
+    branches: [main]
+    paths: ["studio/coverage-derive-triggers/*.json"]
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: "${{ github.sha }}"}
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Install exact derivation script on Studio
+        run: |
+          scp -i ~/.ssh/deploy_key studio/scripts/derive_scene_coverage.py ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/scripts/derive_scene_coverage.py
+      - name: Derive original-pixel 9x16 coverage candidates
+        run: |
+          set -euo pipefail
+          trigger=$(ls studio/coverage-derive-triggers/*.json | sort | tail -1)
+          source_path=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["source_relative_path"])' "$trigger")
+          source_sha=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["source_sha256"])' "$trigger")
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "set -euo pipefail; root=/home/ubuntu/shirtfaced-studio; source=\"\$root/$source_path\"; test -s \"\$source\"; test \"\$(sha256sum \"\$source\" | awk '{print \$1}')\" = '$source_sha'; \$root/.venv/bin/python \$root/scripts/derive_scene_coverage.py --source \"\$source\" --expected-sha256 '$source_sha' --scene pub-1105 --shot damo-9x16 --x 360 --out-root \$root/var/scene-references; \$root/.venv/bin/python \$root/scripts/derive_scene_coverage.py --source \"\$source\" --expected-sha256 '$source_sha' --scene pub-1105 --shot emma-brock-a --x 820 --out-root \$root/var/scene-references; \$root/.venv/bin/python \$root/scripts/derive_scene_coverage.py --source \"\$source\" --expected-sha256 '$source_sha' --scene pub-1105 --shot emma-brock-b --x 900 --out-root \$root/var/scene-references; \$root/.venv/bin/python \$root/scripts/derive_scene_coverage.py --source \"\$source\" --expected-sha256 '$source_sha' --scene pub-1105 --shot emma-brock-c --x 950 --out-root \$root/var/scene-references"
+      - name: Retrieve candidates
+        run: |
+          mkdir -p coverage-result
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105/coverage/damo-9x16 coverage-result/
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105/coverage/emma-brock-a coverage-result/
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105/coverage/emma-brock-b coverage-result/
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105/coverage/emma-brock-c coverage-result/
+          find coverage-result -name frame.png -size +0c | grep -q .
+          grep -R '"operation": "original_pixels_crop_only"' coverage-result
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pub-1105-9x16-coverage-candidates
+          path: coverage-result/
+          if-no-files-found: error
+          retention-days: 7
