@@ -2,70 +2,77 @@
 
 ## THE BIG NIGHT
 
-This ledger records what has been generated, approved, rejected and learned.
+**Status:** ACTIVE ledger  
+**Authority:** Use with `WORLD.md`, `STORY_ARC.md`, `SHOTLIST.md`, `docs/foundations/CHARACTERS.md`, and `docs/stage-2/social-ai-production/CHARACTER_CONTINUITY.md`.
 
-It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
+This ledger records approved reference frames, rejected generation attempts and continuity lessons. It does **not** override the current World bible, global character canon, or `SHOTLIST.md` scene status.
 
 ---
 
-# Status Key
+# Status model
 
-- **APPROVED** — belongs in World 1.
-- **APPROVED WITH NOTE** — belongs in World 1 and revealed a useful continuity rule.
-- **REJECTED** — shall not be used as a reference.
+Scene/shot status and generation-attempt status are different things.
+
+- **APPROVED SCENE** — current production state is approved in `SHOTLIST.md`.
+- **PLANNED SCENE** — current production state is planned in `SHOTLIST.md`.
+- **REJECTED SCENE** — scene itself is rejected in `SHOTLIST.md`.
+- **APPROVED ATTEMPT** — generated frame may be used as a reference.
+- **REJECTED ATTEMPT** — generated frame must not be used as a reference; the scene may still remain planned or later have an approved attempt.
+
+`SHOTLIST.md` is authoritative for scene status. This ledger is authoritative for World 01 attempt history and continuity lessons.
 
 ---
 
 # Hero Product Rotation
 
-| Sequence | Scene | Hero Product | Front/Back/Panel | Status |
+| Sequence | Scene | Hero Product | Front/Back/Panel | Scene Status |
 |---:|---|---|---|---|
-| 01 | Walking between venues | Black heavyweight t-shirt | Front chest | APPROVED |
-| 02 | Late-night kebab shop | Mixed placement | Multiple | APPROVED |
-| 03 | Servo stop | Mixed placement | Multiple | APPROVED |
-| 04 | Pedestrian crossing | Mixed placement | Multiple | APPROVED |
-| 05 | Beer garden | Black heavyweight t-shirt | Front chest | APPROVED |
-| 06 | House-party kitchen | Blank garments | Mixed | APPROVED WITH NOTE |
-| 07 | Fast-food car park | Black hoodie / black tee | Mixed | APPROVED |
-| 08 | Closed bottle shop | Mixed placement | Mixed | REJECTED |
-| 09 | Apartment kick-ons arrival | Black cap | Front panel | APPROVED |
-| 10 | City lookout | Black cap | Front panel | APPROVED |
+| W01-001 | Walking between venues | T-shirt | Front chest | APPROVED |
+| W01-002 | Late-night kebab shop | Mixed | Multiple | APPROVED |
+| W01-003 | Servo stop | Mixed | Multiple | APPROVED |
+| W01-004 | Pedestrian crossing | Mixed | Multiple | APPROVED |
+| W01-005 | Beer garden | T-shirt | Front chest | APPROVED |
+| W01-006 | House-party kitchen | Hoodie | Mixed | APPROVED |
+| W01-007 | Fast-food car park | Hoodie | Mixed | APPROVED |
+| W01-008 | Bottle shop after close | Mixed | Mixed | REJECTED |
+| W01-009 | Apartment arrival | Cap | Front panel | APPROVED |
+| W01-010 | Lookout | Cap | Front panel | APPROVED |
 | W01-011 | Kerbside window chat | T-shirt | Recorded | APPROVED |
 | W01-012 | Apartment lobby | Hoodie waist | Recorded | APPROVED |
 | W01-013 | Apartment balcony back view | T-shirt | Recorded | APPROVED |
+| W01-014 | Kitchen kick-ons II | Hoodie waist | Recorded | APPROVED |
+| W01-015 | Sunrise balcony | Hoodie | Planned | PLANNED |
 
 ## Next Rotation Priority
 
-1. Black heavyweight t-shirt
-2. Hoodie tied around waist
-3. Black heavyweight hoodie
-4. Black cap from a lower or side-front camera angle
+Follow `SHOTLIST.md` planned order unless continuity requires otherwise, while rotating hero products and camera positions.
 
 ---
 
 # Camera Position Rotation
 
-| Sequence | Scene | Camera Position | Status |
+| Sequence | Scene | Camera Position | Scene/Attempt Status |
 |---:|---|---|---|
-| 01 | Walking between venues | Across street, slightly behind | APPROVED |
-| 02 | Kebab shop | Across footpath, street level | APPROVED |
-| 03 | Servo stop | Across forecourt | APPROVED |
-| 04 | Pedestrian crossing | Opposite footpath | APPROVED |
-| 05 | Beer garden | Seated at nearby table | APPROVED |
-| 05B | Beer garden alternate | Rear three-quarter from adjacent table | APPROVED |
-| 06 | House-party kitchen | Dining room toward island | APPROVED |
-| 07 | Fast-food car park | Across car park | APPROVED |
-| 09 | Apartment arrival | Across street / rear movement | APPROVED |
-| 09B | Apartment arrival alternate | Inside gate, facing arrivals | APPROVED |
-| 10 | Lookout | Beside another parked car | APPROVED |
-| 10B | Lookout alternate | Elevated rear three-quarter | REJECTED — incorrect ute body |
+| W01-001 | Walking between venues | Across street, slightly behind | APPROVED |
+| W01-002 | Kebab shop | Across footpath, street level | APPROVED |
+| W01-003 | Servo stop | Across forecourt | APPROVED |
+| W01-004 | Pedestrian crossing | Opposite footpath | APPROVED |
+| W01-005 | Beer garden | Seated at nearby table | APPROVED |
+| W01-005B | Beer garden alternate | Rear three-quarter from adjacent table | APPROVED ATTEMPT |
+| W01-006 | House-party kitchen | Dining room toward island | APPROVED |
+| W01-007 | Fast-food car park | Across car park | APPROVED |
+| W01-009 | Apartment arrival | Across street / rear movement | APPROVED |
+| W01-009B | Apartment arrival alternate | Inside gate, facing arrivals | APPROVED ATTEMPT |
+| W01-010 | Lookout | Beside another parked car | APPROVED |
+| W01-010B | Lookout alternate | Elevated rear three-quarter | REJECTED ATTEMPT — incorrect ute body |
 | W01-011 | Kerbside window chat | Footpath at window | APPROVED |
 | W01-012 | Apartment lobby | From the entrance | APPROVED |
 | W01-013 | Apartment balcony back view | Inside lounge | APPROVED |
+| W01-014 | Kitchen kick-ons II | Facing from hall | APPROVED |
 
 ## Next Camera Priority
 
-- Low seated curb perspective.
+- Low seated kerb perspective.
 - Through an open doorway.
 - From the footpath to an open car window.
 - Tight side-front documentary frame.
@@ -73,27 +80,19 @@ It is used with `SHIRTFACED_WORLD_01_The_Big_Night_v4.md`.
 
 ---
 
-# Cast Rotation
+# Cast Continuity
 
-Added 7 August 2026 alongside `docs/foundations/CHARACTERS.md` (Hot List item 3).
-Nobody is named in a generation prompt — see that document's scope note. This tracks,
-for continuity and caption purposes only, which of the fifteen named people a scene's
-"one bloke" or "another mate" is understood to be.
+`docs/foundations/CHARACTERS.md` is the global narrative authority for recurring cast. `docs/stage-2/social-ai-production/CHARACTER_CONTINUITY.md` governs production identity and appearance resolution.
 
-Shots before this table existed are marked unrecorded rather than assigned after the
-fact — nothing ties a name to a specific already-generated image, and inventing that
-link now would be fabricated continuity, not recovered continuity.
+Canonical names are permitted in generation prompts and should be used when they improve clarity. Provider-facing wording may instead identify a person by reference (`Damo, matching reference 1`, `the man from reference 1`) when that is more reliable for the active generator. Anonymous wording is a provider technique, not a canon rule.
+
+Historical shots created before cast tracking remain **unrecorded** unless an owner-approved reference or production record establishes identity. Do not fabricate retrospective assignments.
 
 | Sequence | Scene | Cast | Status |
 |---:|---|---|---|
-| 01–10, W01-011–014 | (pre-dates cast tracking) | Unrecorded | — |
+| W01-001–W01-014 | Pre-dates reliable cast tracking | Unrecorded unless separately resolved by approved production data | HISTORICAL |
 
-## Next Cast Priority
-
-No scene has used this table yet. `CHARACTERS.md` is a name list only — no core group,
-no roles, no relationships decided. First use of this table is also the first real
-decision on any of that — make it for the scene in front of you, not in the abstract
-ahead of time.
+For all new identity-critical shots, resolve canonical character, approved visual reference and applicable appearance state before generation.
 
 ---
 
@@ -101,22 +100,18 @@ ahead of time.
 
 ## Reference 01 — Walking Between Venues
 
-**Status:** APPROVED
-
-**Why it works:**
+**Attempt status:** APPROVED
 
 - Genuine group chemistry.
 - Strong optimism and momentum.
 - Multiple natural product surfaces.
 - Wet street reflections and warm venue light.
 - Documentary obstruction in the foreground.
-- Instagram-worthy without product placement.
+- Works without product placement becoming the point.
 
 ## Reference 02 — Late-Night Kebab Shop
 
-**Status:** APPROVED
-
-**Why it works:**
+**Attempt status:** APPROVED
 
 - Clear social action.
 - Strong Australian late-night familiarity.
@@ -126,20 +121,16 @@ ahead of time.
 
 ## Reference 03 — Servo Stop
 
-**Status:** APPROVED
-
-**Why it works:**
+**Attempt status:** APPROVED
 
 - Multiple parallel actions.
 - Strong fluorescent Australian night environment.
-- The scene feels transitional and full of possibility.
+- Transitional and full of possibility.
 - Product placements arise from movement.
 
 ## Reference 04 — Apartment Kick-ons Arrival, Front Perspective
 
-**Status:** APPROVED
-
-**Why it works:**
+**Attempt status:** APPROVED
 
 - Clear momentum.
 - Strong front-facing cap opportunity.
@@ -147,184 +138,114 @@ ahead of time.
 - The night visibly continues.
 - Photographer position is believable.
 
-## Reference 05 — City Lookout, Correct Tray-Back Ute
+## Reference 05 — Lookout, Correct Tray-Back Ute
 
-**Status:** APPROVED
+**Attempt status:** APPROVED
 
-**Why it works:**
-
-- Peaceful without resignation.
-- Strong group intimacy.
-- Correct Australian tray-back ute.
-- Front-facing cap panel.
-- City is secondary to the friendship.
-
----
+The historical frame remains approved as a reference for group intimacy, tray-back ute construction and product/camera treatment. **Do not inherit an identifiable skyline, landmark or city-specific location from it.** Current World canon controls location anonymity.
 
 ## W01-011 — Kerbside window chat
 
-**Status:** APPROVED
+**Attempt status:** APPROVED  
+**Hero product:** T-shirt  
+**Camera:** Footpath at window
 
-**Hero product:** T-shirt
-
-**Camera position:** Footpath at window
-
-**Why it works:** Approved by the owner. Structurally sound, camera outside, seated passenger at the open window.
-
-**Reviewer said:** Australian takeaway environment captured, showing some social interaction.
+Owner-approved. Structurally sound: camera outside, seated passenger at the open window.
 
 ## W01-012 — Apartment lobby
 
-**Status:** APPROVED
+**Attempt status:** APPROVED  
+**Hero product:** Hoodie waist  
+**Camera:** From the entrance
 
-**Hero product:** Hoodie waist
-
-**Camera position:** From the entrance
-
-**Why it works:** Keeper. The group carries it.
-
-**Reviewer said:** Authentic Australian location and atmosphere are evident, despite weaknesses in interaction and composition.
+Keeper. The group carries it.
 
 ## W01-013 — Apartment balcony back view
 
-**Status:** APPROVED
+**Attempt status:** APPROVED  
+**Hero product:** T-shirt  
+**Camera:** Inside lounge
 
-**Hero product:** T-shirt
+Keeper.
 
-**Camera position:** Inside lounge
+## W01-014 — Kitchen kick-ons II
 
-**Why it works:** Keeper.
+**Attempt status:** APPROVED  
+**Hero product:** Hoodie waist  
+**Camera:** Facing from hall
 
-**Reviewer said:** The environment shows urban Australian features, credible for the setting.
+Current approved scene state is recorded in `SHOTLIST.md`.
 
+---
 
+# Rejected Generation Attempts
 
+These are rejected **attempts**, not scene-status declarations unless `SHOTLIST.md` also marks the scene rejected.
 
-# Rejected Drift
+### W01-015 — Sunrise balcony attempt
 
-### W01-015 — Sunrise balcony
+**Attempt status:** REJECTED  
+**Scene status:** PLANNED
 
-**Status:** REJECTED
+**Reason:** Phantom hand gripping a forearm and implausibly rested appearance after an all-nighter.
 
-**Reason:** Phantom hand gripping his forearm, belonging to nobody. And the group looks eight hours rested at sunrise after an all-nighter.
+The rejected frame must not be used as a reference. W01-015 remains available for a new attempt.
 
-**Permanent lesson:** No new permanent lesson.
+### W01-012 — Apartment lobby earlier attempt
 
-### W01-012 — Apartment lobby
+**Attempt status:** REJECTED  
+**Scene status:** APPROVED via a later attempt
 
-**Status:** REJECTED
+**Reason:** A man pressed an entry intercom from inside the lobby for a lift not in frame; everyone was individually occupied rather than socially interacting.
 
-**Reason:** Rejected by the owner. A man presses an entry intercom from inside the lobby, for a lift that is not in the frame. And everyone is doing something but nobody is doing anything with anybody else.
+### W01-008 — Bottle shop after close
 
-**Permanent lesson:** No new permanent lesson.
+**Scene status:** REJECTED
 
-## Closed Bottle Shop
+The group looked stranded and indecisive. Standing still without a clear next action read as the end of the night rather than momentum.
 
-**Status:** REJECTED
+### W01-010B — Lookout alternate, pickup tub
 
-**Reason:**
-
-The group looked stranded and indecisive.
-
-The emotional read was resignation rather than possibility.
-
-**Permanent lesson:**
-
-Standing still without a clear next action often reads as the end of the night.
-
-World 1 scenes shall show movement, a new plan, a shared discovery or visible social momentum.
-
-## Lookout Alternate — Pickup Tub
-
-**Status:** REJECTED
-
-**Reason:**
+**Attempt status:** REJECTED
 
 The vehicle became an American-style pickup body rather than an Australian tray-back ute.
 
-**Permanent lesson:**
+**Continuity lesson:** When a tray-back ute is required, explicitly require an open aluminium/alloy tray and prohibit an enclosed pickup tub.
 
-Every ute prompt must explicitly require an open aluminium alloy tray and prohibit an enclosed pickup tub.
+### House-party attempt — distracting commercial branding
 
-## House Party — Branded Clothing and Packaging
+**Attempt status:** REJECTED AS REFERENCE
 
-**Status:** REJECTED AS REFERENCE
+Commercial graphics/packaging became visually prominent and competed with the scene.
 
-**Reason:**
-
-Visible commercial clothing graphics and branded packaging appeared.
-
-**Permanent lesson:**
-
-All garments, food packaging, bottles, cans, cartons and takeaway containers must be generic and unbranded.
+**Current rule:** Shirtfaced products must use the approved Shirtfaced garment/artwork state or be deliberately blank when the shot calls for a blank. Non-Shirtfaced objects may retain incidental real-world branding where legally/operationally acceptable, but it must remain background texture: not centred, presented, heroed or visually dominant. This supersedes the old blanket `all packaging must be generic and unbranded` rule.
 
 ---
 
 # Current Canon Notes
 
+- Current `WORLD.md` and global production contracts outrank historical lessons in this ledger.
 - Optimism does not require loud behaviour.
 - Quiet scenes must still contain momentum or emotional lift.
 - The photographer must have a plausible place in the scene.
 - Product visibility rotates; it does not default to the t-shirt.
-- The cap must periodically face the camera with the full front panel visible.
 - The image must remain desirable without any product.
-- A tray-back ute is now a locked recurring World 1 object.
-- We are observers, so the camera stands outside what it watches; never inside the lift, car or room the group is in.
-- Being in an interior is fine; being inside the container the subjects occupy is not. A kitchen from the dining room is an observer.
-- Subjects stay out of small built enclosures too — car cabins, lifts, tents, phone boxes. Next to, in front of, or sitting on.
-- The exception is interaction at an opening: a car window, a tent entrance.
-- Take the bigger version of the place. A lift becomes a lobby, a cabin becomes a kerb.
-- Anything a person operates must have the thing it operates in frame: a call button needs lift doors, an intercom needs a door with somebody on the far side.
-- Most of the group is doing something *with* somebody, not each busy alone. Everyone occupied separately is a room of strangers.
-- Nobody enters or leaves a vehicle; the scene happens beside the car, not through it.
-- The car is a prop, never the hero.
-- The cast stands on the footpath; nobody leans through a door opening or puts their head inside the cabin.
-- A ute has a bonnet in front of the cab. Cab-over and forward-control trucks are wrong bodies.
-- Ute colour, cab configuration and age are open; it only has to read as a working Australian vehicle.
-- A foreground obstruction must belong to the scene, not be a stray wing mirror with no car attached.
-- Never put the near car's own window rubber, door frame, pillar or mirror in front of the lens; that puts the camera in the cabin.
-- A seated passenger faces the windscreen with the head turned to the window, never squared to the door.
-- We sell t-shirts, crops, hoodies, jumpers and hats (caps, beanies, bucket hats); everything else is cart filler and never the hero.
-- The range is the current one, not a closed set, and will expand over time.
-- The tote is an accessory, carried incidentally, and no frame is composed around it.
-- Black stays for the t-shirt, hoodie and cap; the colour of a filler item is free.
-- Black clothing should be common but not universal.
-- Non-product clothing should vary naturally.
-- Branding turns on what we sell, not on whether it is visible. Anything we sell is blank always, with no background exemption.
-- Anything we do not sell may carry its real branding as background clutter: never centred, never held up, never legible enough that the eye goes to it first. Its absence is what makes a photograph look staged.
-- Incidental Shirtfaced environmental easter eggs remain permitted.
+- A tray-back ute is a recurring World 01 object when relevant, never automatically the hero.
+- Use the larger/open version of a setting rather than trapping the group in a small enclosure: lift → lobby, car cabin → kerb/window interaction.
+- Interior documentary photography is allowed when the photographer plausibly occupies the same social space; the camera must not adopt an impossible or surveillance-like position.
+- Anything a person operates should have the operated object/context legible in frame.
+- Most of the group should be interacting with somebody rather than performing isolated tasks in parallel.
+- Vehicles are props unless a shot brief explicitly says otherwise.
+- Australian tray-back utes require the correct body logic: bonnet ahead of cab and open tray rather than an American pickup tub.
+- Foreground obstruction must belong to the photographer's plausible position and scene.
+- Shirtfaced garments must preserve approved garment/artwork identity, placement and continuity state.
+- Black clothing is common but not universal; non-product clothing varies naturally.
+- Non-Shirtfaced branding may exist incidentally as background texture but must not become the subject.
+- Incidental Shirtfaced environmental easter eggs remain permitted where current brand rules allow them.
+- Character identity resolves through canonical cast plus approved references; prompt anonymity is never required as a brand rule.
 
 ---
 
-# Next Prompt Brief
+# Next Production State
 
-**Scene:** Apartment lobby on the way up to kick-ons. Nobody is in the lift.
-
-**Time:** Approximately 3:41am.
-
-**Hero product:** Black heavyweight hoodie tied around the waist.
-
-**Camera position:** From the entrance doors, looking across the lobby.
-
-**Main action:** Friends waiting in the lobby — someone sitting on the letterbox bank, someone leaning on the wall by the lift buttons, someone still coming through the doors with the food. The lift is a feature of the room, not a place anyone is standing.
-
-**Mood:** Renewed momentum.
-
-**Lighting:** Flat lobby downlights, spill from the street through the glass entrance doors.
-
-**Documentary imperfection:** The entrance door frame crops the near edge and one person is cut by it. The photographer is plainly the one who came in last.
-
-**Avoid:**
-
-- Static posing.
-- Resignation.
-- American pickup vehicles.
-- Branded packaging.
-- Everyone dressed entirely in black.
-- Heroic automotive photography.
-- Anyone entering, leaving or climbing into a vehicle.
-- Anyone standing inside the lift, and the camera standing in it either.
-- Crowding the group into any small built enclosure when the open version of the place exists.
-- Anyone leaning through a door opening or putting their head inside the cabin.
-- Cab-over or forward-control trucks.
-- Composing the frame around the tote bag.
+Do not maintain a duplicate `Next Prompt Brief` here. `SHOTLIST.md` is the production backlog and determines the next planned scene. This ledger records continuity and attempt history only.
