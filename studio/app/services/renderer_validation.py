@@ -4,6 +4,7 @@ This module prepares deterministic, auditable scene packages and exposes the man
 gates. Billable rendering is enabled only when a Gemini key is configured; no key
 means planning/validation only.
 """
+
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
