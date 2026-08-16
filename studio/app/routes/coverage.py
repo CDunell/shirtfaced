@@ -1,9 +1,11 @@
+# ruff: noqa: E501, RUF001
 """Deterministic virtual-camera coverage from approved scene masters.
 
 Coverage frames are crops of existing source pixels only. This route never calls an
 image or video provider and refuses to operate unless the caller supplies the exact
 current source SHA256.
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -14,8 +16,8 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse
-from pydantic import BaseModel, Field
 from PIL import Image
+from pydantic import BaseModel, Field
 
 from app.config import PROJECT_ROOT
 
@@ -125,7 +127,7 @@ def coverage_tool(scene_id: str):
     if crop_w > sw:
         raise HTTPException(400, "Master is too narrow for a full-height 9:16 viewport")
 
-    html = f'''<!doctype html>
+    html = f"""<!doctype html>
 <html><head><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{scene_id} coverage</title>
 <style>
@@ -158,5 +160,5 @@ document.getElementById('save').addEventListener('click',async()=>{{
  const res=await fetch('/api/renderer/coverage-frame',{{method:'POST',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{scene_id:'{scene_id}',shot_name:shot,source_sha256:'{source_sha}',x:x,y:0,height:cropH}})}});
  const body=await res.json(); status.textContent=res.ok ? `Saved ${{body.frame_path}} · SHA ${{body.frame_sha256}} · x=${{x}}` : (body.detail||'Save failed');
 }});
-</script></main></body></html>'''
+</script></main></body></html>"""
     return HTMLResponse(html, headers={"Cache-Control": "no-store, max-age=0"})
