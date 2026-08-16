@@ -1,0 +1,47 @@
+name: Pub whip-pan Veo validation
+on:
+  push:
+    branches: [main]
+    paths: ["studio/veo-whip-pan-triggers/*.json"]
+jobs:
+  video:
+    runs-on: ubuntu-latest
+    concurrency: {group: renderer-veo-whip-pan, cancel-in-progress: false}
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: "${{ github.sha }}"}
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Sync exact triggering Studio code
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv --exclude=web/node_modules --exclude=web/dist --exclude=__pycache__ --exclude=.pytest_cache studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
+      - name: Resolve exact wide source and run one Veo test
+        id: run
+        run: |
+          set -euo pipefail
+          trigger=$(ls studio/veo-whip-pan-triggers/*.json | sort | tail -1)
+          expected_sha=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["seed_sha256"])' "$trigger")
+          expected_path=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["seed_relative_path"])' "$trigger")
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "set -euo pipefail; root=/home/ubuntu/shirtfaced-studio; seed=\"\$root/$expected_path\"; test -s \"\$seed\"; actual=\$(sha256sum \"\$seed\" | awk '{print \$1}'); test \"\$actual\" = '$expected_sha'; echo SEED=\$seed; echo SEED_SHA256=\$actual; result=\$(\$root/.venv/bin/python \$root/scripts/run_pub_veo_whip_pan.py --seed \"\$seed\" --expected-sha256 '$expected_sha'); dir=\$(printf '%s\\n' \"\$result\" | sed -n 's/^RESULT_DIR=//p' | tail -1); test -n \"\$dir\"; echo RESULT_DIR=\$dir")
+          printf '%s\n' "$output"
+          echo "result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1)" >> "$GITHUB_OUTPUT"
+      - name: Retrieve and validate actual result
+        run: |
+          mkdir -p veo-result
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.run.outputs.result_dir }}/." veo-result/
+          test -s veo-result/video-1.mp4
+          test -s veo-result/manifest.json
+          test -s veo-result/motion-prompt.txt
+          grep -q '"experiment": "wide-master-spatial-whip-pan-silent-veo"' veo-result/manifest.json
+          grep -q '"audio": "stripped_for_post"' veo-result/manifest.json
+          ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 veo-result/video-1.mp4 | test ! -s /dev/stdin
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pub-1105-whip-pan-veo-silent
+          path: veo-result/
+          if-no-files-found: error
+          retention-days: 7
