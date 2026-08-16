@@ -1,80 +1,59 @@
 #!/usr/bin/env python3
-"""One-shot Pro localized crop edit using an expression-matched Damo identity bridge."""
+"""One-shot Nano Banana Pro scene-first pub master pass.
+
+Purpose: restore distributed room energy and attention balance before any further
+identity refinement. The persistent GPT composition image is the locked scene
+master; Damo identity is deliberately secondary in this pass.
+"""
 from __future__ import annotations
 import hashlib, io, json, sys
 from datetime import UTC, datetime
 from pathlib import Path
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageOps
 ROOT=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(ROOT))
 from app.adapters.google_media import GoogleImageClient, GoogleImageRequest
 from app.adapters.reference_images import ReferenceImage
 from app.config import get_settings
 
-PROMPT="""IMAGE 1 is a LOCAL CROP from the preserved pub working master around the central man's head, neck and upper torso. IMAGE 2 is DAMO in a purpose-built expression-matched identity bridge: same canonical person, already head-back, eyes shut, mouth open roaring a chorus.
+PROMPT="""IMAGE 1 IS THE LOCKED MASTER PHOTOGRAPH AND OWNS THE WHOLE SCENE.
 
-Edit IMAGE 1. Do NOT create a new photograph.
+Edit IMAGE 1 as conservatively as possible into a native vertical 9:16 social frame. This is a SCENE-FIRST preservation pass, not a portrait, not a character showcase and not a fresh generation.
 
-Replace only the central man's HEAD AND VISIBLE NECK identity so he unmistakably matches DAMO in IMAGE 2. Because IMAGE 2 already matches the target expression, copy its identity decisively rather than averaging it with the source man. Match skull shape, face proportions, brow, nose, cheekbones, jaw, ears, hairline, hair texture, stubble and visible neck identity from IMAGE 2 while keeping the exact head placement and scale required by IMAGE 1.
+The photograph is a packed Australian pub back room already going off on a Friday night. Preserve and, where vertical extension requires invention, CONTINUE the same distributed chaos throughout the frame: overlapping bodies, foreground obstruction, people colliding, independent conversations and reactions, people facing different directions, partial faces, cropped bodies, motion, sweat, deep shadows, red bar spill, pool-table lamp, clutter and several simultaneous human events.
 
-Preserve IMAGE 1's exact event geometry: same head-back angle, eyes shut, mouth open, both raised arms where they enter the crop, same shoulders, same faded olive shirt, same lighting direction/intensity, same red/black pub background, same grain, exposure and motion character.
+DAMO is the man on the pool table with the cue overhead. He is narratively important but photographically he is only ONE incident inside the room. DO NOT give him a clean halo, extra negative space, brighter key light, central-stage treatment or an audience. DO NOT arrange people around him. DO NOT make other patrons sing to him, cheer for him, watch him as a performance or synchronise around him. Some patrons may notice him; many must remain busy with unrelated Friday-night behaviour. The room's energy must still make sense if Damo were removed.
 
-DO NOT move shoulders or arms. DO NOT alter shirt or body. DO NOT brighten or clean up the face. DO NOT make it a portrait. DO NOT add tattoos, jewellery, scars or piercings. Damo has no tattoos.
+Preserve the master event facts: Damo remains on the pool table with both boots on it, cue horizontal overhead in both hands, head back, eyes shut, roaring along with the real band; the wooden pub stool and full beer remain on the table; the actual band remains a separate background event. Damo is a punter, never the singer/frontman. Damo has no tattoos.
 
-The source man's identity surviving is a failure. IMAGE 2 is authoritative inside the head/neck region; IMAGE 1 is authoritative for everything else.
+Preserve IMAGE 1's accidental documentary qualities: inconvenient occlusion, asymmetric body geometry, physical contact, imperfect framing, uneven visibility, deep blacks, localized practical light, foreground people blocking useful information, layered depth and lack of visual cleanliness. Do not beautify, simplify, tidy, balance or make faces uniformly readable.
 
-Return the edited 4:5 crop only."""
+Vertical extension must ADD EVENT INFORMATION, not empty ceiling/headroom. Fill the 9:16 frame with believable crowd interference and layered room detail while retaining the master photograph's camera premise and visual density.
 
-def ref_from_image(name,im,role,quality=98):
- buf=io.BytesIO(); im.convert("RGB").save(buf,"JPEG",quality=quality,subsampling=0); data=buf.getvalue()
- return ReferenceImage(name=name,data=data,mime_type="image/jpeg",locked=True),{"name":name,"role":role,"bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"dimensions":list(im.size),"format":"JPEG"}
+Identity is NOT the optimisation target in this pass. Do not perform a dedicated face replacement. Preserve the source man's existing appearance sufficiently for continuity, but scene richness and attention distribution have absolute priority.
 
-def ref_from_path(name,path,role,quality=98):
- p=ROOT/path; raw=p.read_bytes()
- with Image.open(io.BytesIO(raw)) as im:
-  im.load(); fmt=im.format; dims=im.size; im=ImageOps.exif_transpose(im).convert("RGB"); im.thumbnail((2048,2048),Image.Resampling.LANCZOS); buf=io.BytesIO(); im.save(buf,"JPEG",quality=quality,subsampling=0); data=buf.getvalue()
- return ReferenceImage(name=name,data=data,mime_type="image/jpeg",locked=True),{"name":name,"role":role,"path":path,"sha256":hashlib.sha256(raw).hexdigest(),"bytes":len(raw),"format":fmt,"dimensions":list(dims)}
+Return one photorealistic 9:16 edited photograph only."""
 
-def latest_working_master() -> Path:
- root=ROOT/"var/renderer-validation/pub-1105"; candidates=[]
- accepted={"damo-head-neck-iterative-refinement","gpt-master-plus-damo-head-neck-authoritative"}
- for manifest in root.glob("*/manifest.json"):
-  try: data=json.loads(manifest.read_text())
-  except Exception: continue
-  if data.get("experiment") not in accepted: continue
-  for seed in manifest.parent.glob("seed-1.*"):
-   if seed.is_file() and seed.stat().st_size>0: candidates.append((seed.stat().st_mtime,seed))
- if not candidates: raise SystemExit("no preserved Damo working master found; no provider call made")
- return max(candidates,key=lambda x:x[0])[1]
+def composition_master() -> Path:
+ root=ROOT/"var/scene-references/pub-1105"
+ files=[p for p in root.glob("composition-gpt.*") if p.is_file() and p.stat().st_size>0]
+ if len(files)!=1: raise SystemExit(f"expected exactly one persistent GPT composition master, found {len(files)}; no provider call made")
+ return files[0]
 
-def latest_expression_bridge() -> Path:
- root=ROOT/"var/renderer-validation/identity-bridges/damo"; candidates=[]
- for manifest in root.glob("*/manifest.json"):
-  try: data=json.loads(manifest.read_text())
-  except Exception: continue
-  if data.get("experiment")!="expression-bridge-roaring-chorus": continue
-  for bridge in manifest.parent.glob("bridge-1.*"):
-   if bridge.is_file() and bridge.stat().st_size>0: candidates.append((bridge.stat().st_mtime,bridge))
- if not candidates: raise SystemExit("no Damo expression bridge found; no provider call made")
- return max(candidates,key=lambda x:x[0])[1]
+def make_ref(path:Path):
+ raw=path.read_bytes()
+ with Image.open(io.BytesIO(raw)) as opened:
+  opened.load(); fmt=opened.format; dims=opened.size
+  im=ImageOps.exif_transpose(opened).convert("RGB"); im.thumbnail((3072,3072),Image.Resampling.LANCZOS)
+  buf=io.BytesIO(); im.save(buf,"JPEG",quality=98,subsampling=0); data=buf.getvalue()
+ return ReferenceImage(name="locked-scene-master",data=data,mime_type="image/jpeg",locked=True),{"name":"locked-scene-master","role":"scene-truth-and-attention-hierarchy","path":str(path.relative_to(ROOT)),"sha256":hashlib.sha256(raw).hexdigest(),"bytes":len(raw),"format":fmt,"dimensions":list(dims)}
 
 def main():
- master_path=latest_working_master(); bridge_path=latest_expression_bridge()
- with Image.open(master_path) as opened:
-  opened.load(); master=ImageOps.exif_transpose(opened).convert("RGB")
- if master.size != (1536,2752): raise SystemExit(f"unexpected working master dimensions {master.size}; no provider call made")
- crop_box=(320,160,960,960); source_crop=master.crop(crop_box)
- crop_ref,crop_meta=ref_from_image("localized-master-crop",source_crop,"locked-local-edit-master")
- bridge_ref,bridge_meta=ref_from_path("damo-expression-bridge",str(bridge_path.relative_to(ROOT)),"authoritative-expression-matched-identity")
- settings=get_settings()
+ master=composition_master(); ref,meta=make_ref(master); settings=get_settings()
  if not settings.google_media_live or settings.gemini_api_key is None: raise SystemExit("Google media not live; no provider call made")
  model="gemini-3-pro-image"; stamp=datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ"); out=ROOT/"var/renderer-validation/pub-1105"/stamp; out.mkdir(parents=True,exist_ok=True)
  client=GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(),model=model)
- result=client.generate(GoogleImageRequest(prompt=PROMPT,references=(crop_ref,bridge_ref),aspect_ratio="4:5",image_size="2K"))
- with Image.open(io.BytesIO(result.data)) as edited_opened:
-  edited_opened.load(); edited=ImageOps.exif_transpose(edited_opened).convert("RGB").resize(source_crop.size,Image.Resampling.LANCZOS)
- mask=Image.new("L",source_crop.size,0); inner=Image.new("L",(520,680),255); inner=inner.filter(ImageFilter.GaussianBlur(28)); mask.paste(inner,(60,60))
- composite_crop=Image.composite(edited,source_crop,mask); final=master.copy(); final.paste(composite_crop,(crop_box[0],crop_box[1]))
- output_path=out/"seed-1.jpg"; final.save(output_path,"JPEG",quality=96,subsampling=0)
- manifest={"scene":"pub-1105","experiment":"damo-localized-expression-bridge-edit","generated_at":stamp,"model":model,"aspect_ratio":"9:16","provider_edit_aspect_ratio":"4:5","image_size":"2K-provider-crop","composition_reference_used":True,"source_master":str(master_path.relative_to(ROOT)),"source_master_sha256":hashlib.sha256(master_path.read_bytes()).hexdigest(),"identity_bridge":str(bridge_path.relative_to(ROOT)),"identity_bridge_sha256":hashlib.sha256(bridge_path.read_bytes()).hexdigest(),"crop_box":list(crop_box),"crop_dimensions":list(source_crop.size),"preserve":["all_pixels_outside_local_crop","scene_geometry","camera","crowd","body_below_upper_torso","props","lighting_distribution"],"change":["damo_head_neck_identity_from_expression_bridge"],"references":[crop_meta,bridge_meta],"candidate_count":1,"manual_gate":"seed_review_required_before_video"}; (out/"manifest.json").write_text(json.dumps(manifest,indent=2)); (out/"prompt.txt").write_text(PROMPT)
- print(f"MASTER={master_path}"); print(f"BRIDGE={bridge_path}"); print(f"RESULT_DIR={out}")
+ result=client.generate(GoogleImageRequest(prompt=PROMPT,references=(ref,),aspect_ratio="9:16",image_size="2K"))
+ output=out/"seed-1.jpg"; output.write_bytes(result.data)
+ manifest={"scene":"pub-1105","experiment":"scene-first-distributed-chaos-reset","generated_at":stamp,"model":model,"aspect_ratio":"9:16","image_size":"2K","composition_reference_used":True,"source_master":str(master.relative_to(ROOT)),"source_master_sha256":hashlib.sha256(master.read_bytes()).hexdigest(),"candidate_count":1,"priority_hierarchy":["room-going-off","accidental-crowd-photograph","multiple-simultaneous-interactions","damo-pool-table-incident","damo-identity"],"preserve":["scene-richness","distributed-independent-action","crowd-density","occlusion","foreground-obstruction","lighting-distribution","pool-table-geometry","stool-and-beer","damo-action","band-as-separate-background-event","documentary-camera-premise"],"change":["vertical-9x16-extension-only-as-needed"],"references":[meta],"manual_gate":"scene_richness_review_required_before_identity_or_video"}; (out/"manifest.json").write_text(json.dumps(manifest,indent=2)); (out/"prompt.txt").write_text(PROMPT)
+ print(f"MASTER={master}"); print(f"RESULT_DIR={out}")
 if __name__=="__main__": main()
