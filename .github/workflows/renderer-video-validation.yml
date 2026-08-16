@@ -24,9 +24,32 @@ jobs:
         id: generate
         run: |
           set -euo pipefail
-          seed=/home/ubuntu/shirtfaced-studio/var/renderer-validation/pub-1105/20260816T130347Z/seed-1.jpg
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "test -s $seed"
-          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "/home/ubuntu/shirtfaced-studio/.venv/bin/python /home/ubuntu/shirtfaced-studio/scripts/run_renderer_video.py --seed $seed")
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -euo pipefail
+          seed=$(/home/ubuntu/shirtfaced-studio/.venv/bin/python - <<'"'"'PY'"'"'
+import json
+from pathlib import Path
+root=Path("/home/ubuntu/shirtfaced-studio/var/renderer-validation/pub-1105")
+candidates=[]
+for manifest in root.glob("*/manifest.json"):
+    try:
+        data=json.loads(manifest.read_text())
+    except Exception:
+        continue
+    if data.get("experiment") != "damo-localized-expression-bridge-edit":
+        continue
+    if data.get("manual_gate") != "seed_review_required_before_video":
+        continue
+    seed=manifest.parent/"seed-1.jpg"
+    if seed.is_file() and seed.stat().st_size > 0:
+        candidates.append((manifest.stat().st_mtime, seed))
+if not candidates:
+    raise SystemExit("no approved Damo expression-bridge seed found")
+print(max(candidates,key=lambda x:x[0])[1])
+PY
+          )
+          test -s "$seed"
+          echo "APPROVED_SEED=$seed"
+          /home/ubuntu/shirtfaced-studio/.venv/bin/python /home/ubuntu/shirtfaced-studio/scripts/run_renderer_video.py --seed "$seed"')
           printf '%s\n' "$output"
           result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1)
           test -n "$result_dir"
