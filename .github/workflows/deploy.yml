@@ -39,7 +39,9 @@ jobs:
             'bash /home/ubuntu/deploy-admin.sh'
 
       # Studio owns mutable runtime/canon state on the box. Never let rsync --delete
-      # erase var/ (cast references, renderer results, etc.) or worlds/.
+      # erase var/ (canonical cast originals, cached derivatives, renderer results, etc.)
+      # or worlds/. Canonical cast binaries are provisioned directly into persistent
+      # server storage and are never repaired or replaced from Git.
       - name: Sync Studio
         run: |
           rsync -az --delete \
@@ -110,41 +112,6 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             assets/garments/ \
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/assets/garments/
-
-      # Runtime refs remain authoritative when they are valid. A corrupt/truncated file
-      # is not a deliberate replacement, so repair it from the checked-in bootstrap.
-      - name: Seed canonical cast references
-        run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '
-            set -e
-            root=/home/ubuntu/shirtfaced-studio
-            for slug in damo brock emma; do mkdir -p "$root/var/cast/$slug"; done
-            for rel in \
-              damo/a-full-length.jpg \
-              damo/b-head-shoulders.jpg \
-              brock/a-full-length.jpg \
-              emma/a-full-length.jpg; do
-              src="$root/cast-bootstrap/$rel"
-              dst="$root/var/cast/$rel"
-              test -s "$src"
-              repair=0
-              if [ ! -s "$dst" ]; then
-                repair=1
-              elif [ -x "$root/.venv/bin/python" ]; then
-                if ! "$root/.venv/bin/python" -c "from PIL import Image; import sys; im=Image.open(sys.argv[1]); im.load()" "$dst" >/dev/null 2>&1; then
-                  repair=1
-                fi
-              fi
-              if [ "$repair" -eq 1 ]; then
-                cp "$src" "$dst"
-                echo "Repaired canonical cast reference: $rel"
-              fi
-              test -s "$dst"
-              if [ -x "$root/.venv/bin/python" ]; then
-                "$root/.venv/bin/python" -c "from PIL import Image; import sys; im=Image.open(sys.argv[1]); im.load()" "$dst"
-              fi
-            done
-          '
 
       - name: Bootstrap Studio
         run: |
