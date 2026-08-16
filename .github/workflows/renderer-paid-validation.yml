@@ -21,11 +21,14 @@ jobs:
           set -euo pipefail
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv --exclude=web/node_modules --exclude=web/dist --exclude=__pycache__ --exclude=.pytest_cache studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
           printf '%s\n' '${{ github.sha }}' | ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'cat > /home/ubuntu/shirtfaced-studio/var/renderer-validation/paid-code-sha'
-      - name: Run one Nano Banana Pro quality benchmark
+      - name: Verify persistent composition reference
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -e; count=$(find /home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105 -maxdepth 1 -type f -name "composition-gpt.*" | wc -l); test "$count" -eq 1; ls -lh /home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105/composition-gpt.*'
+      - name: Run one Nano Banana Pro composed benchmark
         id: generate
         run: |
           set -euo pipefail
-          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '/home/ubuntu/shirtfaced-studio/.venv/bin/python /home/ubuntu/shirtfaced-studio/scripts/run_renderer_seed.py --scene pub-1105 --candidates 1 --model gemini-3-pro-image --image-size 2K')
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '/home/ubuntu/shirtfaced-studio/.venv/bin/python /home/ubuntu/shirtfaced-studio/scripts/run_renderer_seed_composed.py')
           printf '%s\n' "$output"
           result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1); test -n "$result_dir"; echo "result_dir=$result_dir" >> "$GITHUB_OUTPUT"
       - name: Retrieve generated seed package
@@ -35,5 +38,6 @@ jobs:
           test -s renderer-result/manifest.json; test -s renderer-result/prompt.txt; ls renderer-result/seed-* >/dev/null
           grep -q '"aspect_ratio": "9:16"' renderer-result/manifest.json
           grep -q '"model": "gemini-3-pro-image"' renderer-result/manifest.json
+          grep -q '"composition_reference_used": true' renderer-result/manifest.json
       - uses: actions/upload-artifact@v4
-        with: {name: pub-1105-seed-pro, path: renderer-result/, if-no-files-found: error, retention-days: 7}
+        with: {name: pub-1105-seed-pro-composed, path: renderer-result/, if-no-files-found: error, retention-days: 7}
