@@ -132,7 +132,13 @@ Resolution order:
 
 The generation prompt consumes this resolved state. It does not choose identity or wardrobe ad hoc.
 
-Literal provider-facing prose may remain anonymous (`the man from reference 1`, `one bloke`, etc.) while the production manifest resolves that role to the canonical slug. Anonymous provider wording must never mean anonymous production identity.
+### Naming policy
+
+Canonical character names are permitted in generation prompts and should be used whenever they make the prompt clearer: for example, `Damo, matching reference 1`.
+
+Provider-facing prose may instead use reference-relative wording such as `the man from reference 1` when a provider responds more reliably to that form. This is an execution technique, not a requirement to anonymise the cast.
+
+Do not replace a known canonical character with vague wording such as `one bloke` merely to hide the name. The production manifest must always resolve identity-critical roles to the canonical slug and approved references regardless of the literal provider wording.
 
 ---
 
