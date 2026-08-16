@@ -6,6 +6,7 @@ Canonical cast originals live only in persistent Studio storage under ``var/cast
 The renderer validates those originals strictly, then creates one SHA-addressed JPEG
 derivative when Gemini needs JPEG input. Canonical originals are never rewritten.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -78,9 +79,7 @@ def prepare_reference(name: str, relative_path: Path) -> tuple[ReferenceImage, d
             source_format = opened.format
             source_dimensions = tuple(opened.size)
             image = ImageOps.exif_transpose(opened)
-            if image.mode in {"RGBA", "LA"} or (
-                image.mode == "P" and "transparency" in image.info
-            ):
+            if image.mode in {"RGBA", "LA"} or (image.mode == "P" and "transparency" in image.info):
                 rgba = image.convert("RGBA")
                 background = Image.new("RGB", rgba.size, "white")
                 background.paste(rgba, mask=rgba.getchannel("A"))
