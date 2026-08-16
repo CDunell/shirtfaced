@@ -23,7 +23,7 @@ jobs:
       - name: Verify persistent GPT scene master
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -e; count=$(find /home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105 -maxdepth 1 -type f -name "composition-gpt.*" | wc -l); test "$count" -eq 1'
-      - name: Run one scene-first Nano Pro candidate
+      - name: Run one master-locked Nano Pro candidate
         id: generate
         run: |
           set -euo pipefail
@@ -35,7 +35,8 @@ jobs:
           mkdir -p renderer-result
           scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:"${{ steps.generate.outputs.result_dir }}/." renderer-result/
           test -s renderer-result/manifest.json; test -s renderer-result/prompt.txt; ls renderer-result/seed-* >/dev/null
-          grep -q '"experiment": "scene-first-richness-master-v1"' renderer-result/manifest.json
+          grep -q '"experiment": "master-locked-scene-preservation-v2"' renderer-result/manifest.json
+          grep -q '"preservation_contract": "master_locked"' renderer-result/manifest.json
           grep -q '"manual_gate": "scene_richness_review_before_identity"' renderer-result/manifest.json
       - uses: actions/upload-artifact@v4
         with: {name: pub-1105-scene-richness, path: renderer-result/, if-no-files-found: error, retention-days: 7}
