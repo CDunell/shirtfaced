@@ -1,0 +1,34 @@
+name: Fix coverage lint
+on:
+  push:
+    branches: [main]
+    paths: ["studio/coverage-lint-fix-triggers/*.json"]
+permissions:
+  contents: write
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Install ruff
+        run: pip install ruff
+      - name: Fix and verify coverage route
+        run: |
+          set -euo pipefail
+          ruff check --fix studio/app/routes/coverage.py
+          ruff format studio/app/routes/coverage.py
+          ruff check studio/app/routes/coverage.py
+      - name: Commit fix if needed
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo "No changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/app/routes/coverage.py
+          git commit -m "fix coverage route lint"
+          git push origin HEAD:main
