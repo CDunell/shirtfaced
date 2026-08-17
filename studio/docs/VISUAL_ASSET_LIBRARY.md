@@ -16,8 +16,19 @@ specification.
 | §9 `visual_assets`, §9.1 `asset_lineage`, §9.2 tags | Built, migration 0031 |
 | §5 cast library, §11 cast and asset endpoints, §15 Phase A UI | Built — `/api/cast`, the Cast bench |
 | §14 Phase 2 ingest | Built — `python -m app.cli ingest-cast`, idempotent |
+| §14 Phase 5 cutover, cast half | Built — nothing resolves a cast reference by path any more |
 | §6 locations, §7 scene masters, §8 coverage | **Not built.** No tables exist |
-| §14 Phase 5 cutover | **Not done.** The renderer still opens `var/cast/<slug>/` by name |
+
+The cutover is what §2.1's audit describes as missing, so specifically: the
+six-slot installer at `/api/renderer/cast-upload` is **retired** and returns
+410; `run_renderer_seed.py`, `run_renderer_scene_rich_pub.py` and
+`run_damo_expression_bridge.py` resolve through
+`app/services/reference_resolution.py` by member and role, and record the asset
+ID and SHA in their manifests; and `composition_path()`'s newest-mtime
+selection is gone — a scene master must be a registered, approved asset, and
+two approved candidates are a refusal rather than a tie-break. Registering that
+master is Phase 3 work and has not been done, so the rich-pub script currently
+refuses, by design and with a message saying what to do.
 
 Two departures from what is specified below, both recorded as **ADR-020** in
 `DECISIONS.md` — the cast table is `cast_members`, because 0029's `characters`

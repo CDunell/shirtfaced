@@ -1,9 +1,7 @@
 # ruff: noqa: E501
 """Renderer validation endpoints."""
 from __future__ import annotations
-import hashlib, io, os, shutil, tempfile
-from datetime import UTC, datetime
-from pathlib import Path
+import hashlib, io, os
 from typing import Annotated
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import HTMLResponse
@@ -12,10 +10,7 @@ from app.config import PROJECT_ROOT, get_settings
 from app.services.renderer_validation import harness_manifest, scene_package
 router=APIRouter(prefix="/api/renderer",tags=["renderer"])
 MAX_CANONICAL_BYTES=50*1024*1024
-CANONICAL_CAST_ROOT=PROJECT_ROOT/"var"/"cast"
 SCENE_REFERENCE_ROOT=PROJECT_ROOT/"var"/"scene-references"
-CANONICAL_SLOTS=(("damo_full","Damo — full length",Path("damo/a-full-length.png")),("damo_head","Damo — head / shoulders",Path("damo/b-head-shoulders.png")),("brock_full","Brock — full length",Path("brock/a-full-length.png")),("brock_head","Brock — head / shoulders",Path("brock/b-head-shoulders.png")),("emma_head","Emma — head / shoulders",Path("emma/b-head-shoulders.png")),("emma_full","Emma — full length",Path("emma/a-full-length.png")))
-UPLOAD_FORM='''<!doctype html><html><meta name="viewport" content="width=device-width,initial-scale=1"><body><h1>World 01 canonical cast</h1><form method="post" enctype="multipart/form-data"><input required type="file" name="damo_full"><input required type="file" name="damo_head"><input required type="file" name="brock_full"><input required type="file" name="brock_head"><input required type="file" name="emma_head"><input required type="file" name="emma_full"><button>Install six</button></form></body></html>'''
 SCENE_REFERENCE_FORM='''<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:system-ui;max-width:680px;margin:auto;padding:24px;background:#111;color:#eee}input,button{width:100%;margin:16px 0;padding:14px}button{font-weight:800}</style></head><body><h1>pub-1105 composition reference</h1><p>Upload the approved GPT composition/energy reference once. It is stored persistently and never deployed from Git.</p><form method="post" enctype="multipart/form-data"><input required type="file" name="reference" accept="image/png,image/jpeg,.png,.jpg,.jpeg"><button>Validate and install reference</button></form><p>No Gemini or Veo call occurs here.</p></body></html>'''
 async def _read_image(label,upload,png_only=False):
  data=await upload.read(MAX_CANONICAL_BYTES+1)
@@ -30,23 +25,15 @@ async def _read_image(label,upload,png_only=False):
  except HTTPException: raise
  except Exception as exc: raise HTTPException(400,f"{label}: unreadable/corrupt image") from exc
  return data,{"bytes":len(data),"sha256":hashlib.sha256(data).hexdigest(),"width":width,"height":height,"format":fmt}
-@router.get("/cast-upload",response_class=HTMLResponse,include_in_schema=False)
-def cast_upload_form(): return UPLOAD_FORM
-@router.post("/cast-upload")
-async def cast_upload(damo_full:Annotated[UploadFile,File()],damo_head:Annotated[UploadFile,File()],brock_full:Annotated[UploadFile,File()],brock_head:Annotated[UploadFile,File()],emma_head:Annotated[UploadFile,File()],emma_full:Annotated[UploadFile,File()]):
- supplied=locals(); validated={}
- for field,label,_ in CANONICAL_SLOTS: validated[field]=await _read_image(label,supplied[field],True)
- CANONICAL_CAST_ROOT.mkdir(parents=True,exist_ok=True); backup_stamp=datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ"); backup_root=PROJECT_ROOT/"var"/"cast-backups"/backup_stamp; existing=[]
- with tempfile.TemporaryDirectory(dir=PROJECT_ROOT/"var",prefix="cast-stage-") as td:
-  staging=Path(td)
-  for field,_,rel in CANONICAL_SLOTS: p=staging/rel;p.parent.mkdir(parents=True,exist_ok=True);p.write_bytes(validated[field][0])
-  existing=[rel for _,_,rel in CANONICAL_SLOTS if (CANONICAL_CAST_ROOT/rel).is_file()]
-  for rel in existing:
-   b=backup_root/rel;b.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(CANONICAL_CAST_ROOT/rel,b)
-  installed=[]
-  for field,label,rel in CANONICAL_SLOTS:
-   target=CANONICAL_CAST_ROOT/rel;target.parent.mkdir(parents=True,exist_ok=True);os.replace(staging/rel,target);installed.append({"slot":field,"label":label,"path":str(target.relative_to(PROJECT_ROOT)),**validated[field][1]})
- return {"status":"installed","count":6,"canonical_root":"var/cast","backup":str(backup_root.relative_to(PROJECT_ROOT)) if existing else None,"files":installed,"provider_called":False}
+# The six-slot cast installer was here. It wrote two fixed filenames for three
+# characters, which is why Damo's third photograph had nowhere to go, and why
+# renaming the frames on 17 August 2026 broke every caller at once. Retired at
+# the Phase 5 cutover: the cast is `cast_members` + `visual_assets`, references
+# resolve by asset ID and SHA, and uploads happen in the Cast bench.
+@router.get("/cast-upload",include_in_schema=False)
+@router.post("/cast-upload",include_in_schema=False)
+def cast_upload_retired():
+ raise HTTPException(410,"The fixed six-slot cast installer is gone. Cast references are managed in Studio under Cast, or POST /api/cast/{slug}/assets. A member may hold any number of references, each with a role and an approval state.")
 @router.get("/scene-reference-upload",response_class=HTMLResponse,include_in_schema=False)
 def scene_reference_upload_form(): return SCENE_REFERENCE_FORM
 @router.post("/scene-reference-upload")

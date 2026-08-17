@@ -6,9 +6,13 @@ from datetime import UTC, datetime
 from pathlib import Path
 from PIL import Image, ImageOps
 ROOT=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(ROOT))
+from app.adapters.asset_store import FilesystemAssetStore
 from app.adapters.google_media import GoogleImageClient, GoogleImageRequest
 from app.adapters.reference_images import ReferenceImage
 from app.config import get_settings
+from app.db.session import get_session_factory
+from app.domain.enums import VisualAssetKind
+from app.services.reference_resolution import ReferenceUnavailable, resolve_cast_reference, resolve_only_approved
 PROMPT="""IMAGE 1 IS THE APPROVED FINAL SCENE MASTER. IMAGE 2 IS DAMO IDENTITY ONLY.
 
 This is a SURGICAL CHARACTER CONTINUITY EDIT. Do not regenerate, reinterpret, improve, restage, reframe, extend, crop or redesign IMAGE 1.
@@ -22,20 +26,23 @@ Damo has NO TATTOOS and NO JEWELLERY. If the master man has any visible tattoos 
 DO NOT alter anyone reacting to him. DO NOT add or remove people. DO NOT create hero lighting, halo, negative space, audience formation or cleaner silhouette. DO NOT move Damo. DO NOT move the cue, stool, beer or pool table. DO NOT change the aspect ratio. The room hierarchy must remain exactly as approved.
 
 If identity fidelity conflicts with scene preservation, SCENE PRESERVATION WINS. Return one edited photorealistic 9:16 image."""
-def load_ref(path:Path,name:str,role:str):
- raw=path.read_bytes()
+def load_ref(resolved,name:str,role:str):
+ raw=resolved.data
  with Image.open(io.BytesIO(raw)) as im:
   im.load(); dims=im.size; fmt=im.format; im=ImageOps.exif_transpose(im).convert('RGB'); im.thumbnail((3072,3072),Image.Resampling.LANCZOS); b=io.BytesIO(); im.save(b,'JPEG',quality=98,subsampling=0); data=b.getvalue()
- return ReferenceImage(name=name,data=data,mime_type='image/jpeg',locked=True),{'name':name,'role':role,'path':str(path.relative_to(ROOT)),'source_sha256':hashlib.sha256(raw).hexdigest(),'dimensions':list(dims),'format':fmt}
-def composition_path():
- files=[p for p in (ROOT/'var/scene-references/pub-1105').glob('composition-gpt.*') if p.is_file() and p.stat().st_size>0]
- if not files: raise SystemExit('approved composition master missing; no provider call made')
- return max(files,key=lambda p:p.stat().st_mtime_ns)
+ return ReferenceImage(name=name,data=data,mime_type='image/jpeg',locked=True),{'name':name,'role':role,**resolved.as_manifest(),'source_sha256':resolved.sha256,'dimensions':list(dims),'format':fmt}
 def main():
- scene=composition_path(); damo=ROOT/'var/cast/damo/b-head-shoulders.png'
- if not damo.is_file(): raise SystemExit('canonical Damo head missing; no provider call made')
- scene_ref,scene_meta=load_ref(scene,'approved-scene-master','locked-whole-scene-master'); damo_ref,damo_meta=load_ref(damo,'damo-head','identity-only')
  settings=get_settings()
+ # Both inputs resolve by asset ID and SHA. The scene master used to be
+ # whichever composition-gpt.* file had the newest mtime, which a backup could
+ # change; VISUAL_ASSET_LIBRARY.md 8.3 forbids exactly that.
+ try:
+  with get_session_factory()() as session:
+   store=FilesystemAssetStore(settings.assets_root_resolved)
+   scene=resolve_only_approved(session,store,kind=VisualAssetKind.SCENE_MASTER,label='approved-scene-master')
+   damo=resolve_cast_reference(session,store,slug='damo',role='head_shoulders_neutral')
+ except ReferenceUnavailable as error: raise SystemExit(f'{error} No provider call made.') from error
+ scene_ref,scene_meta=load_ref(scene,'approved-scene-master','locked-whole-scene-master'); damo_ref,damo_meta=load_ref(damo,'damo-head','identity-only')
  if not settings.google_media_live or settings.gemini_api_key is None: raise SystemExit('Google media not live; no provider call made')
  stamp=datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ'); out=ROOT/'var/renderer-validation/pub-1105'/stamp; out.mkdir(parents=True,exist_ok=True)
  model='gemini-3-pro-image'; client=GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(),model=model)

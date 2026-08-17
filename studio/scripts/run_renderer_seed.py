@@ -7,9 +7,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from PIL import Image, ImageOps
 PROJECT_ROOT=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(PROJECT_ROOT))
+from app.adapters.asset_store import FilesystemAssetStore  # noqa: E402
 from app.adapters.google_media import GoogleImageClient, GoogleImageRequest  # noqa: E402
 from app.adapters.reference_images import ReferenceImage  # noqa: E402
 from app.config import get_settings  # noqa: E402
+from app.db.session import get_session_factory  # noqa: E402
+from app.services.reference_resolution import ReferenceUnavailable, resolve_cast_reference  # noqa: E402
 
 PUB_PROMPT="""Create a photorealistic 9:16 vertical phone photograph, an accidental instant inside a packed ordinary Australian pub back room at 11:05pm Friday. This is not a hero portrait and not an arranged crowd scene. It must feel physically chaotic, obstructed, asymmetrical and caught half a second before or after a cleaner photographer would have pressed the shutter.
 
@@ -26,12 +29,15 @@ LIGHTING: genuinely dark late-night pub. General house lights OFF. Black ceiling
 CAMERA: one-handed phone held by a friend in the crowd at chest/head height, 24mm-equivalent, native portrait 9:16. Damo/cue/table/stool remain within the central 4:5-safe region but DO NOT protect them from foreground occlusion. Cue can approach or clip a frame edge. Nearby bodies can fill corners. Slight motion imperfection, close-range distortion and awkward framing are desirable. Nobody notices the camera.
 
 Wardrobe: Damo black cap, faded olive tee, dark denim, ordinary worn trainers. No logos. The final image should communicate instantly: some dickhead climbed onto the pool table and his mates are dealing with the consequences — not 'man poses enthusiastically on pool table'. Preserve exact identity and required props while prioritising physical spontaneity, crowd entropy, occlusion, depth and accidental-camera realism."""
-REFERENCE_PATHS={"pub-1105":(("damo-full",Path("var/cast/damo/a-full-length.png")),("damo-head",Path("var/cast/damo/b-head-shoulders.png")),("brock-full",Path("var/cast/brock/a-full-length.png")),("brock-head",Path("var/cast/brock/b-head-shoulders.png")),("emma-head",Path("var/cast/emma/b-head-shoulders.png")),("emma-full",Path("var/cast/emma/a-full-length.png")))}
+# Cast slots, by identity. These were six hard-coded paths until the Phase 5
+# cutover; the frames were then renamed on disk and every one of them broke.
+# A slot now says which member and which role, and the library says which bytes.
+REFERENCE_SLOTS={"pub-1105":(("damo-full","damo","full_body_neutral"),("damo-head","damo","head_shoulders_neutral"),("brock-full","brock","full_body_neutral"),("brock-head","brock","head_shoulders_neutral"),("emma-head","emma","head_shoulders_neutral"),("emma-full","emma","full_body_neutral"))}
 DERIVATIVE_ROOT=PROJECT_ROOT/"var"/"cast-derivatives"/"jpeg-v1"; MAX_SOURCE_BYTES=50*1024*1024; MAX_SIDE=2048
 
-def prepare_reference(name,relative_path):
- source_path=PROJECT_ROOT/relative_path; source_bytes=source_path.read_bytes(); source_sha256=hashlib.sha256(source_bytes).hexdigest()
- if not source_bytes or len(source_bytes)>MAX_SOURCE_BYTES: raise ValueError(f"invalid canonical reference: {source_path}")
+def prepare_reference(name,resolved):
+ source_bytes=resolved.data; source_sha256=resolved.sha256
+ if not source_bytes or len(source_bytes)>MAX_SOURCE_BYTES: raise ValueError(f"invalid canonical reference: {resolved.label}")
  with Image.open(io.BytesIO(source_bytes)) as opened:
   opened.load(); source_format=opened.format; source_dimensions=tuple(opened.size); image=ImageOps.exif_transpose(opened)
   if image.mode in {"RGBA","LA"} or (image.mode=="P" and "transparency" in image.info):
@@ -40,14 +46,20 @@ def prepare_reference(name,relative_path):
   if max(image.size)>MAX_SIDE: image.thumbnail((MAX_SIDE,MAX_SIDE),Image.Resampling.LANCZOS)
   derivative_dimensions=tuple(image.size); derivative_path=DERIVATIVE_ROOT/source_sha256[:2]/f"{source_sha256}.jpg"
   if not derivative_path.is_file(): derivative_path.parent.mkdir(parents=True,exist_ok=True); image.save(derivative_path,format="JPEG",quality=92,optimize=True,progressive=False)
- data=derivative_path.read_bytes(); meta={"name":name,"canonical_path":str(relative_path),"canonical_bytes":len(source_bytes),"canonical_sha256":source_sha256,"canonical_format":source_format,"canonical_dimensions":list(source_dimensions),"derivative_path":str(derivative_path.relative_to(PROJECT_ROOT)),"derivative_bytes":len(data),"derivative_sha256":hashlib.sha256(data).hexdigest(),"derivative_dimensions":list(derivative_dimensions),"derivative_mime":"image/jpeg"}
+ data=derivative_path.read_bytes(); meta={"name":name,**resolved.as_manifest(),"canonical_bytes":len(source_bytes),"canonical_sha256":source_sha256,"canonical_format":source_format,"canonical_dimensions":list(source_dimensions),"derivative_path":str(derivative_path.relative_to(PROJECT_ROOT)),"derivative_bytes":len(data),"derivative_sha256":hashlib.sha256(data).hexdigest(),"derivative_dimensions":list(derivative_dimensions),"derivative_mime":"image/jpeg"}
  return ReferenceImage(name=name,data=data,mime_type="image/jpeg",locked=True),meta
 
 def main():
  p=argparse.ArgumentParser(); p.add_argument("--scene",default="pub-1105"); p.add_argument("--candidates",type=int,default=1); p.add_argument("--model",default=None); p.add_argument("--image-size",default="2K"); args=p.parse_args()
  if args.candidates<1 or args.candidates>3: raise SystemExit("--candidates must be 1..3")
- prepared=tuple(prepare_reference(n,p) for n,p in REFERENCE_PATHS[args.scene]); refs=tuple(x[0] for x in prepared); metadata=[x[1] for x in prepared]
- settings=get_settings(); model=args.model or settings.google_image_model
+ settings=get_settings()
+ try:
+  with get_session_factory()() as session:
+   store=FilesystemAssetStore(settings.assets_root_resolved)
+   resolved=[(name,resolve_cast_reference(session,store,slug=slug,role=role)) for name,slug,role in REFERENCE_SLOTS[args.scene]]
+ except ReferenceUnavailable as error: raise SystemExit(f"{error} No provider call made.") from error
+ prepared=tuple(prepare_reference(name,reference) for name,reference in resolved); refs=tuple(x[0] for x in prepared); metadata=[x[1] for x in prepared]
+ model=args.model or settings.google_image_model
  if not settings.google_media_live or settings.gemini_api_key is None: raise SystemExit("Google media not live; no provider call made")
  client=GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(),model=model); stamp=datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ"); out=PROJECT_ROOT/"var"/"renderer-validation"/args.scene/stamp; out.mkdir(parents=True,exist_ok=True)
  manifest={"scene":args.scene,"generated_at":stamp,"model":model,"aspect_ratio":"9:16","channel_master":"vertical-social","safe_crop":"central-4:5","image_size":args.image_size,"references":metadata,"candidate_count":args.candidates,"quality_benchmark":"gpt-chaotic-pub-reference","manual_gate":"seed_review_required_before_video"}; (out/"manifest.json").write_text(json.dumps(manifest,indent=2)); (out/"prompt.txt").write_text(PUB_PROMPT)
