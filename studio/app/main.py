@@ -26,6 +26,7 @@ from app.routes import (
     email,
     health,
     printing,
+    production_library,
     renderer,
     social,
     vintage_agents,
@@ -66,6 +67,7 @@ def create_app() -> FastAPI:
     application.include_router(printing.router)
     application.include_router(assets.router)
     application.include_router(visual_library.router)
+    application.include_router(production_library.router)
     application.include_router(design.router)
     application.include_router(design_advisor.router)
     application.include_router(compose.router)

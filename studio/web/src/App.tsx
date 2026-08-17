@@ -12,6 +12,8 @@ import { ServiceStatus } from "./components/ServiceStatus";
 import { SocialBench } from "./components/SocialBench";
 import { WorldPage } from "./components/WorldPage";
 import { CastBench } from "./components/CastBench";
+import { ScenesBench } from "./components/ScenesBench";
+import { LocationsBench } from "./components/LocationsBench";
 import type { WorkItem } from "./api/concepts";
 import type { ThemeName } from "./theme";
 export interface AppProps {
@@ -25,6 +27,8 @@ type View =
   | "evidence"
   | "research"
   | "cast"
+  | "locations"
+  | "scenes"
   | "social"
   | "email"
   | "dashboard";
@@ -72,6 +76,10 @@ const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
   // Cast comes before Prompts' output in the order the work happens: a shot
   // cannot lock an identity that has no approved reference.
   { id: "cast", label: "Cast", pipeline: "world" },
+  // Locations then Scenes, in the order the work happens: a scene is built into
+  // a place, and its coverage is cut from the master that results.
+  { id: "locations", label: "Locations", pipeline: "world" },
+  { id: "scenes", label: "Scenes", pipeline: "world" },
   // Print was here. It printed a design onto a photograph by dragging four
   // corners onto the garment, and the owner's account of it is that it never
   // got off the ground and was replaced by defined zones. The zone-based print
@@ -308,6 +316,10 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <VintageResearchBench />
         ) : view === "cast" ? (
           <CastBench />
+        ) : view === "locations" ? (
+          <LocationsBench />
+        ) : view === "scenes" ? (
+          <ScenesBench />
         ) : view === "social" ? (
           <SocialBench />
         ) : view === "email" ? (

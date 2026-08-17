@@ -1,0 +1,193 @@
+/**
+ * Scene masters, coverage frames and scouted locations.
+ *
+ * The two decisions that gate a paid run live here: which image is a scene's
+ * master, and which coverage frames Veo may animate. Both were command-line
+ * only until this existed.
+ */
+
+import { ApiError } from "./client";
+
+export interface AssetBrief {
+  id: string;
+  sha256: string;
+  width: number;
+  height: number;
+  mime_type: string;
+  status: string;
+  rights_status: string;
+}
+
+export interface CoverageFrame {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  approved_for_veo: boolean;
+  frame_sha256: string;
+  source_master_sha256: string;
+  /** Cut from a master that is no longer approved. Needs re-cutting. */
+  stale: boolean;
+  asset: AssetBrief;
+}
+
+export interface SceneMaster {
+  id: string;
+  scene_key: string;
+  status: string;
+  approved_at: string | null;
+  notes: string | null;
+  asset: AssetBrief;
+  coverage: CoverageFrame[];
+}
+
+export interface Scene {
+  scene_key: string;
+  approved_master_id: string | null;
+  masters: SceneMaster[];
+}
+
+export interface LocationPlate {
+  id: string;
+  role: string;
+  sort_order: number;
+  is_base_master: boolean;
+  camera_position: string | null;
+  notes: string | null;
+  asset: AssetBrief;
+  /** Why this plate cannot be a base master. Empty when it can. */
+  blocking: string[];
+  ratio: number;
+  lateral_room_px: number;
+  meets_wide_preference: boolean;
+}
+
+export interface ScoutLocation {
+  id: string;
+  slug: string;
+  display_name: string;
+  parent_slug: string | null;
+  location_type: string | null;
+  description: string | null;
+  status: string;
+  assets: LocationPlate[];
+}
+
+/** Bytes of any library asset, addressed by identifier. Immutable, so cacheable. */
+export function previewSource(asset: AssetBrief): string {
+  return `/api/visual-assets/${asset.id}/preview`;
+}
+
+async function failure(response: Response): Promise<ApiError> {
+  const detail = await response
+    .clone()
+    .json()
+    .then((body: unknown) =>
+      typeof body === "object" && body !== null && "detail" in body ? String(body.detail) : null,
+    )
+    .catch(() => null);
+  return new ApiError(
+    response.status,
+    detail ?? `The Studio service returned ${String(response.status)}.`,
+  );
+}
+
+async function send<T>(
+  path: string,
+  method: string,
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
+  let response: Response;
+  try {
+    response = await fetch(path, {
+      method,
+      headers: body
+        ? { Accept: "application/json", "Content-Type": "application/json" }
+        : { Accept: "application/json" },
+      ...(body ? { body: JSON.stringify(body) } : {}),
+      ...(signal ? { signal } : {}),
+    });
+  } catch (cause) {
+    throw new ApiError(0, "The Studio service could not be reached.", { cause });
+  }
+  if (!response.ok) throw await failure(response);
+  if (response.status === 204) return null as T;
+  return (await response.json()) as T;
+}
+
+async function upload<T>(path: string, body: FormData): Promise<T> {
+  const response = await fetch(path, { method: "POST", body });
+  if (!response.ok) throw await failure(response);
+  return (await response.json()) as T;
+}
+
+export function fetchScenes(signal?: AbortSignal): Promise<Scene[]> {
+  return send<Scene[]>("/api/scenes", "GET", undefined, signal);
+}
+
+export function registerMaster(
+  sceneKey: string,
+  file: File,
+  options: { approve?: boolean; notes?: string } = {},
+): Promise<SceneMaster> {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("approve", String(options.approve ?? false));
+  if (options.notes) body.append("notes", options.notes);
+  return upload<SceneMaster>(`/api/scenes/${sceneKey}/masters`, body);
+}
+
+export function approveMaster(masterId: string, note?: string): Promise<SceneMaster> {
+  return send<SceneMaster>(`/api/scene-masters/${masterId}/approve`, "POST", {
+    note: note ?? null,
+  });
+}
+
+export function cutCoverage(
+  sceneKey: string,
+  frame: { name: string; x: number; y?: number; height?: number },
+): Promise<CoverageFrame> {
+  return send<CoverageFrame>(`/api/scenes/${sceneKey}/coverage`, "POST", frame);
+}
+
+export function approveCoverage(frameId: string, note?: string): Promise<CoverageFrame> {
+  return send<CoverageFrame>(`/api/coverage/${frameId}/approve`, "POST", { note: note ?? null });
+}
+
+export function fetchLocations(signal?: AbortSignal): Promise<ScoutLocation[]> {
+  return send<ScoutLocation[]>("/api/locations", "GET", undefined, signal);
+}
+
+export function fetchLocationRoles(signal?: AbortSignal): Promise<string[]> {
+  return send<string[]>("/api/locations/roles", "GET", undefined, signal);
+}
+
+export function createLocation(input: {
+  slug: string;
+  display_name: string;
+  parent_slug?: string | null;
+}): Promise<ScoutLocation> {
+  return send<ScoutLocation>("/api/locations", "POST", input);
+}
+
+export function addPlate(
+  slug: string,
+  file: File,
+  options: { role: string; cameraPosition?: string; promote?: boolean },
+): Promise<LocationPlate> {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("role", options.role);
+  if (options.cameraPosition) body.append("camera_position", options.cameraPosition);
+  body.append("promote", String(options.promote ?? false));
+  return upload<LocationPlate>(`/api/locations/${slug}/plates`, body);
+}
+
+export function promotePlate(linkId: string, note?: string): Promise<LocationPlate> {
+  return send<LocationPlate>(`/api/location-plates/${linkId}/promote`, "POST", {
+    note: note ?? null,
+  });
+}

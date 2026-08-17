@@ -220,8 +220,8 @@ def assess_base_master(link: LocationAsset) -> BaseMasterReadiness:
     role_is_a_stage = link.role in BASE_MASTER_ROLES
     if not role_is_a_stage:
         problems.append(
-            f"{link.role.value} is a reference, not a stage. A base master is an empty or "
-            "participant-neutral plate"
+            f"a {link.role.value.replace('_', ' ')} is a reference, not a stage. A base master "
+            "is an empty or participant-neutral plate"
         )
 
     window_width = round(asset.height * VERTICAL_RATIO)
