@@ -18,6 +18,12 @@ export interface AssetBrief {
   rights_status: string;
 }
 
+export interface PanelPlanEntry {
+  panel: number;
+  title: string;
+  summary: string;
+}
+
 export interface ContactSheet {
   id: string;
   label: string;
@@ -26,7 +32,8 @@ export interface ContactSheet {
   columns: number;
   panels: number;
   prompt_template: string | null;
-  panel_plan: Record<string, unknown>[];
+  /** The numbered observations the coverage prompt asked for, in its order. */
+  panel_plan: PanelPlanEntry[];
   approved_at: string | null;
   asset: AssetBrief;
   reference_asset_ids: string[];

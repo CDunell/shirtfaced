@@ -27,10 +27,12 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import re
 import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -165,6 +167,44 @@ def scene_prompt_path(worlds_root: Path, scene_key: str, name: str | None = None
     )
 
 
+# The coverage prompt numbers its nine observations, and that order is what the
+# sheet comes back in. Panel 3 is not "whichever one looks like a three-quarter"
+# — it is the third thing the prompt asked for. Parsing it means the bench can
+# name the panels instead of asking somebody to count cells.
+_PANEL_LINE = re.compile(r"^(\d{1,2})\.\s+\*\*(?P<title>[^*]+?):?\*\*:?\s*(?P<body>.*)$")
+
+
+def panel_plan_from_prompt(prompt: str) -> list[dict[str, Any]]:
+    """The numbered observations the prompt asks for, in its own order.
+
+    Empty for a prompt that does not number them, which is honest: a plan that
+    was guessed is worse than no plan, because the bench would then label a
+    panel with something the model was never asked for.
+    """
+    plan: list[dict[str, Any]] = []
+    for line in prompt.splitlines():
+        match = _PANEL_LINE.match(line.strip())
+        if match is None:
+            continue
+        panel = int(match.group(1))
+        if panel != len(plan) + 1:  # Out of order, or a numbered list of something else.
+            continue
+        plan.append(
+            {
+                "panel": panel,
+                "title": match.group("title").strip(),
+                "summary": match.group("body").strip(),
+            }
+        )
+    return plan
+
+
+def slugify_title(title: str) -> str:
+    """``Emma + Brock Crowd Observation`` -> ``emma-brock-crowd-observation``."""
+    cleaned = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")
+    return cleaned[:96] or "panel"
+
+
 def _image_client(settings: Settings) -> GoogleImageClient:
     if not settings.google_media_live or settings.gemini_api_key is None:
         raise PipelineUnavailable(
@@ -262,7 +302,7 @@ def generate_coverage_sheet(
         reference_asset_ids=[one.asset_id for one, _ in chosen],
         prompt_template="NANO_BANANA_SCENE_COVERAGE_PROMPT.md",
         resolved_prompt=prompt,
-        panel_plan=[],
+        panel_plan=panel_plan_from_prompt(prompt),
     )
     _record_call(
         session,

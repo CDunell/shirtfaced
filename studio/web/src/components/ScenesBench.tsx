@@ -54,10 +54,29 @@ import {
   rejectTake,
   type ContactSheet,
   type CoverageFrame,
+  type PanelPlanEntry,
   type PipelineInputs,
   type ReferenceChoice,
   type Scene,
 } from "../api/production";
+
+/** What the coverage prompt asked panel N to be, if it numbered its observations. */
+function plannedFor(sheet: ContactSheet | null, panel: number): PanelPlanEntry | null {
+  return sheet?.panel_plan.find((entry) => entry.panel === panel) ?? null;
+}
+
+/** The planned title as a shot name, or the panel number when there is no plan. */
+function plannedName(sheet: ContactSheet | null, panel: number): string {
+  const planned = plannedFor(sheet, panel);
+  if (!planned) return `panel-${String(panel)}`;
+  return (
+    planned.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 96) || `panel-${String(panel)}`
+  );
+}
 
 function shortSha(sha: string): string {
   return sha.slice(0, 12);
@@ -138,9 +157,17 @@ export function ScenesBench(): React.JSX.Element {
     () => scenes.find((one) => one.scene_key === selected) ?? null,
     [scenes, selected],
   );
-  const master = scene?.masters.find((one) => one.id === scene.approved_master_id) ?? null;
-  const sheets: ContactSheet[] = master?.contact_sheets ?? [];
-  const approvedSheet = sheets.find((one) => one.status === "approved") ?? null;
+  // Memoised because onExtract closes over the approved sheet to name the panel
+  // it is extracting, and a value re-derived every render defeats the callback.
+  const master = useMemo(
+    () => scene?.masters.find((one) => one.id === scene.approved_master_id) ?? null,
+    [scene],
+  );
+  const sheets: ContactSheet[] = useMemo(() => master?.contact_sheets ?? [], [master]);
+  const approvedSheet = useMemo(
+    () => sheets.find((one) => one.status === "approved") ?? null,
+    [sheets],
+  );
   const frames: CoverageFrame[] = master?.coverage ?? [];
   const frameByPanel = new Map(frames.filter((one) => one.panel !== null).map((f) => [f.panel, f]));
 
@@ -183,13 +210,13 @@ export function ScenesBench(): React.JSX.Element {
   const onExtract = useCallback(
     (panel: number) => {
       if (!scene) return;
-      const name = (shotNames[panel] ?? `panel-${String(panel)}`).trim();
+      const name = (shotNames[panel] ?? plannedName(approvedSheet, panel)).trim();
       void act(`panel-${String(panel)}`, async () => {
         await extractPanel(scene.scene_key, { panel, name, selections: [...picked] });
         return `Panel ${String(panel)} came back as ${name}. Approve it to let Veo animate it.`;
       });
     },
-    [act, picked, scene, shotNames],
+    [act, approvedSheet, picked, scene, shotNames],
   );
 
   const people = useMemo(() => {
@@ -620,6 +647,10 @@ export function ScenesBench(): React.JSX.Element {
                           {panel}
                         </div>
                       )}
+                      {plannedFor(approvedSheet, panel) ? (
+                        <LabelSmall>{plannedFor(approvedSheet, panel)?.title}</LabelSmall>
+                      ) : null}
+                      {frame ? null : <div />}
                       {frame ? (
                         <>
                           <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
@@ -677,7 +708,7 @@ export function ScenesBench(): React.JSX.Element {
                                 [panel]: event.currentTarget.value,
                               });
                             }}
-                            placeholder={`panel-${String(panel)}`}
+                            placeholder={plannedName(approvedSheet, panel)}
                           />
                           <Button
                             size={SIZE.mini}
