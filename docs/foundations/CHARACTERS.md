@@ -156,8 +156,8 @@ Approved visual reference convention:
 ```text
 studio/var/cast/<slug>/
   reference.json
-  a-full-length.png
-  b-head-shoulders.png
+  <slug>-full-length.png
+  <slug>-head-shoulders.png
 ```
 
 The files are gitignored production assets; `CAST_REFERENCE_USE.md` defines their handling and provenance.
