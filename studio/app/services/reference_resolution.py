@@ -16,8 +16,8 @@ Three refusals, all of them §13's production-readiness gate rather than taste:
 * **Not approved is not usable.** Pending means it arrived; it does not mean
   anyone decided. Deprecated means someone decided against it.
 * **Ambiguity is a refusal, not a coin toss.** Two approved primaries for one
-  role, or two approved scene masters, raise. Nothing here picks the newest
-  file, the newest row, or the first one it happens to see.
+  role, or two approved masters for one scene, raise. Nothing here picks the
+  newest file, the newest row, or the first name in a preference list.
 * **A missing file is not a missing asset.** If the row exists and the bytes do
   not, that is said plainly, because the two have completely different fixes.
 """
@@ -25,16 +25,18 @@ Three refusals, all of them §13's production-readiness gate rather than taste:
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import uuid
 from dataclasses import dataclass
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStore, AssetStoreError
-from app.db.visual_models import CastMember, CastMemberAsset, VisualAsset
-from app.domain.enums import VisualAssetKind, VisualAssetStatus
+from app.db.visual_models import CastMember, CastMemberAsset, SceneMaster, VisualAsset
+from app.domain.enums import VisualAssetStatus
 from app.domain.errors import StudioError
 
 logger = logging.getLogger(__name__)
@@ -180,40 +182,95 @@ def resolve_cast_reference(
     return _load(store, asset, label)
 
 
-def resolve_only_approved(
-    session: Session,
-    store: AssetStore,
-    *,
-    kind: VisualAssetKind,
-    role: str | None = None,
-    label: str | None = None,
+def resolve_scene_master(
+    session: Session, store: AssetStore, *, scene_key: str
 ) -> ResolvedReference:
-    """The single approved asset of a kind, or a refusal naming the candidates.
+    """The approved master for one scene, by scene, and only ever one.
 
-    For inputs that have no owning record yet -- a scene master, before §7's
-    tables exist. It replaces selection by newest modification time, which is
-    the one resolution rule the document forbids by name: a file touched by a
-    backup is not an approval.
+    This replaces two different guesses at the same question. The coverage tool
+    tried ``composition-gpt.png``, then ``.jpg``, then ``.jpeg`` and took the
+    first that existed; the rich-pub script took whichever of them had the
+    newest modification time. Both were answering "which file", not "which
+    master", and on the production box those two files are different images.
+
+    A scene with no approved master is a refusal. It is not an invitation to
+    fall back to a directory.
     """
-    name = label or f"{kind.value}{'/' + role if role else ''}"
-    query = select(VisualAsset).where(
-        VisualAsset.kind == kind, VisualAsset.status == VisualAssetStatus.APPROVED
+    label = f"scene:{scene_key}"
+    masters = (
+        session.execute(select(SceneMaster).where(SceneMaster.scene_key == scene_key))
+        .scalars()
+        .all()
     )
-    if role is not None:
-        query = query.where(VisualAsset.role == role)
+    approved = [master for master in masters if master.status == "approved"]
 
-    candidates = session.execute(query.order_by(VisualAsset.created_at)).scalars().all()
-
-    if not candidates:
+    if not approved:
+        if masters:
+            states = ", ".join(sorted({master.status for master in masters}))
+            raise ReferenceUnavailable(
+                f"{label}: no approved master. {len(masters)} registered ({states}). "
+                "Approve one before generating against this scene."
+            )
         raise ReferenceUnavailable(
-            f"{name}: no approved {kind.value} asset is registered. "
-            "Ingest it and approve it before generating against it."
+            f"{label}: no master is registered for this scene. Register the approved "
+            "composition and approve it before anything is generated from it."
         )
-    if len(candidates) > 1:
-        listed = ", ".join(f"{asset.id} ({asset.sha256[:12]})" for asset in candidates)
+    if len(approved) > 1:  # pragma: no cover - the partial unique index prevents this
         raise ReferenceUnavailable(
-            f"{name}: {len(candidates)} approved {kind.value} assets. Name one explicitly. "
-            f"Candidates: {listed}."
+            f"{label}: {len(approved)} approved masters. Refusing to choose."
         )
 
-    return _load(store, candidates[0], name)
+    master = approved[0]
+    asset = session.get(VisualAsset, master.visual_asset_id)
+    if asset is None:  # pragma: no cover - foreign key prevents this
+        raise ReferenceUnavailable(f"{label}: the master's asset is missing.")
+    _require_approved(asset, label)
+    return _load(store, asset, label)
+
+
+def verify_coverage_seed(
+    session: Session, store: AssetStore, *, seed: Path, scene_key: str
+) -> dict[str, object]:
+    """Refuse a Veo seed that is not coverage of this scene's approved master.
+
+    A seed is a 9:16 crop the coverage tool saved, with a manifest beside it
+    naming the master it came from. The Veo scripts used to take a path and the
+    SHA of that same path -- self-consistent, and silent about whether the frame
+    belonged to the master the scene is actually built on. The production box
+    holds four coverage frames whose parent SHA matches no file that exists any
+    more, so that distinction is not hypothetical.
+
+    Returns the lineage a run should record: which master, which frame.
+
+    Reads the manifest from disk because coverage frames are not database rows
+    yet -- §8 is unbuilt. When they are, this reads the row instead and the
+    manifest becomes an export like every other file under ``var``.
+    """
+    manifest_path = seed.parent / "manifest.json"
+    if not manifest_path.is_file():
+        raise ReferenceUnavailable(
+            f"{seed.name}: no coverage manifest beside the seed, so the master it was cut "
+            "from cannot be established."
+        )
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise ReferenceUnavailable(f"{manifest_path}: unreadable coverage manifest.") from error
+
+    master = resolve_scene_master(session, store, scene_key=scene_key)
+
+    parent = manifest.get("source_sha256")
+    if parent != master.sha256:
+        raise ReferenceUnavailable(
+            f"{seed.name} was cut from master {str(parent)[:12]}, but the approved master "
+            f"for {scene_key} is {master.sha256[:12]} (asset {master.asset_id}). Re-cut the "
+            "coverage from the approved master."
+        )
+
+    return {
+        "scene": scene_key,
+        "scene_master_asset_id": str(master.asset_id),
+        "scene_master_sha256": master.sha256,
+        "coverage_shot": manifest.get("shot"),
+        "coverage_frame_sha256": manifest.get("frame_sha256"),
+    }

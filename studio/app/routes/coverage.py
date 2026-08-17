@@ -4,6 +4,12 @@
 Coverage frames are crops of existing source pixels only. This route never calls an
 image or video provider and refuses to operate unless the caller supplies the exact
 current source SHA256.
+
+Which master a scene has is a database question as of the Phase 5 cutover. It
+used to be answered by trying ``composition-gpt.png``, then ``.jpg``, then
+``.jpeg`` and taking the first that existed -- a preference order over whatever
+happened to be in the directory, with no approval in it. Both files exist on the
+production box and they are different images.
 """
 
 from __future__ import annotations
@@ -12,31 +18,44 @@ import hashlib
 import json
 import re
 from datetime import UTC, datetime
+from io import BytesIO
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi.responses import HTMLResponse
 from PIL import Image
 from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
-from app.config import PROJECT_ROOT
+from app.adapters.asset_store import FilesystemAssetStore
+from app.config import PROJECT_ROOT, Settings, get_settings
+from app.db.session import get_db_session
+from app.services.reference_resolution import (
+    ReferenceUnavailable,
+    ResolvedReference,
+    resolve_scene_master,
+)
 
 router = APIRouter(prefix="/api/renderer", tags=["renderer"])
 SCENE_REFERENCE_ROOT = PROJECT_ROOT / "var" / "scene-references"
 SHOT_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,63}$")
+
+SessionDependency = Annotated[Session, Depends(get_db_session)]
+SettingsDependency = Annotated[Settings, Depends(get_settings)]
 
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _master(scene_id: str) -> Path:
-    root = SCENE_REFERENCE_ROOT / scene_id
-    for name in ("composition-gpt.png", "composition-gpt.jpg", "composition-gpt.jpeg"):
-        candidate = root / name
-        if candidate.is_file():
-            return candidate
-    raise HTTPException(404, f"No approved composition master for {scene_id}")
+def _master(session: Session, settings: Settings, scene_id: str) -> ResolvedReference:
+    """The one approved master for this scene, or a 404 saying what is missing."""
+    store = FilesystemAssetStore(settings.assets_root_resolved)
+    try:
+        return resolve_scene_master(session, store, scene_key=scene_id)
+    except ReferenceUnavailable as error:
+        raise HTTPException(404, str(error)) from error
 
 
 class CoverageFrameRequest(BaseModel):
@@ -49,29 +68,30 @@ class CoverageFrameRequest(BaseModel):
 
 
 @router.get("/coverage-master/{scene_id}", include_in_schema=False)
-def coverage_master(scene_id: str):
-    master = _master(scene_id)
-    media = "image/png" if master.suffix.lower() == ".png" else "image/jpeg"
-    return FileResponse(
-        master,
-        media_type=media,
+def coverage_master(scene_id: str, session: SessionDependency, settings: SettingsDependency):
+    master = _master(session, settings, scene_id)
+    return Response(
+        content=master.data,
+        media_type=master.mime_type,
         headers={"Cache-Control": "no-store, max-age=0"},
     )
 
 
 @router.post("/coverage-frame")
-def save_coverage_frame(request: CoverageFrameRequest):
+def save_coverage_frame(
+    request: CoverageFrameRequest, session: SessionDependency, settings: SettingsDependency
+):
     if not SHOT_RE.fullmatch(request.shot_name):
         raise HTTPException(400, "Invalid shot name")
-    source = _master(request.scene_id)
-    source_sha = _sha256(source)
+    source = _master(session, settings, request.scene_id)
+    source_sha = source.sha256
     if source_sha != request.source_sha256:
         raise HTTPException(
             409,
             f"Source changed: expected {request.source_sha256}, current {source_sha}",
         )
 
-    with Image.open(source) as image:
+    with Image.open(BytesIO(source.data)) as image:
         image.load()
         sw, sh = image.size
         crop_h = request.height or sh
@@ -98,7 +118,9 @@ def save_coverage_frame(request: CoverageFrameRequest):
         "shot": request.shot_name,
         "generated_at": stamp,
         "operation": "original_pixels_crop_only",
-        "source_path": str(source.relative_to(PROJECT_ROOT)),
+        # The asset ID is the durable half. A path can be renamed or replaced;
+        # this says which master these pixels came from, permanently.
+        "source_master_asset_id": str(source.asset_id),
         "source_sha256": source_sha,
         "source_dimensions": [sw, sh],
         "crop_box": [x0, y0, x1, y1],
@@ -117,11 +139,10 @@ def save_coverage_frame(request: CoverageFrameRequest):
 
 
 @router.get("/coverage-tool/{scene_id}", response_class=HTMLResponse, include_in_schema=False)
-def coverage_tool(scene_id: str):
-    master = _master(scene_id)
-    source_sha = _sha256(master)
-    with Image.open(master) as image:
-        sw, sh = image.size
+def coverage_tool(scene_id: str, session: SessionDependency, settings: SettingsDependency):
+    master = _master(session, settings, scene_id)
+    source_sha = master.sha256
+    sw, sh = master.width, master.height
     crop_h = (sh // 16) * 16
     crop_w = crop_h * 9 // 16
     if crop_w > sw:

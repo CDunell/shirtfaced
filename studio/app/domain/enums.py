@@ -111,6 +111,8 @@ class AuditEventType(StrEnum):
     VISUAL_ASSET_DEPRECATED = "visual_asset_deprecated"
     VISUAL_ASSET_REJECTED = "visual_asset_rejected"
     CAST_ASSET_LINKED = "cast_asset_linked"
+    SCENE_MASTER_REGISTERED = "scene_master_registered"
+    SCENE_MASTER_APPROVED = "scene_master_approved"
 
 
 class ReviewRecommendation(StrEnum):

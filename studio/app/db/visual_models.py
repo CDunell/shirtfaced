@@ -263,6 +263,60 @@ class CastMemberAsset(Base, TimestampMixin):
     asset: Mapped[VisualAsset] = relationship(lazy="joined")
 
 
+class SceneMaster(Base, TimestampMixin):
+    """The approved spatial truth for one scene, §7.
+
+    Minimal on purpose: ``scene_key`` is the scene's string identity —
+    ``pub-1105`` — because §7's ``scene_id`` foreign key wants the campaign
+    scene records that nothing populates yet. When they exist this gains the
+    key; until then a string is what the coverage tool, the renderer scripts
+    and the Veo runs already agree on, and inventing a join to an empty table
+    would not make the resolution any more correct.
+
+    The partial unique index is the point of the table. Exactly one master per
+    scene may be approved, so "the master for pub-1105" is a question with one
+    answer rather than a directory listing with a preference order.
+    """
+
+    __tablename__ = "scene_masters"
+    __table_args__ = (
+        UniqueConstraint("visual_asset_id", name="uq_scene_masters_visual_asset_id"),
+        Index(
+            "uq_scene_masters_one_approved_per_scene",
+            "scene_key",
+            unique=True,
+            postgresql_where=text("status = 'approved'"),
+        ),
+        Index("ix_scene_masters_scene_key_status", "scene_key", "status"),
+        CheckConstraint(
+            "status IN ('candidate','approved','superseded','rejected','deprecated')",
+            name="status_known",
+        ),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    scene_key: Mapped[str] = mapped_column(String(96), nullable=False)
+    visual_asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("visual_assets.id", ondelete="RESTRICT"), nullable=False
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="candidate")
+    # The master this one replaced. A new approved master supersedes rather than
+    # overwrites, so a finished clip's lineage stays readable.
+    parent_master_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scene_masters.id", ondelete="SET NULL")
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_by: Mapped[str | None] = mapped_column(String(64))
+
+    asset: Mapped[VisualAsset] = relationship(lazy="joined")
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<SceneMaster {self.scene_key!r} {self.status!r}>"
+
+
 class Tag(Base):
     """A reusable label, §9.2: ``pub``, ``night``, ``2.39``, ``production-safe``."""
 

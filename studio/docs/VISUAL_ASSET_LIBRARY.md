@@ -17,7 +17,9 @@ specification.
 | §5 cast library, §11 cast and asset endpoints, §15 Phase A UI | Built — `/api/cast`, the Cast bench |
 | §14 Phase 2 ingest | Built — `python -m app.cli ingest-cast`, idempotent |
 | §14 Phase 5 cutover, cast half | Built — nothing resolves a cast reference by path any more |
-| §6 locations, §7 scene masters, §8 coverage | **Not built.** No tables exist |
+| §7 scene masters | Built in part, migration 0032 — `scene_masters`, one approved per scene |
+| §8 coverage frames | **Not built as rows.** Crops still land in `var/…/coverage/<shot>/` with a manifest, now carrying the master's asset ID |
+| §6 locations | **Not built.** No tables exist |
 
 The cutover is what §2.1's audit describes as missing, so specifically: the
 six-slot installer at `/api/renderer/cast-upload` is **retired** and returns
@@ -26,9 +28,26 @@ six-slot installer at `/api/renderer/cast-upload` is **retired** and returns
 `app/services/reference_resolution.py` by member and role, and record the asset
 ID and SHA in their manifests; and `composition_path()`'s newest-mtime
 selection is gone — a scene master must be a registered, approved asset, and
-two approved candidates are a refusal rather than a tie-break. Registering that
-master is Phase 3 work and has not been done, so the rich-pub script currently
-refuses, by design and with a message saying what to do.
+two approved candidates are a refusal rather than a tie-break.
+
+Scene masters are resolved **per scene** by `scene_key`, which is what the
+coverage tool, the derivation script and the Veo manifests already agree on.
+Every path that used to pick a master by filename now asks the library:
+
+- `app/routes/coverage.py` tried `composition-gpt.png`, then `.jpg`, then
+  `.jpeg`, and took the first that existed;
+- `scripts/derive_scene_coverage.py` took a path and a hash from a workflow
+  trigger, which could not distinguish the approved master from a neighbour;
+- `run_renderer_scene_rich_pub.py` took whichever matching file had the newest
+  modification time;
+- the three Veo scripts took a seed path and the hash of that same path, which
+  is self-consistent and says nothing about which master the frame came from.
+  They now refuse a seed whose parent is not the scene's approved master.
+
+The evidence that this mattered is on the box: the four coverage frames cut for
+pub-1105 on 16 August cite parent SHA `81290e2f…`, and no file on the host
+hashes to it. The master at that path was replaced. Under the old rules the next
+derivation would have silently cut different pixels for the same shot names.
 
 Two departures from what is specified below, both recorded as **ADR-020** in
 `DECISIONS.md` — the cast table is `cast_members`, because 0029's `characters`

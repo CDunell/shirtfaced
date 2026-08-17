@@ -30,10 +30,26 @@ The room must continue independently during the move: people sing, jostle, talk,
 This is a camera observation of one continuous event, not a new scene. Do not invent a new pub, do not replace or add principal people, do not change Damo's olive/grey-green shirt, black cap, cue, pool-table position or the existing woman/man pair at camera-right. No cuts, no camera teleport, no slow motion, no staged audience semicircle, no tattoos, no jewellery added to Damo, no halo, no text. AUDIO WILL BE ADDED IN POST; generated audio is irrelevant."""
 
 
+def scene_lineage(seed: Path, scene_key: str) -> dict:
+    """Refuse anything that is not coverage of this scene's approved master."""
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.config import get_settings
+    from app.db.session import get_session_factory
+    from app.services.reference_resolution import ReferenceUnavailable, verify_coverage_seed
+
+    store = FilesystemAssetStore(get_settings().assets_root_resolved)
+    try:
+        with get_session_factory()() as session:
+            return verify_coverage_seed(session, store, seed=seed, scene_key=scene_key)
+    except ReferenceUnavailable as error:
+        raise SystemExit(f"{error} No provider call made.") from error
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", required=True)
     parser.add_argument("--expected-sha256", required=True)
+    parser.add_argument("--scene", default="pub-1105")
     args = parser.parse_args()
 
     seed = Path(args.seed).resolve()
@@ -44,6 +60,8 @@ def main() -> None:
     actual_sha = hashlib.sha256(data).hexdigest()
     if actual_sha != args.expected_sha256:
         raise SystemExit(f"seed SHA mismatch: expected {args.expected_sha256}, got {actual_sha}")
+
+    lineage = scene_lineage(seed, args.scene)
 
     with Image.open(seed) as image:
         source_dimensions = list(image.size)
@@ -62,7 +80,7 @@ def main() -> None:
     )
 
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    out = ROOT / "var/renderer-validation/pub-1105" / f"{stamp}-veo-whip-pan"
+    out = ROOT / "var/renderer-validation" / args.scene / f"{stamp}-veo-whip-pan"
     out.mkdir(parents=True, exist_ok=True)
 
     result = client.generate(
@@ -88,7 +106,7 @@ def main() -> None:
 
     final_data = final.read_bytes()
     manifest = {
-        "scene": "pub-1105",
+        **lineage,
         "shot": "1C-whip-pan-damo-to-emma-brock",
         "experiment": "wide-master-spatial-whip-pan-silent-veo",
         "generated_at": stamp,

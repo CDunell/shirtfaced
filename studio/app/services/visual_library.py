@@ -33,7 +33,7 @@ from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStore
 from app.db.models import AuditEvent
-from app.db.visual_models import CastMember, CastMemberAsset, VisualAsset
+from app.db.visual_models import CastMember, CastMemberAsset, SceneMaster, VisualAsset
 from app.domain.enums import (
     PRIMARY_CAST_ROLES,
     AuditEventType,
@@ -387,6 +387,104 @@ def cast_member_by_slug(session: Session, slug: str) -> CastMember:
     if member is None:
         raise CastMemberNotFound(f"No cast member {slug!r}.")
     return member
+
+
+class SceneMasterConflict(StudioError):
+    """Approving this would leave a scene with two masters."""
+
+
+def register_scene_master(
+    session: Session,
+    *,
+    scene_key: str,
+    asset: VisualAsset,
+    notes: str | None = None,
+    actor: str = OWNER,
+) -> SceneMaster:
+    """Record an image as a candidate master for one scene.
+
+    Registering is not approving, §12. A candidate is a proposal; production
+    resolves approved masters only, so an image can be registered and looked at
+    without any generator being able to reach it.
+    """
+    existing = session.execute(
+        select(SceneMaster).where(SceneMaster.visual_asset_id == asset.id)
+    ).scalar_one_or_none()
+    if existing is not None:
+        if existing.scene_key != scene_key:
+            raise SceneMasterConflict(
+                f"That image is already the {existing.status} master for "
+                f"{existing.scene_key!r}. One image is one master."
+            )
+        return existing
+
+    master = SceneMaster(scene_key=scene_key, visual_asset_id=asset.id, notes=notes)
+    session.add(master)
+    session.flush()
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.SCENE_MASTER_REGISTERED,
+            actor=actor,
+            payload_json={
+                "scene_master_id": str(master.id),
+                "scene_key": scene_key,
+                "asset_id": str(asset.id),
+                "sha256": asset.sha256,
+            },
+        )
+    )
+    return master
+
+
+def approve_scene_master(
+    session: Session, master: SceneMaster, *, actor: str = OWNER, note: str | None = None
+) -> SceneMaster:
+    """Make this the one master for its scene, superseding whatever held it.
+
+    The previous approved master becomes ``superseded`` rather than being
+    deleted or edited: coverage frames and finished clips cite it, and their
+    lineage has to stay readable after it stops being current.
+    """
+    if master.asset.status is not VisualAssetStatus.APPROVED:
+        raise SceneMasterConflict(
+            f"The image is {master.asset.status.value}. Approve the asset before the master, "
+            "so a scene cannot be built on something nobody approved."
+        )
+
+    previous = (
+        session.execute(
+            select(SceneMaster).where(
+                SceneMaster.scene_key == master.scene_key,
+                SceneMaster.status == "approved",
+                SceneMaster.id != master.id,
+            )
+        )
+        .scalars()
+        .all()
+    )
+    for superseded in previous:
+        superseded.status = "superseded"
+        master.parent_master_id = master.parent_master_id or superseded.id
+    session.flush()
+
+    master.status = "approved"
+    master.approved_at = dt.datetime.now(dt.UTC)
+    master.approved_by = actor
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.SCENE_MASTER_APPROVED,
+            actor=actor,
+            payload_json={
+                "scene_master_id": str(master.id),
+                "scene_key": master.scene_key,
+                "asset_id": str(master.visual_asset_id),
+                "sha256": master.asset.sha256,
+                "superseded": [str(one.id) for one in previous],
+                "note": note,
+            },
+        )
+    )
+    return master
 
 
 def _as_png(data: bytes, mime_type: str) -> bytes:

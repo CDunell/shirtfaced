@@ -8,6 +8,7 @@ row, or a directory with two candidates and an mtime to break the tie.
 
 from __future__ import annotations
 
+import json
 import uuid
 from io import BytesIO
 from pathlib import Path
@@ -17,14 +18,15 @@ from PIL import Image
 from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import FilesystemAssetStore
-from app.db.visual_models import CastMember
+from app.db.visual_models import CastMember, VisualAsset
 from app.domain.enums import VisualAssetKind, VisualAssetSourceType
 from app.services import visual_library
 from app.services.reference_resolution import (
     ReferenceUnavailable,
     resolve_asset,
     resolve_cast_reference,
-    resolve_only_approved,
+    resolve_scene_master,
+    verify_coverage_seed,
 )
 
 pytestmark = pytest.mark.integration
@@ -163,51 +165,6 @@ def test_a_missing_file_is_not_reported_as_a_missing_asset(
         resolve_cast_reference(session, store, slug="damo", role="head_shoulders_neutral")
 
 
-def test_two_approved_masters_refuse_rather_than_choose(
-    session: Session, store: FilesystemAssetStore
-) -> None:
-    """No newest-mtime, no newest row. Ambiguity is a refusal."""
-    add(
-        session,
-        store,
-        None,
-        role="pub-1105",
-        colour=(22, 23, 24),
-        kind=VisualAssetKind.SCENE_MASTER,
-    )
-
-    resolved = resolve_only_approved(session, store, kind=VisualAssetKind.SCENE_MASTER)
-    assert resolved.role == "pub-1105"
-
-    add(
-        session,
-        store,
-        None,
-        role="pub-1105",
-        colour=(25, 26, 27),
-        kind=VisualAssetKind.SCENE_MASTER,
-    )
-    with pytest.raises(ReferenceUnavailable, match="2 approved"):
-        resolve_only_approved(session, store, kind=VisualAssetKind.SCENE_MASTER)
-
-
-def test_no_approved_master_is_a_refusal_not_a_fallback(
-    session: Session, store: FilesystemAssetStore
-) -> None:
-    add(
-        session,
-        store,
-        None,
-        role="pub-1105",
-        colour=(28, 29, 30),
-        kind=VisualAssetKind.SCENE_MASTER,
-        approve=False,
-    )
-
-    with pytest.raises(ReferenceUnavailable, match="no approved scene_master"):
-        resolve_only_approved(session, store, kind=VisualAssetKind.SCENE_MASTER)
-
-
 def test_an_asset_resolves_by_explicit_identifier(
     session: Session, store: FilesystemAssetStore, damo: CastMember
 ) -> None:
@@ -216,3 +173,142 @@ def test_an_asset_resolves_by_explicit_identifier(
 
     with pytest.raises(ReferenceUnavailable, match="no asset"):
         resolve_asset(session, store, uuid.uuid4())
+
+
+def register(
+    session: Session,
+    store: FilesystemAssetStore,
+    *,
+    scene_key: str,
+    colour: tuple[int, int, int],
+    approve: bool = True,
+):
+    ingested = visual_library.ingest_asset(
+        session,
+        store,
+        data=png(colour),
+        kind=VisualAssetKind.SCENE_MASTER,
+        source_type=VisualAssetSourceType.GENERATED,
+        role=scene_key,
+    )
+    master = visual_library.register_scene_master(
+        session, scene_key=scene_key, asset=ingested.asset
+    )
+    if approve:
+        visual_library.approve_asset(session, ingested.asset)
+        visual_library.approve_scene_master(session, master)
+    session.flush()
+    return master
+
+
+def test_each_scene_resolves_its_own_master(session: Session, store: FilesystemAssetStore) -> None:
+    """The point of the table: two scenes, two masters, no confusion between them."""
+    pub = register(session, store, scene_key="pub-1105", colour=(40, 41, 42))
+    street = register(session, store, scene_key="side-street-0130", colour=(43, 44, 45))
+
+    assert resolve_scene_master(session, store, scene_key="pub-1105").asset_id == (
+        pub.visual_asset_id
+    )
+    assert resolve_scene_master(session, store, scene_key="side-street-0130").asset_id == (
+        street.visual_asset_id
+    )
+
+
+def test_an_unregistered_scene_is_a_refusal(session: Session, store: FilesystemAssetStore) -> None:
+    with pytest.raises(ReferenceUnavailable, match="no master is registered"):
+        resolve_scene_master(session, store, scene_key="carpark-0200")
+
+
+def test_a_registered_candidate_does_not_resolve(
+    session: Session, store: FilesystemAssetStore
+) -> None:
+    """Registering is not approving. A candidate is a proposal."""
+    register(session, store, scene_key="pub-1105", colour=(46, 47, 48), approve=False)
+
+    with pytest.raises(ReferenceUnavailable, match="no approved master"):
+        resolve_scene_master(session, store, scene_key="pub-1105")
+
+
+def test_approving_a_second_master_supersedes_the_first(
+    session: Session, store: FilesystemAssetStore
+) -> None:
+    """A scene cannot have two. The old one is superseded, not deleted."""
+    first = register(session, store, scene_key="pub-1105", colour=(49, 50, 51))
+    second = register(session, store, scene_key="pub-1105", colour=(52, 53, 54))
+
+    assert first.status == "superseded"
+    assert second.status == "approved"
+    assert second.parent_master_id == first.id
+    assert resolve_scene_master(session, store, scene_key="pub-1105").asset_id == (
+        second.visual_asset_id
+    )
+
+
+def test_a_master_cannot_be_approved_on_an_unapproved_image(
+    session: Session, store: FilesystemAssetStore
+) -> None:
+    ingested = visual_library.ingest_asset(
+        session,
+        store,
+        data=png(colour=(55, 56, 57)),
+        kind=VisualAssetKind.SCENE_MASTER,
+        source_type=VisualAssetSourceType.GENERATED,
+        role="pub-1105",
+    )
+    master = visual_library.register_scene_master(
+        session, scene_key="pub-1105", asset=ingested.asset
+    )
+    with pytest.raises(visual_library.SceneMasterConflict, match="pending"):
+        visual_library.approve_scene_master(session, master)
+
+
+def test_one_image_cannot_be_two_scenes_masters(
+    session: Session, store: FilesystemAssetStore
+) -> None:
+    master = register(session, store, scene_key="pub-1105", colour=(58, 59, 60))
+    asset = session.get(VisualAsset, master.visual_asset_id)
+    assert asset is not None
+
+    with pytest.raises(visual_library.SceneMasterConflict, match="already the approved master"):
+        visual_library.register_scene_master(session, scene_key="side-street-0130", asset=asset)
+
+
+def test_a_veo_seed_from_a_superseded_master_is_refused(
+    session: Session, store: FilesystemAssetStore, tmp_path: Path
+) -> None:
+    """The Veo gate: a frame cut from last week's master must not animate."""
+    register(session, store, scene_key="pub-1105", colour=(61, 62, 63))
+    current = resolve_scene_master(session, store, scene_key="pub-1105")
+
+    seed_dir = tmp_path / "coverage" / "damo-9x16"
+    seed_dir.mkdir(parents=True)
+    seed = seed_dir / "frame.png"
+    seed.write_bytes(png(colour=(64, 65, 66)))
+
+    (seed_dir / "manifest.json").write_text(
+        json.dumps({"shot": "damo-9x16", "source_sha256": "f" * 64, "frame_sha256": "a" * 64}),
+        encoding="utf-8",
+    )
+    with pytest.raises(ReferenceUnavailable, match="was cut from master"):
+        verify_coverage_seed(session, store, seed=seed, scene_key="pub-1105")
+
+    (seed_dir / "manifest.json").write_text(
+        json.dumps(
+            {"shot": "damo-9x16", "source_sha256": current.sha256, "frame_sha256": "a" * 64}
+        ),
+        encoding="utf-8",
+    )
+    lineage = verify_coverage_seed(session, store, seed=seed, scene_key="pub-1105")
+    assert lineage["scene_master_sha256"] == current.sha256
+    assert lineage["coverage_shot"] == "damo-9x16"
+
+
+def test_a_seed_with_no_manifest_is_refused(
+    session: Session, store: FilesystemAssetStore, tmp_path: Path
+) -> None:
+    register(session, store, scene_key="pub-1105", colour=(67, 68, 69))
+    seed = tmp_path / "frame.png"
+    seed.write_bytes(png())
+
+    with pytest.raises(ReferenceUnavailable, match="no coverage manifest"):
+        verify_coverage_seed(session, store, seed=seed, scene_key="pub-1105")

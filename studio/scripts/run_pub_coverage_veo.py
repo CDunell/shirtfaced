@@ -21,6 +21,22 @@ sys.path.insert(0, str(ROOT))
 from app.adapters.google_media import GoogleVideoClient, GoogleVideoRequest
 from app.config import get_settings
 
+
+def scene_lineage(seed: Path, scene_key: str) -> dict:
+    """Refuse anything that is not coverage of this scene's approved master."""
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.config import get_settings
+    from app.db.session import get_session_factory
+    from app.services.reference_resolution import ReferenceUnavailable, verify_coverage_seed
+
+    store = FilesystemAssetStore(get_settings().assets_root_resolved)
+    try:
+        with get_session_factory()() as session:
+            return verify_coverage_seed(session, store, seed=seed, scene_key=scene_key)
+    except ReferenceUnavailable as error:
+        raise SystemExit(f"{error} No provider call made.") from error
+
+
 DEV_MODEL = "veo-3.1-lite-generate-preview"
 DEV_RESOLUTION = "720p"
 
@@ -43,6 +59,7 @@ def main() -> None:
     parser.add_argument("--seed", required=True)
     parser.add_argument("--expected-sha256", required=True)
     parser.add_argument("--shot", choices=sorted(PROMPTS), required=True)
+    parser.add_argument("--scene", default="pub-1105")
     args = parser.parse_args()
 
     seed = Path(args.seed).resolve()
@@ -59,6 +76,8 @@ def main() -> None:
         source_format = image.format
     if source_dimensions[0] * 16 != source_dimensions[1] * 9:
         raise SystemExit(f"seed must be exact 9:16, got {source_dimensions}")
+
+    lineage = scene_lineage(seed, args.scene)
 
     settings = get_settings()
     if not settings.google_media_live or settings.gemini_api_key is None:
@@ -83,12 +102,12 @@ def main() -> None:
     )
 
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    out = ROOT / "var/renderer-validation/pub-1105" / f"{stamp}-coverage-{args.shot}"
+    out = ROOT / "var/renderer-validation" / args.scene / f"{stamp}-coverage-{args.shot}"
     out.mkdir(parents=True, exist_ok=True)
     raw = out / "video-generated.mp4"
     raw.write_bytes(result.data)
     manifest = {
-        "scene": "pub-1105",
+        **lineage,
         "shot": args.shot,
         "experiment": "approved-9x16-coverage-crop-to-minimal-motion-veo",
         "generated_at": stamp,

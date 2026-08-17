@@ -12,6 +12,7 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli prompt world-01 [--shot W01-015] [--out prompt.txt]
     python -m app.cli ingest-cast [--extra damo=expression_bridge=path.jpg] [--mirror]
     python -m app.cli resolve-reference damo head_shoulders_neutral
+    python -m app.cli register-scene-master pub-1105 master.png [--approve]
 """
 
 from __future__ import annotations
@@ -139,6 +140,74 @@ def _resolve_reference(slug: str, role: str) -> int:
     print(
         f"{slug}/{role} asset={reference.asset_id} sha256={reference.sha256} "
         f"{reference.width}x{reference.height} {reference.mime_type}"
+    )
+    return EXIT_OK
+
+
+def _register_scene_master(scene_key: str, path: str, approve: bool, note: str | None) -> int:
+    """Register an image as a scene's master. Registering is not approving.
+
+    A candidate sits in the library with its hash and can be looked at. Only an
+    approved master resolves, and approving one supersedes whatever held the
+    scene before rather than overwriting it.
+    """
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.domain.enums import LicenceStatus, VisualAssetKind, VisualAssetSourceType
+    from app.services import visual_library
+
+    source = Path(path).resolve()
+    if not source.is_file():
+        print(f"No such file: {source}", file=sys.stderr)
+        return EXIT_FAILED
+
+    store = FilesystemAssetStore(get_settings().assets_root_resolved)
+    with get_session_factory()() as session:
+        ingested = visual_library.ingest_asset(
+            session,
+            store,
+            data=source.read_bytes(),
+            kind=VisualAssetKind.SCENE_MASTER,
+            source_type=VisualAssetSourceType.GENERATED,
+            role=scene_key,
+            description=f"Scene master candidate for {scene_key}",
+            rights_status=LicenceStatus.VERIFIED,
+            rights_metadata={"owner": "Shirtfaced", "origin": "owner-generated"},
+            metadata={"registered_from": source.name},
+        )
+        master = visual_library.register_scene_master(
+            session, scene_key=scene_key, asset=ingested.asset, notes=note
+        )
+        if approve:
+            visual_library.approve_asset(session, ingested.asset, note=note)
+            visual_library.approve_scene_master(session, master, note=note)
+        session.commit()
+
+        asset = ingested.asset
+        print(
+            f"{scene_key} master {master.status}: asset={asset.id} sha256={asset.sha256} "
+            f"{asset.width}x{asset.height}"
+        )
+        if not approve:
+            print("Candidate only. Nothing resolves it until it is approved.")
+    return EXIT_OK
+
+
+def _resolve_scene_master(scene_key: str) -> int:
+    """What the coverage tool and every Veo run would resolve for this scene."""
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.services.reference_resolution import ReferenceUnavailable, resolve_scene_master
+
+    store = FilesystemAssetStore(get_settings().assets_root_resolved)
+    try:
+        with get_session_factory()() as session:
+            master = resolve_scene_master(session, store, scene_key=scene_key)
+    except ReferenceUnavailable as error:
+        print(str(error), file=sys.stderr)
+        return EXIT_FAILED
+
+    print(
+        f"{scene_key} asset={master.asset_id} sha256={master.sha256} "
+        f"{master.width}x{master.height} {master.mime_type}"
     )
     return EXIT_OK
 
@@ -458,6 +527,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Rewrite the legacy var/cast files from the database afterwards.",
     )
 
+    register = subcommands.add_parser(
+        "register-scene-master",
+        help="Register an image as a scene's master. Candidate unless --approve.",
+    )
+    register.add_argument("scene_key")
+    register.add_argument("path")
+    register.add_argument("--approve", action="store_true", help="Approve it in the same step.")
+    register.add_argument("--note")
+
+    scene = subcommands.add_parser(
+        "resolve-scene-master",
+        help="Print the master a scene resolves to. Non-zero if production would refuse.",
+    )
+    scene.add_argument("scene_key")
+
     mirror = subcommands.add_parser(
         "export-cast-mirror",
         help="Write the legacy var/cast files from the database. A generated view.",
@@ -484,6 +568,12 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _import_design_concepts(arguments.path)
         if arguments.command == "sync-archive":
             return _sync_archive()
+        if arguments.command == "register-scene-master":
+            return _register_scene_master(
+                arguments.scene_key, arguments.path, arguments.approve, arguments.note
+            )
+        if arguments.command == "resolve-scene-master":
+            return _resolve_scene_master(arguments.scene_key)
         if arguments.command == "export-cast-mirror":
             return _export_cast_mirror(arguments.root)
         if arguments.command == "resolve-reference":
