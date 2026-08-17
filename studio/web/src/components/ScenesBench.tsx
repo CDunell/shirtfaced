@@ -1,15 +1,19 @@
 /**
- * Scene masters and the coverage cut from them.
+ * Scene masters, the coverage sheet chosen from them, and the shots extracted.
  *
- * Two decisions gate every paid Veo run: which image is the scene's master, and
- * which 9:16 frames may be animated. Both were reachable only over SSH until
- * this screen existed, which is a poor place to keep a decision that costs
- * money to get wrong.
+ * The order on screen is the order of the contract in
+ * NANO_BANANA_CONTACT_SHEET_PIPELINE.md: an approved master, then one approved
+ * 3x3 coverage sheet, then a standalone still per panel, then approval for
+ * motion. Each stage is refused until the one above it exists, and the refusal
+ * says which stage is missing rather than greying a button out silently.
  *
- * What it shows that a directory could not: that a master is a candidate rather
- * than approved, that approving a second one supersedes the first, and that a
- * coverage frame was cut from a master that has since been replaced — the
- * failure that already happened once here, silently.
+ * The deterministic crop is still here, at the bottom, behind a disclosure.
+ * §8 supersedes it for the Nano route and not everywhere, but leading with it
+ * would point at the wrong pipeline.
+ *
+ * What this shows that a directory could not: that a master is a candidate,
+ * that a sheet has been superseded so its panel numbers no longer mean what
+ * they meant, and that a shot was taken from a master that has since changed.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -24,14 +28,18 @@ import { LabelSmall, ParagraphXSmall } from "baseui/typography";
 import { PageTitle, SectionTitle } from "./chrome";
 import { ApiError } from "../api/client";
 import {
+  approveContactSheet,
   approveCoverage,
   approveMaster,
   cutCoverage,
   fetchScenes,
   previewSource,
+  recordPanel,
+  registerContactSheet,
   registerMaster,
+  type ContactSheet,
+  type CoverageFrame,
   type Scene,
-  type SceneMaster,
 } from "../api/production";
 
 function shortSha(sha: string): string {
@@ -48,9 +56,19 @@ export function ScenesBench(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
 
   const [newScene, setNewScene] = useState("");
-  const [approveOnUpload, setApproveOnUpload] = useState(false);
+  const [approveMasterOnUpload, setApproveMasterOnUpload] = useState(false);
   const masterInput = useRef<HTMLInputElement>(null);
 
+  const [sheetLabel, setSheetLabel] = useState("");
+  const [sheetReferences, setSheetReferences] = useState("");
+  const [approveSheetOnUpload, setApproveSheetOnUpload] = useState(false);
+  const sheetInput = useRef<HTMLInputElement>(null);
+
+  const [panelNumber, setPanelNumber] = useState("1");
+  const [panelName, setPanelName] = useState("");
+  const panelInput = useRef<HTMLInputElement>(null);
+
+  const [showCrop, setShowCrop] = useState(false);
   const [shotName, setShotName] = useState("");
   const [shotX, setShotX] = useState("0");
 
@@ -91,23 +109,62 @@ export function ScenesBench(): React.JSX.Element {
     () => scenes.find((one) => one.scene_key === selected) ?? null,
     [scenes, selected],
   );
-  const approved = scene?.masters.find((one) => one.id === scene.approved_master_id) ?? null;
+  const master = scene?.masters.find((one) => one.id === scene.approved_master_id) ?? null;
+  const sheets: ContactSheet[] = master?.contact_sheets ?? [];
+  const approvedSheet = sheets.find((one) => one.status === "approved") ?? null;
+  const frames: CoverageFrame[] = master?.coverage ?? [];
 
-  const onRegister = useCallback(() => {
+  const onRegisterMaster = useCallback(() => {
     const file = masterInput.current?.files?.[0];
     const key = (scene?.scene_key ?? newScene).trim();
     if (!file || !key) return;
 
     void act(async () => {
-      await registerMaster(key, file, { approve: approveOnUpload });
+      await registerMaster(key, file, { approve: approveMasterOnUpload });
       if (masterInput.current) masterInput.current.value = "";
       setSelected(key);
       setNewScene("");
-      return approveOnUpload
+      return approveMasterOnUpload
         ? `Approved as the master for ${key}.`
         : `Registered as a candidate for ${key}. Nothing resolves it until it is approved.`;
     });
-  }, [act, approveOnUpload, newScene, scene]);
+  }, [act, approveMasterOnUpload, newScene, scene]);
+
+  const onRegisterSheet = useCallback(() => {
+    const file = sheetInput.current?.files?.[0];
+    const label = sheetLabel.trim();
+    if (!file || !scene || !label) return;
+
+    void act(async () => {
+      await registerContactSheet(scene.scene_key, file, {
+        label,
+        approve: approveSheetOnUpload,
+        referenceAssetIds: sheetReferences
+          .split(",")
+          .map((one) => one.trim())
+          .filter(Boolean),
+      });
+      if (sheetInput.current) sheetInput.current.value = "";
+      setSheetLabel("");
+      return approveSheetOnUpload
+        ? "Approved. Panels are now chosen from this sheet."
+        : "Registered as a candidate. Approve it before extracting panels.";
+    });
+  }, [act, approveSheetOnUpload, scene, sheetLabel, sheetReferences]);
+
+  const onRecordPanel = useCallback(() => {
+    const file = panelInput.current?.files?.[0];
+    const name = panelName.trim();
+    const panel = Number.parseInt(panelNumber, 10);
+    if (!file || !scene || !name || Number.isNaN(panel)) return;
+
+    void act(async () => {
+      await recordPanel(scene.scene_key, file, { name, panel });
+      if (panelInput.current) panelInput.current.value = "";
+      setPanelName("");
+      return `Panel ${String(panel)} recorded as ${name}. Not approved for motion yet.`;
+    });
+  }, [act, panelName, panelNumber, scene]);
 
   const onCut = useCallback(() => {
     const name = shotName.trim();
@@ -117,7 +174,7 @@ export function ScenesBench(): React.JSX.Element {
     void act(async () => {
       await cutCoverage(scene.scene_key, { name, x });
       setShotName("");
-      return `Cut ${name}. Not approved for Veo — cutting is not approving.`;
+      return `Cut ${name} as a literal crop. Not approved for motion.`;
     });
   }, [act, scene, shotName, shotX]);
 
@@ -130,14 +187,18 @@ export function ScenesBench(): React.JSX.Element {
     gap: "8px",
     background: theme.colors.backgroundSecondary,
   });
-
   const mono = css({
     fontFamily: "monospace",
     fontSize: "11px",
     color: theme.colors.contentTertiary,
   });
-
-  const frames = approved?.coverage ?? [];
+  const row = css({
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+    gap: "10px",
+    alignItems: "center",
+    marginBottom: "20px",
+  });
 
   return (
     <>
@@ -153,8 +214,8 @@ export function ScenesBench(): React.JSX.Element {
         Scenes
       </PageTitle>
       <ParagraphXSmall>
-        One approved master per scene, and the 9:16 coverage cut from it. Veo can only reach an
-        approved frame of the current master.
+        Approved master, then one approved coverage sheet, then a standalone shot per panel. Veo
+        reaches an approved shot of the current sheet and nothing else.
       </ParagraphXSmall>
 
       {error ? (
@@ -193,16 +254,8 @@ export function ScenesBench(): React.JSX.Element {
         ))}
       </div>
 
-      <SectionTitle>Register a master</SectionTitle>
-      <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: "10px",
-          alignItems: "center",
-          marginBottom: "24px",
-        })}
-      >
+      <SectionTitle>1 — Master</SectionTitle>
+      <div className={row}>
         <Input
           value={scene ? scene.scene_key : newScene}
           onChange={(event) => {
@@ -213,37 +266,130 @@ export function ScenesBench(): React.JSX.Element {
         />
         <input ref={masterInput} type="file" accept="image/png,image/jpeg,image/webp" />
         <Checkbox
-          checked={approveOnUpload}
+          checked={approveMasterOnUpload}
           onChange={(event) => {
-            setApproveOnUpload(event.currentTarget.checked);
+            setApproveMasterOnUpload(event.currentTarget.checked);
           }}
         >
           Approve as the master
         </Checkbox>
-        <Button disabled={busy} onClick={onRegister}>
-          Register
+        <Button disabled={busy} onClick={onRegisterMaster}>
+          Register master
         </Button>
       </div>
 
       {scene ? (
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
+            gap: "12px",
+            marginBottom: "24px",
+          })}
+        >
+          {scene.masters.map((one) => (
+            <div key={one.id} className={card}>
+              <img
+                src={previewSource(one.asset)}
+                alt={`${scene.scene_key} master`}
+                className={css({
+                  width: "100%",
+                  height: "140px",
+                  objectFit: "contain",
+                  background: theme.colors.backgroundTertiary,
+                  borderRadius: "6px",
+                })}
+              />
+              <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
+                <Tag
+                  closeable={false}
+                  kind={
+                    one.status === "approved"
+                      ? TAG_KIND.positive
+                      : one.status === "candidate"
+                        ? TAG_KIND.warning
+                        : TAG_KIND.neutral
+                  }
+                  overrides={{ Text: { style: { maxWidth: "none" } } }}
+                >
+                  {one.status}
+                </Tag>
+                <Tag closeable={false} kind={TAG_KIND.neutral}>
+                  {`${String(one.asset.width)}×${String(one.asset.height)}`}
+                </Tag>
+              </div>
+              <LabelSmall className={mono}>{shortSha(one.asset.sha256)}</LabelSmall>
+              {one.status === "approved" ? null : (
+                <Button
+                  size={SIZE.mini}
+                  disabled={busy}
+                  onClick={() =>
+                    void act(async () => {
+                      await approveMaster(one.id, "Approved from the Scenes bench");
+                      return `That is now the master for ${scene.scene_key}. Any previous one is superseded, and so are its sheets.`;
+                    })
+                  }
+                >
+                  Make this the master
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : null}
+
+      {master ? (
         <>
-          <SectionTitle>{`${scene.scene_key} — masters`}</SectionTitle>
+          <SectionTitle>2 — Coverage contact sheet</SectionTitle>
+          <ParagraphXSmall>
+            The 3×3 Nano sheet generated from this master plus the character references you fed it.
+            Paste those reference asset IDs so the manifest is recorded, not remembered.
+          </ParagraphXSmall>
+          <div className={row}>
+            <Input
+              value={sheetLabel}
+              onChange={(event) => {
+                setSheetLabel(event.currentTarget.value);
+              }}
+              placeholder="Label, e.g. w01-p28-coverage"
+            />
+            <input ref={sheetInput} type="file" accept="image/png,image/jpeg,image/webp" />
+            <Input
+              value={sheetReferences}
+              onChange={(event) => {
+                setSheetReferences(event.currentTarget.value);
+              }}
+              placeholder="Reference asset IDs, comma separated"
+            />
+            <Checkbox
+              checked={approveSheetOnUpload}
+              onChange={(event) => {
+                setApproveSheetOnUpload(event.currentTarget.checked);
+              }}
+            >
+              Approve as the sheet
+            </Checkbox>
+            <Button disabled={busy || !sheetLabel.trim()} onClick={onRegisterSheet}>
+              Register sheet
+            </Button>
+          </div>
+
           <div
             className={css({
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
+              gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))",
               gap: "12px",
               marginBottom: "24px",
             })}
           >
-            {scene.masters.map((master: SceneMaster) => (
-              <div key={master.id} className={card}>
+            {sheets.map((sheet) => (
+              <div key={sheet.id} className={card}>
                 <img
-                  src={previewSource(master.asset)}
-                  alt={`${scene.scene_key} master`}
+                  src={previewSource(sheet.asset)}
+                  alt={sheet.label}
                   className={css({
                     width: "100%",
-                    height: "160px",
+                    height: "200px",
                     objectFit: "contain",
                     background: theme.colors.backgroundTertiary,
                     borderRadius: "6px",
@@ -252,152 +398,221 @@ export function ScenesBench(): React.JSX.Element {
                 <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
                   <Tag
                     closeable={false}
+                    kind={TAG_KIND.neutral}
+                    overrides={{ Text: { style: { maxWidth: "none" } } }}
+                  >
+                    {sheet.label}
+                  </Tag>
+                  <Tag
+                    closeable={false}
                     kind={
-                      master.status === "approved"
+                      sheet.status === "approved"
                         ? TAG_KIND.positive
-                        : master.status === "candidate"
+                        : sheet.status === "candidate"
                           ? TAG_KIND.warning
                           : TAG_KIND.neutral
                     }
                     overrides={{ Text: { style: { maxWidth: "none" } } }}
                   >
-                    {master.status}
+                    {sheet.status}
                   </Tag>
                   <Tag closeable={false} kind={TAG_KIND.neutral}>
-                    {`${String(master.asset.width)}×${String(master.asset.height)}`}
+                    {`${String(sheet.rows)}×${String(sheet.columns)}`}
                   </Tag>
                 </div>
-                <LabelSmall className={mono}>{shortSha(master.asset.sha256)}</LabelSmall>
-                {master.status === "approved" ? null : (
+                <ParagraphXSmall className={css({ margin: 0 })}>
+                  {sheet.reference_asset_ids.length > 0
+                    ? `${String(sheet.reference_asset_ids.length)} character reference(s) recorded`
+                    : "No character references recorded"}
+                </ParagraphXSmall>
+                <LabelSmall className={mono}>{shortSha(sheet.asset.sha256)}</LabelSmall>
+                {sheet.status === "approved" ? null : (
                   <Button
                     size={SIZE.mini}
                     disabled={busy}
                     onClick={() =>
                       void act(async () => {
-                        await approveMaster(master.id, "Approved from the Scenes bench");
-                        return `That is now the master for ${scene.scene_key}. Any previous one is superseded.`;
+                        await approveContactSheet(sheet.id, "Approved from the Scenes bench");
+                        return "Panels are now chosen from that sheet.";
                       })
                     }
                   >
-                    Make this the master
+                    Make this the sheet
                   </Button>
                 )}
               </div>
             ))}
           </div>
+          {sheets.length === 0 ? (
+            <ParagraphXSmall>
+              No sheet yet. Generate one from this master and the approved character references,
+              then register it here.
+            </ParagraphXSmall>
+          ) : null}
 
-          <SectionTitle>Coverage</SectionTitle>
-          {approved ? (
+          <SectionTitle>3 — Shots</SectionTitle>
+          {approvedSheet ? (
             <>
-              <div
-                className={css({
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
-                  gap: "10px",
-                  alignItems: "center",
-                  marginBottom: "16px",
-                })}
-              >
+              <ParagraphXSmall>
+                {`Record the standalone still Nano returned for a panel. Panels 1–${String(
+                  approvedSheet.panels,
+                )} on ${approvedSheet.label}.`}
+              </ParagraphXSmall>
+              <div className={row}>
                 <Input
-                  value={shotName}
+                  value={panelNumber}
                   onChange={(event) => {
-                    setShotName(event.currentTarget.value);
+                    setPanelNumber(event.currentTarget.value);
                   }}
-                  placeholder="Shot name, e.g. pub-1105-a"
+                  placeholder="Panel number"
                 />
                 <Input
-                  value={shotX}
+                  value={panelName}
                   onChange={(event) => {
-                    setShotX(event.currentTarget.value);
+                    setPanelName(event.currentTarget.value);
                   }}
-                  placeholder="x offset in master pixels"
+                  placeholder="Shot name, e.g. damo-wide"
                 />
-                <Button disabled={busy || !shotName.trim()} onClick={onCut}>
-                  Cut 9:16 frame
+                <input ref={panelInput} type="file" accept="image/png,image/jpeg,image/webp" />
+                <Button disabled={busy || !panelName.trim()} onClick={onRecordPanel}>
+                  Record panel
                 </Button>
-                <ParagraphXSmall className={css({ margin: 0 })}>
-                  {`Master is ${String(approved.asset.width)}px wide.`}
-                </ParagraphXSmall>
               </div>
-
-              <div
-                className={css({
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-                  gap: "12px",
-                })}
-              >
-                {frames.map((frame) => (
-                  <div key={frame.id} className={card}>
-                    <img
-                      src={previewSource(frame.asset)}
-                      alt={frame.name}
-                      className={css({
-                        width: "100%",
-                        height: "240px",
-                        objectFit: "contain",
-                        background: theme.colors.backgroundTertiary,
-                        borderRadius: "6px",
-                      })}
-                    />
-                    <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-                      <Tag
-                        closeable={false}
-                        kind={TAG_KIND.neutral}
-                        overrides={{ Text: { style: { maxWidth: "none" } } }}
-                      >
-                        {frame.name}
-                      </Tag>
-                      <Tag
-                        closeable={false}
-                        kind={frame.approved_for_veo ? TAG_KIND.positive : TAG_KIND.warning}
-                      >
-                        {frame.approved_for_veo ? "approved for Veo" : "pending"}
-                      </Tag>
-                      {frame.stale ? (
-                        <Tag
-                          closeable={false}
-                          kind={TAG_KIND.negative}
-                          overrides={{ Text: { style: { maxWidth: "none" } } }}
-                        >
-                          cut from a superseded master
-                        </Tag>
-                      ) : null}
-                    </div>
-                    <ParagraphXSmall className={css({ margin: 0 })}>
-                      {`${String(frame.width)}×${String(frame.height)} at x=${String(frame.x)}`}
-                    </ParagraphXSmall>
-                    <LabelSmall className={mono}>{shortSha(frame.frame_sha256)}</LabelSmall>
-                    {frame.approved_for_veo ? null : (
-                      <Button
-                        size={SIZE.mini}
-                        disabled={busy}
-                        onClick={() =>
-                          void act(async () => {
-                            await approveCoverage(frame.id, "Approved from the Scenes bench");
-                            return `${frame.name} can be animated.`;
-                          })
-                        }
-                      >
-                        Approve for Veo
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-              {frames.length === 0 ? (
-                <ParagraphXSmall>
-                  No coverage yet. Cut a frame above; the offset is measured in the master&apos;s
-                  own pixels.
-                </ParagraphXSmall>
-              ) : null}
             </>
           ) : (
             <ParagraphXSmall>
-              No approved master, so nothing can be cut. Approve one above first.
+              No approved sheet, so there are no panels to record against. Approve one above.
             </ParagraphXSmall>
           )}
+
+          <div
+            className={css({
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
+              gap: "12px",
+            })}
+          >
+            {frames.map((frame) => (
+              <div key={frame.id} className={card}>
+                <img
+                  src={previewSource(frame.asset)}
+                  alt={frame.name}
+                  className={css({
+                    width: "100%",
+                    height: "230px",
+                    objectFit: "contain",
+                    background: theme.colors.backgroundTertiary,
+                    borderRadius: "6px",
+                  })}
+                />
+                <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
+                  <Tag
+                    closeable={false}
+                    kind={TAG_KIND.neutral}
+                    overrides={{ Text: { style: { maxWidth: "none" } } }}
+                  >
+                    {frame.name}
+                  </Tag>
+                  {frame.panel === null ? (
+                    <Tag closeable={false} kind={TAG_KIND.neutral}>
+                      crop
+                    </Tag>
+                  ) : (
+                    <Tag closeable={false} kind={TAG_KIND.accent}>
+                      {`panel ${String(frame.panel)}`}
+                    </Tag>
+                  )}
+                  <Tag
+                    closeable={false}
+                    kind={frame.approved_for_veo ? TAG_KIND.positive : TAG_KIND.warning}
+                    overrides={{ Text: { style: { maxWidth: "none" } } }}
+                  >
+                    {frame.approved_for_veo ? "approved for Veo" : "pending"}
+                  </Tag>
+                  {frame.stale ? (
+                    <Tag
+                      closeable={false}
+                      kind={TAG_KIND.negative}
+                      overrides={{ Text: { style: { maxWidth: "none" } } }}
+                    >
+                      master has changed
+                    </Tag>
+                  ) : null}
+                </div>
+                <ParagraphXSmall className={css({ margin: 0 })}>
+                  {frame.width !== null && frame.height !== null
+                    ? `${String(frame.width)}×${String(frame.height)}`
+                    : "dimensions unknown"}
+                </ParagraphXSmall>
+                <LabelSmall className={mono}>{shortSha(frame.frame_sha256)}</LabelSmall>
+                {frame.approved_for_veo ? null : (
+                  <Button
+                    size={SIZE.mini}
+                    disabled={busy}
+                    onClick={() =>
+                      void act(async () => {
+                        await approveCoverage(frame.id, "Approved from the Scenes bench");
+                        return `${frame.name} can be animated.`;
+                      })
+                    }
+                  >
+                    Approve for Veo
+                  </Button>
+                )}
+              </div>
+            ))}
+          </div>
+          {frames.length === 0 ? <ParagraphXSmall>No shots yet.</ParagraphXSmall> : null}
+
+          <div className={css({ marginTop: "28px" })}>
+            <Button
+              size={SIZE.mini}
+              kind={BUTTON_KIND.tertiary}
+              onClick={() => {
+                setShowCrop((current) => !current);
+              }}
+            >
+              {showCrop ? "Hide" : "Show"} the deterministic crop route
+            </Button>
+            {showCrop ? (
+              <>
+                <ParagraphXSmall>
+                  Superseded for the Nano path, and still the cheapest way to take an exact
+                  observation out of an image nobody needs to regenerate. Offset is in the
+                  master&apos;s own pixels; it is {String(master.asset.width)}px wide.
+                </ParagraphXSmall>
+                <div className={row}>
+                  <Input
+                    value={shotName}
+                    onChange={(event) => {
+                      setShotName(event.currentTarget.value);
+                    }}
+                    placeholder="Shot name"
+                  />
+                  <Input
+                    value={shotX}
+                    onChange={(event) => {
+                      setShotX(event.currentTarget.value);
+                    }}
+                    placeholder="x offset"
+                  />
+                  <Button
+                    size={SIZE.compact}
+                    kind={BUTTON_KIND.secondary}
+                    disabled={busy || !shotName.trim()}
+                    onClick={onCut}
+                  >
+                    Cut 9:16 crop
+                  </Button>
+                </div>
+              </>
+            ) : null}
+          </div>
         </>
+      ) : scene ? (
+        <ParagraphXSmall>
+          No approved master for this scene, so there is nothing to cover yet.
+        </ParagraphXSmall>
       ) : null}
     </>
   );

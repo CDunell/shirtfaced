@@ -14,7 +14,7 @@ to do next; a bare 409 does not.
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel, Field
@@ -25,8 +25,10 @@ from app.adapters.asset_store import AssetStoreError, FilesystemAssetStore
 from app.config import Settings, get_settings
 from app.db.session import get_db_session
 from app.db.visual_models import (
+    AssetLineage,
     CoverageFrame,
     LocationAsset,
+    SceneContactSheet,
     SceneMaster,
     ScoutLocation,
     VisualAsset,
@@ -72,10 +74,13 @@ class AssetBrief(BaseModel):
 class CoverageFrameOut(BaseModel):
     id: uuid.UUID
     name: str
-    x: int
-    y: int
-    width: int
-    height: int
+    # A crop has a box; a Nano extraction has a panel and no box at all.
+    x: int | None
+    y: int | None
+    width: int | None
+    height: int | None
+    panel: int | None
+    operation: str
     approved_for_veo: bool
     frame_sha256: str
     source_master_sha256: str
@@ -83,6 +88,23 @@ class CoverageFrameOut(BaseModel):
     # one. It cannot be animated and needs re-cutting.
     stale: bool
     asset: AssetBrief
+
+
+class ContactSheetOut(BaseModel):
+    """A Nano coverage sheet and what its panels are meant to observe."""
+
+    id: uuid.UUID
+    label: str
+    status: str
+    rows: int
+    columns: int
+    panels: int
+    prompt_template: str | None
+    panel_plan: list[dict[str, Any]]
+    approved_at: str | None
+    asset: AssetBrief
+    # Which references went into it, from the lineage rather than a note.
+    reference_asset_ids: list[uuid.UUID]
 
 
 class SceneMasterOut(BaseModel):
@@ -93,6 +115,7 @@ class SceneMasterOut(BaseModel):
     notes: str | None
     asset: AssetBrief
     coverage: list[CoverageFrameOut]
+    contact_sheets: list[ContactSheetOut]
 
 
 class SceneOut(BaseModel):
@@ -150,11 +173,39 @@ def _coverage_out(frame: CoverageFrame) -> CoverageFrameOut:
         y=frame.y,
         width=frame.width,
         height=frame.height,
+        panel=frame.panel,
+        operation=frame.operation,
         approved_for_veo=frame.approved_for_veo,
         frame_sha256=frame.frame_sha256,
         source_master_sha256=frame.source_master_sha256,
         stale=frame.source_master_sha256 != frame.master.asset.sha256,
         asset=AssetBrief.of(frame.asset),
+    )
+
+
+def _sheet_out(session: Session, sheet: SceneContactSheet) -> ContactSheetOut:
+    references = (
+        session.execute(
+            select(AssetLineage.parent_asset_id).where(
+                AssetLineage.child_asset_id == sheet.visual_asset_id,
+                AssetLineage.relationship_kind == "generated_from_reference",
+            )
+        )
+        .scalars()
+        .all()
+    )
+    return ContactSheetOut(
+        id=sheet.id,
+        label=sheet.label,
+        status=sheet.status,
+        rows=sheet.rows,
+        columns=sheet.columns,
+        panels=sheet.panels,
+        prompt_template=sheet.prompt_template,
+        panel_plan=list(sheet.panel_plan),
+        approved_at=sheet.approved_at.isoformat() if sheet.approved_at else None,
+        asset=AssetBrief.of(sheet.asset),
+        reference_asset_ids=list(references),
     )
 
 
@@ -168,6 +219,15 @@ def _master_out(session: Session, master: SceneMaster) -> SceneMasterOut:
         .scalars()
         .all()
     )
+    sheets = (
+        session.execute(
+            select(SceneContactSheet)
+            .where(SceneContactSheet.scene_master_id == master.id)
+            .order_by(SceneContactSheet.created_at.desc())
+        )
+        .scalars()
+        .all()
+    )
     return SceneMasterOut(
         id=master.id,
         scene_key=master.scene_key,
@@ -176,6 +236,7 @@ def _master_out(session: Session, master: SceneMaster) -> SceneMasterOut:
         notes=master.notes,
         asset=AssetBrief.of(master.asset),
         coverage=[_coverage_out(frame) for frame in frames],
+        contact_sheets=[_sheet_out(session, sheet) for sheet in sheets],
     )
 
 
@@ -312,6 +373,125 @@ def approve_coverage(
     try:
         coverage_library.approve_for_veo(session, frame, actor=payload.actor, note=payload.note)
     except coverage_library.CoverageRejected as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+
+    session.commit()
+    session.refresh(frame)
+    return _coverage_out(frame)
+
+
+@router.post(
+    "/scenes/{scene_key}/contact-sheets",
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a Nano coverage contact sheet for this scene",
+)
+async def register_sheet(
+    scene_key: str,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    file: Annotated[UploadFile, File()],
+    label: Annotated[str, Form()],
+    rows: Annotated[int, Form()] = 3,
+    columns: Annotated[int, Form()] = 3,
+    prompt_template: Annotated[str | None, Form()] = None,
+    reference_asset_ids: Annotated[str, Form()] = "",
+    approve: Annotated[bool, Form()] = False,
+) -> ContactSheetOut:
+    """``reference_asset_ids`` is a comma-separated list of the character
+    references fed to the model. They are recorded as lineage, which is the
+    input manifest the pipeline contract asks for.
+    """
+    try:
+        references = [
+            uuid.UUID(one.strip()) for one in reference_asset_ids.split(",") if one.strip()
+        ]
+    except ValueError as error:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, f"reference_asset_ids: {error}") from error
+
+    data = await file.read(visual_library.MAX_ASSET_BYTES + 1)
+    try:
+        sheet = coverage_library.register_contact_sheet(
+            session,
+            _store(settings),
+            scene_key=scene_key,
+            label=label,
+            data=data,
+            reference_asset_ids=references,
+            rows=rows,
+            columns=columns,
+            prompt_template=prompt_template,
+            approve=approve,
+        )
+    except visual_library.AssetRejected as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
+    except (coverage_library.CoverageRejected, ReferenceUnavailable) as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+
+    session.commit()
+    session.refresh(sheet)
+    return _sheet_out(session, sheet)
+
+
+@router.post(
+    "/contact-sheets/{sheet_id}/approve", summary="Make this the sheet panels are chosen from"
+)
+def approve_sheet(
+    sheet_id: uuid.UUID, payload: DecisionIn, session: SessionDependency
+) -> ContactSheetOut:
+    sheet = session.get(SceneContactSheet, sheet_id)
+    if sheet is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such contact sheet.")
+    try:
+        coverage_library.approve_contact_sheet(
+            session, sheet, actor=payload.actor, note=payload.note
+        )
+    except coverage_library.CoverageRejected as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+
+    session.commit()
+    session.refresh(sheet)
+    return _sheet_out(session, sheet)
+
+
+@router.post(
+    "/scenes/{scene_key}/panels",
+    status_code=status.HTTP_201_CREATED,
+    summary="Record the standalone still Nano returned for one panel",
+)
+async def record_panel(
+    scene_key: str,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    file: Annotated[UploadFile, File()],
+    name: Annotated[str, Form()],
+    panel: Annotated[int, Form()],
+    aspect_ratio: Annotated[str, Form()] = "9:16",
+    model: Annotated[str | None, Form()] = None,
+) -> CoverageFrameOut:
+    """The bytes are the model's own, so nothing checks them against the sheet.
+    What is checked is that the panel exists on the approved sheet.
+    """
+    data = await file.read(visual_library.MAX_ASSET_BYTES + 1)
+    try:
+        frame = coverage_library.record_panel_extraction(
+            session,
+            _store(settings),
+            scene_key=scene_key,
+            name=name,
+            panel=panel,
+            data=data,
+            aspect_ratio=aspect_ratio,
+            provider="google" if model else None,
+            model=model,
+        )
+    except visual_library.AssetRejected as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
+    except (coverage_library.CoverageRejected, ReferenceUnavailable) as error:
         session.rollback()
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
 

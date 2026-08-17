@@ -18,13 +18,30 @@ export interface AssetBrief {
   rights_status: string;
 }
 
+export interface ContactSheet {
+  id: string;
+  label: string;
+  status: string;
+  rows: number;
+  columns: number;
+  panels: number;
+  prompt_template: string | null;
+  panel_plan: Record<string, unknown>[];
+  approved_at: string | null;
+  asset: AssetBrief;
+  reference_asset_ids: string[];
+}
+
 export interface CoverageFrame {
   id: string;
   name: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  /** A crop carries a box; a Nano extraction carries a panel and no box. */
+  x: number | null;
+  y: number | null;
+  width: number | null;
+  height: number | null;
+  panel: number | null;
+  operation: string;
   approved_for_veo: boolean;
   frame_sha256: string;
   source_master_sha256: string;
@@ -41,6 +58,7 @@ export interface SceneMaster {
   notes: string | null;
   asset: AssetBrief;
   coverage: CoverageFrame[];
+  contact_sheets: ContactSheet[];
 }
 
 export interface Scene {
@@ -155,6 +173,51 @@ export function cutCoverage(
 
 export function approveCoverage(frameId: string, note?: string): Promise<CoverageFrame> {
   return send<CoverageFrame>(`/api/coverage/${frameId}/approve`, "POST", { note: note ?? null });
+}
+
+export function registerContactSheet(
+  sceneKey: string,
+  file: File,
+  options: {
+    label: string;
+    rows?: number;
+    columns?: number;
+    referenceAssetIds?: string[];
+    promptTemplate?: string;
+    approve?: boolean;
+  },
+): Promise<ContactSheet> {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("label", options.label);
+  body.append("rows", String(options.rows ?? 3));
+  body.append("columns", String(options.columns ?? 3));
+  if (options.promptTemplate) body.append("prompt_template", options.promptTemplate);
+  if (options.referenceAssetIds?.length) {
+    body.append("reference_asset_ids", options.referenceAssetIds.join(","));
+  }
+  body.append("approve", String(options.approve ?? false));
+  return upload<ContactSheet>(`/api/scenes/${sceneKey}/contact-sheets`, body);
+}
+
+export function approveContactSheet(sheetId: string, note?: string): Promise<ContactSheet> {
+  return send<ContactSheet>(`/api/contact-sheets/${sheetId}/approve`, "POST", {
+    note: note ?? null,
+  });
+}
+
+export function recordPanel(
+  sceneKey: string,
+  file: File,
+  options: { name: string; panel: number; aspectRatio?: string; model?: string },
+): Promise<CoverageFrame> {
+  const body = new FormData();
+  body.append("file", file);
+  body.append("name", options.name);
+  body.append("panel", String(options.panel));
+  body.append("aspect_ratio", options.aspectRatio ?? "9:16");
+  if (options.model) body.append("model", options.model);
+  return upload<CoverageFrame>(`/api/scenes/${sceneKey}/panels`, body);
 }
 
 export function fetchLocations(signal?: AbortSignal): Promise<ScoutLocation[]> {
