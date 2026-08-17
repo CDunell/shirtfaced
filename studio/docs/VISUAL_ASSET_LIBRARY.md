@@ -235,6 +235,7 @@ Support unlimited assets per character. Recommended roles:
 - `severe_head_angle`
 - `wardrobe_reference`
 - `body_reference`
+- `contact_sheet` — the Nano 3x3 identity sheet, one per character. Nine views in one reference: full length, three-quarter, torso, head and shoulders, tight face, profile and an eye macro. Send this on its own; `full_body_neutral` and `head_shoulders_neutral` are two of its own cells as standalone files.
 - `historical/deprecated`
 - `other`
 
