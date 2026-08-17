@@ -11,6 +11,7 @@ import { PromptWorkbench } from "./components/PromptWorkbench";
 import { ServiceStatus } from "./components/ServiceStatus";
 import { SocialBench } from "./components/SocialBench";
 import { WorldPage } from "./components/WorldPage";
+import { CastBench } from "./components/CastBench";
 import type { WorkItem } from "./api/concepts";
 import type { ThemeName } from "./theme";
 export interface AppProps {
@@ -18,7 +19,8 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 type View =
-  "work" | "prompts" | "concepts" | "evidence" | "research" | "social" | "email" | "dashboard";
+  | "work" | "prompts" | "concepts" | "evidence" | "research" | "cast" | "social" | "email"
+  | "dashboard";
 /** Which pipeline a destination belongs to.
  *
  * Phase 2a of DESIGN_FLOW_PLAN.md. The 14 August audit's largest structural
@@ -60,6 +62,9 @@ const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
   // World: canon → shot → photograph → decision → social → customer.
   { id: "dashboard", label: "Dashboard", pipeline: "world" },
   { id: "prompts", label: "Prompts", pipeline: "world" },
+  // Cast comes before Prompts' output in the order the work happens: a shot
+  // cannot lock an identity that has no approved reference.
+  { id: "cast", label: "Cast", pipeline: "world" },
   // Print was here. It printed a design onto a photograph by dragging four
   // corners onto the garment, and the owner's account of it is that it never
   // got off the ground and was replaced by defined zones. The zone-based print
@@ -294,6 +299,8 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <VintageEvidenceBench />
         ) : view === "research" ? (
           <VintageResearchBench />
+        ) : view === "cast" ? (
+          <CastBench />
         ) : view === "social" ? (
           <SocialBench />
         ) : view === "email" ? (

@@ -20,6 +20,7 @@ from app.db import (  # noqa: F401
     models,
     observation_models,
     social_models,
+    visual_models,
 )
 from app.db.base import Base
 from app.db.session import build_migration_engine

@@ -6,6 +6,25 @@ Owner: SHIRTFACED Studio
 
 Scope: cast, locations/scouting, scene masters, coverage frames, props/other production references
 
+## 0. What is built, as of 17 August 2026
+
+Phases 1 and 2 of §14, and Phase A of §15. Everything below them is still
+specification.
+
+| Section | State |
+|---|---|
+| §9 `visual_assets`, §9.1 `asset_lineage`, §9.2 tags | Built, migration 0031 |
+| §5 cast library, §11 cast and asset endpoints, §15 Phase A UI | Built — `/api/cast`, the Cast bench |
+| §14 Phase 2 ingest | Built — `python -m app.cli ingest-cast`, idempotent |
+| §6 locations, §7 scene masters, §8 coverage | **Not built.** No tables exist |
+| §14 Phase 5 cutover | **Not done.** The renderer still opens `var/cast/<slug>/` by name |
+
+Two departures from what is specified below, both recorded as **ADR-020** in
+`DECISIONS.md` — the cast table is `cast_members`, because 0029's `characters`
+already exists and is campaign-scoped; and cast asset roles are free text with
+`CAST_ASSET_ROLES` as the offered vocabulary, because a closed list would refuse
+photographs nobody anticipated.
+
 ## 1. Purpose
 
 SHIRTFACED needs one professional visual asset system for all reusable production imagery. The current production approach has outgrown fixed folders and ad-hoc manifests. Cast references, location plates, approved scene masters and deterministic coverage frames must become first-class database-backed production assets with explicit provenance and lineage.

@@ -148,6 +148,7 @@ class Character(Base, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("campaign_id", "handle", name="uq_characters_campaign_id_handle"),
         UniqueConstraint("id", "campaign_id", name="uq_characters_id_campaign_id"),
+        Index("ix_characters_cast_member_id", "cast_member_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -173,6 +174,13 @@ class Character(Base, TimestampMixin):
     allowed_variation: Mapped[str | None] = mapped_column(Text)
     forbidden_drift: Mapped[str | None] = mapped_column(Text)
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("true"))
+    # Which canonical person plays this story role, added by 0031. Null until
+    # someone casts it: a matching handle is not a casting decision. Identity
+    # and its approved references live on ``cast_members``, which outlives the
+    # campaign this row belongs to.
+    cast_member_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("cast_members.id", ondelete="SET NULL")
+    )
 
 
 class CharacterAppearance(Base, TimestampMixin):

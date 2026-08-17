@@ -19,6 +19,7 @@ from sqlalchemy import Engine, Enum, text
 # the module loads, and without it there is nothing here to compare.
 import app.db.concept_models
 import app.db.models  # noqa: F401
+import app.db.visual_models  # noqa: F401
 from app.db.base import Base
 
 pytestmark = pytest.mark.integration

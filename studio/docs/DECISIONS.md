@@ -684,3 +684,41 @@ is that what remains is true.
 source, but nothing reads it any more. The decision is per frame, on what is
 actually in it — a per-source declaration could not see that the American shops
 mix worn shots into a mostly flat range.
+
+## ADR-020 — Canonical cast is its own table, not the campaign's `characters`
+
+**17 August 2026.** `VISUAL_ASSET_LIBRARY.md` §5.1 proposes a `characters`
+table for the cast. Migration 0029 had already added one, and the two mean
+different things.
+
+0029's `characters` is a **story role**: `campaign_id` is NOT NULL, the row
+cascades away with its campaign, and `character_appearances` and
+`scene_characters` reach it through composite foreign keys on
+`(id, campaign_id)`. Canonical cast is the opposite — Damo outlives every
+campaign he appears in, and his approved references are what a scene locks
+against.
+
+**So 0031 adds `cast_members`, world-scoped with `world_id` nullable, and gives
+`characters` a nullable `cast_member_id`.** A story role can now say which real
+person plays it, and neither table has to pretend to be the other.
+
+The alternative considered was making `characters.campaign_id` nullable. It was
+rejected because a composite foreign key with a NULL column is simply not
+enforced: every global cast row would have silently switched off the constraint
+0029 added to keep appearances and scenes inside one campaign. A schema that
+stops checking under a condition nobody can see is worse than a second table.
+
+Two smaller reuses in the same revision, on the same principle — the thing
+already exists:
+
+- `rights_status` is the existing `licence_status` enum, not a second
+  three-state rights vocabulary. It already means "may this be used
+  commercially" for archive elements.
+- `image_assets` is untouched. Its `attempt_id` is NOT NULL and means "a
+  provider produced this", which an uploaded photograph did not.
+
+Cast reference **roles are free text**, not an enum, and `CAST_ASSET_ROLES` is a
+vocabulary the interface offers. §5.2's list is a recommendation, and a closed
+list would mean a photograph nobody anticipated cannot be filed at all. That is
+the invented-constraint failure this repository keeps re-learning; the standing
+rule is that everything gets ingested.

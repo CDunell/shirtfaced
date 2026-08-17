@@ -10,6 +10,7 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli attempts world-01
     python -m app.cli discard-attempt <id>
     python -m app.cli prompt world-01 [--shot W01-015] [--out prompt.txt]
+    python -m app.cli ingest-cast [--extra damo=expression_bridge=path.jpg] [--mirror]
 """
 
 from __future__ import annotations
@@ -113,6 +114,80 @@ def _import_design_concepts(path: str) -> int:
     for missing in report.missing_from_source:
         print(f"  missing: {missing}")
     return EXIT_OK
+
+
+def _ingest_cast(
+    root: str | None, extras: Sequence[str], assets: Sequence[str], mirror: bool
+) -> int:
+    """Phase 2 of VISUAL_ASSET_LIBRARY.md: ``var/cast`` becomes cast members.
+
+    Idempotent. Assets are identified by the SHA of their bytes, so a second
+    run re-links what is already there and ingests nothing twice.
+    """
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.config import PROJECT_ROOT
+    from app.domain.enums import VisualAssetKind, VisualAssetSourceType
+    from app.services import visual_library
+    from app.services.cast_ingest import (
+        IngestReport,
+        ingest_cast_directory,
+        ingest_extra_reference,
+    )
+
+    settings = get_settings()
+    cast_root = Path(root).resolve() if root else PROJECT_ROOT / "var" / "cast"
+    if not cast_root.is_dir():
+        print(f"No cast directory at {cast_root}", file=sys.stderr)
+        return EXIT_FAILED
+
+    store = FilesystemAssetStore(settings.assets_root_resolved)
+    report = IngestReport()
+
+    with get_session_factory()() as session:
+        ingest_cast_directory(session, store, cast_root, report=report)
+
+        for specification in extras:
+            slug, role, path = _split_specification(specification, "--extra")
+            ingest_extra_reference(
+                session, store, slug=slug, role=role, path=Path(path).resolve(), report=report
+            )
+
+        for specification in assets:
+            kind, role, path = _split_specification(specification, "--asset")
+            source = Path(path).resolve()
+            ingested = visual_library.ingest_asset(
+                session,
+                store,
+                data=source.read_bytes(),
+                kind=VisualAssetKind(kind),
+                source_type=VisualAssetSourceType.GENERATED,
+                role=role,
+                description=f"Imported from {source.name}",
+                metadata={"ingested_from": source.name},
+            )
+            bucket = report.assets_created if ingested.created else report.assets_already_held
+            bucket.append(f"{kind}/{role}")
+
+        session.commit()
+
+        written: list[Path] = []
+        if mirror:
+            written = visual_library.export_legacy_cast_mirror(session, store, cast_root)
+
+    print(report.summary())
+    for line in report.skipped:
+        print(f"  skipped: {line}")
+    if mirror:
+        print(f"  legacy mirror rewritten: {len(written)} files under {cast_root}")
+    return EXIT_OK
+
+
+def _split_specification(specification: str, flag: str) -> tuple[str, str, str]:
+    """``a=b=path`` -- split on the first two separators so Windows paths survive."""
+    parts = specification.split("=", 2)
+    if len(parts) != 3:
+        raise StudioError(f"{flag} expects three parts separated by '=', got {specification!r}")
+    return parts[0], parts[1], parts[2]
 
 
 def _sync_archive() -> int:
@@ -306,6 +381,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Store the authored archive elements and their feature vectors",
     )
 
+    cast = subcommands.add_parser(
+        "ingest-cast",
+        help="Import var/cast into the Visual Asset Library. Idempotent.",
+    )
+    cast.add_argument("--root", help="Cast directory. Defaults to var/cast.")
+    cast.add_argument(
+        "--extra",
+        action="append",
+        default=[],
+        metavar="slug=role=path",
+        help="One further reference for a member, such as damo=expression_bridge=shout.jpg",
+    )
+    cast.add_argument(
+        "--asset",
+        action="append",
+        default=[],
+        metavar="kind=role=path",
+        help="An asset held without a cast link, such as coverage=shouting=frame.jpg",
+    )
+    cast.add_argument(
+        "--mirror",
+        action="store_true",
+        help="Rewrite the legacy var/cast files from the database afterwards.",
+    )
+
     arguments = parser.parse_args(argv)
 
     try:
@@ -319,6 +419,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _import_design_concepts(arguments.path)
         if arguments.command == "sync-archive":
             return _sync_archive()
+        if arguments.command == "ingest-cast":
+            return _ingest_cast(arguments.root, arguments.extra, arguments.asset, arguments.mirror)
         if arguments.command == "prompt":
             return _write_prompt(arguments.slug, arguments.shot, arguments.out, arguments.video)
         if arguments.command == "attempts":

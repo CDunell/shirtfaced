@@ -33,6 +33,7 @@ from app.routes import (
     vintage_design,
     vintage_design_page,
     vintage_evidence,
+    visual_library,
 )
 from app.routes import range as design_range
 from app.web import mount_interface
@@ -64,6 +65,7 @@ def create_app() -> FastAPI:
     application.include_router(coverage.router)
     application.include_router(printing.router)
     application.include_router(assets.router)
+    application.include_router(visual_library.router)
     application.include_router(design.router)
     application.include_router(design_advisor.router)
     application.include_router(compose.router)

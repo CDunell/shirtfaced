@@ -103,6 +103,14 @@ class AuditEventType(StrEnum):
     # the append-only record of what the application did.
     DESIGN_DECISION_RECORDED = "design_decision_recorded"
     DESIGN_APPROVED = "design_approved"
+    # Visual Asset Library. Approval and deprecation are decisions about what
+    # production may reach, so they are recorded here rather than inferred from
+    # a status column's current value.
+    VISUAL_ASSET_INGESTED = "visual_asset_ingested"
+    VISUAL_ASSET_APPROVED = "visual_asset_approved"
+    VISUAL_ASSET_DEPRECATED = "visual_asset_deprecated"
+    VISUAL_ASSET_REJECTED = "visual_asset_rejected"
+    CAST_ASSET_LINKED = "cast_asset_linked"
 
 
 class ReviewRecommendation(StrEnum):
@@ -235,6 +243,81 @@ class AssetKind(StrEnum):
     ORIGINAL = "original"
     THUMBNAIL = "thumbnail"
     REFERENCE = "reference"
+
+
+class VisualAssetKind(StrEnum):
+    """What part of production a Visual Asset Library image belongs to.
+
+    ``VISUAL_ASSET_LIBRARY.md`` §18: one asset substrate, not one store per
+    domain, so SHA, provenance, rights and lineage behave the same way whatever
+    the image is of. The kind says which domain owns it; the link tables say
+    which record.
+    """
+
+    CAST = "cast"
+    LOCATION = "location"
+    SCENE_MASTER = "scene_master"
+    COVERAGE = "coverage"
+    PROP = "prop"
+    REFERENCE = "reference"
+    OTHER = "other"
+
+
+class VisualAssetSourceType(StrEnum):
+    """How the bytes came to exist.
+
+    §13 gates production on rights, and rights depend on origin. Stored as a
+    property of the asset because it can never be recovered from the pixels.
+    """
+
+    UPLOAD = "upload"
+    GENERATED = "generated"
+    EDITED = "edited"
+    IMPORTED = "imported"
+    COMMISSIONED = "commissioned"
+    LICENSED_STOCK = "licensed_stock"
+
+
+class VisualAssetStatus(StrEnum):
+    """Where an asset sits in the approval lifecycle, §12.
+
+    ``pending -> approved -> deprecated``, or ``pending -> rejected``. Nothing
+    becomes canonical by being newest, and deprecation is a state rather than a
+    deletion: bytes an approved master or a finished clip depends on stay
+    resolvable.
+    """
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    DEPRECATED = "deprecated"
+    REJECTED = "rejected"
+
+
+# The cast reference roles §5.2 names. A vocabulary the interface offers, not a
+# constraint the database enforces: the column is free text, because a closed
+# list would mean a photograph nobody anticipated cannot be filed at all, and
+# the standing rule is that everything gets ingested. Adding a role here makes
+# it offerable; it was already storable.
+CAST_ASSET_ROLES: tuple[str, ...] = (
+    "full_body_neutral",
+    "head_shoulders_neutral",
+    "expression_bridge",
+    "profile_left",
+    "profile_right",
+    "three_quarter",
+    "shouting",
+    "laughing",
+    "sleeping",
+    "severe_head_angle",
+    "wardrobe_reference",
+    "body_reference",
+    "historical",
+    "other",
+)
+
+# The two roles the renderer's fixed slots used to hold, and the only ones the
+# legacy ``var/cast/<slug>/`` mirror can express.
+PRIMARY_CAST_ROLES: tuple[str, ...] = ("full_body_neutral", "head_shoulders_neutral")
 
 
 class FailureCode(StrEnum):
