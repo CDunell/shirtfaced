@@ -49,6 +49,7 @@ from app.db.visual_models import (
 from app.domain.errors import StudioError
 from app.services import coverage_library, visual_library
 from app.services.generation_ledger import record_call as _record_call
+from app.services.nano_prompts import EXTRACTION_PROMPT
 from app.services.reference_resolution import (
     ReferenceUnavailable,
     load_reference,
@@ -59,32 +60,6 @@ logger = logging.getLogger(__name__)
 
 OWNER = "owner"
 PROVIDER = "google"
-
-# The generic extraction prompt, quoted from
-# NANO_BANANA_CONTACT_SHEET_EXTRACTION_PROMPT.md. Held here rather than read
-# from docs/ because the contract calls it the generic master and a provider
-# call should not depend on a documentation path staying put; the scene-specific
-# coverage prompt is a different matter and is read from the world.
-EXTRACTION_PROMPT = (
-    "Using the supplied contact sheet as the visual authority, reproduce panel "
-    "{panel} as one standalone full-resolution image at {aspect_ratio}. Keep the "
-    "same people, faces, wardrobe, props, furniture scale, geography, lighting, "
-    "crowd density and event state. Do not invent a new camera angle, restage "
-    "the scene, move characters, alter props or create a different version of "
-    "the world. Resolve missing fine detail conservatively from the same "
-    "approved reference set. "
-    # Added 18 August 2026. Asked for a 9:16 standalone from a sheet whose cells
-    # were 16:9, the model satisfied the ratio by stacking three landscape
-    # frames down the canvas. It answered the question as asked, so the question
-    # now says what a single photograph is.
-    "Output exactly one continuous photograph filling the whole frame edge to "
-    "edge. It is a single camera observation, not a layout: no grid, no panels, "
-    "no stacked or side-by-side images, no split screen, no borders, no letterbox "
-    "or pillarbox bars, no collage of several moments. Panel {panel} is already "
-    "framed at {aspect_ratio}, so reproduce what it shows without recomposing, "
-    "cropping to a different shape, or adding material above or below it to fill "
-    "the canvas."
-)
 
 
 class PipelineUnavailable(StudioError):

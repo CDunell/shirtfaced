@@ -58,6 +58,11 @@ select = ["E", "W", "F", "I", "B", "UP", "C4", "SIM", "TID", "RUF"]
 #          changes the text sent to the provider, so the line stays long.
 # Every other rule, including the ones that catch real defects, still applies.
 "scripts/**" = ["E402", "E501"]
+# The Nano prompt masters, copied word for word from the documents the owner
+# wrote. Wrapping a line changes the text sent to the provider, and a paraphrase
+# of a prompt has already cost one bad generation. Nothing but literals lives
+# here, so E501 is the only rule that has to give.
+"app/services/nano_prompts.py" = ["E501"]
 
 [tool.mypy]
 python_version = "3.12"
