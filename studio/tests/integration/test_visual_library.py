@@ -25,7 +25,12 @@ from sqlalchemy.orm import Session
 from app.adapters.asset_store import FilesystemAssetStore
 from app.db.models import AuditEvent
 from app.db.visual_models import AssetIsImmutable, CastMember, CastMemberAsset, VisualAsset
-from app.domain.enums import AuditEventType, VisualAssetKind, VisualAssetSourceType, VisualAssetStatus
+from app.domain.enums import (
+    AuditEventType,
+    VisualAssetKind,
+    VisualAssetSourceType,
+    VisualAssetStatus,
+)
 from app.services import cast_ingest, visual_library
 
 pytestmark = pytest.mark.integration
@@ -73,7 +78,9 @@ def test_the_same_bytes_ingest_once(session: Session, store: FilesystemAssetStor
     assert session.execute(select(VisualAsset)).scalars().all() == [first.asset]
 
 
-def test_different_bytes_are_different_assets(session: Session, store: FilesystemAssetStore) -> None:
+def test_different_bytes_are_different_assets(
+    session: Session, store: FilesystemAssetStore
+) -> None:
     first = ingest(session, store, png(colour=(10, 10, 10)))
     second = ingest(session, store, png(colour=(20, 20, 20)))
     assert first.asset.id != second.asset.id
@@ -129,12 +136,16 @@ def test_references_keep_their_order_and_one_primary_per_role(
     )
     session.flush()
 
-    primaries = session.execute(
-        select(CastMemberAsset).where(
-            CastMemberAsset.cast_member_id == member.id,
-            CastMemberAsset.is_primary.is_(True),
+    primaries = (
+        session.execute(
+            select(CastMemberAsset).where(
+                CastMemberAsset.cast_member_id == member.id,
+                CastMemberAsset.is_primary.is_(True),
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     assert len(primaries) == 1, "two images cannot both be the neutral head shot"
     assert primaries[0].visual_asset_id == second.id
@@ -231,6 +242,55 @@ def test_the_import_preserves_hashes_and_is_idempotent(
 
     held = {asset.sha256 for asset in session.execute(select(VisualAsset)).scalars()}
     assert held == {hashlib.sha256(full).hexdigest(), hashlib.sha256(head).hexdigest()}
+
+
+def test_a_renamed_frame_is_the_same_asset(
+    session: Session, store: FilesystemAssetStore, tmp_path: Path
+) -> None:
+    """The files were renamed on 17 August 2026. Identity is the bytes, not the name."""
+    cast_root = tmp_path / "cast"
+    directory = cast_root / "damo"
+    directory.mkdir(parents=True)
+    full = png(colour=(7, 7, 7))
+    head = png(colour=(8, 8, 8))
+    (directory / "a-full-length.png").write_bytes(full)
+    (directory / "b-head-shoulders.png").write_bytes(head)
+
+    first = cast_ingest.ingest_cast_directory(session, store, cast_root)
+    session.flush()
+    assert len(first.assets_created) == 2
+
+    (directory / "a-full-length.png").rename(directory / "damo-full-length.png")
+    (directory / "b-head-shoulders.png").rename(directory / "damo-head-shoulders.png")
+    (directory / "reference.json").write_text(
+        '{"slug": "damo", "frames": {"a": "damo-full-length.png", "b": "damo-head-shoulders.png"}}',
+        encoding="utf-8",
+    )
+
+    second = cast_ingest.ingest_cast_directory(session, store, cast_root)
+    session.flush()
+
+    assert second.assets_created == [], "a rename is not a new photograph"
+    assert len(second.assets_already_held) == 2
+    assert len(second.renamed) == 2
+    assert len(session.execute(select(VisualAsset)).scalars().all()) == 2
+
+    # And the mirror follows the rename rather than resurrecting the old name.
+    written = visual_library.export_legacy_cast_mirror(session, store, cast_root)
+    assert directory / "damo-full-length.png" in written
+    assert not (directory / "a-full-length.png").exists()
+
+
+def test_frames_resolve_without_a_manifest(tmp_path: Path) -> None:
+    """A directory with no reference.json still resolves, on the suffix."""
+    directory = tmp_path / "gary"
+    directory.mkdir()
+    (directory / "gary-full-length.png").write_bytes(png())
+    (directory / "gary-head-shoulders.png").write_bytes(png(colour=(9, 9, 9)))
+
+    resolved = cast_ingest.resolve_frames(directory, {})
+    assert resolved["full_body_neutral"].name == "gary-full-length.png"
+    assert resolved["head_shoulders_neutral"].name == "gary-head-shoulders.png"
 
 
 def test_the_legacy_mirror_is_rebuilt_from_the_database(

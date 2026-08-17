@@ -60,11 +60,12 @@ EXTENSIONS = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 
 ROLE_PATTERN = re.compile(r"^[a-z0-9]+(?:[_-][a-z0-9]+)*$")
 
-# Where the legacy renderer still looks. Regenerated from the database by
-# ``export_legacy_cast_mirror``; never read back as truth, §10.
-LEGACY_CAST_FILENAMES = {
-    "full_body_neutral": "a-full-length.png",
-    "head_shoulders_neutral": "b-head-shoulders.png",
+# The suffix each legacy role's file carries. The stem was ``a``/``b`` until 17
+# August 2026 and is now the member's slug; the suffix survived both, so the
+# mirror composes a name rather than storing one.
+LEGACY_CAST_SUFFIXES = {
+    "full_body_neutral": "full-length.png",
+    "head_shoulders_neutral": "head-shoulders.png",
 }
 
 
@@ -398,6 +399,20 @@ def _as_png(data: bytes, mime_type: str) -> bytes:
     return buffer.getvalue()
 
 
+def legacy_filename_for(slug: str, role: str, asset: VisualAsset) -> str:
+    """What the mirror should call this file on disk.
+
+    Whatever it was called when it was imported, if the import recorded it --
+    the point of the mirror is to keep working for code that opens a path, and
+    that code was pointed at the name the owner chose. Only when nothing is
+    recorded does it fall back to the current convention, ``<slug>-<suffix>``.
+    """
+    recorded = asset.metadata_json.get("legacy_filename")
+    if isinstance(recorded, str) and recorded:
+        return recorded
+    return f"{slug}-{LEGACY_CAST_SUFFIXES[role]}"
+
+
 def export_legacy_cast_mirror(session: Session, store: AssetStore, root: Path) -> list[Path]:
     """Rewrite ``var/cast/<slug>/`` from the database.
 
@@ -435,7 +450,7 @@ def export_legacy_cast_mirror(session: Session, store: AssetStore, root: Path) -
             if asset is None:  # pragma: no cover - foreign key prevents this
                 continue
 
-            destination = root / member.slug / LEGACY_CAST_FILENAMES[role]
+            destination = root / member.slug / legacy_filename_for(member.slug, role, asset)
             destination.parent.mkdir(parents=True, exist_ok=True)
             destination.write_bytes(_as_png(store.load(asset.storage_key), asset.mime_type))
             written.append(destination)

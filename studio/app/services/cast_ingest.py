@@ -39,9 +39,22 @@ from app.services import visual_library
 logger = logging.getLogger(__name__)
 
 # The two frames the fixed-slot era could express, and the role each becomes.
-LEGACY_FRAMES = {
-    "a-full-length.png": "full_body_neutral",
-    "b-head-shoulders.png": "head_shoulders_neutral",
+#
+# Keyed by the ``frames`` letter in ``reference.json``, not by filename. The
+# files were called ``a-full-length.png`` and ``b-head-shoulders.png`` until 17
+# August 2026 and are now ``<slug>-full-length.png``; the manifest was updated
+# with them, the letters were not. Anything that keyed on the name broke, which
+# is the argument for this library stated as an incident.
+FRAME_ROLES = {
+    "a": "full_body_neutral",
+    "b": "head_shoulders_neutral",
+}
+
+# Used only when a directory has no manifest to ask. Matched on the suffix, so
+# both the old and the current naming resolve.
+FRAME_SUFFIXES = {
+    "full-length.png": "full_body_neutral",
+    "head-shoulders.png": "head_shoulders_neutral",
 }
 
 # Slugs whose display name is not simply the slug capitalised.
@@ -58,14 +71,17 @@ class IngestReport:
     assets_already_held: list[str] = field(default_factory=list)
     links: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
+    # Held already, but under a different filename than last time.
+    renamed: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
+        renamed = f", {len(self.renamed)} renamed on disk" if self.renamed else ""
         return (
             f"{len(set(self.members_seen))} cast members "
             f"({len(self.members_created)} new), "
             f"{len(self.assets_created)} assets ingested, "
             f"{len(self.assets_already_held)} already held, "
-            f"{len(self.links)} references linked"
+            f"{len(self.links)} references linked{renamed}"
         )
 
 
@@ -124,6 +140,39 @@ def upsert_cast_member(
     return member, True
 
 
+def resolve_frames(directory: Path, manifest: dict[str, Any]) -> dict[str, Path]:
+    """Find a member's two canonical frames without trusting their filenames.
+
+    ``reference.json`` names them under ``frames`` and is kept in step when the
+    files are renamed, so it is asked first. A directory with no manifest, or
+    one naming a file that is not there, falls back to matching the suffix --
+    both ``a-full-length.png`` and ``damo-full-length.png`` resolve.
+
+    Returns role to path, in the order the roles are declared, so the strip
+    orders the same way every run.
+    """
+    found: dict[str, Path] = {}
+
+    frames = manifest.get("frames")
+    if isinstance(frames, dict):
+        for letter, role in FRAME_ROLES.items():
+            named = frames.get(letter)
+            if isinstance(named, str) and (directory / named).is_file():
+                found[role] = directory / named
+
+    if len(found) == len(FRAME_ROLES):
+        return found
+
+    for path in sorted(directory.iterdir()):
+        if not path.is_file():
+            continue
+        for suffix, role in FRAME_SUFFIXES.items():
+            if role not in found and path.name.endswith(suffix):
+                found[role] = path
+
+    return {role: found[role] for role in FRAME_ROLES.values() if role in found}
+
+
 def ingest_cast_directory(
     session: Session, store: AssetStore, root: Path, *, report: IngestReport | None = None
 ) -> IngestReport:
@@ -142,12 +191,12 @@ def ingest_cast_directory(
         if created:
             report.members_created.append(slug)
 
-        for index, (filename, role) in enumerate(LEGACY_FRAMES.items()):
-            source = directory / filename
-            if not source.is_file():
-                report.skipped.append(f"{slug}/{filename}: absent")
-                continue
+        frames = resolve_frames(directory, manifest)
+        if not frames:
+            report.skipped.append(f"{slug}: no full-length or head-shoulders frame found")
 
+        for index, (role, source) in enumerate(frames.items()):
+            filename = source.name
             ingested = visual_library.ingest_asset(
                 session,
                 store,
@@ -160,13 +209,24 @@ def ingest_cast_directory(
                 # their own subscription. The right to use it is not in doubt.
                 rights_status=LicenceStatus.VERIFIED,
                 rights_metadata={"owner": "Shirtfaced", "origin": "owner-generated"},
-                metadata=_asset_metadata(manifest) | {"legacy_path": f"cast/{slug}/{filename}"},
+                metadata=_asset_metadata(manifest) | {"legacy_filename": filename},
                 model=manifest.get("model"),
                 prompt_hash=manifest.get("prompt_sha256"),
             )
             (report.assets_created if ingested.created else report.assets_already_held).append(
                 f"{slug}/{role}"
             )
+
+            # Bytes already held under the previous name: same asset, same
+            # identity, new filename. Record where it now lives so the
+            # compatibility mirror writes back over the current file rather
+            # than resurrecting the old one beside it.
+            if ingested.asset.metadata_json.get("legacy_filename") != filename:
+                ingested.asset.metadata_json = ingested.asset.metadata_json | {
+                    "legacy_filename": filename,
+                    "previous_filename": ingested.asset.metadata_json.get("legacy_filename"),
+                }
+                report.renamed.append(f"{slug}/{filename}")
 
             # The frames the fixed slots held are the approved primaries: they
             # are what every scene generated so far already used. Approved only
