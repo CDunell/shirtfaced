@@ -63,6 +63,7 @@ export function ScenesBench(): React.JSX.Element {
   const masterInput = useRef<HTMLInputElement>(null);
 
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [promptName, setPromptName] = useState<string | null>(null);
   const [shotNames, setShotNames] = useState<Record<number, string>>({});
 
   const reload = useCallback(async (sceneKey: string | null) => {
@@ -146,10 +147,11 @@ export function ScenesBench(): React.JSX.Element {
       await generateSheet(scene.scene_key, {
         label: `${scene.scene_key}-coverage-${stamp}`,
         selections: [...picked],
+        ...(promptName ? { prompt_name: promptName } : {}),
       });
       return "Nano returned a sheet. Look at it, then approve or reject.";
     });
-  }, [act, picked, scene]);
+  }, [act, picked, promptName, scene]);
 
   const onExtract = useCallback(
     (panel: number) => {
@@ -328,11 +330,32 @@ export function ScenesBench(): React.JSX.Element {
       {master ? (
         <>
           <SectionTitle>2 — Who is in it</SectionTitle>
-          <ParagraphXSmall>
-            {inputs?.source
-              ? `The coverage prompt comes from ${inputs.source}.`
-              : "This scene has no persisted coverage prompt, so generating will refuse rather than borrow another scene's."}
-          </ParagraphXSmall>
+          {inputs?.source ? (
+            <ParagraphXSmall>{`The coverage prompt comes from ${inputs.source}.`}</ParagraphXSmall>
+          ) : (
+            <>
+              <ParagraphXSmall>
+                This scene&apos;s key matches no prompt filename, so pick the one it uses. The pub
+                scene is keyed pub-1105 and its prompt is filed under the shot id.
+              </ParagraphXSmall>
+              <div
+                className={css({ display: "flex", gap: "6px", flexWrap: "wrap", margin: "8px 0" })}
+              >
+                {(inputs?.available_prompts ?? []).map((choice) => (
+                  <Button
+                    key={choice.name}
+                    size={SIZE.mini}
+                    kind={promptName === choice.name ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                    onClick={() => {
+                      setPromptName(choice.name);
+                    }}
+                  >
+                    {`${choice.name} · ${String(choice.characters)} chars`}
+                  </Button>
+                ))}
+              </div>
+            </>
+          )}
           <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap", margin: "10px 0" })}>
             {(inputs?.references ?? []).map((reference) => {
               const on = picked.has(reference.key);
@@ -357,7 +380,7 @@ export function ScenesBench(): React.JSX.Element {
             {`${String(new Set([...picked].map((one) => one.split(":")[0])).size)} people selected. Nano holds identity for five; send only who the panels need.`}
           </ParagraphXSmall>
           <Button
-            disabled={busy !== null || !inputs?.prompt}
+            disabled={busy !== null || (!inputs?.prompt && promptName === null)}
             isLoading={busy === "sheet"}
             onClick={onGenerate}
           >

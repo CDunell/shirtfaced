@@ -513,10 +513,18 @@ class ReferenceChoice(BaseModel):
     role: str
 
 
+class PromptChoice(BaseModel):
+    name: str
+    characters: int
+
+
 class ScenePromptOut(BaseModel):
     scene_key: str
     prompt: str | None
     source: str | None
+    # Every coverage prompt the worlds hold, for a scene whose key does not
+    # match a filename. pub-1105's prompt is filed under the shot id W01-P28.
+    available_prompts: list[PromptChoice]
     references: list[ReferenceChoice]
     attempts: int
     media_live: bool
@@ -526,6 +534,9 @@ class GenerateSheetIn(BaseModel):
     label: str = Field(min_length=1, max_length=96)
     selections: list[str] = Field(default_factory=list)
     prompt: str | None = None
+    # The filename of a world's coverage prompt, when the scene key does not
+    # match one by itself.
+    prompt_name: str | None = None
 
 
 class ExtractPanelIn(BaseModel):
@@ -555,6 +566,10 @@ def pipeline_inputs(
         scene_key=scene_key,
         prompt=prompt,
         source=source,
+        available_prompts=[
+            PromptChoice(name=one.name, characters=len(one.read_text(encoding="utf-8")))
+            for one in nano_pipeline.coverage_prompts(settings.worlds_root_resolved)
+        ],
         references=[
             ReferenceChoice(key=f"{one.slug}:{one.role}", slug=one.slug, role=one.role)
             for one in nano_pipeline.available_references(session)
@@ -578,12 +593,17 @@ def generate_sheet(
     """Generates and stores. Approving what comes back stays a human step."""
     prompt = payload.prompt
     if not prompt:
-        prompt_path = nano_pipeline.scene_prompt_path(settings.worlds_root_resolved, scene_key)
+        prompt_path = nano_pipeline.scene_prompt_path(
+            settings.worlds_root_resolved, scene_key, payload.prompt_name
+        )
         if prompt_path is None:
+            available = [
+                one.name for one in nano_pipeline.coverage_prompts(settings.worlds_root_resolved)
+            ]
             raise HTTPException(
                 status.HTTP_409_CONFLICT,
-                f"{scene_key} has no persisted coverage prompt and none was supplied. "
-                "A scene does not inherit another scene's prompt.",
+                f"No coverage prompt chosen for {scene_key}, and its key matches no filename. "
+                f"Pick one: {', '.join(available) or 'none exist'}.",
             )
         prompt = prompt_path.read_text(encoding="utf-8")
 

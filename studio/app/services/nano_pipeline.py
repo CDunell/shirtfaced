@@ -150,18 +150,32 @@ def resolve_selected_references(
     return chosen
 
 
-def scene_prompt_path(worlds_root: Path, scene_key: str) -> Path | None:
-    """The world's own resolved coverage prompt, if it has one.
+def coverage_prompts(worlds_root: Path) -> list[Path]:
+    """Every resolved coverage prompt the worlds hold."""
+    found: list[Path] = []
+    for shots in sorted(worlds_root.glob("*/shots")):
+        found.extend(sorted(shots.glob("*nano-banana-coverage.txt")))
+    return found
 
-    ``W01-P28.nano-banana-coverage.txt`` is where the pub scene keeps its
-    nine-panel instruction. A scene without one has to be given a prompt
-    explicitly rather than inheriting somebody else's.
+
+def scene_prompt_path(worlds_root: Path, scene_key: str, name: str | None = None) -> Path | None:
+    """The coverage prompt for this scene: named outright, or matched by key.
+
+    Matching is exact on the file stem, and deliberately not fuzzy. The pub
+    scene is keyed ``pub-1105`` in the library and its prompt is filed under the
+    shot id ``W01-P28``, so a fuzzy match would have to decide that those are
+    the same thing — which is a naming decision, not a lookup. Where nothing
+    matches, the caller is offered the list and picks, which is one click and
+    leaves a record of what was actually sent.
     """
-    for world in sorted(worlds_root.glob("*/shots")):
-        for candidate in sorted(world.glob("*nano-banana-coverage.txt")):
-            if scene_key.lower().replace("-", "") in candidate.stem.lower().replace("-", ""):
-                return candidate
-    return None
+    available = coverage_prompts(worlds_root)
+    if name:
+        return next((one for one in available if one.name == name), None)
+    key = scene_key.lower().replace("-", "").replace("_", "")
+    return next(
+        (one for one in available if key in one.stem.lower().replace("-", "").replace("_", "")),
+        None,
+    )
 
 
 def _record_call(

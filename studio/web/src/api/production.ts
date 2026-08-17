@@ -226,11 +226,17 @@ export interface ReferenceChoice {
   role: string;
 }
 
+export interface PromptChoice {
+  name: string;
+  characters: number;
+}
+
 export interface PipelineInputs {
   scene_key: string;
-  /** The scene's own persisted coverage prompt, if the world has one. */
+  /** The scene's own persisted coverage prompt, if its key matches a filename. */
   prompt: string | null;
   source: string | null;
+  available_prompts: PromptChoice[];
   references: ReferenceChoice[];
   attempts: number;
   media_live: boolean;
@@ -246,7 +252,7 @@ export function fetchPipelineInputs(
 /** Sends master + chosen references to Nano and stores the sheet it returns. */
 export function generateSheet(
   sceneKey: string,
-  input: { label: string; selections: string[]; prompt?: string },
+  input: { label: string; selections: string[]; prompt?: string; prompt_name?: string },
 ): Promise<ContactSheet> {
   return send<ContactSheet>(`/api/scenes/${sceneKey}/generate-sheet`, "POST", input);
 }
