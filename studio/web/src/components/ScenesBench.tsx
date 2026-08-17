@@ -48,6 +48,7 @@ import {
   extractPanel,
   fetchPipelineInputs,
   fetchScenes,
+  fetchVeoTrigger,
   generateSheet,
   previewSource,
   registerMaster,
@@ -670,7 +671,22 @@ export function ScenesBench(): React.JSX.Element {
                             </Tag>
                           </div>
                           <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
-                            {frame.approved_for_veo ? null : (
+                            {frame.approved_for_veo ? (
+                              <Button
+                                size={SIZE.mini}
+                                isLoading={busy === `trigger-${frame.id}`}
+                                disabled={busy !== null}
+                                onClick={() =>
+                                  void act(`trigger-${frame.id}`, async () => {
+                                    const built = await fetchVeoTrigger(frame.id);
+                                    await navigator.clipboard.writeText(built.content);
+                                    return `Copied. Save as ${built.directory}/${built.filename}, commit and push.`;
+                                  })
+                                }
+                              >
+                                Copy Veo trigger
+                              </Button>
+                            ) : (
                               <Button
                                 size={SIZE.mini}
                                 disabled={busy !== null}

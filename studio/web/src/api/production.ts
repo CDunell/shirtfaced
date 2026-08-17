@@ -330,6 +330,17 @@ export function takeVideoSource(takeId: string): string {
   return `/api/takes/${takeId}/video`;
 }
 
+export interface VeoTrigger {
+  filename: string;
+  content: string;
+  directory: string;
+}
+
+/** The trigger file that animates an approved shot, built server-side. */
+export function fetchVeoTrigger(frameId: string): Promise<VeoTrigger> {
+  return send<VeoTrigger>(`/api/coverage/${frameId}/veo-trigger`, "GET");
+}
+
 export function rejectTake(assetId: string, note?: string): Promise<AssetBrief> {
   return send<AssetBrief>(`/api/visual-assets/${assetId}/reject`, "POST", { note: note ?? null });
 }

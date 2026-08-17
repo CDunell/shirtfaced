@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import json
 import logging
 import uuid
 from collections.abc import Sequence
@@ -380,6 +381,51 @@ def resolve_veo_seed(
     from app.services.reference_resolution import resolve_asset
 
     return resolve_asset(session, store, asset.id, label=f"{scene_key}/{name}")
+
+
+@dataclass(frozen=True)
+class VeoTrigger:
+    """The trigger file §17's workflow reads, and the name to save it under."""
+
+    filename: str
+    content: str
+
+
+def veo_trigger(
+    session: Session, store: AssetStore, *, frame: CoverageFrame, purpose: str, stamp: str
+) -> VeoTrigger:
+    """Build the trigger for one approved shot, or refuse with the reason why.
+
+    The seed is resolved through ``resolve_veo_seed`` rather than read off the
+    row, so building the trigger runs every gate the run itself would: approved
+    for motion, cut from the master that is approved now, sheet still approved,
+    and the file on disk still hashing to what the row says. A trigger that
+    names a stale seed is worse than no trigger, because the workflow's own
+    SHA check would pass -- it verifies the file matches the trigger, not that
+    the trigger names the current shot.
+
+    ``seed_relative_path`` is relative to the Studio checkout on the box, which
+    is where the workflow resolves it from.
+    """
+    scene_key = frame.master.scene_key
+    resolved = resolve_veo_seed(session, store, scene_key=scene_key, name=frame.name)
+
+    asset = session.get(VisualAsset, resolved.asset_id)
+    if asset is None:  # pragma: no cover - resolve_veo_seed already loaded it
+        raise CoverageRejected(f"{frame.name}: the frame's asset is missing.")
+
+    payload = {
+        "scene": scene_key,
+        "shot": frame.name,
+        "seed_relative_path": f"assets/{asset.storage_key}",
+        "seed_sha256": resolved.sha256,
+        "source_master_sha256": frame.source_master_sha256,
+        "purpose": purpose,
+    }
+    return VeoTrigger(
+        filename=f"{stamp}-{frame.name}.json",
+        content=json.dumps(payload, separators=(",", ":")),
+    )
 
 
 def register_contact_sheet(

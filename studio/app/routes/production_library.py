@@ -13,6 +13,7 @@ to do next; a bare 409 does not.
 
 from __future__ import annotations
 
+import datetime as dt
 import uuid
 from typing import Annotated, Any
 
@@ -671,6 +672,59 @@ def reject_take(asset_id: uuid.UUID, payload: DecisionIn, session: SessionDepend
     session.commit()
     session.refresh(asset)
     return AssetBrief.of(asset)
+
+
+class VeoTriggerOut(BaseModel):
+    """A ready-to-commit trigger file, so nobody assembles one by hand."""
+
+    filename: str
+    content: str
+    directory: str = "studio/veo-coverage-triggers"
+
+
+@router.get(
+    "/coverage/{frame_id}/veo-trigger",
+    summary="The trigger file that animates this shot",
+)
+def veo_trigger(
+    frame_id: uuid.UUID, session: SessionDependency, settings: SettingsDependency
+) -> VeoTriggerOut:
+    """Studio's part of the pipeline ends at an approved shot; this hands it over.
+
+    §17: motion runs from a trigger committed under
+    ``studio/veo-coverage-triggers/``, and the interface knows every field it
+    needs -- the seed's path on the box, its checksum and its master's. Building
+    that by hand meant reading a storage key out of the database.
+    """
+    frame = session.get(CoverageFrame, frame_id)
+    if frame is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such coverage frame.")
+
+    planned = next(
+        (
+            entry.get("title")
+            for entry in (frame.contact_sheet.panel_plan if frame.contact_sheet else [])
+            if entry.get("panel") == frame.panel
+        ),
+        None,
+    )
+    purpose = (
+        f"animate approved {frame.master.scene_key} {planned or frame.name}; "
+        "motion only, no camera reveal"
+    )
+
+    try:
+        built = coverage_library.veo_trigger(
+            session,
+            _store(settings),
+            frame=frame,
+            purpose=purpose,
+            stamp=dt.datetime.now(dt.UTC).strftime("%Y%m%dT%H%M%SZ"),
+        )
+    except (coverage_library.CoverageRejected, ReferenceUnavailable) as error:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+
+    return VeoTriggerOut(filename=built.filename, content=built.content)
 
 
 def _location_asset_out(link: LocationAsset) -> LocationAssetOut:
