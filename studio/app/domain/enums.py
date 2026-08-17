@@ -117,6 +117,10 @@ class AuditEventType(StrEnum):
     CONTACT_SHEET_APPROVED = "contact_sheet_approved"
     COVERAGE_FRAME_DERIVED = "coverage_frame_derived"
     COVERAGE_FRAME_APPROVED = "coverage_frame_approved"
+    AUDIO_ASSET_INGESTED = "audio_asset_ingested"
+    AUDIO_ASSET_APPROVED = "audio_asset_approved"
+    AUDIO_ASSET_DEPRECATED = "audio_asset_deprecated"
+    SOUNDTRACK_ASSET_LINKED = "soundtrack_asset_linked"
     LOCATION_REGISTERED = "location_registered"
     LOCATION_ASSET_LINKED = "location_asset_linked"
     LOCATION_MASTER_APPROVED = "location_master_approved"
@@ -300,6 +304,70 @@ class VisualAssetStatus(StrEnum):
     APPROVED = "approved"
     DEPRECATED = "deprecated"
     REJECTED = "rejected"
+
+
+class AudioSourceType(StrEnum):
+    """How an audio file came to exist.
+
+    The same six origins as :class:`VisualAssetSourceType`, kept as its own type
+    rather than borrowed: a column named after visual assets on an audio table
+    would be a name that lies, and renaming the visual one to suit audio would
+    churn tables that are already deployed.
+    """
+
+    UPLOAD = "upload"
+    GENERATED = "generated"
+    EDITED = "edited"
+    IMPORTED = "imported"
+    COMMISSIONED = "commissioned"
+    LICENSED_STOCK = "licensed_stock"
+
+
+class AudioAssetStatus(StrEnum):
+    """Where an audio file sits in the approval lifecycle.
+
+    Mirrors :class:`VisualAssetStatus` for the same reason and with the same
+    rule: nothing becomes the mix that ships by being newest.
+    """
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    DEPRECATED = "deprecated"
+    REJECTED = "rejected"
+
+
+# The deliverables SOUNDTRACK.md §8 and §6 name. A vocabulary the interface
+# offers, not a constraint -- free text for the same reason cast roles are, so a
+# mix nobody anticipated is still storable.
+SOUNDTRACK_ASSET_ROLES: tuple[str, ...] = (
+    # §8 required masters.
+    "full_master",
+    "instrumental",
+    "tv_mix",
+    "no_gang",
+    "gang_only",
+    "a_cappella",
+    "clean",
+    "premaster",
+    # §6 cutdown map, named by the job the edit gives them. The length is in the
+    # name because that is how both the spec and the edit refer to them.
+    "hook_sting_6s",
+    "hero_social_10s",
+    "canonical_12s5",
+    "paid_social_15s",
+    "story_reel_30s",
+    "bed_60s",
+    "loop_8_bar",
+    # §8 stem families.
+    "stem_drums",
+    "stem_bass",
+    "stem_guitars",
+    "stem_keys",
+    "stem_vocals",
+    "stem_fx",
+    "stem_mix_groups",
+    "other",
+)
 
 
 class LocationAssetRole(StrEnum):

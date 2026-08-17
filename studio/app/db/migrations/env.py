@@ -14,6 +14,7 @@ from alembic import context
 from app.config import get_settings
 from app.db import (  # noqa: F401
     archive_models,
+    audio_models,
     campaign_models,
     concept_models,
     email_models,

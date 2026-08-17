@@ -36,10 +36,16 @@ if ! "$PYTHON" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 12) else 1)
 fi
 echo "Using $PYTHON ($("$PYTHON" --version))"
 
-say "Ensuring the venv module and PostgreSQL are present"
+say "Ensuring the venv module, PostgreSQL and ffmpeg are present"
 NEEDED=()
 "$PYTHON" -c 'import venv' 2>/dev/null || NEEDED+=("$(basename "$PYTHON")-venv")
 command -v psql >/dev/null 2>&1 || NEEDED+=(postgresql)
+# The Veo scripts strip generated audio with ffmpeg and fail hard without it.
+# It was absent until 18 August 2026, which cost a paid whip-pan run: the video
+# generated, the strip step died, and the raw had to be recovered and processed
+# on a CI runner instead. ffprobe also measures any audio format the soundtrack
+# library cannot read by itself.
+command -v ffmpeg >/dev/null 2>&1 || NEEDED+=(ffmpeg)
 if [ ${#NEEDED[@]} -gt 0 ]; then
   echo "Installing: ${NEEDED[*]}"
   sudo apt-get update -qq

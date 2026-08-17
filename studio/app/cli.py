@@ -13,6 +13,7 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli ingest-cast [--extra damo=expression_bridge=path.jpg] [--mirror]
     python -m app.cli resolve-reference damo head_shoulders_neutral
     python -m app.cli register-scene-master pub-1105 master.png [--approve]
+    python -m app.cli ingest-soundtrack all-in-tonight canonical_12s5 mix.wav --approve --primary
 """
 
 from __future__ import annotations
@@ -141,6 +142,117 @@ def _resolve_reference(slug: str, role: str) -> int:
         f"{slug}/{role} asset={reference.asset_id} sha256={reference.sha256} "
         f"{reference.width}x{reference.height} {reference.mime_type}"
     )
+    return EXIT_OK
+
+
+def _ingest_soundtrack(
+    slug: str,
+    role: str,
+    path: str,
+    title: str | None,
+    approve: bool,
+    primary: bool,
+    bpm: int | None,
+    key: str | None,
+) -> int:
+    """File one delivered mix against a track.
+
+    Idempotent on the bytes: the same WAV twice is one asset, which is also what
+    makes SOUNDTRACK.md §8's checksum requirement free -- the hash is the
+    identity, not a field somebody fills in.
+    """
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.domain.enums import AudioAssetStatus
+    from app.services import audio_library
+
+    source = Path(path).resolve()
+    if not source.is_file():
+        print(f"No such file: {source}", file=sys.stderr)
+        return EXIT_FAILED
+
+    store = FilesystemAssetStore(get_settings().assets_root_resolved)
+    with get_session_factory()() as session:
+        try:
+            ingested = audio_library.ingest_audio(
+                session,
+                store,
+                data=source.read_bytes(),
+                filename=source.name,
+                role=role,
+                description=f"{slug} - {role.replace('_', ' ')}",
+            )
+        except audio_library.AudioRejected as error:
+            print(str(error), file=sys.stderr)
+            return EXIT_FAILED
+
+        track, created = audio_library.upsert_track(
+            session,
+            slug=slug,
+            title=title or slug.replace("-", " ").title(),
+            bpm=bpm,
+            musical_key=key,
+        )
+        if approve:
+            audio_library.approve_audio(session, ingested.asset, note="Approved at ingest")
+        audio_library.attach_to_track(session, track, ingested.asset, role=role, is_primary=primary)
+        session.commit()
+
+        asset = ingested.asset
+        duration = "unknown length" if asset.duration_ms is None else f"{asset.duration_ms}ms"
+        print(
+            f"{'new track, ' if created else ''}"
+            f"{'ingested' if ingested.created else 'already held'}: {slug}/{role} "
+            f"asset={asset.id} sha256={asset.sha256} {duration} {asset.mime_type}"
+        )
+        if asset.status is not AudioAssetStatus.APPROVED:
+            print("Pending. Nothing resolves it until it is approved.")
+    return EXIT_OK
+
+
+def _soundtrack(slug: str) -> int:
+    """What a track holds, and which file answers to each role."""
+    from app.db.audio_models import SoundtrackTrack, SoundtrackTrackAsset
+
+    with get_session_factory()() as session:
+        track = (
+            session.execute(select(SoundtrackTrack).where(SoundtrackTrack.slug == slug))
+            .scalars()
+            .first()
+        )
+        if track is None:
+            print(f"No track {slug!r}.", file=sys.stderr)
+            return EXIT_FAILED
+
+        facts = " ".join(
+            part
+            for part in (
+                f"{track.bpm} BPM" if track.bpm else "",
+                track.musical_key or "",
+                track.time_signature or "",
+            )
+            if part
+        )
+        print(f"{track.title} ({track.slug}){' - ' + facts if facts else ''}")
+
+        links = (
+            session.execute(
+                select(SoundtrackTrackAsset)
+                .where(SoundtrackTrackAsset.track_id == track.id)
+                .order_by(SoundtrackTrackAsset.role)
+            )
+            .scalars()
+            .all()
+        )
+        if not links:
+            print("  nothing filed yet")
+            return EXIT_OK
+        for link in links:
+            asset = link.asset
+            length = "?" if asset.duration_ms is None else f"{asset.duration_ms / 1000:.1f}s"
+            print(
+                f"  {link.role:18} {asset.status.value:9} {length:>7} "
+                f"{asset.sha256[:12]}{'  primary' if link.is_primary else ''}"
+            )
     return EXIT_OK
 
 
@@ -615,6 +727,26 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Rewrite the legacy var/cast files from the database afterwards.",
     )
 
+    soundtrack_in = subcommands.add_parser(
+        "ingest-soundtrack",
+        help="File one delivered mix against a track. Idempotent on the bytes.",
+    )
+    soundtrack_in.add_argument("slug", help="Track slug, e.g. all-in-tonight")
+    soundtrack_in.add_argument("role", help="What the file is, e.g. canonical_12s5")
+    soundtrack_in.add_argument("path")
+    soundtrack_in.add_argument("--title")
+    soundtrack_in.add_argument("--bpm", type=int)
+    soundtrack_in.add_argument("--key", help="Musical key, e.g. 'D major'")
+    soundtrack_in.add_argument("--approve", action="store_true")
+    soundtrack_in.add_argument(
+        "--primary", action="store_true", help="Make it the file this role resolves to."
+    )
+
+    soundtrack_out = subcommands.add_parser(
+        "soundtrack", help="What a track holds, and which file answers to each role."
+    )
+    soundtrack_out.add_argument("slug")
+
     add_members = subcommands.add_parser(
         "add-cast-members",
         help="Create cast members with no references yet, so photos can be uploaded.",
@@ -672,6 +804,19 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _import_design_concepts(arguments.path)
         if arguments.command == "sync-archive":
             return _sync_archive()
+        if arguments.command == "ingest-soundtrack":
+            return _ingest_soundtrack(
+                arguments.slug,
+                arguments.role,
+                arguments.path,
+                arguments.title,
+                arguments.approve,
+                arguments.primary,
+                arguments.bpm,
+                arguments.key,
+            )
+        if arguments.command == "soundtrack":
+            return _soundtrack(arguments.slug)
         if arguments.command == "add-cast-members":
             return _add_cast_members(arguments.members)
         if arguments.command == "coverage":
