@@ -26,7 +26,7 @@ def main() -> None:
     if manifest.get("billable_generation_exposed") is not False:
         raise SystemExit("validation deployment must not expose unguarded billable generation")
 
-    pub = get_json(f"{base}/api/renderer/validation/pub-1105")
+    pub = get_json(f"{base}/api/renderer/validation/W01-P28")
     instant = str(pub.get("exact_instant", "")).lower()
     if "stands on the pool table" not in instant or "cue horizontal overhead" not in instant:
         raise SystemExit("pub benchmark lost locked hero geometry")

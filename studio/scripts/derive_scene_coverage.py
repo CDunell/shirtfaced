@@ -8,11 +8,11 @@ Which image is the master is a database question, per scene, as of the Phase 5
 cutover. ``--source`` used to be a path typed into a workflow trigger with its
 hash beside it: self-consistent, and unable to say whether that file was the
 scene's approved master or something sitting next to it. The four frames already
-cut for pub-1105 cite a parent SHA that matches no file now on the box, which is
+cut for W01-P28 cite a parent SHA that matches no file now on the box, which is
 what that gap looks like once it has happened.
 
 ``--plan`` cuts a whole shot list from one resolution, which is what the
-pub-1105 five-shot package in SHOTLIST.md needs: five windows onto one image,
+W01-P28 five-shot package in SHOTLIST.md needs: five windows onto one image,
 resolved once, so a master cannot change halfway through a set of clips that are
 meant to be simultaneous observations of the same moment.
 

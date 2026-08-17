@@ -49,7 +49,7 @@ OWNER = "owner"
 # the only width rule here.
 #
 # §6.3 *prefers* 2.39:1, and the reason is lateral geography: room to move the
-# window. Preference is not a gate. A 16:9 plate is what pub-1105 is actually
+# window. Preference is not a gate. A 16:9 plate is what W01-P28 is actually
 # built on, and refusing it because it is not ultrawide would be a rule nobody
 # made -- the same mistake as the 25mm legibility test and the 20mm minimum
 # print. The report says how much lateral room there is; the owner decides

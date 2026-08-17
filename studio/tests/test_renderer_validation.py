@@ -11,7 +11,7 @@ def test_validation_harness_has_five_distinct_scenes() -> None:
 
 
 def test_pub_scene_locks_cue_overhead_and_table_position() -> None:
-    pub = scene_package("pub-1105")
+    pub = scene_package("W01-P28")
     instant = str(pub["exact_instant"]).lower()
     assert "stands on the pool table" in instant
     assert "cue horizontal overhead" in instant

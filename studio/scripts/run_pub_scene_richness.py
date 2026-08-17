@@ -85,7 +85,7 @@ def main():
     output = out / ("seed-1" + suffix)
     output.write_bytes(result.data)
     manifest = {
-        "scene": "pub-1105",
+        "scene": "W01-P28",
         "experiment": "master-locked-scene-preservation-v2",
         "generated_at": stamp,
         "model": model,

@@ -6,7 +6,7 @@ Owner: SHIRTFACED Studio
 
 Scope: cast, locations/scouting, scene masters, coverage frames, props/other production references
 
-## 0. What is built, as of 17 August 2026
+## 0. What is built, as of 18 August 2026
 
 Phases 1 to 5 of §14, and Phases A, D and E of §15. What remains unbuilt is
 listed as such in the table.
@@ -22,6 +22,10 @@ listed as such in the table.
 | §6.4 rights | Built, migration 0035 — **verified by default**, see ADR-022: everything here is invented here |
 | §6 locations / scouting | Built, migration 0034 — `scout_locations` (nesting), `location_assets`, one base master per place, rights gated |
 | §15 Phase E | Built — a Veo run names a scene and a shot, and cannot reach an unapproved or stale frame |
+| Nano contact sheets, §5 of the pipeline contract | Built, migration 0036 — sheet → panel extraction, one approved sheet per master |
+| Soundtrack audio | Built, migrations 0037–0038 — `audio_assets`, `soundtrack_tracks`, MP3 and WAV read without ffmpeg |
+| Motion takes | Built, migration 0040 — `video_assets`, `motion_takes`, one keeper per shot, see ADR-024 |
+| Scene naming | Settled, migration 0039 — the pub scene is `W01-P28`, see ADR-023 |
 
 The cutover is what §2.1's audit describes as missing, so specifically: the
 six-slot installer at `/api/renderer/cast-upload` is **retired** and returns
@@ -47,7 +51,7 @@ Every path that used to pick a master by filename now asks the library:
   They now refuse a seed whose parent is not the scene's approved master.
 
 The evidence that this mattered is on the box: the four coverage frames cut for
-pub-1105 on 16 August cite parent SHA `81290e2f…`, and no file on the host
+W01-P28 on 16 August cite parent SHA `81290e2f…`, and no file on the host
 hashes to it. The master at that path was replaced. Under the old rules the next
 derivation would have silently cut different pixels for the same shot names.
 
@@ -78,7 +82,7 @@ Studio already has several useful building blocks:
 - PostgreSQL is the mandated production state store, with SQLAlchemy/Alembic and persistent asset storage separated from database metadata.
 - `ImageAsset` already records a stable asset row with path, SHA256, MIME type, dimensions and byte size. Its current scope is generated outputs belonging to a `GenerationAttempt`, so it cannot represent arbitrary cast/location/master library assets without extension or a new generalised asset table.
 - `/api/renderer/cast-upload` exists with a primitive HTML upload form. It installs exactly six PNG files into fixed `var/cast/...` slots: Damo full/head, Brock full/head and Emma full/head. It validates files and records hashes in the response, but does not persist cast records or asset metadata in PostgreSQL.
-- `/api/renderer/scene-reference-upload` exists for `pub-1105`, but it writes one fixed `composition-gpt.*` file into `var/scene-references/pub-1105/`. It is scene-specific and folder-backed rather than a reusable library.
+- `/api/renderer/scene-reference-upload` existed for the pub scene, writing one fixed `composition-gpt.*` file into `var/scene-references/pub-1105/`. It was scene-specific and folder-backed rather than a reusable library, and that directory name was the only place the scene's second identifier ever came from. **Retired** — it returns 410 and points at the Scenes bench. See ADR-023.
 - The virtual-camera coverage route already implements a valuable constitutional behaviour: exact SHA-locked master resolution, original-pixels-only 9:16 cropping, crop-coordinate manifests and no provider call. This should be retained and moved onto database-backed master/coverage records.
 - `Shot.locked_reference_manifest` already provides a place to persist exact locked references for a shot, but today this is JSONB and not a replacement for proper relational library records.
 
@@ -565,6 +569,22 @@ Suggested endpoints:
 - `GET /api/scene-masters/{id}/coverage`
 - `POST /api/coverage/{id}/approve-for-veo`
 - `POST /api/coverage/{id}/attach-shot`
+
+### Motion
+
+```
+GET    /api/scenes/{scene_key}/takes            every take, rejected ones included
+POST   /api/scenes/{scene_key}/generate-take    animate an approved shot with Veo
+POST   /api/takes/{take_id}/keep                the take the edit cuts from, and its range
+POST   /api/takes/{take_id}/reject              no, without deleting
+GET    /api/takes/{take_id}/video               the clip's bytes
+```
+
+The seed is never named. `generate-take` takes a scene and a shot name, and
+`resolve_veo_seed` re-checks approval, master currency and sheet currency before
+anything is sent. The motion prompt defaults to the scene's own shot
+specification (§6, Motion direction) and is editable; what was sent is what the
+ledger records.
 
 ### Compatibility
 

@@ -117,6 +117,9 @@ class AuditEventType(StrEnum):
     CONTACT_SHEET_APPROVED = "contact_sheet_approved"
     COVERAGE_FRAME_DERIVED = "coverage_frame_derived"
     COVERAGE_FRAME_APPROVED = "coverage_frame_approved"
+    MOTION_TAKE_GENERATED = "motion_take_generated"
+    MOTION_TAKE_APPROVED = "motion_take_approved"
+    MOTION_TAKE_REJECTED = "motion_take_rejected"
     AUDIO_ASSET_INGESTED = "audio_asset_ingested"
     AUDIO_ASSET_APPROVED = "audio_asset_approved"
     AUDIO_ASSET_DEPRECATED = "audio_asset_deprecated"
@@ -321,6 +324,20 @@ class AudioSourceType(StrEnum):
     IMPORTED = "imported"
     COMMISSIONED = "commissioned"
     LICENSED_STOCK = "licensed_stock"
+
+
+class VideoAssetStatus(StrEnum):
+    """Where a clip sits in the approval lifecycle.
+
+    Separate from the take's own status: a clip can be approved as an asset
+    while the take it belongs to is still waiting for somebody to pick the two
+    seconds worth cutting.
+    """
+
+    PENDING = "pending"
+    APPROVED = "approved"
+    DEPRECATED = "deprecated"
+    REJECTED = "rejected"
 
 
 class AudioAssetStatus(StrEnum):

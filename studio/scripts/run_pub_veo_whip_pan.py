@@ -50,7 +50,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", required=True)
     parser.add_argument("--expected-sha256", required=True)
-    parser.add_argument("--scene", default="pub-1105")
+    parser.add_argument("--scene", default="W01-P28")
     args = parser.parse_args()
 
     seed = Path(args.seed).resolve()

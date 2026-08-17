@@ -32,7 +32,7 @@ import uuid
 from dataclasses import dataclass
 from pathlib import Path
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStore
@@ -43,12 +43,12 @@ from app.db.visual_models import (
     CastMember,
     CastMemberAsset,
     CoverageFrame,
-    GenerationCall,
     SceneContactSheet,
     VisualAsset,
 )
 from app.domain.errors import StudioError
 from app.services import coverage_library, visual_library
+from app.services.generation_ledger import record_call as _record_call
 from app.services.reference_resolution import (
     ReferenceUnavailable,
     load_reference,
@@ -161,12 +161,13 @@ def coverage_prompts(worlds_root: Path) -> list[Path]:
 def scene_prompt_path(worlds_root: Path, scene_key: str, name: str | None = None) -> Path | None:
     """The coverage prompt for this scene: named outright, or matched by key.
 
-    Matching is exact on the file stem, and deliberately not fuzzy. The pub
-    scene is keyed ``pub-1105`` in the library and its prompt is filed under the
-    shot id ``W01-P28``, so a fuzzy match would have to decide that those are
-    the same thing — which is a naming decision, not a lookup. Where nothing
-    matches, the caller is offered the list and picks, which is one click and
-    leaves a record of what was actually sent.
+    Matching is exact on the normalised stem, and deliberately not fuzzy. It
+    used to miss: the pub scene was keyed ``pub-1105`` while its prompt was
+    filed under the shot id ``W01-P28``, and a fuzzy match would have had to
+    decide those were the same thing — which is a naming decision, not a
+    lookup. Migration 0039 made the decision instead, so the key and the prompt
+    now agree. Where nothing matches, the caller is still offered the list and
+    picks: one click, and a record of what was actually sent.
     """
     available = coverage_prompts(worlds_root)
     if name:
@@ -175,51 +176,6 @@ def scene_prompt_path(worlds_root: Path, scene_key: str, name: str | None = None
     return next(
         (one for one in available if key in one.stem.lower().replace("-", "").replace("_", "")),
         None,
-    )
-
-
-def _record_call(
-    session: Session,
-    *,
-    operation: str,
-    model: str,
-    scene_key: str | None,
-    subject: str | None,
-    prompt: str,
-    inputs: list[uuid.UUID],
-    output_asset_id: uuid.UUID | None,
-    succeeded: bool,
-    failure: str | None,
-    duration_ms: int,
-    actor: str,
-) -> None:
-    session.add(
-        GenerationCall(
-            provider=PROVIDER,
-            model=model,
-            operation=operation,
-            scene_key=scene_key,
-            subject=subject,
-            prompt_sha256=hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
-            input_asset_ids=[str(one) for one in inputs],
-            output_asset_id=output_asset_id,
-            succeeded=succeeded,
-            failure=failure,
-            duration_ms=duration_ms,
-            actor=actor,
-        )
-    )
-
-
-def calls_for_scene(session: Session, scene_key: str) -> int:
-    """How many successful provider calls this scene has behind it."""
-    return int(
-        session.execute(
-            select(func.count())
-            .select_from(GenerationCall)
-            .where(GenerationCall.scene_key == scene_key, GenerationCall.succeeded.is_(True))
-        ).scalar()
-        or 0
     )
 
 

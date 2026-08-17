@@ -51,7 +51,7 @@ def main() -> None:
     video = out / "video-1.mp4"
     video.write_bytes(result.data)
     manifest = {
-        "scene": "pub-1105",
+        "scene": "W01-P28",
         "generated_at": stamp,
         "model": result.model,
         "operation_name": result.operation_name,

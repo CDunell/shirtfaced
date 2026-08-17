@@ -63,7 +63,7 @@ def load_ref(resolved, name: str, role: str):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--scene", default="pub-1105")
+    parser.add_argument("--scene", default="W01-P28")
     args = parser.parse_args()
     settings = get_settings()
     # Both inputs resolve by asset ID and SHA. The scene master used to be

@@ -37,7 +37,7 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--seed", required=True)
     p.add_argument("--arm", default="approved-master")
-    p.add_argument("--scene", default="pub-1105")
+    p.add_argument("--scene", default="W01-P28")
     a = p.parse_args()
     seed = Path(a.seed).resolve()
     if not seed.is_file():

@@ -49,7 +49,7 @@ def store(tmp_path: Path) -> FilesystemAssetStore:
 
 
 def approved_master(
-    session: Session, store: FilesystemAssetStore, *, scene_key: str = "pub-1105", shade: int = 10
+    session: Session, store: FilesystemAssetStore, *, scene_key: str = "W01-P28", shade: int = 10
 ) -> SceneMaster:
     ingested = visual_library.ingest_asset(
         session,
@@ -88,7 +88,7 @@ def sheet_for(
     return register_contact_sheet(
         session,
         store,
-        scene_key=kw.pop("scene_key", "pub-1105"),
+        scene_key=kw.pop("scene_key", "W01-P28"),
         label=kw.pop("label", "w01-p28-coverage"),
         data=png(width=2048, height=2048, shade=shade),
         approve=approve,
@@ -127,7 +127,7 @@ def test_registering_a_sheet_is_not_approving_it(
 
     assert sheet.status == "candidate"
     with pytest.raises(CoverageRejected, match="no approved coverage contact sheet"):
-        approved_contact_sheet(session, scene_key="pub-1105")
+        approved_contact_sheet(session, scene_key="W01-P28")
 
 
 def test_approving_a_second_sheet_supersedes_the_first(
@@ -139,7 +139,7 @@ def test_approving_a_second_sheet_supersedes_the_first(
     session.flush()
 
     assert first.status == "superseded"
-    assert approved_contact_sheet(session, scene_key="pub-1105").id == second.id
+    assert approved_contact_sheet(session, scene_key="W01-P28").id == second.id
 
 
 def test_a_panel_extraction_has_no_crop_box(session: Session, store: FilesystemAssetStore) -> None:
@@ -151,7 +151,7 @@ def test_a_panel_extraction_has_no_crop_box(session: Session, store: FilesystemA
     frame = record_panel_extraction(
         session,
         store,
-        scene_key="pub-1105",
+        scene_key="W01-P28",
         name="damo-wide",
         panel=1,
         data=png(width=1080, height=1920, shade=44),
@@ -174,7 +174,7 @@ def test_the_extraction_cites_the_sheet_as_its_parent(
     frame = record_panel_extraction(
         session,
         store,
-        scene_key="pub-1105",
+        scene_key="W01-P28",
         name="damo-close",
         panel=4,
         data=png(width=1080, height=1920, shade=45),
@@ -197,7 +197,7 @@ def test_one_panel_is_one_shot(session: Session, store: FilesystemAssetStore) ->
     first = record_panel_extraction(
         session,
         store,
-        scene_key="pub-1105",
+        scene_key="W01-P28",
         name="damo-wide",
         panel=1,
         data=png(width=1080, height=1920, shade=46),
@@ -206,7 +206,7 @@ def test_one_panel_is_one_shot(session: Session, store: FilesystemAssetStore) ->
     again = record_panel_extraction(
         session,
         store,
-        scene_key="pub-1105",
+        scene_key="W01-P28",
         name="damo-wide-v2",
         panel=1,
         data=png(width=1080, height=1920, shade=47),
@@ -227,7 +227,7 @@ def test_a_panel_outside_the_grid_is_refused(session: Session, store: Filesystem
         record_panel_extraction(
             session,
             store,
-            scene_key="pub-1105",
+            scene_key="W01-P28",
             name="nope",
             panel=10,
             data=png(width=1080, height=1920),
@@ -243,7 +243,7 @@ def test_extraction_needs_an_approved_sheet(session: Session, store: FilesystemA
         record_panel_extraction(
             session,
             store,
-            scene_key="pub-1105",
+            scene_key="W01-P28",
             name="damo-wide",
             panel=1,
             data=png(width=1080, height=1920),
@@ -259,7 +259,7 @@ def test_an_extraction_reaches_veo_only_after_review(
     frame = record_panel_extraction(
         session,
         store,
-        scene_key="pub-1105",
+        scene_key="W01-P28",
         name="damo-wide",
         panel=1,
         data=png(width=1080, height=1920, shade=48),
@@ -268,11 +268,11 @@ def test_an_extraction_reaches_veo_only_after_review(
 
     assert frame.approved_for_veo is False
     with pytest.raises(CoverageRejected, match="not approved for Veo"):
-        resolve_veo_seed(session, store, scene_key="pub-1105", name="damo-wide")
+        resolve_veo_seed(session, store, scene_key="W01-P28", name="damo-wide")
 
     approve_for_veo(session, frame)
     session.flush()
-    assert resolve_veo_seed(session, store, scene_key="pub-1105", name="damo-wide").sha256 == (
+    assert resolve_veo_seed(session, store, scene_key="W01-P28", name="damo-wide").sha256 == (
         frame.frame_sha256
     )
 
@@ -286,20 +286,20 @@ def test_a_shot_from_a_superseded_sheet_stops_resolving(
     frame = record_panel_extraction(
         session,
         store,
-        scene_key="pub-1105",
+        scene_key="W01-P28",
         name="damo-wide",
         panel=1,
         data=png(width=1080, height=1920, shade=49),
     )
     approve_for_veo(session, frame)
     session.flush()
-    assert resolve_veo_seed(session, store, scene_key="pub-1105", name="damo-wide") is not None
+    assert resolve_veo_seed(session, store, scene_key="W01-P28", name="damo-wide") is not None
 
     sheet_for(session, store, shade=34, label="w01-p28-coverage-v2")
     session.flush()
 
     with pytest.raises(CoverageRejected, match="contact sheet is superseded"):
-        resolve_veo_seed(session, store, scene_key="pub-1105", name="damo-wide")
+        resolve_veo_seed(session, store, scene_key="W01-P28", name="damo-wide")
 
 
 def test_a_sheet_of_a_superseded_master_cannot_be_approved(
@@ -320,7 +320,7 @@ def test_the_crop_route_still_works(session: Session, store: FilesystemAssetStor
     """§8 supersedes it for the Nano path, not everywhere."""
     approved_master(session, store, shade=13)
     frame = coverage_library.derive_coverage_frame(
-        session, store, scene_key="pub-1105", name="literal-crop", x=0
+        session, store, scene_key="W01-P28", name="literal-crop", x=0
     )
     session.flush()
 

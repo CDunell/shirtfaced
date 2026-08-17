@@ -3,54 +3,15 @@
 
 from __future__ import annotations
 
-import hashlib
-import io
-import os
-from typing import Annotated, Any, NoReturn
+from typing import Any, NoReturn
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
-from fastapi.responses import HTMLResponse
-from PIL import Image
+from fastapi import APIRouter, HTTPException
 
-from app.config import PROJECT_ROOT, get_settings
+from app.config import get_settings
 from app.services.renderer_validation import harness_manifest, scene_package
 
 router = APIRouter(prefix="/api/renderer", tags=["renderer"])
 MAX_CANONICAL_BYTES = 50 * 1024 * 1024
-SCENE_REFERENCE_ROOT = PROJECT_ROOT / "var" / "scene-references"
-SCENE_REFERENCE_FORM = """<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:system-ui;max-width:680px;margin:auto;padding:24px;background:#111;color:#eee}input,button{width:100%;margin:16px 0;padding:14px}button{font-weight:800}</style></head><body><h1>pub-1105 composition reference</h1><p>Upload the approved GPT composition/energy reference once. It is stored persistently and never deployed from Git.</p><form method="post" enctype="multipart/form-data"><input required type="file" name="reference" accept="image/png,image/jpeg,.png,.jpg,.jpeg"><button>Validate and install reference</button></form><p>No Gemini or Veo call occurs here.</p></body></html>"""
-
-
-async def _read_image(
-    label: str, upload: UploadFile, png_only: bool = False
-) -> tuple[bytes, dict[str, Any]]:
-    data = await upload.read(MAX_CANONICAL_BYTES + 1)
-    if not data:
-        raise HTTPException(400, f"{label}: empty upload")
-    if len(data) > MAX_CANONICAL_BYTES:
-        raise HTTPException(413, f"{label}: exceeds 50 MB")
-    try:
-        with Image.open(io.BytesIO(data)) as image:
-            image.load()
-            fmt = image.format
-            width, height = image.size
-            if png_only and fmt != "PNG":
-                raise HTTPException(400, f"{label}: source must be PNG")
-            if fmt not in {"PNG", "JPEG"}:
-                raise HTTPException(400, f"{label}: source must be PNG/JPEG")
-            if width < 256 or height < 256:
-                raise HTTPException(400, f"{label}: implausibly small {width}x{height}")
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(400, f"{label}: unreadable/corrupt image") from exc
-    return data, {
-        "bytes": len(data),
-        "sha256": hashlib.sha256(data).hexdigest(),
-        "width": width,
-        "height": height,
-        "format": fmt,
-    }
 
 
 # The six-slot cast installer was here. It wrote two fixed filenames for three
@@ -67,29 +28,19 @@ def cast_upload_retired() -> NoReturn:
     )
 
 
-@router.get("/scene-reference-upload", response_class=HTMLResponse, include_in_schema=False)
-def scene_reference_upload_form() -> str:
-    return SCENE_REFERENCE_FORM
-
-
-@router.post("/scene-reference-upload")
-async def scene_reference_upload(reference: Annotated[UploadFile, File()]) -> dict[str, Any]:
-    data, meta = await _read_image("pub-1105 composition reference", reference, False)
-    root = SCENE_REFERENCE_ROOT / "pub-1105"
-    root.mkdir(parents=True, exist_ok=True)
-    ext = ".png" if meta["format"] == "PNG" else ".jpg"
-    target = root / ("composition-gpt" + ext)
-    tmp = root / (".composition-upload" + ext)
-    tmp.write_bytes(data)
-    os.replace(tmp, target)
-    return {
-        "status": "installed",
-        "scene": "pub-1105",
-        "role": "composition-energy-reference",
-        "path": str(target.relative_to(PROJECT_ROOT)),
-        **meta,
-        "provider_called": False,
-    }
+# And the scene-reference uploader was here. It wrote one fixed
+# `composition-gpt.*` file into `var/scene-references/pub-1105/` -- a scene the
+# world's own canon calls W01-P28, in a directory whose name was the only place
+# the other name ever came from. Retired for the same reason as the cast
+# installer: a master is a `scene_masters` row over an ingested asset, resolved
+# by SHA, and the scene it belongs to is named once.
+@router.get("/scene-reference-upload", include_in_schema=False, response_model=None)
+@router.post("/scene-reference-upload", response_model=None)
+def scene_reference_upload_retired() -> NoReturn:
+    raise HTTPException(
+        410,
+        "The fixed scene-reference uploader is gone. Register a scene master in Studio under Scenes, or POST /api/scenes/{scene_key}/masters. The pub scene is W01-P28.",
+    )
 
 
 @router.get("/validation")

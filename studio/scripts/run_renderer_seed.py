@@ -40,7 +40,7 @@ Wardrobe: Damo black cap, faded olive tee, dark denim, ordinary worn trainers. N
 # cutover; the frames were then renamed on disk and every one of them broke.
 # A slot now says which member and which role, and the library says which bytes.
 REFERENCE_SLOTS = {
-    "pub-1105": (
+    "W01-P28": (
         ("damo-full", "damo", "full_body_neutral"),
         ("damo-head", "damo", "head_shoulders_neutral"),
         ("brock-full", "brock", "full_body_neutral"),
@@ -97,7 +97,7 @@ def prepare_reference(name, resolved):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--scene", default="pub-1105")
+    p.add_argument("--scene", default="W01-P28")
     p.add_argument("--candidates", type=int, default=1)
     p.add_argument("--model", default=None)
     p.add_argument("--image-size", default="2K")

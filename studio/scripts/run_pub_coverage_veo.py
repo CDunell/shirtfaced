@@ -81,7 +81,7 @@ def main() -> None:
     parser.add_argument("--seed", help="Legacy: a file. Omit to resolve the approved frame.")
     parser.add_argument("--expected-sha256", help="Required with --seed.")
     parser.add_argument("--shot", choices=sorted(PROMPTS), required=True)
-    parser.add_argument("--scene", default="pub-1105")
+    parser.add_argument("--scene", default="W01-P28")
     args = parser.parse_args()
 
     if args.seed:

@@ -237,6 +237,8 @@ export interface PipelineInputs {
   prompt: string | null;
   source: string | null;
   available_prompts: PromptChoice[];
+  /** The scene's shared motion direction, read from its shot specification. */
+  motion_prompt: string | null;
   references: ReferenceChoice[];
   attempts: number;
   media_live: boolean;
@@ -263,6 +265,62 @@ export function extractPanel(
   input: { panel: number; name: string; selections: string[]; aspect_ratio?: string },
 ): Promise<CoverageFrame> {
   return send<CoverageFrame>(`/api/scenes/${sceneKey}/extract-panel`, "POST", input);
+}
+
+export interface VideoBrief {
+  id: string;
+  sha256: string;
+  status: string;
+  duration_ms: number | null;
+  width: number | null;
+  height: number | null;
+  frame_rate: number | null;
+  has_audio: boolean | null;
+  byte_size: number;
+}
+
+export interface MotionTake {
+  id: string;
+  shot: string;
+  coverage_frame_id: string;
+  attempt: number;
+  status: string;
+  keeper_from_ms: number | null;
+  keeper_to_ms: number | null;
+  notes: string | null;
+  first_frame_sha256: string;
+  /** The shot has been re-extracted since this was animated. */
+  stale: boolean;
+  video: VideoBrief;
+}
+
+export function fetchTakes(sceneKey: string, signal?: AbortSignal): Promise<MotionTake[]> {
+  return send<MotionTake[]>(`/api/scenes/${sceneKey}/takes`, "GET", undefined, signal);
+}
+
+/** Animates an approved shot. The seed is resolved from the scene, not named. */
+export function generateTake(
+  sceneKey: string,
+  input: { name: string; prompt?: string; aspect_ratio?: string },
+): Promise<MotionTake> {
+  return send<MotionTake>(`/api/scenes/${sceneKey}/generate-take`, "POST", input);
+}
+
+/** One keeper per shot. Naming a new one stands the previous one down. */
+export function keepTake(
+  takeId: string,
+  input: { keeper_from_ms?: number | null; keeper_to_ms?: number | null; note?: string | null },
+): Promise<MotionTake> {
+  return send<MotionTake>(`/api/takes/${takeId}/keep`, "POST", input);
+}
+
+export function rejectMotionTake(takeId: string, note?: string): Promise<MotionTake> {
+  return send<MotionTake>(`/api/takes/${takeId}/reject`, "POST", { note: note ?? null });
+}
+
+/** The clip's own bytes, for a <video> element. */
+export function takeVideoSource(takeId: string): string {
+  return `/api/takes/${takeId}/video`;
 }
 
 export function rejectTake(assetId: string, note?: string): Promise<AssetBrief> {

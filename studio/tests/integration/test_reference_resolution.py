@@ -203,10 +203,10 @@ def register(
 
 def test_each_scene_resolves_its_own_master(session: Session, store: FilesystemAssetStore) -> None:
     """The point of the table: two scenes, two masters, no confusion between them."""
-    pub = register(session, store, scene_key="pub-1105", colour=(40, 41, 42))
+    pub = register(session, store, scene_key="W01-P28", colour=(40, 41, 42))
     street = register(session, store, scene_key="side-street-0130", colour=(43, 44, 45))
 
-    assert resolve_scene_master(session, store, scene_key="pub-1105").asset_id == (
+    assert resolve_scene_master(session, store, scene_key="W01-P28").asset_id == (
         pub.visual_asset_id
     )
     assert resolve_scene_master(session, store, scene_key="side-street-0130").asset_id == (
@@ -223,23 +223,23 @@ def test_a_registered_candidate_does_not_resolve(
     session: Session, store: FilesystemAssetStore
 ) -> None:
     """Registering is not approving. A candidate is a proposal."""
-    register(session, store, scene_key="pub-1105", colour=(46, 47, 48), approve=False)
+    register(session, store, scene_key="W01-P28", colour=(46, 47, 48), approve=False)
 
     with pytest.raises(ReferenceUnavailable, match="no approved master"):
-        resolve_scene_master(session, store, scene_key="pub-1105")
+        resolve_scene_master(session, store, scene_key="W01-P28")
 
 
 def test_approving_a_second_master_supersedes_the_first(
     session: Session, store: FilesystemAssetStore
 ) -> None:
     """A scene cannot have two. The old one is superseded, not deleted."""
-    first = register(session, store, scene_key="pub-1105", colour=(49, 50, 51))
-    second = register(session, store, scene_key="pub-1105", colour=(52, 53, 54))
+    first = register(session, store, scene_key="W01-P28", colour=(49, 50, 51))
+    second = register(session, store, scene_key="W01-P28", colour=(52, 53, 54))
 
     assert first.status == "superseded"
     assert second.status == "approved"
     assert second.parent_master_id == first.id
-    assert resolve_scene_master(session, store, scene_key="pub-1105").asset_id == (
+    assert resolve_scene_master(session, store, scene_key="W01-P28").asset_id == (
         second.visual_asset_id
     )
 
@@ -253,10 +253,10 @@ def test_a_master_cannot_be_approved_on_an_unapproved_image(
         data=png(colour=(55, 56, 57)),
         kind=VisualAssetKind.SCENE_MASTER,
         source_type=VisualAssetSourceType.GENERATED,
-        role="pub-1105",
+        role="W01-P28",
     )
     master = visual_library.register_scene_master(
-        session, scene_key="pub-1105", asset=ingested.asset
+        session, scene_key="W01-P28", asset=ingested.asset
     )
     with pytest.raises(visual_library.SceneMasterConflict, match="pending"):
         visual_library.approve_scene_master(session, master)
@@ -265,7 +265,7 @@ def test_a_master_cannot_be_approved_on_an_unapproved_image(
 def test_one_image_cannot_be_two_scenes_masters(
     session: Session, store: FilesystemAssetStore
 ) -> None:
-    master = register(session, store, scene_key="pub-1105", colour=(58, 59, 60))
+    master = register(session, store, scene_key="W01-P28", colour=(58, 59, 60))
     asset = session.get(VisualAsset, master.visual_asset_id)
     assert asset is not None
 
@@ -277,8 +277,8 @@ def test_a_veo_seed_from_a_superseded_master_is_refused(
     session: Session, store: FilesystemAssetStore, tmp_path: Path
 ) -> None:
     """The Veo gate: a frame cut from last week's master must not animate."""
-    register(session, store, scene_key="pub-1105", colour=(61, 62, 63))
-    current = resolve_scene_master(session, store, scene_key="pub-1105")
+    register(session, store, scene_key="W01-P28", colour=(61, 62, 63))
+    current = resolve_scene_master(session, store, scene_key="W01-P28")
 
     seed_dir = tmp_path / "coverage" / "damo-9x16"
     seed_dir.mkdir(parents=True)
@@ -290,7 +290,7 @@ def test_a_veo_seed_from_a_superseded_master_is_refused(
         encoding="utf-8",
     )
     with pytest.raises(ReferenceUnavailable, match="was cut from master"):
-        verify_coverage_seed(session, store, seed=seed, scene_key="pub-1105")
+        verify_coverage_seed(session, store, seed=seed, scene_key="W01-P28")
 
     (seed_dir / "manifest.json").write_text(
         json.dumps(
@@ -298,7 +298,7 @@ def test_a_veo_seed_from_a_superseded_master_is_refused(
         ),
         encoding="utf-8",
     )
-    lineage = verify_coverage_seed(session, store, seed=seed, scene_key="pub-1105")
+    lineage = verify_coverage_seed(session, store, seed=seed, scene_key="W01-P28")
     assert lineage["scene_master_sha256"] == current.sha256
     assert lineage["coverage_shot"] == "damo-9x16"
 
@@ -306,9 +306,9 @@ def test_a_veo_seed_from_a_superseded_master_is_refused(
 def test_a_seed_with_no_manifest_is_refused(
     session: Session, store: FilesystemAssetStore, tmp_path: Path
 ) -> None:
-    register(session, store, scene_key="pub-1105", colour=(67, 68, 69))
+    register(session, store, scene_key="W01-P28", colour=(67, 68, 69))
     seed = tmp_path / "frame.png"
     seed.write_bytes(png())
 
     with pytest.raises(ReferenceUnavailable, match="no coverage manifest"):
-        verify_coverage_seed(session, store, seed=seed, scene_key="pub-1105")
+        verify_coverage_seed(session, store, seed=seed, scene_key="W01-P28")

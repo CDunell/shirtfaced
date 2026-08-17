@@ -93,7 +93,7 @@ def main():
     output = out / "seed-1.jpg"
     output.write_bytes(result.data)
     manifest = {
-        "scene": "pub-1105",
+        "scene": "W01-P28",
         "experiment": "scene-first-distributed-chaos-reset",
         "generated_at": stamp,
         "model": model,

@@ -45,7 +45,7 @@ For crowd/event scenes, require:
 
 Add **attention distribution / scene richness** as a hard manual QC dimension alongside identity, action, geometry and lighting.
 
-For `pub-1105`, the required hierarchy is:
+For `W01-P28`, the required hierarchy is:
 
 `ROOM GOING OFF > ACCIDENTAL CROWD PHOTOGRAPH > MULTIPLE SIMULTANEOUS INTERACTIONS > DAMO POOL-TABLE INCIDENT > DAMO IDENTITY`
 

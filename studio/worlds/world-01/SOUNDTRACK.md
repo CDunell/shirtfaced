@@ -27,18 +27,18 @@ code, the same way `CHARACTERS.md` and `POSITIONING.md` are.
 It governs the commissioned audio asset. It does not govern photography,
 garment design, or channel distribution.
 
-### Open question — `pub-1105`
+### Resolved — the hero sync scene is `W01-P28`
 
-The hero sync in §5 is specified against a scene identified as `pub-1105`.
-**No such identifier exists anywhere in this repository.** World 01 shot IDs
-follow the form `W01-NNN` (see `SHOTLIST.md`), which currently runs W01-001 to
-W01-020 and contains no pub interior scene. The characters the sync names —
-Damo, Emma, Brock — are all canon in `docs/foundations/CHARACTERS.md`.
+The hero sync in §5 was drafted against a scene called `pub-1105`, which was
+never an identifier anybody chose: it is the name of the directory the old
+scene references sat in. The scene itself is real and specified — the 11:05pm
+live-music/pool-table sequence, `shots/W01-P28.md` and the shot package in
+`SHOTLIST.md` — and its own canon calls it `W01-P28`. The characters the sync
+names, Damo, Emma and Brock, are canon in `docs/foundations/CHARACTERS.md`.
 
-The scene is therefore either held outside this repository or was invented
-during drafting. **Resolve before commissioning.** The entire 12.5-second
-section, and the arrangement bar count built around it, assume a picture that
-this repository cannot currently show a producer.
+Settled 18 August 2026, and the library data renamed with it (migration 0039).
+The 12.5-second section and the arrangement bar count built around it stand
+against `W01-P28`.
 
 ---
 

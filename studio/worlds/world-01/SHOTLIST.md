@@ -48,7 +48,7 @@ The approved lookout scene is location-generic. Historical reference material ma
 
 ------------------------------------------------------------------------
 
-## PUB-1105 — 11:05pm live-music/pool-table sequence
+## W01-P28 — 11:05pm live-music/pool-table sequence
 
 **Status:** 🟡 In Progress  
 **Master:** one approved 16:9 world master is the spatial source of truth.  
@@ -68,11 +68,11 @@ A focus crop changes framing only. It does not regenerate the pub, characters, c
 
 | Shot | Raw target | 9:16 focus | Purpose / expected keeper |
 | --- | ---: | --- | --- |
-| **PUB-1105-A — Wide discovery** | 6s | Damo + full pool-table incident, retaining band and surrounding crowd | Establish that the room is already going off; viewer discovers Damo on the table. Expect ~2.5–4s usable. |
-| **PUB-1105-B — Damo close** | 6s | Tight Damo crop from the same master: face, upper body, cue overhead, enough neighbouring bodies/geography to stay documentary | Brief identity/performance hit. Head back, eyes shut, roaring; no hero re-staging. Expect ~1.5–2.5s usable. |
-| **PUB-1105-C — Emma + Brock cutaway** | 6s | Right-side social cluster containing Emma/Brock, with Damo peripheral or absent | Prove the room exists independently of Damo. They continue their own pre-existing behaviour, not a reaction shot staged for him. Expect ~2–3s usable. |
-| **PUB-1105-D — Band / crowd source** | 6s | Stage and dense mid-room crowd; band clearly remains the performance source | Reset attention away from Damo, add rhythm and explain what everyone is actually singing to. Expect ~1.5–3s usable. |
-| **PUB-1105-E — Return wide / collision** | 6s | Alternate vertical window across pool table + foreground crowd; not necessarily identical to A | Return to the incident with foreground obstruction, crowd surge or a small phone bump; leave on energy rather than a generated ending. Expect ~2–4s usable. |
+| **W01-P28-A — Wide discovery** | 6s | Damo + full pool-table incident, retaining band and surrounding crowd | Establish that the room is already going off; viewer discovers Damo on the table. Expect ~2.5–4s usable. |
+| **W01-P28-B — Damo close** | 6s | Tight Damo crop from the same master: face, upper body, cue overhead, enough neighbouring bodies/geography to stay documentary | Brief identity/performance hit. Head back, eyes shut, roaring; no hero re-staging. Expect ~1.5–2.5s usable. |
+| **W01-P28-C — Emma + Brock cutaway** | 6s | Right-side social cluster containing Emma/Brock, with Damo peripheral or absent | Prove the room exists independently of Damo. They continue their own pre-existing behaviour, not a reaction shot staged for him. Expect ~2–3s usable. |
+| **W01-P28-D — Band / crowd source** | 6s | Stage and dense mid-room crowd; band clearly remains the performance source | Reset attention away from Damo, add rhythm and explain what everyone is actually singing to. Expect ~1.5–3s usable. |
+| **W01-P28-E — Return wide / collision** | 6s | Alternate vertical window across pool table + foreground crowd; not necessarily identical to A | Return to the incident with foreground obstruction, crowd surge or a small phone bump; leave on energy rather than a generated ending. Expect ~2–4s usable. |
 
 ### Editorial intent
 

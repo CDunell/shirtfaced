@@ -12,7 +12,7 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli prompt world-01 [--shot W01-015] [--out prompt.txt]
     python -m app.cli ingest-cast [--extra damo=expression_bridge=path.jpg] [--mirror]
     python -m app.cli resolve-reference damo head_shoulders_neutral
-    python -m app.cli register-scene-master pub-1105 master.png [--approve]
+    python -m app.cli register-scene-master W01-P28 master.png [--approve]
     python -m app.cli ingest-soundtrack all-in-tonight canonical_12s5 mix.wav --approve --primary
 """
 

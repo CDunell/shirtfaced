@@ -81,7 +81,7 @@ Nano is never the place where we discover the composition.
 
 The failed 9:16 Nano experiments proved that trying to preserve a rich master while also asking Nano to reframe/extend it introduces too many degrees of freedom. It duplicated scene regions, changed crowd semantics and repeatedly turned Damo into the visual organising principle.
 
-Therefore for `pub-1105`:
+Therefore for `W01-P28`:
 
 - generate the full 9:16 pub master upstream;
 - get the room, chaos, camera accident, Damo action, stool/beer and attention hierarchy right in that master;

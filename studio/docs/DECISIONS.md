@@ -733,7 +733,7 @@ narrower than 1.5:1 could not become a base master.
 **That was withdrawn before it shipped.** It is an invented constraint, the same
 shape as the 25mm legibility test and the 20mm minimum print: a preference read
 off a document and enforced as a rule nobody made. It would have refused the
-16:9 image pub-1105 is actually built on.
+16:9 image W01-P28 is actually built on.
 
 What `assess_base_master` refuses instead is arithmetic: a plate too narrow to
 yield **one** full-height 9:16 frame cannot be a stage for a vertical shot,
@@ -776,3 +776,79 @@ Anything genuinely third-party is marked explicitly at ingest.
 This is the same shape as ADR-021, one step further out. That one was a
 constraint derived from a preference in a document; this one was a default that
 had no basis in what the library actually holds.
+
+
+## ADR-023 — The pub scene is `W01-P28`, and `pub-1105` was never a name
+
+**18 August 2026.** The scene carried two identifiers. `worlds/world-01/shots/
+W01-P28.md` opens "SHOT SPECIFICATION — W01-P28" and states "Scene: `W01-P28`";
+`SHOTLIST.md` numbers every shot `W01-NNN`. Meanwhile the library, the renderer
+scripts and eight CI workflows keyed it `pub-1105` — which nobody chose. It is
+the name of the directory the old scene references happened to sit in,
+`var/scene-references/pub-1105`, promoted to an identifier by being typed twice.
+
+Two names cost something measurable. The coverage prompt is filed under the shot
+id, so the scene key matched no prompt filename, and the interface had to ask
+which prompt to use for a scene that had exactly one. `SOUNDTRACK.md` carried an
+open question saying the hero sync named a scene that did not exist in the
+repository — it did exist; it was under the other name.
+
+**The world's own identifier wins.** Migration 0039 renames the data:
+`scene_masters.scene_key`, `generation_calls.scene_key`, the master's `role`,
+and `metadata_json->>'scene'` on coverage and sheets. `SHOTLIST.md`'s shot
+package is `W01-P28-A` through `-E`. The soundtrack's open question is closed
+against `W01-P28`.
+
+**Two things deliberately keep the old name.** The directories
+`var/scene-references/pub-1105` and `var/renderer-validation/pub-1105` are a
+compatibility mirror that eight workflows and four scripts read; renaming files
+on the host is a separate operation from agreeing what the scene is called. And
+the migration docstrings that already shipped say `pub-1105`, because they are
+history and history is what they are for.
+
+The path-backed uploader that wrote into that directory is retired in the same
+change (410, pointing at the Scenes bench), for the reason the six-slot cast
+installer was: it wrote one fixed filename into one fixed folder, and the folder
+was the only place the wrong name ever came from.
+
+
+## ADR-024 — A shot accumulates takes; the keeper and its range are chosen
+
+**18 August 2026.** Migration 0040 adds `video_assets` and `motion_takes`, the
+last leg of the Nano contract's §5: an approved standalone shot becomes a Veo
+first frame.
+
+**`video_assets` is a third sibling beside images and audio**, for the reason
+audio got its own table. A clip knows its duration, its frame rate and whether
+it still carries the sound the model generated, and none of that means anything
+on a still. The last of those is not cosmetic: `SHOTLIST.md` discards Veo's
+audio in favour of one continuous pub bed built in post, and whether a given
+file has already been stripped cannot be told from its name.
+
+**`motion_takes` is plural on purpose.** The shot package asks for roughly six
+seconds a shot and expects one and a half to four of them to survive. So most
+takes are wrong, and a wrong take is kept: it is the cheapest evidence there is
+about what a motion prompt does. A rerun is the next attempt number, never an
+overwrite — the same rule as rejecting a Nano sheet.
+
+**One keeper per shot**, as a partial unique index, the same shape as one
+approved master per scene and one approved sheet per master. The edit needs one
+answer. Naming a new keeper stands the previous one down rather than deleting
+it, and the range that one was given survives: somebody watched that clip and
+decided which seconds were good, and losing the judgement because a later take
+won is not the same as reversing the decision.
+
+`keeper_from_ms`/`keeper_to_ms` are null until a person has watched the take.
+Nothing computes which two seconds of six are the good ones, and a default would
+be a guess an edit would then trust.
+
+**`first_frame_sha256` is stored on the take**, beside the foreign key to the
+shot. A panel is re-extracted in place, so the frame row's SHA changes under any
+take already animated from it; without the copy, a take of the old still would
+silently read as a take of the new one. The interface shows those as stale.
+
+**The clip is measured without ffmpeg.** MP4 states its duration, dimensions,
+track list and sample count in its own header boxes, so those are parsed
+directly and `ffprobe` is tried only for anything else. ffmpeg is now installed
+on the box, but the parser does not depend on that staying true — and the months
+it was missing are why two Veo scripts were quietly broken.

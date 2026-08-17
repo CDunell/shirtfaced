@@ -24,7 +24,7 @@ class BenchmarkScene:
 
 SCENES: tuple[BenchmarkScene, ...] = (
     BenchmarkScene(
-        "pub-1105",
+        "W01-P28",
         "Pub chorus",
         "crowd + identity + prop + I2V",
         "damo",
