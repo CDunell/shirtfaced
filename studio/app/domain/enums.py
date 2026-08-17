@@ -113,6 +113,8 @@ class AuditEventType(StrEnum):
     CAST_ASSET_LINKED = "cast_asset_linked"
     SCENE_MASTER_REGISTERED = "scene_master_registered"
     SCENE_MASTER_APPROVED = "scene_master_approved"
+    CONTACT_SHEET_REGISTERED = "contact_sheet_registered"
+    CONTACT_SHEET_APPROVED = "contact_sheet_approved"
     COVERAGE_FRAME_DERIVED = "coverage_frame_derived"
     COVERAGE_FRAME_APPROVED = "coverage_frame_approved"
     LOCATION_REGISTERED = "location_registered"
@@ -351,6 +353,10 @@ CAST_ASSET_ROLES: tuple[str, ...] = (
     "wardrobe_reference",
     "body_reference",
     "historical",
+    # The Nano Banana 3x3 identity sheet, one per character. A first-class
+    # reference asset, not a preview: panels are extracted from it by feeding it
+    # back to the model, never by cropping it.
+    "contact_sheet",
     "other",
 )
 

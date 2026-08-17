@@ -429,6 +429,67 @@ class SceneMaster(Base, TimestampMixin):
         return f"<SceneMaster {self.scene_key!r} {self.status!r}>"
 
 
+class SceneContactSheet(Base, TimestampMixin):
+    """A Nano coverage sheet: nine observations of one approved master.
+
+    Persisted as an artefact rather than a preview, because the pipeline
+    contract §6 says so and because the panel a shot claims to be means nothing
+    once the sheet it was chosen from is gone.
+
+    One approved sheet per master, for the same reason there is one approved
+    master per scene: the selected observation needs one authority.
+    """
+
+    __tablename__ = "scene_contact_sheets"
+    __table_args__ = (
+        UniqueConstraint("visual_asset_id", name="uq_scene_contact_sheets_visual_asset_id"),
+        Index(
+            "uq_scene_contact_sheets_one_approved_per_master",
+            "scene_master_id",
+            unique=True,
+            postgresql_where=text("status = 'approved'"),
+        ),
+        CheckConstraint(
+            "status IN ('candidate','approved','superseded','rejected')", name="status_known"
+        ),
+        CheckConstraint("rows > 0 AND columns > 0", name="grid_positive"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    scene_master_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scene_masters.id", ondelete="RESTRICT"), nullable=False
+    )
+    visual_asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("visual_assets.id", ondelete="RESTRICT"), nullable=False
+    )
+    label: Mapped[str] = mapped_column(String(96), nullable=False)
+    rows: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("3"))
+    columns: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("3"))
+    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="candidate")
+    prompt_template: Mapped[str | None] = mapped_column(String(200))
+    resolved_prompt_sha256: Mapped[str | None] = mapped_column(String(SHA256_HEX_LENGTH))
+    # What each numbered panel is meant to observe, from the scene's own prompt.
+    # Stored so a person choosing panel 5 can see it should be Emma and Brock.
+    panel_plan: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
+    approved_by: Mapped[str | None] = mapped_column(String(64))
+
+    master: Mapped[SceneMaster] = relationship(lazy="joined")
+    asset: Mapped[VisualAsset] = relationship(lazy="joined")
+
+    @property
+    def panels(self) -> int:
+        return self.rows * self.columns
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<SceneContactSheet {self.label!r} {self.rows}x{self.columns} {self.status!r}>"
+
+
 class CoverageFrame(Base, TimestampMixin):
     """One named 9:16 observation of a scene master, §8.
 
@@ -445,8 +506,26 @@ class CoverageFrame(Base, TimestampMixin):
         UniqueConstraint("scene_master_id", "name", name="uq_coverage_frames_scene_master_id_name"),
         Index("ix_coverage_frames_scene_master_id_name", "scene_master_id", "name"),
         Index("ix_coverage_frames_approved_for_veo", "approved_for_veo"),
-        CheckConstraint("width > 0 AND height > 0", name="dimensions_positive"),
-        CheckConstraint("x >= 0 AND y >= 0", name="origin_not_negative"),
+        Index(
+            "uq_coverage_frames_contact_sheet_id_panel",
+            "contact_sheet_id",
+            "panel",
+            unique=True,
+            postgresql_where=text("contact_sheet_id IS NOT NULL"),
+        ),
+        CheckConstraint(
+            "width IS NULL OR height IS NULL OR (width > 0 AND height > 0)",
+            name="dimensions_positive",
+        ),
+        CheckConstraint(
+            "(x IS NULL OR x >= 0) AND (y IS NULL OR y >= 0)", name="origin_not_negative"
+        ),
+        CheckConstraint(
+            "(x IS NOT NULL AND y IS NOT NULL AND width IS NOT NULL AND height IS NOT NULL)"
+            " OR (contact_sheet_id IS NOT NULL AND panel IS NOT NULL)",
+            name="crop_or_panel",
+        ),
+        CheckConstraint("panel IS NULL OR panel > 0", name="panel_positive"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -460,10 +539,17 @@ class CoverageFrame(Base, TimestampMixin):
     )
     name: Mapped[str] = mapped_column(String(96), nullable=False)
     aspect_ratio: Mapped[str] = mapped_column(String(16), nullable=False, server_default="9:16")
-    x: Mapped[int] = mapped_column(Integer, nullable=False)
-    y: Mapped[int] = mapped_column(Integer, nullable=False)
-    width: Mapped[int] = mapped_column(Integer, nullable=False)
-    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    # A crop carries its box. A Nano extraction carries a sheet and a panel and
+    # no box at all -- it is generated, so coordinates could neither identify it
+    # nor reproduce it. The check constraint requires one shape or the other.
+    x: Mapped[int | None] = mapped_column(Integer)
+    y: Mapped[int | None] = mapped_column(Integer)
+    width: Mapped[int | None] = mapped_column(Integer)
+    height: Mapped[int | None] = mapped_column(Integer)
+    contact_sheet_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scene_contact_sheets.id", ondelete="RESTRICT")
+    )
+    panel: Mapped[int | None] = mapped_column(Integer)
     source_master_sha256: Mapped[str] = mapped_column(String(SHA256_HEX_LENGTH), nullable=False)
     frame_sha256: Mapped[str] = mapped_column(String(SHA256_HEX_LENGTH), nullable=False)
     operation: Mapped[str] = mapped_column(String(32), nullable=False, server_default="crop_only")
@@ -476,11 +562,20 @@ class CoverageFrame(Base, TimestampMixin):
         "metadata_json", JSONB, nullable=False, server_default=text("'{}'::jsonb")
     )
 
-    master: Mapped[SceneMaster] = relationship(lazy="joined")
-    asset: Mapped[VisualAsset] = relationship(lazy="joined")
+    master: Mapped[SceneMaster] = relationship(lazy="joined", foreign_keys=[scene_master_id])
+    asset: Mapped[VisualAsset] = relationship(lazy="joined", foreign_keys=[visual_asset_id])
+    contact_sheet: Mapped[SceneContactSheet | None] = relationship(
+        lazy="joined", foreign_keys=[contact_sheet_id]
+    )
+
+    @property
+    def is_extraction(self) -> bool:
+        """Generated from a panel rather than cut from the master."""
+        return self.contact_sheet_id is not None
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
-        return f"<CoverageFrame {self.name!r} {self.width}x{self.height}>"
+        where = f"panel {self.panel}" if self.is_extraction else f"{self.width}x{self.height}"
+        return f"<CoverageFrame {self.name!r} {where}>"
 
 
 class Tag(Base):

@@ -200,7 +200,7 @@ def test_a_frame_from_a_superseded_master_stops_resolving(
     approved_master(session, store, seed=2)  # the master is replaced
     session.flush()
 
-    with pytest.raises(CoverageRejected, match="Re-cut and re-approve"):
+    with pytest.raises(CoverageRejected, match="Redo it against the current one"):
         resolve_veo_seed(session, store, scene_key="pub-1105", name="pub-1105-a")
 
 

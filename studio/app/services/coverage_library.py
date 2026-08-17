@@ -1,23 +1,35 @@
-"""Cutting coverage frames, and recording what they are observations of.
+"""Coverage: the observations a scene is shot from, and how they are obtained.
 
-``VISUAL_ASSET_LIBRARY.md`` §8. A coverage frame is a named 9:16 window onto one
-scene master: original pixels, never a resize, never a regeneration.
+Two routes, and the difference between them is the whole design.
 
-What this adds over the manifest-in-a-directory it replaces is that the frame
-has an identity. It can be asked which master it came from, whether that master
-is still the approved one, and whether anyone approved the frame itself for Veo.
-None of those questions could be asked of a file.
+**Nano extraction**, the active contract in
+``NANO_BANANA_CONTACT_SHEET_PIPELINE.md``. An approved master plus approved
+character references produce a 3x3 coverage contact sheet; a chosen panel is fed
+back to the model and returns as a standalone still. That still is *generated*,
+so it has its own bytes, its own hash, and no crop box. What identifies it is
+the sheet it came from and the panel number on it — coordinates could neither
+name it nor reproduce it.
 
-The crop is deterministic: the same master and the same box produce the same
-bytes, so a frame can be re-derived and checked rather than trusted.
+**Deterministic crop**, superseded for the Nano route by §8 of that contract but
+still the cheapest way to take an exact observation out of an image nobody needs
+to regenerate. Same master and same box, same bytes, every time.
+
+A frame is one or the other, and the database enforces that: a crop carries its
+whole box, an extraction carries a sheet and a panel. Both end at the same gate,
+because the thing that matters downstream is identical either way — Veo may
+animate an approved observation of the scene's current master, and nothing else.
 """
 
 from __future__ import annotations
 
+import datetime as dt
+import hashlib
 import logging
 import uuid
+from collections.abc import Sequence
 from dataclasses import dataclass
 from io import BytesIO
+from typing import Any
 
 from PIL import Image
 from sqlalchemy import select
@@ -25,7 +37,13 @@ from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStore
 from app.db.models import AuditEvent
-from app.db.visual_models import AssetLineage, CoverageFrame, SceneMaster, VisualAsset
+from app.db.visual_models import (
+    AssetLineage,
+    CoverageFrame,
+    SceneContactSheet,
+    SceneMaster,
+    VisualAsset,
+)
 from app.domain.enums import (
     AuditEventType,
     VisualAssetKind,
@@ -192,6 +210,34 @@ def derive_coverage_frame(
     return frame
 
 
+def _record_lineage_edge(
+    session: Session,
+    *,
+    parent: uuid.UUID,
+    child: uuid.UUID,
+    relationship: str,
+    operation_metadata: dict[str, Any] | None = None,
+) -> None:
+    """One edge, recorded once. The input manifest §6 asks for is these."""
+    existing = session.execute(
+        select(AssetLineage).where(
+            AssetLineage.parent_asset_id == parent,
+            AssetLineage.child_asset_id == child,
+            AssetLineage.relationship_kind == relationship,
+        )
+    ).scalar_one_or_none()
+    if existing is not None:
+        return
+    session.add(
+        AssetLineage(
+            parent_asset_id=parent,
+            child_asset_id=child,
+            relationship_kind=relationship,
+            operation_metadata=operation_metadata or {},
+        )
+    )
+
+
 def _record_lineage(session: Session, *, parent: uuid.UUID, child: uuid.UUID, box: CropBox) -> None:
     existing = session.execute(
         select(AssetLineage).where(
@@ -223,8 +269,17 @@ def approve_for_veo(
         )
     if frame.source_master_sha256 != frame.master.asset.sha256:
         raise CoverageRejected(
-            f"{frame.name}: cut from {frame.source_master_sha256[:12]}, but its master now "
-            f"holds {frame.master.asset.sha256[:12]}. Re-cut it."
+            f"{frame.name}: taken from {frame.source_master_sha256[:12]}, but its master now "
+            f"holds {frame.master.asset.sha256[:12]}. Redo it."
+        )
+    if (
+        frame.is_extraction
+        and frame.contact_sheet is not None
+        and (frame.contact_sheet.status != "approved")
+    ):
+        raise CoverageRejected(
+            f"{frame.name}: its contact sheet is {frame.contact_sheet.status}, so the panel "
+            "it names is no longer the approved observation."
         )
     if frame.asset.status is not VisualAssetStatus.APPROVED:
         visual_library.approve_asset(session, frame.asset, note=note)
@@ -287,9 +342,19 @@ def resolve_veo_seed(
             f"{scene_key}/{name}: not approved for Veo. Cutting a frame is not approving it."
         )
     if frame.source_master_sha256 != master.sha256:
+        origin = "extracted from a sheet of" if frame.is_extraction else "cut from"
         raise CoverageRejected(
-            f"{scene_key}/{name}: cut from master {frame.source_master_sha256[:12]}, but the "
-            f"approved master is now {master.sha256[:12]}. Re-cut and re-approve it."
+            f"{scene_key}/{name}: {origin} master {frame.source_master_sha256[:12]}, but the "
+            f"approved master is now {master.sha256[:12]}. Redo it against the current one."
+        )
+    if (
+        frame.is_extraction
+        and frame.contact_sheet is not None
+        and (frame.contact_sheet.status != "approved")
+    ):
+        raise CoverageRejected(
+            f"{scene_key}/{name}: its contact sheet is {frame.contact_sheet.status}. "
+            "Extract the panel again from the approved sheet."
         )
 
     asset = session.get(VisualAsset, frame.visual_asset_id)
@@ -299,3 +364,267 @@ def resolve_veo_seed(
     from app.services.reference_resolution import resolve_asset
 
     return resolve_asset(session, store, asset.id, label=f"{scene_key}/{name}")
+
+
+def register_contact_sheet(
+    session: Session,
+    store: AssetStore,
+    *,
+    scene_key: str,
+    label: str,
+    data: bytes,
+    reference_asset_ids: Sequence[uuid.UUID] = (),
+    rows: int = 3,
+    columns: int = 3,
+    prompt_template: str | None = None,
+    resolved_prompt: str | None = None,
+    panel_plan: Sequence[dict[str, Any]] = (),
+    approve: bool = False,
+    actor: str = OWNER,
+) -> SceneContactSheet:
+    """Record a Nano coverage sheet against the scene's approved master.
+
+    ``reference_asset_ids`` is the exact set of character references fed to the
+    model, recorded as lineage edges rather than a note: §6 asks for an input
+    manifest, and edges are the version of that which can be queried from either
+    end. The master is always one of the parents.
+
+    Registering is not approving, and approving supersedes rather than replaces:
+    a sheet that shots were already extracted from stays resolvable, because
+    those shots cite it.
+    """
+    master_reference = resolve_scene_master(session, store, scene_key=scene_key)
+    master = session.execute(
+        select(SceneMaster).where(
+            SceneMaster.scene_key == scene_key, SceneMaster.status == "approved"
+        )
+    ).scalar_one()
+
+    ingested = visual_library.ingest_asset(
+        session,
+        store,
+        data=data,
+        kind=VisualAssetKind.COVERAGE,
+        source_type=VisualAssetSourceType.GENERATED,
+        role="contact_sheet",
+        description=f"{scene_key} coverage contact sheet - {label}",
+        metadata={
+            "scene": scene_key,
+            "grid": f"{rows}x{columns}",
+            "prompt_template": prompt_template,
+        },
+    )
+
+    sheet = session.execute(
+        select(SceneContactSheet).where(SceneContactSheet.visual_asset_id == ingested.asset.id)
+    ).scalar_one_or_none()
+    if sheet is None:
+        sheet = SceneContactSheet(
+            scene_master_id=master.id, visual_asset_id=ingested.asset.id, label=label
+        )
+        session.add(sheet)
+
+    sheet.rows, sheet.columns = rows, columns
+    sheet.prompt_template = prompt_template
+    sheet.resolved_prompt_sha256 = (
+        hashlib.sha256(resolved_prompt.encode("utf-8")).hexdigest() if resolved_prompt else None
+    )
+    sheet.panel_plan = list(panel_plan)
+    session.flush()
+
+    # The master is spatial authority; each character reference is identity
+    # authority. Both are parents of the sheet.
+    _record_lineage_edge(
+        session,
+        parent=master_reference.asset_id,
+        child=ingested.asset.id,
+        relationship="generated_from_master",
+    )
+    for reference_id in reference_asset_ids:
+        _record_lineage_edge(
+            session,
+            parent=reference_id,
+            child=ingested.asset.id,
+            relationship="generated_from_reference",
+        )
+
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.CONTACT_SHEET_REGISTERED,
+            actor=actor,
+            payload_json={
+                "contact_sheet_id": str(sheet.id),
+                "scene": scene_key,
+                "label": label,
+                "grid": f"{rows}x{columns}",
+                "sha256": ingested.asset.sha256,
+                "references": [str(one) for one in reference_asset_ids],
+            },
+        )
+    )
+
+    if approve:
+        approve_contact_sheet(session, sheet, actor=actor)
+    return sheet
+
+
+def approve_contact_sheet(
+    session: Session, sheet: SceneContactSheet, *, actor: str = OWNER, note: str | None = None
+) -> SceneContactSheet:
+    """Make this the sheet panels are chosen from. One per master."""
+    if sheet.master.status != "approved":
+        raise CoverageRejected(
+            f"{sheet.label}: its master is {sheet.master.status}. A sheet of a superseded "
+            "master cannot become the coverage authority."
+        )
+    if sheet.asset.status is not VisualAssetStatus.APPROVED:
+        visual_library.approve_asset(session, sheet.asset, note=note)
+
+    for other in session.execute(
+        select(SceneContactSheet).where(
+            SceneContactSheet.scene_master_id == sheet.scene_master_id,
+            SceneContactSheet.status == "approved",
+            SceneContactSheet.id != sheet.id,
+        )
+    ).scalars():
+        other.status = "superseded"
+    session.flush()
+
+    sheet.status = "approved"
+    sheet.approved_at = dt.datetime.now(dt.UTC)
+    sheet.approved_by = actor
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.CONTACT_SHEET_APPROVED,
+            actor=actor,
+            payload_json={
+                "contact_sheet_id": str(sheet.id),
+                "scene": sheet.master.scene_key,
+                "label": sheet.label,
+                "sha256": sheet.asset.sha256,
+                "note": note,
+            },
+        )
+    )
+    return sheet
+
+
+def approved_contact_sheet(session: Session, *, scene_key: str) -> SceneContactSheet:
+    """The sheet panels are chosen from, or a refusal naming what is missing."""
+    sheet = session.execute(
+        select(SceneContactSheet)
+        .join(SceneMaster, SceneMaster.id == SceneContactSheet.scene_master_id)
+        .where(
+            SceneMaster.scene_key == scene_key,
+            SceneMaster.status == "approved",
+            SceneContactSheet.status == "approved",
+        )
+    ).scalar_one_or_none()
+    if sheet is None:
+        raise CoverageRejected(
+            f"{scene_key}: no approved coverage contact sheet for the current master. "
+            "Register one and approve it before extracting panels."
+        )
+    return sheet
+
+
+def record_panel_extraction(
+    session: Session,
+    store: AssetStore,
+    *,
+    scene_key: str,
+    name: str,
+    panel: int,
+    data: bytes,
+    aspect_ratio: str = "9:16",
+    provider: str | None = None,
+    model: str | None = None,
+    provider_request_id: str | None = None,
+    prompt_hash: str | None = None,
+    notes: str | None = None,
+    actor: str = OWNER,
+) -> CoverageFrame:
+    """Record the standalone still Nano returned for one panel.
+
+    The bytes are the model's, not a crop of anything, so nothing here checks
+    them against the sheet. What is checked is that the panel exists on the
+    approved sheet; what is recorded is which sheet and which panel, the two
+    facts that make the still traceable back to the master.
+
+    Never approved for motion by this call. §5: a panel becomes a first frame
+    only after it has been reviewed.
+    """
+    sheet = approved_contact_sheet(session, scene_key=scene_key)
+    if panel < 1 or panel > sheet.panels:
+        raise CoverageRejected(
+            f"{scene_key}: panel {panel} is outside a {sheet.rows}x{sheet.columns} sheet "
+            f"(1-{sheet.panels})."
+        )
+
+    ingested = visual_library.ingest_asset(
+        session,
+        store,
+        data=data,
+        kind=VisualAssetKind.COVERAGE,
+        source_type=VisualAssetSourceType.GENERATED,
+        role=name,
+        description=f"{scene_key} panel {panel} - {name}",
+        provider=provider,
+        model=model,
+        provider_request_id=provider_request_id,
+        prompt_hash=prompt_hash,
+        metadata={
+            "scene": scene_key,
+            "panel": panel,
+            "contact_sheet": str(sheet.id),
+            "aspect_ratio": aspect_ratio,
+        },
+    )
+    _record_lineage_edge(
+        session,
+        parent=sheet.visual_asset_id,
+        child=ingested.asset.id,
+        relationship="extracted_from_panel",
+        operation_metadata={"panel": panel},
+    )
+
+    frame = session.execute(
+        select(CoverageFrame).where(
+            CoverageFrame.contact_sheet_id == sheet.id, CoverageFrame.panel == panel
+        )
+    ).scalar_one_or_none()
+    if frame is None:
+        frame = CoverageFrame(
+            scene_master_id=sheet.scene_master_id, contact_sheet_id=sheet.id, panel=panel
+        )
+        session.add(frame)
+
+    frame.name = name
+    frame.visual_asset_id = ingested.asset.id
+    frame.aspect_ratio = aspect_ratio
+    frame.width, frame.height = ingested.asset.width, ingested.asset.height
+    frame.x = frame.y = None
+    frame.frame_sha256 = ingested.asset.sha256
+    frame.source_master_sha256 = sheet.master.asset.sha256
+    frame.operation = "nano_extraction"
+    frame.approved_for_veo = False
+    if notes is not None:
+        frame.notes = notes
+    session.flush()
+
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.COVERAGE_FRAME_DERIVED,
+            actor=actor,
+            payload_json={
+                "coverage_frame_id": str(frame.id),
+                "scene": scene_key,
+                "name": name,
+                "panel": panel,
+                "operation": "nano_extraction",
+                "contact_sheet_id": str(sheet.id),
+                "frame_sha256": ingested.asset.sha256,
+            },
+        )
+    )
+    return frame
