@@ -137,10 +137,10 @@ def test_invalid_values_are_rejected(field: str, value: object) -> None:
 #       exist yet; the limits are meaningless until it does.
 #   renderer_seed_candidates, renderer_video_candidates - the scripts take
 #       --candidates and default it to 1, ignoring these.
-#   google_image_size - the scripts pass image_size="2K" as a literal.
+# google_image_size left the list on 18 August 2026: the Nano pipeline passes it
+# to every image call, which is what a setting is for.
 DECLARED_BUT_NOT_WIRED = frozenset(
     {
-        "google_image_size",
         "renderer_scene_budget_usd",
         "renderer_validation_budget_usd",
         "renderer_monthly_budget_usd",

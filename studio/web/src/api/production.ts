@@ -220,6 +220,49 @@ export function recordPanel(
   return upload<CoverageFrame>(`/api/scenes/${sceneKey}/panels`, body);
 }
 
+export interface ReferenceChoice {
+  key: string;
+  slug: string;
+  role: string;
+}
+
+export interface PipelineInputs {
+  scene_key: string;
+  /** The scene's own persisted coverage prompt, if the world has one. */
+  prompt: string | null;
+  source: string | null;
+  references: ReferenceChoice[];
+  attempts: number;
+  media_live: boolean;
+}
+
+export function fetchPipelineInputs(
+  sceneKey: string,
+  signal?: AbortSignal,
+): Promise<PipelineInputs> {
+  return send<PipelineInputs>(`/api/scenes/${sceneKey}/pipeline`, "GET", undefined, signal);
+}
+
+/** Sends master + chosen references to Nano and stores the sheet it returns. */
+export function generateSheet(
+  sceneKey: string,
+  input: { label: string; selections: string[]; prompt?: string },
+): Promise<ContactSheet> {
+  return send<ContactSheet>(`/api/scenes/${sceneKey}/generate-sheet`, "POST", input);
+}
+
+/** Sends the approved sheet back to Nano for one panel. */
+export function extractPanel(
+  sceneKey: string,
+  input: { panel: number; name: string; selections: string[]; aspect_ratio?: string },
+): Promise<CoverageFrame> {
+  return send<CoverageFrame>(`/api/scenes/${sceneKey}/extract-panel`, "POST", input);
+}
+
+export function rejectTake(assetId: string, note?: string): Promise<AssetBrief> {
+  return send<AssetBrief>(`/api/visual-assets/${assetId}/reject`, "POST", { note: note ?? null });
+}
+
 export function fetchLocations(signal?: AbortSignal): Promise<ScoutLocation[]> {
   return send<ScoutLocation[]>("/api/locations", "GET", undefined, signal);
 }

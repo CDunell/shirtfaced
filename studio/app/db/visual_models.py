@@ -578,6 +578,44 @@ class CoverageFrame(Base, TimestampMixin):
         return f"<CoverageFrame {self.name!r} {where}>"
 
 
+class GenerationCall(Base):
+    """One provider call, kept whether it worked or not.
+
+    §6 of the Nano contract wants each stage persisted as an attempt with its
+    prompt, model, inputs and output. The assets carry half of that; this is the
+    other half, and it is the only place a refusal survives — which is the
+    record worth having, because a prompt the model rejects is a fact about the
+    prompt.
+    """
+
+    __tablename__ = "generation_calls"
+    __table_args__ = (
+        Index("ix_generation_calls_scene_key_created_at", "scene_key", text("created_at DESC")),
+        Index("ix_generation_calls_operation", "operation"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    model: Mapped[str] = mapped_column(String(128), nullable=False)
+    operation: Mapped[str] = mapped_column(String(48), nullable=False)
+    scene_key: Mapped[str | None] = mapped_column(String(96))
+    subject: Mapped[str | None] = mapped_column(String(96))
+    prompt_sha256: Mapped[str | None] = mapped_column(String(SHA256_HEX_LENGTH))
+    input_asset_ids: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    output_asset_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True))
+    succeeded: Mapped[bool] = mapped_column(Boolean, nullable=False)
+    failure: Mapped[str | None] = mapped_column(Text)
+    duration_ms: Mapped[int | None] = mapped_column(Integer)
+    actor: Mapped[str] = mapped_column(String(64), nullable=False, server_default="owner")
+    created_at: Mapped[dt.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+
+
 class Tag(Base):
     """A reusable label, §9.2: ``pub``, ``night``, ``2.39``, ``production-safe``."""
 

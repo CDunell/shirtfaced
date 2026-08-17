@@ -34,7 +34,12 @@ from app.db.visual_models import (
     VisualAsset,
 )
 from app.domain.enums import LocationAssetRole, VisualAssetKind, VisualAssetSourceType
-from app.services import coverage_library, location_library, visual_library
+from app.services import (
+    coverage_library,
+    location_library,
+    nano_pipeline,
+    visual_library,
+)
 from app.services.reference_resolution import ReferenceUnavailable
 
 router = APIRouter(prefix="/api", tags=["production-library"])
@@ -498,6 +503,154 @@ async def record_panel(
     session.commit()
     session.refresh(frame)
     return _coverage_out(frame)
+
+
+class ReferenceChoice(BaseModel):
+    """A cast reference, offered by name so nobody has to know an identifier."""
+
+    key: str
+    slug: str
+    role: str
+
+
+class ScenePromptOut(BaseModel):
+    scene_key: str
+    prompt: str | None
+    source: str | None
+    references: list[ReferenceChoice]
+    attempts: int
+    media_live: bool
+
+
+class GenerateSheetIn(BaseModel):
+    label: str = Field(min_length=1, max_length=96)
+    selections: list[str] = Field(default_factory=list)
+    prompt: str | None = None
+
+
+class ExtractPanelIn(BaseModel):
+    panel: int = Field(ge=1)
+    name: str = Field(min_length=1, max_length=96, pattern=r"^[a-z0-9][a-z0-9_-]*$")
+    selections: list[str] = Field(default_factory=list)
+    aspect_ratio: str = "9:16"
+
+
+@router.get("/scenes/{scene_key}/pipeline", summary="What the pipeline needs to run here")
+def pipeline_inputs(
+    scene_key: str, session: SessionDependency, settings: SettingsDependency
+) -> ScenePromptOut:
+    """The scene's own coverage prompt and the references that can be sent.
+
+    Returned together so the bench can offer a run without the operator having
+    to find a prompt file or remember an asset ID.
+    """
+    prompt_path = nano_pipeline.scene_prompt_path(settings.worlds_root_resolved, scene_key)
+    prompt = None
+    source = None
+    if prompt_path is not None:
+        prompt = prompt_path.read_text(encoding="utf-8")
+        source = prompt_path.name
+
+    return ScenePromptOut(
+        scene_key=scene_key,
+        prompt=prompt,
+        source=source,
+        references=[
+            ReferenceChoice(key=f"{one.slug}:{one.role}", slug=one.slug, role=one.role)
+            for one in nano_pipeline.available_references(session)
+        ],
+        attempts=nano_pipeline.calls_for_scene(session, scene_key),
+        media_live=settings.google_media_live,
+    )
+
+
+@router.post(
+    "/scenes/{scene_key}/generate-sheet",
+    status_code=status.HTTP_201_CREATED,
+    summary="Send the master and chosen references to Nano for a coverage sheet",
+)
+def generate_sheet(
+    scene_key: str,
+    payload: GenerateSheetIn,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> ContactSheetOut:
+    """Generates and stores. Approving what comes back stays a human step."""
+    prompt = payload.prompt
+    if not prompt:
+        prompt_path = nano_pipeline.scene_prompt_path(settings.worlds_root_resolved, scene_key)
+        if prompt_path is None:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT,
+                f"{scene_key} has no persisted coverage prompt and none was supplied. "
+                "A scene does not inherit another scene's prompt.",
+            )
+        prompt = prompt_path.read_text(encoding="utf-8")
+
+    try:
+        sheet = nano_pipeline.generate_coverage_sheet(
+            session,
+            _store(settings),
+            settings,
+            scene_key=scene_key,
+            label=payload.label,
+            selections=payload.selections,
+            prompt=prompt,
+        )
+    except nano_pipeline.PipelineUnavailable as error:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+    except visual_library.AssetRejected as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
+
+    session.commit()
+    session.refresh(sheet)
+    return _sheet_out(session, sheet)
+
+
+@router.post(
+    "/scenes/{scene_key}/extract-panel",
+    status_code=status.HTTP_201_CREATED,
+    summary="Send the approved sheet back to Nano for one panel",
+)
+def extract_panel(
+    scene_key: str,
+    payload: ExtractPanelIn,
+    session: SessionDependency,
+    settings: SettingsDependency,
+) -> CoverageFrameOut:
+    try:
+        frame = nano_pipeline.extract_panel(
+            session,
+            _store(settings),
+            settings,
+            scene_key=scene_key,
+            panel=payload.panel,
+            name=payload.name,
+            selections=payload.selections,
+            aspect_ratio=payload.aspect_ratio,
+        )
+    except nano_pipeline.PipelineUnavailable as error:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+    except (coverage_library.CoverageRejected, visual_library.AssetRejected) as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+
+    session.commit()
+    session.refresh(frame)
+    return _coverage_out(frame)
+
+
+@router.post("/visual-assets/{asset_id}/reject", summary="Say no to a take without deleting it")
+def reject_take(asset_id: uuid.UUID, payload: DecisionIn, session: SessionDependency) -> AssetBrief:
+    """Rerunning is a new call, never an overwrite: the take stays as evidence."""
+    asset = session.get(VisualAsset, asset_id)
+    if asset is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such asset.")
+    nano_pipeline.reject_asset(session, asset, note=payload.note, actor=payload.actor)
+    session.commit()
+    session.refresh(asset)
+    return AssetBrief.of(asset)
 
 
 def _location_asset_out(link: LocationAsset) -> LocationAssetOut:
