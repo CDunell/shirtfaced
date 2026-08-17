@@ -81,7 +81,7 @@ class ResolvedReference:
         }
 
 
-def _load(store: AssetStore, asset: VisualAsset, label: str) -> ResolvedReference:
+def load_reference(store: AssetStore, asset: VisualAsset, label: str) -> ResolvedReference:
     try:
         data = store.load(asset.storage_key)
     except AssetStoreError as error:
@@ -128,7 +128,7 @@ def resolve_asset(
     if asset is None:
         raise ReferenceUnavailable(f"{name}: no asset {asset_id}.")
     _require_approved(asset, name)
-    return _load(store, asset, name)
+    return load_reference(store, asset, name)
 
 
 def resolve_cast_reference(
@@ -179,7 +179,7 @@ def resolve_cast_reference(
     if asset is None:  # pragma: no cover - foreign key prevents this
         raise ReferenceUnavailable(f"{label}: the linked asset is missing.")
     _require_approved(asset, label)
-    return _load(store, asset, label)
+    return load_reference(store, asset, label)
 
 
 def resolve_scene_master(
@@ -225,7 +225,7 @@ def resolve_scene_master(
     if asset is None:  # pragma: no cover - foreign key prevents this
         raise ReferenceUnavailable(f"{label}: the master's asset is missing.")
     _require_approved(asset, label)
-    return _load(store, asset, label)
+    return load_reference(store, asset, label)
 
 
 def verify_coverage_seed(

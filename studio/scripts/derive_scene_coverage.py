@@ -121,8 +121,50 @@ def cut_one(
     return frame
 
 
+def cut_plan_into_library(plan_path: Path) -> None:
+    """Cut every shot in a trigger into coverage rows, from one master.
+
+    The database path. Each frame becomes a row that knows its parent master and
+    the hash that master had when the crop was taken, so it can be checked later
+    rather than trusted.
+    """
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.config import get_settings
+    from app.db.session import get_session_factory
+    from app.services.coverage_library import CoverageRejected, derive_coverage_frame
+    from app.services.reference_resolution import ReferenceUnavailable
+
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    scene = plan["scene"]
+    shots = plan.get("shots")
+    if not shots:
+        raise SystemExit(f"{plan_path.name}: no 'shots' list.")
+
+    store = FilesystemAssetStore(get_settings().assets_root_resolved)
+    try:
+        with get_session_factory()() as session:
+            for shot in shots:
+                frame = derive_coverage_frame(
+                    session,
+                    store,
+                    scene_key=scene,
+                    name=str(shot["shot"]),
+                    x=int(shot["x"]),
+                    y=int(shot.get("y", 0)),
+                    height=int(shot.get("height", 0)),
+                )
+                print(
+                    f"FRAME={frame.name} id={frame.id} sha={frame.frame_sha256} "
+                    f"{frame.width}x{frame.height} master={frame.source_master_sha256[:12]}"
+                )
+            session.commit()
+    except (CoverageRejected, ReferenceUnavailable) as error:
+        raise SystemExit(f"{error} Nothing cut.") from error
+    print("Frames are not approved for Veo. Approve them before any run.")
+
+
 def cut_plan(plan_path: Path, out_root: str) -> None:
-    """Cut every shot in a trigger, from one resolution of the scene's master."""
+    """Cut every shot in a trigger to files, from one resolution of the master."""
     plan = json.loads(plan_path.read_text(encoding="utf-8"))
     scene = plan["scene"]
     shots = plan.get("shots")
@@ -161,8 +203,15 @@ def main() -> None:
     parser.add_argument("--height", type=int, default=0, help="0 = full source height")
     parser.add_argument("--source", help="Cut from this file instead of the registered master.")
     parser.add_argument("--expected-sha256", help="Required with --source.")
-    parser.add_argument("--out-root", required=True)
+    parser.add_argument("--out-root", help="Write files here. Omit with --plan to use the library.")
     args = parser.parse_args()
+
+    if args.plan and not args.out_root:
+        cut_plan_into_library(Path(args.plan).resolve())
+        return
+
+    if not args.out_root:
+        raise SystemExit("--out-root is required unless --plan writes into the library")
 
     if args.plan:
         cut_plan(Path(args.plan).resolve(), args.out_root)

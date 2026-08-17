@@ -12,6 +12,7 @@ import hashlib
 import json
 import sys
 from datetime import UTC, datetime
+from io import BytesIO
 from pathlib import Path
 
 from PIL import Image
@@ -21,6 +22,26 @@ sys.path.insert(0, str(ROOT))
 
 from app.adapters.google_media import GoogleVideoClient, GoogleVideoRequest
 from app.config import get_settings
+
+
+def resolve_seed(scene_key: str, shot: str):
+    """The approved coverage frame for this shot, or a refusal.
+
+    Phase E: a Veo run names a shot in a scene, never a file. Everything a path
+    could get wrong -- an unapproved frame, one cut from a superseded master, a
+    lookalike sitting in the same directory -- is checked before any spend.
+    """
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.db.session import get_session_factory
+    from app.services.coverage_library import CoverageRejected, resolve_veo_seed
+    from app.services.reference_resolution import ReferenceUnavailable
+
+    store = FilesystemAssetStore(get_settings().assets_root_resolved)
+    try:
+        with get_session_factory()() as session:
+            return resolve_veo_seed(session, store, scene_key=scene_key, name=shot)
+    except (CoverageRejected, ReferenceUnavailable) as error:
+        raise SystemExit(f"{error} No provider call made.") from error
 
 
 def scene_lineage(seed: Path, scene_key: str) -> dict:
@@ -57,28 +78,42 @@ Preserve the exact people and clothing from the supplied frame. No tattoos or je
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", required=True)
-    parser.add_argument("--expected-sha256", required=True)
+    parser.add_argument("--seed", help="Legacy: a file. Omit to resolve the approved frame.")
+    parser.add_argument("--expected-sha256", help="Required with --seed.")
     parser.add_argument("--shot", choices=sorted(PROMPTS), required=True)
     parser.add_argument("--scene", default="pub-1105")
     args = parser.parse_args()
 
-    seed = Path(args.seed).resolve()
-    if not seed.is_file():
-        raise SystemExit(f"missing seed: {seed}")
-    data = seed.read_bytes()
-    actual_sha = hashlib.sha256(data).hexdigest()
-    if actual_sha != args.expected_sha256:
-        raise SystemExit(f"seed SHA mismatch: expected {args.expected_sha256}, got {actual_sha}")
+    if args.seed:
+        if not args.expected_sha256:
+            raise SystemExit("--seed requires --expected-sha256")
+        seed = Path(args.seed).resolve()
+        if not seed.is_file():
+            raise SystemExit(f"missing seed: {seed}")
+        data = seed.read_bytes()
+        actual_sha = hashlib.sha256(data).hexdigest()
+        if actual_sha != args.expected_sha256:
+            raise SystemExit(
+                f"seed SHA mismatch: expected {args.expected_sha256}, got {actual_sha}"
+            )
+        lineage = scene_lineage(seed, args.scene)
+        source_format = "PNG" if seed.suffix.lower() == ".png" else "JPEG"
+        with Image.open(BytesIO(data)) as image:
+            source_dimensions = list(image.size)
+    else:
+        resolved = resolve_seed(args.scene, args.shot)
+        data = resolved.data
+        source_dimensions = [resolved.width, resolved.height]
+        source_format = "PNG" if resolved.mime_type == "image/png" else "JPEG"
+        lineage = {
+            "scene": args.scene,
+            "coverage_shot": args.shot,
+            "coverage_frame_asset_id": str(resolved.asset_id),
+            "coverage_frame_sha256": resolved.sha256,
+        }
 
-    with Image.open(seed) as image:
-        image.load()
-        source_dimensions = list(image.size)
-        source_format = image.format
     if source_dimensions[0] * 16 != source_dimensions[1] * 9:
         raise SystemExit(f"seed must be exact 9:16, got {source_dimensions}")
-
-    lineage = scene_lineage(seed, args.scene)
 
     settings = get_settings()
     if not settings.google_media_live or settings.gemini_api_key is None:

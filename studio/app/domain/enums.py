@@ -113,6 +113,11 @@ class AuditEventType(StrEnum):
     CAST_ASSET_LINKED = "cast_asset_linked"
     SCENE_MASTER_REGISTERED = "scene_master_registered"
     SCENE_MASTER_APPROVED = "scene_master_approved"
+    COVERAGE_FRAME_DERIVED = "coverage_frame_derived"
+    COVERAGE_FRAME_APPROVED = "coverage_frame_approved"
+    LOCATION_REGISTERED = "location_registered"
+    LOCATION_ASSET_LINKED = "location_asset_linked"
+    LOCATION_MASTER_APPROVED = "location_master_approved"
 
 
 class ReviewRecommendation(StrEnum):
@@ -293,6 +298,38 @@ class VisualAssetStatus(StrEnum):
     APPROVED = "approved"
     DEPRECATED = "deprecated"
     REJECTED = "rejected"
+
+
+class LocationAssetRole(StrEnum):
+    """What a location image is, §6.2.
+
+    Closed, unlike the cast roles, and for the opposite reason: this decides
+    whether an image may become the base master a scene is built into. A typo
+    that silently created a new class would be a way to promote a photograph
+    nobody assessed.
+    """
+
+    SCOUT_PHOTO = "scout_photo"
+    SURVEY_WIDE = "survey_wide"
+    SURVEY_DETAIL = "survey_detail"
+    EMPTY_PLATE = "empty_plate"
+    PARTICIPANT_NEUTRAL_BASE = "participant_neutral_base"
+    GENERATED_LOCATION_PLATE = "generated_location_plate"
+    APPROVED_BASE_MASTER = "approved_base_master"
+    LIGHTING_REFERENCE = "lighting_reference"
+    SCALE_REFERENCE = "scale_reference"
+
+
+# The classes §6.3 will accept as the plate a scene is built into. A detail
+# survey or a lighting reference is useful and is not a stage.
+BASE_MASTER_ROLES: frozenset[LocationAssetRole] = frozenset(
+    {
+        LocationAssetRole.EMPTY_PLATE,
+        LocationAssetRole.PARTICIPANT_NEUTRAL_BASE,
+        LocationAssetRole.GENERATED_LOCATION_PLATE,
+        LocationAssetRole.APPROVED_BASE_MASTER,
+    }
+)
 
 
 # The cast reference roles §5.2 names. A vocabulary the interface offers, not a

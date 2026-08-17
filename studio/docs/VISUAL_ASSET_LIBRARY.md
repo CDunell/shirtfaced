@@ -8,8 +8,8 @@ Scope: cast, locations/scouting, scene masters, coverage frames, props/other pro
 
 ## 0. What is built, as of 17 August 2026
 
-Phases 1 and 2 of §14, and Phase A of §15. Everything below them is still
-specification.
+Phases 1 to 5 of §14, and Phases A, D and E of §15. What remains unbuilt is
+listed as such in the table.
 
 | Section | State |
 |---|---|
@@ -17,9 +17,10 @@ specification.
 | §5 cast library, §11 cast and asset endpoints, §15 Phase A UI | Built — `/api/cast`, the Cast bench |
 | §14 Phase 2 ingest | Built — `python -m app.cli ingest-cast`, idempotent |
 | §14 Phase 5 cutover, cast half | Built — nothing resolves a cast reference by path any more |
-| §7 scene masters | Built in part, migration 0032 — `scene_masters`, one approved per scene |
-| §8 coverage frames | **Not built as rows.** Crops still land in `var/…/coverage/<shot>/` with a manifest, now carrying the master's asset ID |
-| §6 locations | **Not built.** No tables exist |
+| §7 scene masters | Built, migration 0032 — `scene_masters`, one approved per scene |
+| §8 coverage frames | Built, migration 0033 — `coverage_frames`, each citing its master and that master's hash at the time of the crop |
+| §6 locations / scouting | Built, migration 0034 — `scout_locations` (nesting), `location_assets`, one base master per place, rights gated |
+| §15 Phase E | Built — a Veo run names a scene and a shot, and cannot reach an unapproved or stale frame |
 
 The cutover is what §2.1's audit describes as missing, so specifically: the
 six-slot installer at `/api/renderer/cast-upload` is **retired** and returns

@@ -185,6 +185,55 @@ def _add_cast_members(specifications: Sequence[str]) -> int:
     return EXIT_OK
 
 
+def _coverage(scene_key: str, approve: str | None, show: bool) -> int:
+    """List a scene's coverage frames, or approve one for Veo."""
+    from sqlalchemy import select
+
+    from app.db.visual_models import CoverageFrame, SceneMaster
+    from app.services.coverage_library import CoverageRejected, approve_for_veo
+
+    with get_session_factory()() as session:
+        frames = (
+            session.execute(
+                select(CoverageFrame)
+                .join(SceneMaster, SceneMaster.id == CoverageFrame.scene_master_id)
+                .where(SceneMaster.scene_key == scene_key)
+                .order_by(CoverageFrame.name)
+            )
+            .scalars()
+            .all()
+        )
+
+        if approve:
+            match = next((frame for frame in frames if frame.name == approve), None)
+            if match is None:
+                print(f"No coverage frame {approve!r} for {scene_key}.", file=sys.stderr)
+                return EXIT_FAILED
+            try:
+                approve_for_veo(session, match, note="Approved from the command line")
+            except CoverageRejected as error:
+                print(str(error), file=sys.stderr)
+                return EXIT_FAILED
+            session.commit()
+            print(f"{scene_key}/{approve} approved for Veo.")
+            return EXIT_OK
+
+        if not frames:
+            print(f"No coverage frames for {scene_key}.")
+            return EXIT_OK
+        for frame in frames:
+            stale = frame.source_master_sha256 != frame.master.asset.sha256
+            state = "approved" if frame.approved_for_veo else "pending"
+            print(
+                f"{frame.name:16} {state:8} {frame.width}x{frame.height} "
+                f"at ({frame.x},{frame.y}) frame={frame.frame_sha256[:12]} "
+                f"master={frame.source_master_sha256[:12]}{'  STALE' if stale else ''}"
+            )
+        if show:
+            print("STALE means the frame was cut from a master that is no longer approved.")
+    return EXIT_OK
+
+
 def _register_scene_master(scene_key: str, path: str, approve: bool, note: str | None) -> int:
     """Register an image as a scene's master. Registering is not approving.
 
@@ -576,6 +625,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         "members", nargs="+", metavar="slug[=Display Name]", help="One or more members."
     )
 
+    coverage = subcommands.add_parser(
+        "coverage",
+        help="List a scene's coverage frames, or approve one for Veo.",
+    )
+    coverage.add_argument("scene_key")
+    coverage.add_argument("--approve", metavar="SHOT", help="Approve this frame for Veo.")
+    coverage.add_argument("--explain", action="store_true", help="Explain the STALE marker.")
+
     register = subcommands.add_parser(
         "register-scene-master",
         help="Register an image as a scene's master. Candidate unless --approve.",
@@ -619,6 +676,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _sync_archive()
         if arguments.command == "add-cast-members":
             return _add_cast_members(arguments.members)
+        if arguments.command == "coverage":
+            return _coverage(arguments.scene_key, arguments.approve, arguments.explain)
         if arguments.command == "register-scene-master":
             return _register_scene_master(
                 arguments.scene_key, arguments.path, arguments.approve, arguments.note

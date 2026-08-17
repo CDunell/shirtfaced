@@ -238,6 +238,7 @@ class Location(Base, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("campaign_id", "code", name="uq_locations_campaign_id_code"),
         UniqueConstraint("id", "campaign_id", name="uq_locations_id_campaign_id"),
+        Index("ix_locations_scout_location_id", "scout_location_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -264,6 +265,11 @@ class Location(Base, TimestampMixin):
     )
     allowed_variation: Mapped[str | None] = mapped_column(Text)
     forbidden_drift: Mapped[str | None] = mapped_column(Text)
+    # Which real, reusable place this is, added by 0034. Null until someone says
+    # so: a matching name is not the same as a scouted location.
+    scout_location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scout_locations.id", ondelete="SET NULL")
+    )
 
 
 class Scene(Base, TimestampMixin):

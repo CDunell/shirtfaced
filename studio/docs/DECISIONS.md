@@ -722,3 +722,33 @@ vocabulary the interface offers. §5.2's list is a recommendation, and a closed
 list would mean a photograph nobody anticipated cannot be filed at all. That is
 the invented-constraint failure this repository keeps re-learning; the standing
 rule is that everything gets ingested.
+
+## ADR-021 — A base master is refused on rights, not on aspect ratio
+
+**17 August 2026.** §6.3 of `VISUAL_ASSET_LIBRARY.md` lists what a good scouting
+plate looks like: high resolution, "preferably 2.39:1", useful lateral geography,
+participant-neutral. The first implementation turned that into a gate — a plate
+narrower than 1.5:1 could not become a base master.
+
+**That was withdrawn before it shipped.** It is an invented constraint, the same
+shape as the 25mm legibility test and the 20mm minimum print: a preference read
+off a document and enforced as a rule nobody made. It would have refused the
+16:9 image pub-1105 is actually built on.
+
+What `assess_base_master` refuses instead is arithmetic: a plate too narrow to
+yield **one** full-height 9:16 frame cannot be a stage for a vertical shot,
+because the window does not fit. Everything else it reports rather than enforces
+— the ratio, whether the plate meets §6.3's 2.39:1 preference, and how many
+pixels of lateral room a 9:16 window has to travel in. The owner decides whether
+that is enough room for five shots.
+
+The gates that do refuse are the ones that are real:
+
+- **rights** — unverified or refused licence. A scene generated into a plate is
+  sold from it, and §6.4 puts the line exactly here. Unknown rights never stop
+  an asset being held, compared or looked at.
+- **approval** — the image is pending or deprecated.
+- **class** — a lighting reference or a detail survey is a reference, not a
+  stage. This one is a closed enum, unlike cast roles, because the class decides
+  whether a plate can be promoted, and a typo must not create a new class that
+  slips past the check.

@@ -51,6 +51,7 @@ from app.db.base import Base, TimestampMixin
 from app.db.models import SHA256_HEX_LENGTH, _enum
 from app.domain.enums import (
     LicenceStatus,
+    LocationAssetRole,
     VisualAssetKind,
     VisualAssetSourceType,
     VisualAssetStatus,
@@ -263,6 +264,112 @@ class CastMemberAsset(Base, TimestampMixin):
     asset: Mapped[VisualAsset] = relationship(lazy="joined")
 
 
+class ScoutLocation(Base, TimestampMixin):
+    """A reusable place, §6.1, and the facts a scene needs before generating.
+
+    Nests: a pub is a location and its back room is another, so a scene can be
+    built into the room while the building carries what is true of all of it.
+
+    ``scout_locations``, not 0029's campaign-scoped ``locations``. A place
+    outlives the campaign that shot there, the same argument as ADR-020 makes
+    for cast, and ``locations.scout_location_id`` links the two.
+    """
+
+    __tablename__ = "scout_locations"
+    __table_args__ = (
+        UniqueConstraint("slug", name="uq_scout_locations_slug"),
+        Index("ix_scout_locations_parent_location_id", "parent_location_id"),
+        Index("ix_scout_locations_status", "status"),
+        CheckConstraint("status IN ('active','deprecated')", name="status_known"),
+        CheckConstraint("id <> parent_location_id", name="no_self_parent"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    parent_location_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scout_locations.id", ondelete="RESTRICT")
+    )
+    slug: Mapped[str] = mapped_column(String(96), nullable=False)
+    display_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    location_type: Mapped[str | None] = mapped_column(String(64))
+    region: Mapped[str | None] = mapped_column(String(120))
+    description: Mapped[str | None] = mapped_column(Text)
+    layout_notes: Mapped[str | None] = mapped_column(Text)
+    scale_anchor_notes: Mapped[str | None] = mapped_column(Text)
+    lighting_notes: Mapped[str | None] = mapped_column(Text)
+    continuity_notes: Mapped[str | None] = mapped_column(Text)
+    time_of_day_tags: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    weather_tags: Mapped[list[str]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    practical_fixtures: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb")
+    )
+    restrictions: Mapped[dict[str, Any]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="active")
+
+    parent: Mapped[ScoutLocation | None] = relationship(remote_side="ScoutLocation.id")
+    assets: Mapped[list[LocationAsset]] = relationship(
+        back_populates="location",
+        cascade="all, delete-orphan",
+        order_by="LocationAsset.sort_order",
+    )
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<ScoutLocation {self.slug!r}>"
+
+
+class LocationAsset(Base, TimestampMixin):
+    """One scouting image of one place, in one class, §6.2.
+
+    ``is_base_master`` is the promotion §6.4 gates on rights: a plate with
+    unknown rights can be held, looked at and compared, and cannot become the
+    thing a scene is generated into.
+    """
+
+    __tablename__ = "location_assets"
+    __table_args__ = (
+        UniqueConstraint(
+            "location_id", "visual_asset_id", name="uq_location_assets_location_id_visual_asset_id"
+        ),
+        Index(
+            "uq_location_assets_one_base_master",
+            "location_id",
+            unique=True,
+            postgresql_where=text("is_base_master"),
+        ),
+        Index("ix_location_assets_role", "role"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    location_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scout_locations.id", ondelete="CASCADE"), nullable=False
+    )
+    visual_asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("visual_assets.id", ondelete="RESTRICT"), nullable=False
+    )
+    role: Mapped[LocationAssetRole] = mapped_column(
+        _enum(LocationAssetRole, "location_asset_role"), nullable=False
+    )
+    sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
+    camera_position: Mapped[str | None] = mapped_column(String(200))
+    exposure_notes: Mapped[str | None] = mapped_column(Text)
+    notes: Mapped[str | None] = mapped_column(Text)
+    is_base_master: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+
+    location: Mapped[ScoutLocation] = relationship(back_populates="assets")
+    asset: Mapped[VisualAsset] = relationship(lazy="joined")
+
+
 class SceneMaster(Base, TimestampMixin):
     """The approved spatial truth for one scene, §7.
 
@@ -315,6 +422,60 @@ class SceneMaster(Base, TimestampMixin):
 
     def __repr__(self) -> str:  # pragma: no cover - debugging aid
         return f"<SceneMaster {self.scene_key!r} {self.status!r}>"
+
+
+class CoverageFrame(Base, TimestampMixin):
+    """One named 9:16 observation of a scene master, §8.
+
+    The crop box and the parent's hash are both stored, so the frame can be
+    reproduced from the master byte for byte and checked against what it claims.
+    ``source_master_sha256`` is not derivable from ``scene_master_id``: a master
+    can be superseded after a frame was cut from it, and the difference between
+    "this master" and "this master as it was then" is the whole point.
+    """
+
+    __tablename__ = "coverage_frames"
+    __table_args__ = (
+        UniqueConstraint("visual_asset_id", name="uq_coverage_frames_visual_asset_id"),
+        UniqueConstraint("scene_master_id", "name", name="uq_coverage_frames_scene_master_id_name"),
+        Index("ix_coverage_frames_scene_master_id_name", "scene_master_id", "name"),
+        Index("ix_coverage_frames_approved_for_veo", "approved_for_veo"),
+        CheckConstraint("width > 0 AND height > 0", name="dimensions_positive"),
+        CheckConstraint("x >= 0 AND y >= 0", name="origin_not_negative"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    scene_master_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("scene_masters.id", ondelete="RESTRICT"), nullable=False
+    )
+    visual_asset_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("visual_assets.id", ondelete="RESTRICT"), nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(96), nullable=False)
+    aspect_ratio: Mapped[str] = mapped_column(String(16), nullable=False, server_default="9:16")
+    x: Mapped[int] = mapped_column(Integer, nullable=False)
+    y: Mapped[int] = mapped_column(Integer, nullable=False)
+    width: Mapped[int] = mapped_column(Integer, nullable=False)
+    height: Mapped[int] = mapped_column(Integer, nullable=False)
+    source_master_sha256: Mapped[str] = mapped_column(String(SHA256_HEX_LENGTH), nullable=False)
+    frame_sha256: Mapped[str] = mapped_column(String(SHA256_HEX_LENGTH), nullable=False)
+    operation: Mapped[str] = mapped_column(String(32), nullable=False, server_default="crop_only")
+    # Veo takes an approved frame and nothing else, §15 Phase E.
+    approved_for_veo: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
+    notes: Mapped[str | None] = mapped_column(Text)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(
+        "metadata_json", JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
+
+    master: Mapped[SceneMaster] = relationship(lazy="joined")
+    asset: Mapped[VisualAsset] = relationship(lazy="joined")
+
+    def __repr__(self) -> str:  # pragma: no cover - debugging aid
+        return f"<CoverageFrame {self.name!r} {self.width}x{self.height}>"
 
 
 class Tag(Base):
