@@ -77,6 +77,13 @@ class ReviewResult(StrEnum):
 class DesignStatus(StrEnum):
     """The eleven design statuses, verbatim from ``domain.ts``.
 
+    That file is not in the repository: ``admin/src/design-system/`` was deleted
+    in 4187e2f, which is the commit that made this the only copy. Checked
+    against the original again on 18 August 2026 from a surviving snapshot --
+    same eleven, same order. The pin that outlives the snapshot is
+    ``tests/unit/test_design_scoring.py``, which is ``workflow.test.ts``'s seven
+    cases translated rather than reinterpreted.
+
     Ported intact because the owner's decision was to move the engine, not to
     edit it, and because ``next_status_for_review`` is part of the tested
     contract. Nothing in studio drives this machine today -- the product
@@ -160,7 +167,10 @@ def can_transition(source: DesignStatus, target: DesignStatus) -> bool:
     return target in ALLOWED_TRANSITIONS[source]
 
 
-# The thirteen hard-gate ids, verbatim from ``workflow.ts``'s ``HARD_GATE_IDS``.
+# The thirteen hard-gate ids, verbatim from ``workflow.ts``'s ``HARD_GATE_IDS``
+# -- a file deleted in 4187e2f, so the citation is to history rather than to
+# a path. Re-checked against a surviving snapshot on 18 August 2026: same
+# thirteen, same order, same reason recorded against the last of them.
 # The order is the order a reviewer meets them; the ids are what callers match
 # on and must not be renamed without a migration of stored reviews.
 HARD_GATE_IDS: tuple[str, ...] = (
@@ -368,7 +378,8 @@ CATEGORY_GROUPS: dict[str, str] = {
     "commercial_wearability": COLLECTION,
 }
 
-# ``workflow.ts``'s two thresholds. Design approval at 75, production approval
+# ``workflow.ts``'s two thresholds, re-checked 18 August 2026 against the
+# snapshot. Design approval at 75, production approval
 # at 85, both on top of every gate passing and every floor met.
 APPROVAL_PERCENTAGE = 75.0
 PRODUCTION_PERCENTAGE = 85.0
