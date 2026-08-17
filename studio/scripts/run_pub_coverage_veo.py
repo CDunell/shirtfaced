@@ -4,6 +4,7 @@
 The supplied crop is already the camera composition. Veo is not asked to reveal
 new geography or perform a major reframing; it only animates the established shot.
 """
+
 from __future__ import annotations
 
 import argparse

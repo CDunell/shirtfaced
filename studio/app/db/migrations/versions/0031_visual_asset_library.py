@@ -181,9 +181,7 @@ def upgrade() -> None:
             "relationship",
             name="uq_asset_lineage_parent_asset_id_child_asset_id_relationship",
         ),
-        sa.CheckConstraint(
-            "parent_asset_id <> child_asset_id", name="no_self_lineage"
-        ),
+        sa.CheckConstraint("parent_asset_id <> child_asset_id", name="no_self_lineage"),
     )
     op.create_index("ix_asset_lineage_child_asset_id", "asset_lineage", ["child_asset_id"])
 
@@ -208,9 +206,7 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.UniqueConstraint("world_id", "slug", name="uq_cast_members_world_id_slug"),
-        sa.CheckConstraint(
-            "status IN ('active','deprecated')", name="status_known"
-        ),
+        sa.CheckConstraint("status IN ('active','deprecated')", name="status_known"),
     )
     op.create_index("ix_cast_members_status", "cast_members", ["status"])
 

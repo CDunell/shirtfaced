@@ -94,10 +94,11 @@ def _load_reference_json(directory: Path) -> dict[str, Any]:
     if not manifest.is_file():
         return {}
     try:
-        return json.loads(manifest.read_text(encoding="utf-8"))
+        loaded: dict[str, Any] = json.loads(manifest.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         logger.warning("unreadable reference.json in %s; provenance left empty", directory)
         return {}
+    return loaded
 
 
 def _canonical_metadata(manifest: dict[str, Any]) -> dict[str, Any]:

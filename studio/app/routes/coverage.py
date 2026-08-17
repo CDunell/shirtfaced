@@ -20,7 +20,7 @@ import re
 from datetime import UTC, datetime
 from io import BytesIO
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from fastapi.responses import HTMLResponse
@@ -68,7 +68,9 @@ class CoverageFrameRequest(BaseModel):
 
 
 @router.get("/coverage-master/{scene_id}", include_in_schema=False)
-def coverage_master(scene_id: str, session: SessionDependency, settings: SettingsDependency):
+def coverage_master(
+    scene_id: str, session: SessionDependency, settings: SettingsDependency
+) -> Response:
     master = _master(session, settings, scene_id)
     return Response(
         content=master.data,
@@ -80,7 +82,7 @@ def coverage_master(scene_id: str, session: SessionDependency, settings: Setting
 @router.post("/coverage-frame")
 def save_coverage_frame(
     request: CoverageFrameRequest, session: SessionDependency, settings: SettingsDependency
-):
+) -> dict[str, Any]:
     if not SHOT_RE.fullmatch(request.shot_name):
         raise HTTPException(400, "Invalid shot name")
     source = _master(session, settings, request.scene_id)
@@ -139,7 +141,9 @@ def save_coverage_frame(
 
 
 @router.get("/coverage-tool/{scene_id}", response_class=HTMLResponse, include_in_schema=False)
-def coverage_tool(scene_id: str, session: SessionDependency, settings: SettingsDependency):
+def coverage_tool(
+    scene_id: str, session: SessionDependency, settings: SettingsDependency
+) -> HTMLResponse:
     master = _master(session, settings, scene_id)
     source_sha = master.sha256
     sw, sh = master.width, master.height

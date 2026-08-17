@@ -126,6 +126,30 @@ def test_invalid_values_are_rejected(field: str, value: object) -> None:
         _settings(**{field: value})
 
 
+# Settings that exist and that nothing reads, as of 17 August 2026. Recorded
+# rather than asserted away: each is a decision the owner wrote down and the
+# code has not honoured, and the list failing in either direction is the point.
+#
+#   renderer_*_budget_usd - app/services/renderer_budget.py can refuse a spend
+#       that would breach these, is unit tested, and is called by nothing. Every
+#       paid Gemini and Veo run in scripts/ therefore has no budget ceiling at
+#       all. Wiring it needs a record of what has been spent, which does not
+#       exist yet; the limits are meaningless until it does.
+#   renderer_seed_candidates, renderer_video_candidates - the scripts take
+#       --candidates and default it to 1, ignoring these.
+#   google_image_size - the scripts pass image_size="2K" as a literal.
+DECLARED_BUT_NOT_WIRED = frozenset(
+    {
+        "google_image_size",
+        "renderer_scene_budget_usd",
+        "renderer_validation_budget_usd",
+        "renderer_monthly_budget_usd",
+        "renderer_seed_candidates",
+        "renderer_video_candidates",
+    }
+)
+
+
 def test_every_setting_is_read_by_application_code() -> None:
     """A setting nothing reads is a lie in the environment file.
 
@@ -142,23 +166,36 @@ def test_every_setting_is_read_by_application_code() -> None:
     from app.config import Settings
 
     root = Path(__file__).resolve().parents[2]
+    # scripts/ counts. The paid renderer and Veo runs live there, and they are
+    # the only readers of the provider key, the video resolution, and the poll
+    # and timeout seconds. Scanning app/ alone called five settings dead that
+    # production depends on every time it spends money.
     sources = " ".join(
         path.read_text(encoding="utf-8", errors="ignore")
-        for path in (root / "app").rglob("*.py")
+        for directory in ("app", "scripts")
+        for path in (root / directory).rglob("*.py")
         if path.name != "config.py"
     )
     config = (root / "app" / "config.py").read_text(encoding="utf-8")
 
     unread = []
     for name in Settings.model_fields:
-        # Some settings are exposed through a resolved property rather than directly.
-        via_property = re.search(rf"{re.escape(name)}_resolved", config) and re.search(
-            rf"{re.escape(name)}_resolved", sources
+        # Some settings are only ever read through a property derived from them:
+        # google_media_enabled is reached as google_media_live, and the *_resolved
+        # paths are the same idea.
+        derived = re.findall(
+            rf"def (\w+)[^\n]*\n(?:[^\n]*\n){{0,6}}?[^\n]*self\.{re.escape(name)}\b", config
         )
+        via_property = any(re.search(rf"\b{re.escape(alias)}\b", sources) for alias in derived)
         if not re.search(rf"\b{re.escape(name)}\b", sources) and not via_property:
             unread.append(name)
 
-    assert not unread, (
-        f"These settings are declared but never read by app code: {unread}. "
-        "Either wire them in or delete them; a dead setting reads as configuration."
+    assert set(unread) == DECLARED_BUT_NOT_WIRED, (
+        "The set of settings nothing reads has changed.\n"
+        f"  now unread:     {sorted(unread)}\n"
+        f"  expected:       {sorted(DECLARED_BUT_NOT_WIRED)}\n"
+        f"  newly dead:     {sorted(set(unread) - DECLARED_BUT_NOT_WIRED)}\n"
+        f"  now wired in:   {sorted(DECLARED_BUT_NOT_WIRED - set(unread))}\n"
+        "Add a setting to DECLARED_BUT_NOT_WIRED only with a reason, or remove it "
+        "from the list once something reads it."
     )

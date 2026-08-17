@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run one silent Veo coverage test: Damo -> Emma/Brock whip pan from the wide pub master."""
+
 from __future__ import annotations
 
 import argparse

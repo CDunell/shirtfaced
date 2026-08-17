@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 """Generate one master-locked Nano Pro pub candidate from the persistent GPT scene master."""
+
 from __future__ import annotations
-import hashlib, io, json, sys
+
+import hashlib
+import io
+import json
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
+
 from PIL import Image, ImageOps
-ROOT=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(ROOT))
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 from app.adapters.google_media import GoogleImageClient, GoogleImageRequest
 from app.adapters.reference_images import ReferenceImage
 from app.config import get_settings
 
-PROMPT="""IMAGE 1 IS THE MASTER. PRESERVE IT. DO NOT REDESIGN, REINTERPRET, RESTAGE, REGENERATE OR IMPROVE THE SCENE.
+PROMPT = """IMAGE 1 IS THE MASTER. PRESERVE IT. DO NOT REDESIGN, REINTERPRET, RESTAGE, REGENERATE OR IMPROVE THE SCENE.
 
 This is a MASTER-LOCKED EDIT, not a fresh generation.
 
@@ -42,19 +50,81 @@ Success means the output feels like the same photograph/camera observation, mere
 
 Return one 9:16 image."""
 
+
 def main():
- refs=list((ROOT/'var/scene-references/pub-1105').glob('composition-gpt.*'))
- if len(refs)!=1: raise SystemExit(f'expected one persistent GPT master, found {len(refs)}; no provider call made')
- p=refs[0]; raw=p.read_bytes()
- with Image.open(io.BytesIO(raw)) as opened:
-  opened.load(); dims=opened.size; fmt=opened.format; im=ImageOps.exif_transpose(opened).convert('RGB'); buf=io.BytesIO(); im.save(buf,'JPEG',quality=98,subsampling=0); data=buf.getvalue()
- ref=ReferenceImage(name='locked-whole-scene-master',data=data,mime_type='image/jpeg',locked=True)
- settings=get_settings()
- if not settings.google_media_live or settings.gemini_api_key is None: raise SystemExit('Google media not live; no provider call made')
- stamp=datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ'); out=ROOT/'var/renderer-validation/pub-1105'/stamp; out.mkdir(parents=True,exist_ok=True)
- model='gemini-3-pro-image'; client=GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(),model=model)
- result=client.generate(GoogleImageRequest(prompt=PROMPT,references=(ref,),aspect_ratio='9:16',image_size='2K'))
- suffix='.png' if result.mime_type=='image/png' else '.jpg'; output=out/('seed-1'+suffix); output.write_bytes(result.data)
- manifest={'scene':'pub-1105','experiment':'master-locked-scene-preservation-v2','generated_at':stamp,'model':model,'aspect_ratio':'9:16','image_size':'2K','composition_reference_used':True,'source_master':str(p.relative_to(ROOT)),'source_master_sha256':hashlib.sha256(raw).hexdigest(),'source_dimensions':list(dims),'source_format':fmt,'continuity_layer':'scene','preservation_contract':'master_locked','preserve':['all_existing_people','positions','poses','interactions','gazes','crowd_density','attention_distribution','foreground_obstruction','occlusion','depth','lighting','camera_viewpoint','pool_table','stool','beer','central_action_geometry','secondary_tertiary_events'],'change':['9:16_canvas_only','peripheral_extension_only_if_unavoidable'],'candidate_count':1,'manual_gate':'scene_richness_review_before_identity'}
- (out/'manifest.json').write_text(json.dumps(manifest,indent=2)); (out/'prompt.txt').write_text(PROMPT); print(f'RESULT_DIR={out}')
-if __name__=='__main__': main()
+    refs = list((ROOT / "var/scene-references/pub-1105").glob("composition-gpt.*"))
+    if len(refs) != 1:
+        raise SystemExit(
+            f"expected one persistent GPT master, found {len(refs)}; no provider call made"
+        )
+    p = refs[0]
+    raw = p.read_bytes()
+    with Image.open(io.BytesIO(raw)) as opened:
+        opened.load()
+        dims = opened.size
+        fmt = opened.format
+        im = ImageOps.exif_transpose(opened).convert("RGB")
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=98, subsampling=0)
+        data = buf.getvalue()
+    ref = ReferenceImage(
+        name="locked-whole-scene-master", data=data, mime_type="image/jpeg", locked=True
+    )
+    settings = get_settings()
+    if not settings.google_media_live or settings.gemini_api_key is None:
+        raise SystemExit("Google media not live; no provider call made")
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    out = ROOT / "var/renderer-validation/pub-1105" / stamp
+    out.mkdir(parents=True, exist_ok=True)
+    model = "gemini-3-pro-image"
+    client = GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(), model=model)
+    result = client.generate(
+        GoogleImageRequest(prompt=PROMPT, references=(ref,), aspect_ratio="9:16", image_size="2K")
+    )
+    suffix = ".png" if result.mime_type == "image/png" else ".jpg"
+    output = out / ("seed-1" + suffix)
+    output.write_bytes(result.data)
+    manifest = {
+        "scene": "pub-1105",
+        "experiment": "master-locked-scene-preservation-v2",
+        "generated_at": stamp,
+        "model": model,
+        "aspect_ratio": "9:16",
+        "image_size": "2K",
+        "composition_reference_used": True,
+        "source_master": str(p.relative_to(ROOT)),
+        "source_master_sha256": hashlib.sha256(raw).hexdigest(),
+        "source_dimensions": list(dims),
+        "source_format": fmt,
+        "continuity_layer": "scene",
+        "preservation_contract": "master_locked",
+        "preserve": [
+            "all_existing_people",
+            "positions",
+            "poses",
+            "interactions",
+            "gazes",
+            "crowd_density",
+            "attention_distribution",
+            "foreground_obstruction",
+            "occlusion",
+            "depth",
+            "lighting",
+            "camera_viewpoint",
+            "pool_table",
+            "stool",
+            "beer",
+            "central_action_geometry",
+            "secondary_tertiary_events",
+        ],
+        "change": ["9:16_canvas_only", "peripheral_extension_only_if_unavoidable"],
+        "candidate_count": 1,
+        "manual_gate": "scene_richness_review_before_identity",
+    }
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    (out / "prompt.txt").write_text(PROMPT)
+    print(f"RESULT_DIR={out}")
+
+
+if __name__ == "__main__":
+    main()

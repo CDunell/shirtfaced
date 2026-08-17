@@ -5,17 +5,25 @@ Purpose: restore distributed room energy and attention balance before any furthe
 identity refinement. The persistent GPT composition image is the locked scene
 master; Damo identity is deliberately secondary in this pass.
 """
+
 from __future__ import annotations
-import hashlib, io, json, sys
+
+import hashlib
+import io
+import json
+import sys
 from datetime import UTC, datetime
 from pathlib import Path
+
 from PIL import Image, ImageOps
-ROOT=Path(__file__).resolve().parents[1]; sys.path.insert(0,str(ROOT))
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 from app.adapters.google_media import GoogleImageClient, GoogleImageRequest
 from app.adapters.reference_images import ReferenceImage
 from app.config import get_settings
 
-PROMPT="""IMAGE 1 IS THE LOCKED MASTER PHOTOGRAPH AND OWNS THE WHOLE SCENE.
+PROMPT = """IMAGE 1 IS THE LOCKED MASTER PHOTOGRAPH AND OWNS THE WHOLE SCENE.
 
 Edit IMAGE 1 as conservatively as possible into a native vertical 9:16 social frame. This is a SCENE-FIRST preservation pass, not a portrait, not a character showcase and not a fresh generation.
 
@@ -33,27 +41,97 @@ Identity is NOT the optimisation target in this pass. Do not perform a dedicated
 
 Return one photorealistic 9:16 edited photograph only."""
 
-def composition_master() -> Path:
- root=ROOT/"var/scene-references/pub-1105"
- files=[p for p in root.glob("composition-gpt.*") if p.is_file() and p.stat().st_size>0]
- if len(files)!=1: raise SystemExit(f"expected exactly one persistent GPT composition master, found {len(files)}; no provider call made")
- return files[0]
 
-def make_ref(path:Path):
- raw=path.read_bytes()
- with Image.open(io.BytesIO(raw)) as opened:
-  opened.load(); fmt=opened.format; dims=opened.size
-  im=ImageOps.exif_transpose(opened).convert("RGB"); im.thumbnail((3072,3072),Image.Resampling.LANCZOS)
-  buf=io.BytesIO(); im.save(buf,"JPEG",quality=98,subsampling=0); data=buf.getvalue()
- return ReferenceImage(name="locked-scene-master",data=data,mime_type="image/jpeg",locked=True),{"name":"locked-scene-master","role":"scene-truth-and-attention-hierarchy","path":str(path.relative_to(ROOT)),"sha256":hashlib.sha256(raw).hexdigest(),"bytes":len(raw),"format":fmt,"dimensions":list(dims)}
+def composition_master() -> Path:
+    root = ROOT / "var/scene-references/pub-1105"
+    files = [p for p in root.glob("composition-gpt.*") if p.is_file() and p.stat().st_size > 0]
+    if len(files) != 1:
+        raise SystemExit(
+            f"expected exactly one persistent GPT composition master, found {len(files)}; no provider call made"
+        )
+    return files[0]
+
+
+def make_ref(path: Path):
+    raw = path.read_bytes()
+    with Image.open(io.BytesIO(raw)) as opened:
+        opened.load()
+        fmt = opened.format
+        dims = opened.size
+        im = ImageOps.exif_transpose(opened).convert("RGB")
+        im.thumbnail((3072, 3072), Image.Resampling.LANCZOS)
+        buf = io.BytesIO()
+        im.save(buf, "JPEG", quality=98, subsampling=0)
+        data = buf.getvalue()
+    return ReferenceImage(
+        name="locked-scene-master", data=data, mime_type="image/jpeg", locked=True
+    ), {
+        "name": "locked-scene-master",
+        "role": "scene-truth-and-attention-hierarchy",
+        "path": str(path.relative_to(ROOT)),
+        "sha256": hashlib.sha256(raw).hexdigest(),
+        "bytes": len(raw),
+        "format": fmt,
+        "dimensions": list(dims),
+    }
+
 
 def main():
- master=composition_master(); ref,meta=make_ref(master); settings=get_settings()
- if not settings.google_media_live or settings.gemini_api_key is None: raise SystemExit("Google media not live; no provider call made")
- model="gemini-3-pro-image"; stamp=datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ"); out=ROOT/"var/renderer-validation/pub-1105"/stamp; out.mkdir(parents=True,exist_ok=True)
- client=GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(),model=model)
- result=client.generate(GoogleImageRequest(prompt=PROMPT,references=(ref,),aspect_ratio="9:16",image_size="2K"))
- output=out/"seed-1.jpg"; output.write_bytes(result.data)
- manifest={"scene":"pub-1105","experiment":"scene-first-distributed-chaos-reset","generated_at":stamp,"model":model,"aspect_ratio":"9:16","image_size":"2K","composition_reference_used":True,"source_master":str(master.relative_to(ROOT)),"source_master_sha256":hashlib.sha256(master.read_bytes()).hexdigest(),"candidate_count":1,"priority_hierarchy":["room-going-off","accidental-crowd-photograph","multiple-simultaneous-interactions","damo-pool-table-incident","damo-identity"],"preserve":["scene-richness","distributed-independent-action","crowd-density","occlusion","foreground-obstruction","lighting-distribution","pool-table-geometry","stool-and-beer","damo-action","band-as-separate-background-event","documentary-camera-premise"],"change":["vertical-9x16-extension-only-as-needed"],"references":[meta],"manual_gate":"scene_richness_review_required_before_identity_or_video"}; (out/"manifest.json").write_text(json.dumps(manifest,indent=2)); (out/"prompt.txt").write_text(PROMPT)
- print(f"MASTER={master}"); print(f"RESULT_DIR={out}")
-if __name__=="__main__": main()
+    master = composition_master()
+    ref, meta = make_ref(master)
+    settings = get_settings()
+    if not settings.google_media_live or settings.gemini_api_key is None:
+        raise SystemExit("Google media not live; no provider call made")
+    model = "gemini-3-pro-image"
+    stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+    out = ROOT / "var/renderer-validation/pub-1105" / stamp
+    out.mkdir(parents=True, exist_ok=True)
+    client = GoogleImageClient(api_key=settings.gemini_api_key.get_secret_value(), model=model)
+    result = client.generate(
+        GoogleImageRequest(prompt=PROMPT, references=(ref,), aspect_ratio="9:16", image_size="2K")
+    )
+    output = out / "seed-1.jpg"
+    output.write_bytes(result.data)
+    manifest = {
+        "scene": "pub-1105",
+        "experiment": "scene-first-distributed-chaos-reset",
+        "generated_at": stamp,
+        "model": model,
+        "aspect_ratio": "9:16",
+        "image_size": "2K",
+        "composition_reference_used": True,
+        "source_master": str(master.relative_to(ROOT)),
+        "source_master_sha256": hashlib.sha256(master.read_bytes()).hexdigest(),
+        "candidate_count": 1,
+        "priority_hierarchy": [
+            "room-going-off",
+            "accidental-crowd-photograph",
+            "multiple-simultaneous-interactions",
+            "damo-pool-table-incident",
+            "damo-identity",
+        ],
+        "preserve": [
+            "scene-richness",
+            "distributed-independent-action",
+            "crowd-density",
+            "occlusion",
+            "foreground-obstruction",
+            "lighting-distribution",
+            "pool-table-geometry",
+            "stool-and-beer",
+            "damo-action",
+            "band-as-separate-background-event",
+            "documentary-camera-premise",
+        ],
+        "change": ["vertical-9x16-extension-only-as-needed"],
+        "references": [meta],
+        "manual_gate": "scene_richness_review_required_before_identity_or_video",
+    }
+    (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    (out / "prompt.txt").write_text(PROMPT)
+    print(f"MASTER={master}")
+    print(f"RESULT_DIR={out}")
+
+
+if __name__ == "__main__":
+    main()

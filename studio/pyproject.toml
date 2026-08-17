@@ -50,6 +50,14 @@ select = ["E", "W", "F", "I", "B", "UP", "C4", "SIM", "TID", "RUF"]
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["B008"]
 "app/routes/**" = ["B008"]
+# Operator scripts, run by hand or by a workflow on the box. Two rules are
+# properties of what they are rather than faults:
+#   E402 - each one inserts the repository root on sys.path before it can import
+#          app.*, so its imports cannot all sit at the top.
+#   E501 - they carry the generation prompts as literals. Wrapping a prompt
+#          changes the text sent to the provider, so the line stays long.
+# Every other rule, including the ones that catch real defects, still applies.
+"scripts/**" = ["E402", "E501"]
 
 [tool.mypy]
 python_version = "3.12"
@@ -62,7 +70,7 @@ module = "alembic.*"
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["fontTools.*", "scipy.*", "pgvector.*"]
+module = ["fontTools.*", "scipy.*", "pgvector.*", "google.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
