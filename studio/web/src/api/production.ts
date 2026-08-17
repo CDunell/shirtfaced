@@ -262,7 +262,7 @@ export function generateSheet(
 /** Sends the approved sheet back to Nano for one panel. */
 export function extractPanel(
   sceneKey: string,
-  input: { panel: number; name: string; selections: string[]; aspect_ratio?: string },
+  input: { panel: number; name: string; selections: string[] },
 ): Promise<CoverageFrame> {
   return send<CoverageFrame>(`/api/scenes/${sceneKey}/extract-panel`, "POST", input);
 }

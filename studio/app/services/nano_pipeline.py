@@ -49,7 +49,7 @@ from app.db.visual_models import (
 from app.domain.errors import StudioError
 from app.services import coverage_library, visual_library
 from app.services.generation_ledger import record_call as _record_call
-from app.services.nano_prompts import EXTRACTION_PROMPT
+from app.services.nano_prompts import EXTRACTION_PROMPT, position_name
 from app.services.reference_resolution import (
     ReferenceUnavailable,
     load_reference,
@@ -290,7 +290,6 @@ def extract_panel(
     panel: int,
     name: str,
     selections: list[str] | None = None,
-    aspect_ratio: str = "9:16",
     actor: str = OWNER,
 ) -> CoverageFrame:
     """Send the approved sheet back to Nano and keep the standalone still.
@@ -319,7 +318,14 @@ def extract_panel(
         ),
         *(image for _, image in chosen),
     )
-    prompt = EXTRACTION_PROMPT.format(panel=panel, aspect_ratio=aspect_ratio)
+    # §9: the panel is named by where it sits, not by an index Nano has to count.
+    position = position_name(panel, sheet.rows, sheet.columns)
+    prompt = EXTRACTION_PROMPT.format(
+        position=position,
+        rows=sheet.rows,
+        columns=sheet.columns,
+        siblings=sheet.panels - 1,
+    )
     inputs = [sheet.visual_asset_id, *(one.asset_id for one, _ in chosen)]
 
     client = _image_client(settings)
@@ -329,7 +335,7 @@ def extract_panel(
             GoogleImageRequest(
                 prompt=prompt,
                 references=references,
-                aspect_ratio=aspect_ratio,
+                aspect_ratio=None,
                 image_size=settings.google_image_size,
             )
         )
@@ -359,7 +365,7 @@ def extract_panel(
         name=name,
         panel=panel,
         data=result.data,
-        aspect_ratio=aspect_ratio,
+        aspect_ratio=None,
         provider=PROVIDER,
         model=result.model,
         prompt_hash=hashlib.sha256(prompt.encode("utf-8")).hexdigest(),

@@ -552,7 +552,6 @@ class ExtractPanelIn(BaseModel):
     panel: int = Field(ge=1)
     name: str = Field(min_length=1, max_length=96, pattern=r"^[a-z0-9][a-z0-9_-]*$")
     selections: list[str] = Field(default_factory=list)
-    aspect_ratio: str = "9:16"
 
 
 @router.get("/scenes/{scene_key}/pipeline", summary="What the pipeline needs to run here")
@@ -658,7 +657,6 @@ def extract_panel(
             panel=payload.panel,
             name=payload.name,
             selections=payload.selections,
-            aspect_ratio=payload.aspect_ratio,
         )
     except nano_pipeline.PipelineUnavailable as error:
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error

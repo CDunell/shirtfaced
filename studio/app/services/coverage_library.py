@@ -29,6 +29,7 @@ import uuid
 from collections.abc import Sequence
 from dataclasses import dataclass
 from io import BytesIO
+from math import gcd
 from typing import Any
 
 from PIL import Image
@@ -208,6 +209,21 @@ def derive_coverage_frame(
         )
     )
     return frame
+
+
+def measured_ratio(width: int, height: int) -> str:
+    """``9:16`` from the pixels, reduced. What the image is, not what was asked.
+
+    Falls back to the raw pair when the reduction is not a tidy one, because
+    "1367:768" is a true statement about the file and "16:9" would not be.
+    """
+    if width <= 0 or height <= 0:  # pragma: no cover - measurements are positive
+        return "unknown"
+    divisor = gcd(width, height)
+    left, right = width // divisor, height // divisor
+    if left > 64 or right > 64:
+        return f"{width}:{height}"
+    return f"{left}:{right}"
 
 
 def _record_lineage_edge(
@@ -536,7 +552,7 @@ def record_panel_extraction(
     name: str,
     panel: int,
     data: bytes,
-    aspect_ratio: str = "9:16",
+    aspect_ratio: str | None = None,
     provider: str | None = None,
     model: str | None = None,
     provider_request_id: str | None = None,
@@ -601,7 +617,11 @@ def record_panel_extraction(
 
     frame.name = name
     frame.visual_asset_id = ingested.asset.id
-    frame.aspect_ratio = aspect_ratio
+    # Measured from what came back, not requested. §10's extraction is a crop:
+    # the frame's shape is the panel's shape, and asking for a different one
+    # turns a crop into a reframe. So this records the ratio rather than
+    # imposing it.
+    frame.aspect_ratio = aspect_ratio or measured_ratio(ingested.asset.width, ingested.asset.height)
     frame.width, frame.height = ingested.asset.width, ingested.asset.height
     frame.x = frame.y = None
     frame.frame_sha256 = ingested.asset.sha256

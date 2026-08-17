@@ -1,106 +1,116 @@
-"""The prompts are the supplied masters, and the sheet is whatever shape it comes back.
+"""Extraction is the tested structural crop, and no stage imposes a shape.
 
-Two failures on 18 August 2026, neither of which the numbers would have caught,
-because nothing was out of range: the sheet was a valid 16:9 image and the
-extracted panel was a valid 9:16 one. Looking at them caught it — nine landscape
-cells for a vertical delivery, and a "standalone" panel that was three landscape
-frames stacked down the canvas.
+Three failures on 18 August 2026, each one a rewrite of something the owner had
+already written down.
 
-The first of those was self-inflicted in a way worth pinning. The extraction
-prompt in code was a paraphrase of the supplied master: seven lines standing in
-for eleven, and among the four it dropped were "combine it with another panel"
-and "no contact-sheet grid, borders, labels or other panels are visible" — the
-two that describe precisely what came back. A paraphrase of a prompt is a
-rewrite of it, and nothing recorded which words had gone.
+1. The extraction prompt in code was a paraphrase of a supplied master — seven
+   lines standing in for eleven — and among the four it dropped were "combine it
+   with another panel" and "no contact-sheet grid, borders, labels or other
+   panels are visible". An extraction came back as three landscape frames
+   stacked down one canvas: precisely that.
+
+2. The fix was to force the coverage sheet to 9:16, on the theory that a 3x3
+   grid divides its canvas into nine cells of the canvas's ratio. The model
+   composes a layout rather than dividing a canvas: it returned 3072x5504
+   holding twelve cells in two columns of six, still landscape, while the sheet
+   record still said nine.
+
+3. Then the prompt was restored from the wrong document. NANO_BANANA_VEO_SCENE_
+   PRODUCTION_PIPELINE.md §10 states the tested extraction method outright, and
+   it is short, positional, structural, and names no aspect ratio at all.
+
+What all three have in common is a shape being requested somewhere the owner
+never asked for one. So these pin the absence.
 """
 
 from __future__ import annotations
 
 import inspect
-from pathlib import Path
 
 from app.config import PROJECT_ROOT, Settings
-from app.services.nano_pipeline import EXTRACTION_PROMPT, generate_coverage_sheet
+from app.services.coverage_library import measured_ratio, record_panel_extraction
+from app.services.nano_pipeline import extract_panel, generate_coverage_sheet
+from app.services.nano_prompts import EXTRACTION_PROMPT, position_name
 
-MASTER = (
+PIPELINE = (
     PROJECT_ROOT.parent
     / "docs"
     / "stage-2"
     / "social-ai-production"
-    / "NANO_BANANA_CONTACT_SHEET_EXTRACTION_PROMPT.md"
+    / "NANO_BANANA_VEO_SCENE_PRODUCTION_PIPELINE.md"
 )
 
 
-def test_the_extraction_prompt_is_the_supplied_master_word_for_word() -> None:
-    """The copy in code and the document it came from, compared outright.
+def test_the_extraction_prompt_is_10s_tested_method() -> None:
+    """Compared against the document's own example, line for line.
 
-    Held as a constant rather than read at call time so a provider call does not
-    depend on a documentation path staying put — which is the reason a copy
-    exists, and the reason it needs checking.
+    Only the panel's position, the grid size and the sibling count are
+    substituted; §9 requires the position be structural, so the numbers in the
+    document's 3x3 example fall out of the same fields.
     """
-    supplied = MASTER.read_text(encoding="utf-8").strip()
-    expected = supplied.replace("{{panel_number_or_description}}", "{panel}").replace(
-        "{{target_aspect_ratio}}", "{aspect_ratio}"
-    )
+    example = PIPELINE.read_text(encoding="utf-8").split("The tested extraction method")[1]
+    example = example.split("```")[1].strip()
+    if example.startswith("text"):
+        example = example[len("text") :].strip()
 
-    assert EXTRACTION_PROMPT.strip() == expected
+    rendered = EXTRACTION_PROMPT.format(position="top-center", rows=3, columns=3, siblings=8)
 
-
-def test_the_lines_the_paraphrase_dropped_are_present() -> None:
-    """Named outright, because these two are what the failure looked like."""
-    prompt = EXTRACTION_PROMPT.format(panel=2, aspect_ratio="9:16")
-
-    assert "combine it with another panel" in prompt
-    assert "No contact-sheet grid, borders, labels or other panels are visible" in prompt
+    assert rendered.strip() == example
 
 
-def test_the_world_prompt_is_an_adaptation_of_the_supplied_coverage_master() -> None:
-    """Scene prompts are specialised per scene, so this checks shape, not words.
+def test_a_panel_is_named_by_where_it_sits() -> None:
+    """§9: selection should not require Nano to reinterpret what a panel means."""
+    assert position_name(1, 3, 3) == "top-left"
+    assert position_name(2, 3, 3) == "top-center"
+    assert position_name(5, 3, 3) == "middle-center"
+    assert position_name(9, 3, 3) == "bottom-right"
+    # A sheet that is not 3x3 has no "middle-center", so it is named plainly.
+    assert position_name(4, 6, 2) == "row 2 / column 2"
 
-    The coverage master is written to be adapted — it says so — and W01-P28's
-    fills in the actual room. What must survive adaptation is its structure.
+
+def test_extraction_requests_no_aspect_ratio() -> None:
+    """§10 expands the panel to fill the canvas, preserving its composition.
+
+    Requesting a ratio is what turned a crop into a reframe, which §11 forbids
+    outright: extraction is structural, never corrective.
     """
-    scene = Path(PROJECT_ROOT / "worlds/world-01/shots/W01-P28.nano-banana-coverage.txt").read_text(
-        encoding="utf-8"
-    )
-
-    for heading in (
-        "<instruction>",
-        "**Row 1 (World / Event):**",
-        "**Row 2 (Core Human Coverage):**",
-        "**Row 3 (Details & Alternate Observations):**",
-        'Generate a cohesive 3x3 grid "Documentary Contact Sheet"',
-        "The scene exists independently of the camera.",
-    ):
-        assert heading in scene
+    assert "aspect" not in EXTRACTION_PROMPT.lower()
+    assert "aspect_ratio" not in inspect.signature(extract_panel).parameters
 
 
-def test_the_sheet_asks_for_no_aspect_ratio() -> None:
-    """The sheet comes back the shape the model decides.
+def test_the_sheet_requests_no_aspect_ratio_either() -> None:
+    """The sheet comes back the shape the model decides. §7 states no shape."""
+    assert inspect.signature(generate_coverage_sheet).parameters["aspect_ratio"].default is None
 
-    Forcing one was an invented constraint, and it did not do what it was
-    supposed to. The theory was that a 3x3 grid divides its canvas into nine
-    cells of the canvas's ratio, so a 9:16 canvas would make the panels
-    vertical. The model composes a layout instead of dividing a canvas: asked
-    for a 3x3 grid at 9:16 it returned 3072x5504 holding twelve cells in two
-    columns of six, still landscape, while the sheet record said nine.
 
-    The frame shape is chosen per panel at extraction, which is where the
-    supplied master puts it: TARGET ASPECT RATIO.
-    """
-    default = inspect.signature(generate_coverage_sheet).parameters["aspect_ratio"].default
-
-    assert default is None
+def test_a_frame_records_the_ratio_it_came_back_as() -> None:
+    """Measured, not requested — and null means measure it, not assume 9:16."""
+    assert inspect.signature(record_panel_extraction).parameters["aspect_ratio"].default is None
+    assert measured_ratio(1080, 1920) == "9:16"
+    assert measured_ratio(1376, 768) == "43:24"
 
 
 def test_a_sheet_is_generated_larger_than_a_single_frame() -> None:
     """Nine images in one file. 1K makes each panel a 459-pixel thumbnail.
 
-    Not a preference: the supplied extraction master itself allows for "where the
-    small contact-sheet panel lacks fine pixel detail", and the first sheet came
-    back 1376x768.
+    Resolution is about pixels, not shape, so it survives all of the above. §10
+    asks extraction to expand a panel to fill a canvas, which it can only do
+    with pixels to work from.
     """
     settings = Settings()
 
     assert settings.google_sheet_image_size == "4K"
     assert settings.google_image_size != "1K"
+
+
+def test_the_pipeline_document_is_in_the_repository() -> None:
+    """It was not, until 18 August 2026, and that is why it was not followed."""
+    text = PIPELINE.read_text(encoding="utf-8")
+
+    for law in (
+        "The scene exists independently of the camera.",
+        "Never repair the selected shot during extraction.",
+        "Extraction is structural, not corrective.",
+        "Failed panels are fixed upstream.",
+    ):
+        assert law in text
