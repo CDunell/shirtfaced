@@ -23,7 +23,12 @@ class GoogleMediaError(RuntimeError):
 class GoogleImageRequest:
     prompt: str
     references: tuple[ReferenceImage, ...] = ()
-    aspect_ratio: str = "16:9"
+    # None asks for nothing and lets the model return the shape it thinks the
+    # prompt wants. That is not the same as a default: a contact sheet is a
+    # layout of nine observations, and stating a canvas ratio makes the model
+    # re-lay-out the grid to fit it rather than compose the grid it was asked
+    # for. A single frame is different -- there, the shape is the deliverable.
+    aspect_ratio: str | None = "16:9"
     image_size: str = "1K"
 
 
@@ -72,14 +77,17 @@ class GoogleImageClient:
             )
         inputs.append({"type": "text", "text": request.prompt})
 
+        response_format: dict[str, str] = {
+            "type": "image",
+            "image_size": request.image_size,
+        }
+        if request.aspect_ratio is not None:
+            response_format["aspect_ratio"] = request.aspect_ratio
+
         interaction = self._client.interactions.create(
             model=self._model,
             input=inputs,
-            response_format={
-                "type": "image",
-                "aspect_ratio": request.aspect_ratio,
-                "image_size": request.image_size,
-            },
+            response_format=response_format,
         )
         output = getattr(interaction, "output_image", None)
         if output is None or not getattr(output, "data", None):

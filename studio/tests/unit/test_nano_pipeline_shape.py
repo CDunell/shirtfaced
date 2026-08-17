@@ -1,4 +1,4 @@
-"""The prompts are the supplied masters, and the sheet is the shape of a panel.
+"""The prompts are the supplied masters, and the sheet is whatever shape it comes back.
 
 Two failures on 18 August 2026, neither of which the numbers would have caught,
 because nothing was out of range: the sheet was a valid 16:9 image and the
@@ -75,20 +75,22 @@ def test_the_world_prompt_is_an_adaptation_of_the_supplied_coverage_master() -> 
         assert heading in scene
 
 
-def test_a_sheet_takes_the_shape_of_its_panels() -> None:
-    """A 3x3 grid divides its canvas into nine cells of the canvas's own ratio.
+def test_the_sheet_asks_for_no_aspect_ratio() -> None:
+    """The sheet comes back the shape the model decides.
 
-    So the sheet is generated 9:16 — the shape the panels have to be — rather
-    than 16:9, the shape the master is.
+    Forcing one was an invented constraint, and it did not do what it was
+    supposed to. The theory was that a 3x3 grid divides its canvas into nine
+    cells of the canvas's ratio, so a 9:16 canvas would make the panels
+    vertical. The model composes a layout instead of dividing a canvas: asked
+    for a 3x3 grid at 9:16 it returned 3072x5504 holding twelve cells in two
+    columns of six, still landscape, while the sheet record said nine.
 
-    This one is not in the supplied documents either way. Their pipeline puts the
-    reshaping in the extraction step, "extraction at target aspect ratio", which
-    is a defensible design and is the one that produced nine landscape panels for
-    a vertical edit. Recorded here as the owner's call rather than the document's.
+    The frame shape is chosen per panel at extraction, which is where the
+    supplied master puts it: TARGET ASPECT RATIO.
     """
     default = inspect.signature(generate_coverage_sheet).parameters["aspect_ratio"].default
 
-    assert default == "9:16"
+    assert default is None
 
 
 def test_a_sheet_is_generated_larger_than_a_single_frame() -> None:

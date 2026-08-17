@@ -185,7 +185,7 @@ def generate_coverage_sheet(
     label: str,
     selections: list[str],
     prompt: str,
-    aspect_ratio: str = "9:16",
+    aspect_ratio: str | None = None,
     actor: str = OWNER,
 ) -> SceneContactSheet:
     """Send the master and the chosen references to Nano, keep what comes back.
@@ -194,18 +194,20 @@ def generate_coverage_sheet(
     contract is explicit that a sheet is a planning artefact rather than a
     preview, so it is persisted either way.
 
-    **The sheet takes the shape of the panels, not the shape of the master.** A
-    3x3 grid divides its canvas into nine cells of the canvas's own ratio, so a
-    16:9 sheet yields nine 16:9 observations — and the delivery is a vertical
-    9:16 social edit. The first sheet was generated 16:9 and every panel came
-    back landscape, which pushed the reframe onto the extraction step, where
-    MASTER_FIRST_PIPELINE.md had already recorded that reframing fails. A 9:16
-    canvas divides into nine 9:16 cells, and extraction becomes a straight
-    reproduction with no reshaping asked of it at all.
+    **No aspect ratio is requested.** The sheet comes back the shape the model
+    decides, because the sheet is a layout of nine observations rather than a
+    frame, and the frame shape is chosen later, per panel, at extraction.
 
-    The master stays 16:9. It is the spatial authority, and each panel declares
-    its own vertical window on it — which is §8's coverage rule, arrived at from
-    the other direction.
+    This was got wrong on 18 August 2026 on the theory that a 3x3 grid divides
+    its canvas into nine cells of the canvas's ratio, so a 9:16 canvas would
+    yield nine vertical panels. It does not work that way. The model composes a
+    layout rather than dividing a canvas: asked for a 3x3 grid on a 9:16 canvas
+    it returned 3072x5504 holding **twelve** cells in two columns of six, still
+    landscape. The stated ratio did not reshape the panels, it reshaped the grid
+    — and the sheet record still said nine, so three of them were unreachable.
+
+    Stating a shape here is an invented constraint in the plainest sense: not a
+    property of the model, and not a decision the owner made.
     """
     try:
         master = resolve_scene_master(session, store, scene_key=scene_key)
