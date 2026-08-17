@@ -12,6 +12,12 @@
  * panel to extract it. The only decisions left are the ones that are actually
  * decisions — which master, and whether what came back is any good.
  *
+ * The screen is built one row per person, not one per photograph. Each person
+ * has three references and only one of them is normally sent — the 3x3 contact
+ * sheet, which already contains the other two as cells 1 and 5. Listing all
+ * thirty-three was a wall of near-identical chips that argued for sending the
+ * same view three times. The singles are still reachable behind Frames.
+ *
  * Approve and reject are both real. Rejecting keeps the take: a rerun is a new
  * call, never an overwrite, and a bad take is evidence about the prompt.
  *
@@ -52,6 +58,7 @@ import {
   takeVideoSource,
   type ContactSheet,
   type CoverageFrame,
+  type ReferenceChoice,
   type MotionTake,
   type PipelineInputs,
   type Scene,
@@ -59,6 +66,16 @@ import {
 
 function shortSha(sha: string): string {
   return sha.slice(0, 12);
+}
+
+/** The one reference a person is normally sent: their 3x3 sheet. */
+function defaultReference(choices: ReferenceChoice[]): ReferenceChoice | null {
+  return (
+    choices.find((one) => one.role === "contact_sheet") ??
+    choices.find((one) => one.role === "head_shoulders_neutral") ??
+    choices[0] ??
+    null
+  );
 }
 
 function seconds(ms: number | null): string {
@@ -88,6 +105,9 @@ export function ScenesBench(): React.JSX.Element {
   const masterInput = useRef<HTMLInputElement>(null);
 
   const [picked, setPicked] = useState<Set<string>>(new Set());
+  const [showFrames, setShowFrames] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
+  const [showDirection, setShowDirection] = useState(false);
   const [promptName, setPromptName] = useState<string | null>(null);
   const [shotNames, setShotNames] = useState<Record<number, string>>({});
 
@@ -230,6 +250,27 @@ export function ScenesBench(): React.JSX.Element {
     [act, ranges],
   );
 
+  const people = useMemo(() => {
+    const grouped = new Map<string, ReferenceChoice[]>();
+    for (const one of inputs?.references ?? [])
+      grouped.set(one.slug, [...(grouped.get(one.slug) ?? []), one]);
+    return [...grouped.entries()];
+  }, [inputs]);
+
+  const togglePerson = useCallback(
+    (choices: ReferenceChoice[]) => {
+      const keys = choices.map((one) => one.key);
+      const next = new Set(picked);
+      if (keys.some((key) => next.has(key))) for (const key of keys) next.delete(key);
+      else {
+        const chosen = defaultReference(choices);
+        if (chosen) next.add(chosen.key);
+      }
+      setPicked(next);
+    },
+    [picked],
+  );
+
   const takesByShot = useMemo(() => {
     const grouped = new Map<string, MotionTake[]>();
     for (const take of takes) grouped.set(take.shot, [...(grouped.get(take.shot) ?? []), take]);
@@ -245,6 +286,14 @@ export function ScenesBench(): React.JSX.Element {
     gap: "8px",
     background: theme.colors.backgroundSecondary,
   });
+  const row = css({
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginTop: "20px",
+  });
+  const quiet = css({ color: theme.colors.contentTertiary });
   const mono = css({
     fontFamily: "monospace",
     fontSize: "11px",
@@ -264,11 +313,6 @@ export function ScenesBench(): React.JSX.Element {
       >
         Scenes
       </PageTitle>
-      <ParagraphXSmall>
-        Pick the people, press generate, review what comes back. The master, the references and the
-        scene&apos;s coverage prompt are resolved for you.
-      </ParagraphXSmall>
-
       {error ? (
         <Notification
           kind={NOTIFICATION_KIND.negative}
@@ -313,37 +357,55 @@ export function ScenesBench(): React.JSX.Element {
         ))}
       </div>
 
-      <SectionTitle>1 — The master, which is yours to choose</SectionTitle>
-      <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-          gap: "10px",
-          alignItems: "center",
-          marginBottom: "16px",
-        })}
-      >
-        <Input
-          value={scene ? scene.scene_key : newScene}
-          onChange={(event) => {
-            setSelected(null);
-            setNewScene(event.currentTarget.value);
-          }}
-          placeholder="Scene key, e.g. W01-P28"
-        />
-        <input ref={masterInput} type="file" accept="image/png,image/jpeg,image/webp" />
-        <Checkbox
-          checked={approveMasterOnUpload}
-          onChange={(event) => {
-            setApproveMasterOnUpload(event.currentTarget.checked);
-          }}
-        >
-          Approve it
-        </Checkbox>
-        <Button disabled={busy !== null} onClick={onRegisterMaster}>
-          Add master
-        </Button>
+      <div className={row}>
+        <SectionTitle>1 — Master</SectionTitle>
+        {master ? (
+          <Button
+            size={SIZE.mini}
+            kind={BUTTON_KIND.tertiary}
+            onClick={() => {
+              setShowUpload(!showUpload);
+            }}
+          >
+            {showUpload ? "Cancel" : "Add another"}
+          </Button>
+        ) : null}
       </div>
+
+      {/* Hidden once a scene has one: on a phone this was four controls above
+          the fold, in front of the master they came to look at. */}
+      {master && !showUpload ? null : (
+        <div
+          className={css({
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
+            gap: "10px",
+            alignItems: "center",
+            marginBottom: "16px",
+          })}
+        >
+          <Input
+            value={scene ? scene.scene_key : newScene}
+            onChange={(event) => {
+              setSelected(null);
+              setNewScene(event.currentTarget.value);
+            }}
+            placeholder="Scene key, e.g. W01-P28"
+          />
+          <input ref={masterInput} type="file" accept="image/png,image/jpeg,image/webp" />
+          <Checkbox
+            checked={approveMasterOnUpload}
+            onChange={(event) => {
+              setApproveMasterOnUpload(event.currentTarget.checked);
+            }}
+          >
+            Approve it
+          </Checkbox>
+          <Button disabled={busy !== null} onClick={onRegisterMaster}>
+            Add master
+          </Button>
+        </div>
+      )}
 
       {scene && scene.masters.length > 0 ? (
         <div
@@ -400,14 +462,22 @@ export function ScenesBench(): React.JSX.Element {
 
       {master ? (
         <>
-          <SectionTitle>2 — Who is in it</SectionTitle>
-          {inputs?.source ? (
-            <ParagraphXSmall>{`The coverage prompt comes from ${inputs.source}.`}</ParagraphXSmall>
-          ) : (
+          <div className={row}>
+            <SectionTitle>2 — Who is in it</SectionTitle>
+            <Button
+              size={SIZE.mini}
+              kind={showFrames ? BUTTON_KIND.primary : BUTTON_KIND.tertiary}
+              onClick={() => {
+                setShowFrames(!showFrames);
+              }}
+            >
+              Frames
+            </Button>
+          </div>
+          {inputs?.source ? null : (
             <>
               <ParagraphXSmall>
-                This scene&apos;s key matches no prompt filename, so pick the one it uses. A scene
-                named as its own canon names it will match without this.
+                No prompt is filed under this scene&apos;s name. Pick the one it uses.
               </ParagraphXSmall>
               <div
                 className={css({ display: "flex", gap: "6px", flexWrap: "wrap", margin: "8px 0" })}
@@ -428,38 +498,70 @@ export function ScenesBench(): React.JSX.Element {
             </>
           )}
           <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap", margin: "10px 0" })}>
-            {(inputs?.references ?? []).map((reference) => {
-              const on = picked.has(reference.key);
+            {people.map(([slug, choices]) => {
+              const chosen = choices.filter((one) => picked.has(one.key));
               return (
                 <Button
-                  key={reference.key}
-                  size={SIZE.mini}
-                  kind={on ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                  key={slug}
+                  size={SIZE.compact}
+                  kind={chosen.length > 0 ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
                   onClick={() => {
-                    const next = new Set(picked);
-                    if (on) next.delete(reference.key);
-                    else next.add(reference.key);
-                    setPicked(next);
+                    togglePerson(choices);
                   }}
                 >
-                  {`${reference.slug} · ${reference.role.replace(/_/g, " ")}`}
+                  {slug}
+                  {showFrames && chosen.length > 0 ? (
+                    <span className={css({ marginLeft: "6px", opacity: 0.7 })}>
+                      {String(chosen.length)}
+                    </span>
+                  ) : null}
                 </Button>
               );
             })}
           </div>
-          <ParagraphXSmall>
-            {`${String(new Set([...picked].map((one) => one.split(":")[0])).size)} people selected. Nano holds identity for five; send only who the panels need.`}
-          </ParagraphXSmall>
-          <Button
-            disabled={busy !== null || (!inputs?.prompt && promptName === null)}
-            isLoading={busy === "sheet"}
-            onClick={onGenerate}
-          >
-            Generate coverage sheet
-          </Button>
+
+          {/* The individual frames, for the rare panel that wants one on its
+              own. Cells 1 and 5 of the sheet the person button already sends. */}
+          {showFrames ? (
+            <div
+              className={css({ display: "flex", gap: "6px", flexWrap: "wrap", margin: "0 0 10px" })}
+            >
+              {(inputs?.references ?? []).map((reference) => {
+                const on = picked.has(reference.key);
+                return (
+                  <Button
+                    key={reference.key}
+                    size={SIZE.mini}
+                    kind={on ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                    onClick={() => {
+                      const next = new Set(picked);
+                      if (on) next.delete(reference.key);
+                      else next.add(reference.key);
+                      setPicked(next);
+                    }}
+                  >
+                    {`${reference.slug} · ${reference.role.replace(/_/g, " ")}`}
+                  </Button>
+                );
+              })}
+            </div>
+          ) : null}
+
+          <div className={row}>
+            <Button
+              disabled={busy !== null || (!inputs?.prompt && promptName === null)}
+              isLoading={busy === "sheet"}
+              onClick={onGenerate}
+            >
+              Generate coverage sheet
+            </Button>
+            <LabelSmall className={quiet}>
+              {`${String(new Set([...picked].map((one) => one.split(":")[0])).size)} of 5`}
+            </LabelSmall>
+          </div>
 
           <div className={css({ marginTop: "24px" })}>
-            <SectionTitle>3 — The sheet</SectionTitle>
+            <SectionTitle>3 — Sheet</SectionTitle>
           </div>
           <div
             className={css({
@@ -543,9 +645,6 @@ export function ScenesBench(): React.JSX.Element {
           {approvedSheet ? (
             <>
               <SectionTitle>4 — Panels</SectionTitle>
-              <ParagraphXSmall>
-                Each panel goes back to Nano on its own and comes back as a standalone still.
-              </ParagraphXSmall>
               <div
                 className={css({
                   display: "grid",
@@ -673,35 +772,37 @@ export function ScenesBench(): React.JSX.Element {
               </div>
             </>
           ) : (
-            <ParagraphXSmall>
-              Approve a sheet and its nine panels appear here, each with its own extract button.
-            </ParagraphXSmall>
+            <ParagraphXSmall>Approve a sheet and its panels appear here.</ParagraphXSmall>
           )}
 
-          <SectionTitle>5 — Takes</SectionTitle>
-          <ParagraphXSmall>
-            An approved panel becomes a Veo first frame. Six seconds are generated and one and a
-            half to four survive, so a shot collects takes: watch one, type the seconds worth
-            cutting, and keep it. Rejected takes stay on the list — they are what the prompt cost.
-          </ParagraphXSmall>
-          <Textarea
-            value={motionPrompt}
-            onChange={(event) => {
-              setMotionEdit(event.currentTarget.value);
-            }}
-            placeholder="Motion direction"
-            rows={4}
-          />
-          <ParagraphXSmall>
-            {inputs?.motion_prompt
-              ? "Read from this scene's own shot specification. Edit it per shot; what is sent is what is recorded."
-              : "This scene has no shot specification holding motion direction, so type it here."}
-          </ParagraphXSmall>
+          <div className={row}>
+            <SectionTitle>5 — Takes</SectionTitle>
+            <Button
+              size={SIZE.mini}
+              kind={showDirection ? BUTTON_KIND.primary : BUTTON_KIND.tertiary}
+              onClick={() => {
+                setShowDirection(!showDirection);
+              }}
+            >
+              {inputs?.motion_prompt && !motionEdit ? "Direction · from canon" : "Direction"}
+            </Button>
+          </div>
+
+          {/* Pre-filled from the scene's shot specification, so it is closed by
+              default: the common case is sending it as written. */}
+          {showDirection ? (
+            <Textarea
+              value={motionPrompt}
+              onChange={(event) => {
+                setMotionEdit(event.currentTarget.value);
+              }}
+              placeholder="Motion direction"
+              rows={6}
+            />
+          ) : null}
 
           {takes.length === 0 ? (
-            <ParagraphXSmall>
-              No takes yet. Animate an approved panel above and the first one lands here.
-            </ParagraphXSmall>
+            <ParagraphXSmall>No takes yet. Animate an approved panel above.</ParagraphXSmall>
           ) : (
             [...takesByShot.entries()].map(([shot, shotTakes]) => (
               <div key={shot} className={css({ marginTop: "14px" })}>
