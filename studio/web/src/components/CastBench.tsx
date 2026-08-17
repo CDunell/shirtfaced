@@ -164,16 +164,14 @@ export function CastBench(): React.JSX.Element {
     <>
       <PageTitle
         meta={
-          loading
-            ? "Loading"
-            : `${String(members.length)} members · ${String(total)} references`
+          loading ? "Loading" : `${String(members.length)} members · ${String(total)} references`
         }
       >
         Cast
       </PageTitle>
       <ParagraphXSmall>
-        Every reference is a row with an identity, a hash and an approval state. A member can
-        have as many as the work needs.
+        Every reference is a row with an identity, a hash and an approval state. A member can have
+        as many as the work needs.
       </ParagraphXSmall>
 
       {error ? (

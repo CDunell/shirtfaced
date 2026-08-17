@@ -19,7 +19,14 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 type View =
-  | "work" | "prompts" | "concepts" | "evidence" | "research" | "cast" | "social" | "email"
+  | "work"
+  | "prompts"
+  | "concepts"
+  | "evidence"
+  | "research"
+  | "cast"
+  | "social"
+  | "email"
   | "dashboard";
 /** Which pipeline a destination belongs to.
  *

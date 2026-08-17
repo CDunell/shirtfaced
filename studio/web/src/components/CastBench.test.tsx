@@ -193,9 +193,7 @@ describe("CastBench member creation", () => {
     await userEvent.click(screen.getByRole("button", { name: /Add sk/i }));
 
     await waitFor(() => {
-      expect(created).toEqual([
-        { slug: "sk", display_name: "SK", canonical_metadata: {} },
-      ]);
+      expect(created).toEqual([{ slug: "sk", display_name: "SK", canonical_metadata: {} }]);
     });
   });
 });

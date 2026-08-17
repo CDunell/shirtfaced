@@ -63,15 +63,25 @@ async function failure(response: Response): Promise<ApiError> {
       typeof body === "object" && body !== null && "detail" in body ? String(body.detail) : null,
     )
     .catch(() => null);
-  return new ApiError(response.status, detail ?? `The Studio service returned ${String(response.status)}.`);
+  return new ApiError(
+    response.status,
+    detail ?? `The Studio service returned ${String(response.status)}.`,
+  );
 }
 
-async function send<T>(path: string, method: string, body?: unknown, signal?: AbortSignal): Promise<T> {
+async function send<T>(
+  path: string,
+  method: string,
+  body?: unknown,
+  signal?: AbortSignal,
+): Promise<T> {
   let response: Response;
   try {
     response = await fetch(path, {
       method,
-      headers: body ? { Accept: "application/json", "Content-Type": "application/json" } : { Accept: "application/json" },
+      headers: body
+        ? { Accept: "application/json", "Content-Type": "application/json" }
+        : { Accept: "application/json" },
       ...(body ? { body: JSON.stringify(body) } : {}),
       ...(signal ? { signal } : {}),
     });
