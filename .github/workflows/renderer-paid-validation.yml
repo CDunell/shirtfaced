@@ -21,9 +21,14 @@ jobs:
           set -euo pipefail
           rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=worlds --exclude=var --exclude=assets --exclude=.env --exclude=.venv --exclude=web/node_modules --exclude=web/dist --exclude=__pycache__ --exclude=.pytest_cache studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
           printf '%s\n' '${{ github.sha }}' | ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'cat > /home/ubuntu/shirtfaced-studio/var/renderer-validation/paid-code-sha'
-      - name: Verify persistent approved scene and Damo reference
+      # Was: test -s var/cast/damo/b-head-shoulders.png, plus a count of
+      # composition-gpt.* files. Both were true of images nobody had approved and
+      # false of an image that had merely been renamed. This asks the library what
+      # the run will actually resolve, before any money is spent.
+      - name: Verify Damo resolves to an approved reference
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'set -e; count=$(find /home/ubuntu/shirtfaced-studio/var/scene-references/pub-1105 -maxdepth 1 -type f -name "composition-gpt.*" -size +0c | wc -l); test "$count" -ge 1; test -s /home/ubuntu/shirtfaced-studio/var/cast/damo/b-head-shoulders.png'
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}             'cd /home/ubuntu/shirtfaced-studio && set -a && . .env && set +a &&
+             ./.venv/bin/python -m app.cli resolve-reference damo head_shoulders_neutral'
       - name: Run one surgical Damo identity candidate
         id: generate
         run: |

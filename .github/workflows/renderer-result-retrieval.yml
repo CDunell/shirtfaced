@@ -15,14 +15,24 @@ jobs:
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      # Was two scp calls naming a-full-length.png and b-head-shoulders.png.
+      # Those files were renamed on 17 August 2026 and this step would have
+      # started failing on a rename that changed nothing about the references.
+      # The library is asked which assets they are, and the box exports those.
       - name: Retrieve Damo canonical references
         run: |
           set -euo pipefail
           mkdir -p renderer-result/damo
-          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/cast/damo/a-full-length.png renderer-result/damo/
-          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/cast/damo/b-head-shoulders.png renderer-result/damo/
-          test -s renderer-result/damo/a-full-length.png
-          test -s renderer-result/damo/b-head-shoulders.png
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}             'cd /home/ubuntu/shirtfaced-studio && set -a && . .env && set +a &&
+             rm -rf var/tmp/damo-refs && mkdir -p var/tmp/damo-refs &&
+             for role in full_body_neutral head_shoulders_neutral; do
+               ./.venv/bin/python -m app.cli resolve-reference damo "$role" > "var/tmp/damo-refs/$role.txt"
+             done &&
+             ./.venv/bin/python -m app.cli export-cast-mirror --root var/tmp/damo-refs/cast'
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/tmp/damo-refs/. renderer-result/damo/
+          test -s renderer-result/damo/full_body_neutral.txt
+          test -s renderer-result/damo/head_shoulders_neutral.txt
+          ls renderer-result/damo/cast/damo/ | grep -q . 
       - uses: actions/upload-artifact@v4
         with:
           name: damo-canonical-refs

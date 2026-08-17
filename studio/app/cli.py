@@ -11,6 +11,7 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli discard-attempt <id>
     python -m app.cli prompt world-01 [--shot W01-015] [--out prompt.txt]
     python -m app.cli ingest-cast [--extra damo=expression_bridge=path.jpg] [--mirror]
+    python -m app.cli resolve-reference damo head_shoulders_neutral
 """
 
 from __future__ import annotations
@@ -113,6 +114,57 @@ def _import_design_concepts(path: str) -> int:
         print(f"  conflict: {conflict}")
     for missing in report.missing_from_source:
         print(f"  missing: {missing}")
+    return EXIT_OK
+
+
+def _resolve_reference(slug: str, role: str) -> int:
+    """Answer what production would resolve, and fail loudly if it would not.
+
+    A precondition a paid pipeline can run before it spends anything. It used
+    to be ``test -s var/cast/damo/b-head-shoulders.png``, which was true of a
+    file nobody had approved, false of a file that had merely been renamed, and
+    silent about which bytes the generator would actually receive.
+    """
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.services.reference_resolution import ReferenceUnavailable, resolve_cast_reference
+
+    store = FilesystemAssetStore(get_settings().assets_root_resolved)
+    try:
+        with get_session_factory()() as session:
+            reference = resolve_cast_reference(session, store, slug=slug, role=role)
+    except ReferenceUnavailable as error:
+        print(str(error), file=sys.stderr)
+        return EXIT_FAILED
+
+    print(
+        f"{slug}/{role} asset={reference.asset_id} sha256={reference.sha256} "
+        f"{reference.width}x{reference.height} {reference.mime_type}"
+    )
+    return EXIT_OK
+
+
+def _export_cast_mirror(root: str | None) -> int:
+    """Write the legacy ``<slug>/<file>.png`` view from the database.
+
+    A generated compatibility artefact, never a source of truth. Useful for
+    handing the approved references to something that can only take files --
+    and for proving the database and the mirror agree.
+    """
+    from app.adapters.asset_store import FilesystemAssetStore
+    from app.config import PROJECT_ROOT
+    from app.services.visual_library import export_legacy_cast_mirror
+
+    settings = get_settings()
+    target = Path(root).resolve() if root else PROJECT_ROOT / "var" / "cast"
+    store = FilesystemAssetStore(settings.assets_root_resolved)
+
+    with get_session_factory()() as session:
+        written = export_legacy_cast_mirror(session, store, target)
+
+    if not written:
+        print(f"No approved primary references to export into {target}.", file=sys.stderr)
+        return EXIT_FAILED
+    print(f"{len(written)} files written under {target}")
     return EXIT_OK
 
 
@@ -406,6 +458,19 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Rewrite the legacy var/cast files from the database afterwards.",
     )
 
+    mirror = subcommands.add_parser(
+        "export-cast-mirror",
+        help="Write the legacy var/cast files from the database. A generated view.",
+    )
+    mirror.add_argument("--root", help="Where to write. Defaults to var/cast.")
+
+    resolve = subcommands.add_parser(
+        "resolve-reference",
+        help="Print the asset a cast slug/role resolves to. Non-zero if it would refuse.",
+    )
+    resolve.add_argument("slug")
+    resolve.add_argument("role")
+
     arguments = parser.parse_args(argv)
 
     try:
@@ -419,6 +484,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _import_design_concepts(arguments.path)
         if arguments.command == "sync-archive":
             return _sync_archive()
+        if arguments.command == "export-cast-mirror":
+            return _export_cast_mirror(arguments.root)
+        if arguments.command == "resolve-reference":
+            return _resolve_reference(arguments.slug, arguments.role)
         if arguments.command == "ingest-cast":
             return _ingest_cast(arguments.root, arguments.extra, arguments.asset, arguments.mirror)
         if arguments.command == "prompt":

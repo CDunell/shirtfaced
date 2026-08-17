@@ -66,6 +66,16 @@ for world in worlds/*/; do
   ./.venv/bin/python -m app.cli import-world "$slug"
 done
 
+say "Importing the cast into the Visual Asset Library"
+# Idempotent, and identified by the SHA of the bytes: a re-run re-links what is
+# already there. var/ is excluded from the deploy rsync, so this reads whatever
+# cast the box itself holds, not whatever was in the repository.
+if [ -d var/cast ]; then
+  ./.venv/bin/python -m app.cli ingest-cast
+else
+  echo "No var/cast on this host; skipping."
+fi
+
 say "Syncing the element archive"
 ./.venv/bin/python -m app.cli sync-archive
 
