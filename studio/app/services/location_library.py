@@ -11,8 +11,8 @@ it refuses, it refuses by naming the specific gate.
 Rights are one of those gates and, as of the owner's ruling on 17 August 2026,
 one that passes by construction: the locations are invented and generated here
 like everything else, so assets default to verified. The check remains for the
-case §6.4 was written for — material that came from outside and was deliberately
-marked ``refused`` — and costs nothing while that case does not exist.
+case §6.4 was written for — something deliberately marked ``refused`` — and
+costs nothing while that case does not exist.
 """
 
 from __future__ import annotations

@@ -713,7 +713,7 @@ already exists:
 
 - `rights_status` is the existing `licence_status` enum, not a second
   three-state rights vocabulary. It already means "may this be used
-  commercially" for archive elements.
+  commercially".
 - `image_assets` is untouched. Its `attempt_id` is NOT NULL and means "a
   provider produced this", which an uploaded photograph did not.
 
@@ -757,8 +757,8 @@ The gates that do refuse are the ones that are real:
 ## ADR-022 — Rights are not an open question in the Visual Asset Library
 
 **17 August 2026.** Migration 0031 gave `visual_assets.rights_status` a default
-of `unverified`, copied from the element archive. Owner's ruling on the same
-day, when the location gate refused his own plates:
+of `unverified`. Owner's ruling on the same day, when the location gate refused
+his own plates:
 
 > we hold the rights as we fucking invented everything. there is no real people.
 
@@ -773,13 +773,6 @@ something if material ever does arrive from outside, and §6.4's gate still read
 it — it simply passes for everything the owner makes, which is everything.
 Anything genuinely third-party is marked explicitly at ingest.
 
-**`app/archive/` is untouched and must stay that way.** That library holds found
-third-party design elements, and `LicenceStatus.UNVERIFIED` as its default is the
-entire point of it: an element goes on a garment that is sold, and "nobody has
-checked" is the truth until somebody has. The two libraries share an enum and
-answer different questions, which is why a test now asserts the archive's
-default explicitly — so a later tidy-up cannot unify them by accident.
-
 This is the same shape as ADR-021, one step further out. That one was a
-constraint derived from a preference in a document; this one was a default
-copied from a neighbouring system whose situation is not this one's.
+constraint derived from a preference in a document; this one was a default that
+had no basis in what the library actually holds.

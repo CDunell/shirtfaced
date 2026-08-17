@@ -4,8 +4,8 @@ Revision ID: 0035
 Revises: 0034
 Create Date: 2026-08-17
 
-0031 gave ``visual_assets.rights_status`` a default of ``unverified``, copied
-from the element archive where that default is correct. It is not correct here.
+0031 gave ``visual_assets.rights_status`` a default of ``unverified``. That was
+never right for this library.
 
 Owner's ruling, 17 August 2026: everything in this library is invented here.
 The worlds, the cast, the locations, the scene masters and the coverage are all
@@ -17,11 +17,6 @@ So the default becomes ``verified`` and the existing rows are backfilled. The
 column stays: a licence is a fact worth recording, ``refused`` still means
 something if material ever does come in from outside, and §6.4's gate still
 reads it — it simply passes for everything the owner makes, which is everything.
-
-``app/archive/`` is untouched. That library holds found third-party design
-elements whose terms genuinely are unknown until a person reads them, and its
-default of ``unverified`` is the whole point of it. Same enum, different
-question, and the two are not being merged.
 """
 
 from __future__ import annotations

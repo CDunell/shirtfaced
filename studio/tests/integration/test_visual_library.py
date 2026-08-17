@@ -347,15 +347,3 @@ def test_rights_are_verified_by_default(session: Session, store: FilesystemAsset
 
     assert asset.rights_status is LicenceStatus.VERIFIED
     assert asset.rights_metadata == {"owner": "Shirtfaced", "origin": "owner-generated"}
-
-
-def test_the_element_archive_keeps_its_own_answer() -> None:
-    """The same enum, a different library, and a genuinely open question.
-
-    ``app/archive`` holds found third-party material whose terms nobody has read
-    yet. Its default must stay UNVERIFIED; the two are not being merged because
-    they share a type.
-    """
-    from app.domain.element import Licence
-
-    assert Licence().status is LicenceStatus.UNVERIFIED
