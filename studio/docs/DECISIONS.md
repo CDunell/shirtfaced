@@ -744,11 +744,42 @@ that is enough room for five shots.
 
 The gates that do refuse are the ones that are real:
 
-- **rights** — unverified or refused licence. A scene generated into a plate is
-  sold from it, and §6.4 puts the line exactly here. Unknown rights never stop
-  an asset being held, compared or looked at.
+- **rights** — refused or unverified licence. See ADR-022: this now passes by
+  construction, because the owner invents everything the library holds. It stays
+  for material that might one day come from outside.
 - **approval** — the image is pending or deprecated.
 - **class** — a lighting reference or a detail survey is a reference, not a
   stage. This one is a closed enum, unlike cast roles, because the class decides
   whether a plate can be promoted, and a typo must not create a new class that
   slips past the check.
+
+
+## ADR-022 — Rights are not an open question in the Visual Asset Library
+
+**17 August 2026.** Migration 0031 gave `visual_assets.rights_status` a default
+of `unverified`, copied from the element archive. Owner's ruling on the same
+day, when the location gate refused his own plates:
+
+> we hold the rights as we fucking invented everything. there is no real people.
+
+**So the default is `verified`, and 0035 backfilled every row.** The worlds, the
+cast, the locations, the scene masters and the coverage are all generated here.
+There is no photograph of a real person in the library, no model release to
+chase, no licensor. Asking the question on every ingest was asking one with a
+single answer, and the answer being absent was blocking work.
+
+The column stays. A licence is a fact worth recording, `refused` still means
+something if material ever does arrive from outside, and §6.4's gate still reads
+it — it simply passes for everything the owner makes, which is everything.
+Anything genuinely third-party is marked explicitly at ingest.
+
+**`app/archive/` is untouched and must stay that way.** That library holds found
+third-party design elements, and `LicenceStatus.UNVERIFIED` as its default is the
+entire point of it: an element goes on a garment that is sold, and "nobody has
+checked" is the truth until somebody has. The two libraries share an enum and
+answer different questions, which is why a test now asserts the archive's
+default explicitly — so a later tidy-up cannot unify them by accident.
+
+This is the same shape as ADR-021, one step further out. That one was a
+constraint derived from a preference in a document; this one was a default
+copied from a neighbouring system whose situation is not this one's.

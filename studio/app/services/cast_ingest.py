@@ -33,7 +33,7 @@ from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStore
 from app.db.visual_models import CastMember
-from app.domain.enums import LicenceStatus, VisualAssetKind, VisualAssetSourceType
+from app.domain.enums import VisualAssetKind, VisualAssetSourceType
 from app.services import visual_library
 
 logger = logging.getLogger(__name__)
@@ -206,10 +206,6 @@ def ingest_cast_directory(
                 source_type=VisualAssetSourceType.GENERATED,
                 role=role,
                 description=f"{display_name_for(slug)} — canonical {role.replace('_', ' ')}",
-                # Everything here is the owner's own generated imagery, made in
-                # their own subscription. The right to use it is not in doubt.
-                rights_status=LicenceStatus.VERIFIED,
-                rights_metadata={"owner": "Shirtfaced", "origin": "owner-generated"},
                 metadata=_asset_metadata(manifest) | {"legacy_filename": filename},
                 model=manifest.get("model"),
                 prompt_hash=manifest.get("prompt_sha256"),
@@ -286,8 +282,6 @@ def ingest_extra_reference(
         source_type=VisualAssetSourceType.GENERATED,
         role=role,
         description=description,
-        rights_status=LicenceStatus.VERIFIED,
-        rights_metadata={"owner": "Shirtfaced", "origin": "owner-generated"},
         metadata={"ingested_from": path.name},
     )
     (report.assets_created if ingested.created else report.assets_already_held).append(

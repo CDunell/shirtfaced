@@ -27,6 +27,7 @@ from app.db.models import AuditEvent
 from app.db.visual_models import AssetIsImmutable, CastMember, CastMemberAsset, VisualAsset
 from app.domain.enums import (
     AuditEventType,
+    LicenceStatus,
     VisualAssetKind,
     VisualAssetSourceType,
     VisualAssetStatus,
@@ -332,3 +333,29 @@ def test_only_approved_primaries_reach_the_mirror(
     visual_library.approve_asset(session, asset)
     session.flush()
     assert visual_library.export_legacy_cast_mirror(session, store, tmp_path) != []
+
+
+def test_rights_are_verified_by_default(session: Session, store: FilesystemAssetStore) -> None:
+    """Owner's ruling, 17 August 2026: everything here is invented here.
+
+    The worlds, the cast, the locations and the masters are all generated, there
+    are no photographs of real people, and there is no third party with a claim.
+    An ingest that had to be told this every time was asking a question with one
+    answer, and the location gate refused the owner's own plates while it did.
+    """
+    asset = ingest(session, store, png()).asset
+
+    assert asset.rights_status is LicenceStatus.VERIFIED
+    assert asset.rights_metadata == {"owner": "Shirtfaced", "origin": "owner-generated"}
+
+
+def test_the_element_archive_keeps_its_own_answer() -> None:
+    """The same enum, a different library, and a genuinely open question.
+
+    ``app/archive`` holds found third-party material whose terms nobody has read
+    yet. Its default must stay UNVERIFIED; the two are not being merged because
+    they share a type.
+    """
+    from app.domain.element import Licence
+
+    assert Licence().status is LicenceStatus.UNVERIFIED

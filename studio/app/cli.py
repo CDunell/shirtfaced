@@ -242,7 +242,7 @@ def _register_scene_master(scene_key: str, path: str, approve: bool, note: str |
     scene before rather than overwriting it.
     """
     from app.adapters.asset_store import FilesystemAssetStore
-    from app.domain.enums import LicenceStatus, VisualAssetKind, VisualAssetSourceType
+    from app.domain.enums import VisualAssetKind, VisualAssetSourceType
     from app.services import visual_library
 
     source = Path(path).resolve()
@@ -260,8 +260,6 @@ def _register_scene_master(scene_key: str, path: str, approve: bool, note: str |
             source_type=VisualAssetSourceType.GENERATED,
             role=scene_key,
             description=f"Scene master candidate for {scene_key}",
-            rights_status=LicenceStatus.VERIFIED,
-            rights_metadata={"owner": "Shirtfaced", "origin": "owner-generated"},
             metadata={"registered_from": source.name},
         )
         master = visual_library.register_scene_master(

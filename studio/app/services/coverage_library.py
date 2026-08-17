@@ -28,7 +28,6 @@ from app.db.models import AuditEvent
 from app.db.visual_models import AssetLineage, CoverageFrame, SceneMaster, VisualAsset
 from app.domain.enums import (
     AuditEventType,
-    LicenceStatus,
     VisualAssetKind,
     VisualAssetSourceType,
     VisualAssetStatus,
@@ -140,8 +139,8 @@ def derive_coverage_frame(
         source_type=VisualAssetSourceType.EDITED,
         role=name,
         description=f"{scene_key} coverage — {name}",
-        # A crop of an owned master carries the master's rights.
-        rights_status=LicenceStatus.VERIFIED,
+        # A crop carries its master's provenance, which is worth saying even
+        # though the default is already verified: this frame is that master.
         rights_metadata={"inherited_from_master": str(master_reference.asset_id)},
         metadata={
             "scene": scene_key,

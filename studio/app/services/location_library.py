@@ -5,15 +5,14 @@ this is a virtual location department, not a folder of attractive photographs.
 A useful plate is spatially legible and reusable, which is a different property
 from being a good picture.
 
-Rights matter more here than anywhere else in the library. Cast frames and scene
-masters are the owner's own generated imagery; a location plate might be
-licensed stock, a commissioned photograph, or something whose licence nobody has
-read. §6.4 draws the line where the money is: unknown rights never stop an asset
-being held, looked at or compared — they stop it becoming the plate a scene is
-generated into and sold from.
+``promote_to_base_master`` is the only gated call in this module, and everything
+it refuses, it refuses by naming the specific gate.
 
-So ``promote_to_base_master`` is the only gated call in this module, and
-everything it refuses, it refuses by naming the specific gate.
+Rights are one of those gates and, as of the owner's ruling on 17 August 2026,
+one that passes by construction: the locations are invented and generated here
+like everything else, so assets default to verified. The check remains for the
+case §6.4 was written for — material that came from outside and was deliberately
+marked ``refused`` — and costs nothing while that case does not exist.
 """
 
 from __future__ import annotations
@@ -209,6 +208,8 @@ def assess_base_master(link: LocationAsset) -> BaseMasterReadiness:
     if not approved:
         problems.append(f"the image is {asset.status.value}, not approved")
 
+    # Assets default to verified because the owner invents them. This fires only
+    # for something deliberately marked otherwise.
     rights_verified = asset.rights_status is LicenceStatus.VERIFIED
     if not rights_verified:
         problems.append(

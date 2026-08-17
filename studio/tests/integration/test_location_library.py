@@ -8,6 +8,11 @@ The width rule here is arithmetic and nothing more. §6.3 prefers 2.39:1 and thi
 reports whether a plate meets that, but it refuses only a plate too narrow to
 yield a single 9:16 frame — a preference enforced as a gate would be an invented
 constraint, which is a mistake this repository has made enough times to name.
+
+Rights pass by construction since the owner's ruling of 17 August 2026: the
+locations are invented here, so assets default to verified. The two tests below
+that exercise the rights gate mark an asset otherwise on purpose, which is now
+the only way that state arises.
 """
 
 from __future__ import annotations

@@ -60,6 +60,13 @@ EXTENSIONS = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp"}
 
 ROLE_PATTERN = re.compile(r"^[a-z0-9]+(?:[_-][a-z0-9]+)*$")
 
+# Everything this library holds is invented here: generated worlds, generated
+# cast, no real people, no third party with a claim. Recorded on every asset so
+# the provenance is a stated fact rather than an assumption a later reader has
+# to make. Pass rights_metadata explicitly for anything that did come from
+# outside.
+DEFAULT_RIGHTS: dict[str, Any] = {"owner": "Shirtfaced", "origin": "owner-generated"}
+
 # The suffix each legacy role's file carries. The stem was ``a``/``b`` until 17
 # August 2026 and is now the member's slug; the suffix survived both, so the
 # mirror composes a name rather than storing one.
@@ -153,7 +160,7 @@ def ingest_asset(
     source_type: VisualAssetSourceType,
     role: str | None = None,
     description: str | None = None,
-    rights_status: LicenceStatus = LicenceStatus.UNVERIFIED,
+    rights_status: LicenceStatus = LicenceStatus.VERIFIED,
     rights_metadata: dict[str, Any] | None = None,
     metadata: dict[str, Any] | None = None,
     provider: str | None = None,
@@ -194,7 +201,7 @@ def ingest_asset(
         prompt_hash=prompt_hash,
         status=VisualAssetStatus.PENDING,
         rights_status=rights_status,
-        rights_metadata=rights_metadata or {},
+        rights_metadata=rights_metadata or DEFAULT_RIGHTS,
         metadata_json=metadata or {},
         description=description,
     )

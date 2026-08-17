@@ -19,6 +19,7 @@ listed as such in the table.
 | §14 Phase 5 cutover, cast half | Built — nothing resolves a cast reference by path any more |
 | §7 scene masters | Built, migration 0032 — `scene_masters`, one approved per scene |
 | §8 coverage frames | Built, migration 0033 — `coverage_frames`, each citing its master and that master's hash at the time of the crop |
+| §6.4 rights | Built, migration 0035 — **verified by default**, see ADR-022: everything here is invented here |
 | §6 locations / scouting | Built, migration 0034 — `scout_locations` (nesting), `location_assets`, one base master per place, rights gated |
 | §15 Phase E | Built — a Veo run names a scene and a shot, and cannot reach an unapproved or stale frame |
 
