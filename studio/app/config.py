@@ -68,7 +68,14 @@ class Settings(BaseSettings):
     gemini_api_key: SecretStr | None = None
     google_image_model: str = "gemini-3.1-flash-image"
     google_video_model: str = "veo-3.1-fast-generate-preview"
-    google_image_size: str = "1K"
+    # 1K on a 9:16 frame is 768x1376, which is under the 1080x1920 a Veo first
+    # frame wants and was being upscaled into it.
+    google_image_size: str = "2K"
+    # A contact sheet is nine images in one file, so a size that is generous for
+    # a single frame is a thumbnail for each panel. The first sheet came back
+    # 1376x768: nine cells of roughly 459x256, and the extraction was then asked
+    # to reproduce a postage stamp as a full frame.
+    google_sheet_image_size: str = "4K"
     google_video_resolution: str = "1080p"
     google_video_poll_seconds: float = Field(default=10.0, ge=1.0)
     google_video_timeout_seconds: float = Field(default=900.0, ge=30.0)

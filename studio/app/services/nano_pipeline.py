@@ -72,7 +72,18 @@ EXTRACTION_PROMPT = (
     "crowd density and event state. Do not invent a new camera angle, restage "
     "the scene, move characters, alter props or create a different version of "
     "the world. Resolve missing fine detail conservatively from the same "
-    "approved reference set."
+    "approved reference set. "
+    # Added 18 August 2026. Asked for a 9:16 standalone from a sheet whose cells
+    # were 16:9, the model satisfied the ratio by stacking three landscape
+    # frames down the canvas. It answered the question as asked, so the question
+    # now says what a single photograph is.
+    "Output exactly one continuous photograph filling the whole frame edge to "
+    "edge. It is a single camera observation, not a layout: no grid, no panels, "
+    "no stacked or side-by-side images, no split screen, no borders, no letterbox "
+    "or pillarbox bars, no collage of several moments. Panel {panel} is already "
+    "framed at {aspect_ratio}, so reproduce what it shows without recomposing, "
+    "cropping to a different shape, or adding material above or below it to fill "
+    "the canvas."
 )
 
 
@@ -199,7 +210,7 @@ def generate_coverage_sheet(
     label: str,
     selections: list[str],
     prompt: str,
-    aspect_ratio: str = "16:9",
+    aspect_ratio: str = "9:16",
     actor: str = OWNER,
 ) -> SceneContactSheet:
     """Send the master and the chosen references to Nano, keep what comes back.
@@ -207,6 +218,19 @@ def generate_coverage_sheet(
     The sheet arrives as a candidate. Approving it is the human step, and the
     contract is explicit that a sheet is a planning artefact rather than a
     preview, so it is persisted either way.
+
+    **The sheet takes the shape of the panels, not the shape of the master.** A
+    3x3 grid divides its canvas into nine cells of the canvas's own ratio, so a
+    16:9 sheet yields nine 16:9 observations — and the delivery is a vertical
+    9:16 social edit. The first sheet was generated 16:9 and every panel came
+    back landscape, which pushed the reframe onto the extraction step, where
+    MASTER_FIRST_PIPELINE.md had already recorded that reframing fails. A 9:16
+    canvas divides into nine 9:16 cells, and extraction becomes a straight
+    reproduction with no reshaping asked of it at all.
+
+    The master stays 16:9. It is the spatial authority, and each panel declares
+    its own vertical window on it — which is §8's coverage rule, arrived at from
+    the other direction.
     """
     try:
         master = resolve_scene_master(session, store, scene_key=scene_key)
@@ -230,7 +254,7 @@ def generate_coverage_sheet(
                 prompt=prompt,
                 references=references,
                 aspect_ratio=aspect_ratio,
-                image_size=settings.google_image_size,
+                image_size=settings.google_sheet_image_size,
             )
         )
     except GoogleMediaError as error:
