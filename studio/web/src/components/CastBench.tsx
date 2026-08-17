@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStyletron } from "baseui";
 import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
 import { Checkbox } from "baseui/checkbox";
+import { Input } from "baseui/input";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Select, type Value } from "baseui/select";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
@@ -29,10 +30,12 @@ import { ApiError } from "../api/client";
 import {
   approveAsset,
   assetSource,
+  createCastMember,
   deprecateAsset,
   detachCastAsset,
   fetchCast,
   fetchCastRoles,
+  slugify,
   updateCastAsset,
   uploadCastAsset,
   type CastAsset,
@@ -60,6 +63,7 @@ export function CastBench(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
 
+  const [newName, setNewName] = useState("");
   const [uploadRole, setUploadRole] = useState<Value>([]);
   const [uploadPrimary, setUploadPrimary] = useState(false);
   const [uploadApprove, setUploadApprove] = useState(false);
@@ -112,6 +116,19 @@ export function CastBench(): React.JSX.Element {
     },
     [reload],
   );
+
+  const onCreate = useCallback(() => {
+    const displayName = newName.trim();
+    const slug = slugify(displayName);
+    if (!slug) return;
+
+    void act(async () => {
+      await createCastMember(slug, displayName);
+      setNewName("");
+      setSelected(slug);
+      return `${displayName} added. No references yet — upload one below.`;
+    });
+  }, [act, newName]);
 
   const onUpload = useCallback(() => {
     const file = fileInput.current?.files?.[0];
@@ -200,6 +217,36 @@ export function CastBench(): React.JSX.Element {
             </span>
           </Button>
         ))}
+      </div>
+
+      <div
+        className={css({
+          display: "flex",
+          gap: "8px",
+          alignItems: "center",
+          flexWrap: "wrap",
+          marginBottom: "24px",
+        })}
+      >
+        <Input
+          value={newName}
+          onChange={(event) => {
+            setNewName(event.currentTarget.value);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") onCreate();
+          }}
+          placeholder="Add a cast member — their name"
+          overrides={{ Root: { style: { width: "320px" } } }}
+        />
+        <Button
+          size={SIZE.compact}
+          kind={BUTTON_KIND.secondary}
+          disabled={busy || slugify(newName) === ""}
+          onClick={onCreate}
+        >
+          {newName.trim() ? `Add ${slugify(newName)}` : "Add member"}
+        </Button>
       </div>
 
       {member ? (

@@ -91,6 +91,24 @@ export function fetchCastRoles(signal?: AbortSignal): Promise<string[]> {
   return send<string[]>("/api/cast/roles", "GET", undefined, signal);
 }
 
+/** A person, before any photograph of them exists. */
+export function createCastMember(slug: string, displayName: string): Promise<CastMember> {
+  return send<CastMember>("/api/cast", "POST", {
+    slug,
+    display_name: displayName,
+    canonical_metadata: {},
+  });
+}
+
+/** The slug the API will accept: lowercase, digits, single hyphens. */
+export function slugify(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export interface UploadOptions {
   role: string;
   description?: string;

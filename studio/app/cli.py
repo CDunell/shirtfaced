@@ -144,6 +144,47 @@ def _resolve_reference(slug: str, role: str) -> int:
     return EXIT_OK
 
 
+def _add_cast_members(specifications: Sequence[str]) -> int:
+    """Create cast members who have no photographs yet.
+
+    A person exists before any picture of them does, and the library should not
+    require one to record that. Seeds a host whose ``var/cast`` holds only some
+    of the cast, so the references can be uploaded through the Cast bench
+    instead of provisioned as files.
+
+    Idempotent: an existing slug is left alone, including its canon.
+    """
+    from app.db.visual_models import CastMember
+    from app.services.cast_ingest import display_name_for
+
+    created: list[str] = []
+    existing: list[str] = []
+    with get_session_factory()() as session:
+        for specification in specifications:
+            slug, _, display_name = specification.partition("=")
+            slug = slug.strip().lower()
+            if not slug:
+                continue
+            found = (
+                session.execute(select(CastMember).where(CastMember.slug == slug)).scalars().first()
+            )
+            if found is not None:
+                existing.append(slug)
+                continue
+            session.add(
+                CastMember(slug=slug, display_name=display_name.strip() or display_name_for(slug))
+            )
+            created.append(slug)
+        session.commit()
+
+    print(f"{len(created)} created, {len(existing)} already present")
+    for slug in created:
+        print(f"  added: {slug}")
+    for slug in existing:
+        print(f"  kept:  {slug}")
+    return EXIT_OK
+
+
 def _register_scene_master(scene_key: str, path: str, approve: bool, note: str | None) -> int:
     """Register an image as a scene's master. Registering is not approving.
 
@@ -527,6 +568,14 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Rewrite the legacy var/cast files from the database afterwards.",
     )
 
+    add_members = subcommands.add_parser(
+        "add-cast-members",
+        help="Create cast members with no references yet, so photos can be uploaded.",
+    )
+    add_members.add_argument(
+        "members", nargs="+", metavar="slug[=Display Name]", help="One or more members."
+    )
+
     register = subcommands.add_parser(
         "register-scene-master",
         help="Register an image as a scene's master. Candidate unless --approve.",
@@ -568,6 +617,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _import_design_concepts(arguments.path)
         if arguments.command == "sync-archive":
             return _sync_archive()
+        if arguments.command == "add-cast-members":
+            return _add_cast_members(arguments.members)
         if arguments.command == "register-scene-master":
             return _register_scene_master(
                 arguments.scene_key, arguments.path, arguments.approve, arguments.note

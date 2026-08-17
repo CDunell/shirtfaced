@@ -169,3 +169,33 @@ describe("CastBench", () => {
     });
   });
 });
+
+describe("CastBench member creation", () => {
+  it("adds a person who has no photographs yet", async () => {
+    const fetchMock = stubCast([damo([reference()])]);
+    const created: unknown[] = [];
+    fetchMock.mockImplementation((input: unknown, init?: unknown): Promise<StubResponse> => {
+      const url = String(input);
+      const method = (init as { method?: string } | undefined)?.method ?? "GET";
+      if (url === "/api/cast" && method === "POST") {
+        created.push(JSON.parse(String((init as { body?: string }).body)));
+        return respond({ ...damo([]), slug: "sk", display_name: "SK" }, 201);
+      }
+      return respond(url.includes("/api/cast/roles") ? ["shouting"] : [damo([reference()])]);
+    });
+
+    renderWithBase(<CastBench />);
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/Add a cast member/i)).toBeInTheDocument();
+    });
+
+    await userEvent.type(screen.getByPlaceholderText(/Add a cast member/i), "SK");
+    await userEvent.click(screen.getByRole("button", { name: /Add sk/i }));
+
+    await waitFor(() => {
+      expect(created).toEqual([
+        { slug: "sk", display_name: "SK", canonical_metadata: {} },
+      ]);
+    });
+  });
+});
