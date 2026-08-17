@@ -21,11 +21,13 @@
  * Approve and reject are both real. Rejecting keeps the take: a rerun is a new
  * call, never an overwrite, and a bad take is evidence about the prompt.
  *
- * The last stage is motion, and it is the one that behaves least like the
- * others. A shot does not get animated once — it accumulates takes, most of
- * them wrong, and the work is watching them and saying which seconds are the
- * good ones. So takes are listed in full, rejected ones included, and the
- * keeper range is typed against a clip that is playing on the same screen.
+ * Motion is deliberately absent. NANO_BANANA_VEO_SCENE_PRODUCTION_PIPELINE.md
+ * §17 records the Veo route that already exists and is proven: a trigger under
+ * studio/veo-coverage-triggers/ runs the workflow, which resolves the seed by
+ * checksum, generates, strips the generated audio that §20 requires stripping,
+ * probes and checksums the result. A second route built here would be a second
+ * answer to a solved question, so this bench ends at an approved standalone
+ * shot and hands over there.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -33,7 +35,6 @@ import { useStyletron } from "baseui";
 import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
 import { Checkbox } from "baseui/checkbox";
 import { Input } from "baseui/input";
-import { Textarea } from "baseui/textarea";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
 import { LabelSmall, ParagraphXSmall } from "baseui/typography";
@@ -47,20 +48,14 @@ import {
   extractPanel,
   fetchPipelineInputs,
   fetchScenes,
-  fetchTakes,
   generateSheet,
-  generateTake,
-  keepTake,
   previewSource,
   registerMaster,
-  rejectMotionTake,
   rejectTake,
-  takeVideoSource,
   type ContactSheet,
   type CoverageFrame,
-  type ReferenceChoice,
-  type MotionTake,
   type PipelineInputs,
+  type ReferenceChoice,
   type Scene,
 } from "../api/production";
 
@@ -76,18 +71,6 @@ function defaultReference(choices: ReferenceChoice[]): ReferenceChoice | null {
     choices[0] ??
     null
   );
-}
-
-function seconds(ms: number | null): string {
-  return ms === null ? "unknown length" : `${(ms / 1000).toFixed(1)}s`;
-}
-
-/** Milliseconds from a typed field, or null for anything that is not a number. */
-function asMilliseconds(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) && parsed >= 0 ? Math.round(parsed) : null;
 }
 
 export function ScenesBench(): React.JSX.Element {
@@ -107,20 +90,14 @@ export function ScenesBench(): React.JSX.Element {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [showFrames, setShowFrames] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
-  const [showDirection, setShowDirection] = useState(false);
   const [promptName, setPromptName] = useState<string | null>(null);
   const [shotNames, setShotNames] = useState<Record<number, string>>({});
-
-  const [takes, setTakes] = useState<MotionTake[]>([]);
-  const [motionEdit, setMotionEdit] = useState<string | null>(null);
-  const [ranges, setRanges] = useState<Record<string, { from: string; to: string }>>({});
 
   const reload = useCallback(async (sceneKey: string | null) => {
     const data = await fetchScenes();
     setScenes(data);
     const key = sceneKey ?? data[0]?.scene_key ?? null;
     setInputs(key ? await fetchPipelineInputs(key) : null);
-    setTakes(key ? await fetchTakes(key) : []);
     return key;
   }, []);
 
@@ -130,10 +107,7 @@ export function ScenesBench(): React.JSX.Element {
         setScenes(data);
         const key = data[0]?.scene_key ?? null;
         setSelected(key);
-        if (key) {
-          setInputs(await fetchPipelineInputs(key));
-          setTakes(await fetchTakes(key));
-        }
+        if (key) setInputs(await fetchPipelineInputs(key));
         setLoading(false);
       })
       .catch((cause: unknown) => {
@@ -160,8 +134,6 @@ export function ScenesBench(): React.JSX.Element {
     [reload, selected],
   );
 
-  const motionPrompt = motionEdit ?? inputs?.motion_prompt ?? "";
-
   const scene = useMemo(
     () => scenes.find((one) => one.scene_key === selected) ?? null,
     [scenes, selected],
@@ -176,9 +148,7 @@ export function ScenesBench(): React.JSX.Element {
     setSelected(key);
     setNote(null);
     setPicked(new Set());
-    setMotionEdit(null);
     void fetchPipelineInputs(key).then(setInputs);
-    void fetchTakes(key).then(setTakes);
   }, []);
 
   const onRegisterMaster = useCallback(() => {
@@ -222,34 +192,6 @@ export function ScenesBench(): React.JSX.Element {
     [act, picked, scene, shotNames],
   );
 
-  const onAnimate = useCallback(
-    (name: string) => {
-      if (!scene) return;
-      void act(`animate-${name}`, async () => {
-        await generateTake(scene.scene_key, {
-          name,
-          ...(motionPrompt.trim() ? { prompt: motionPrompt.trim() } : {}),
-        });
-        return `Veo returned a take of ${name}. Watch it, then keep or reject it.`;
-      });
-    },
-    [act, motionPrompt, scene],
-  );
-
-  const onKeep = useCallback(
-    (take: MotionTake) => {
-      const range = ranges[take.id] ?? { from: "", to: "" };
-      void act(`keep-${take.id}`, async () => {
-        await keepTake(take.id, {
-          keeper_from_ms: asMilliseconds(range.from),
-          keeper_to_ms: asMilliseconds(range.to),
-        });
-        return `Attempt ${String(take.attempt)} is the keeper for ${take.shot}.`;
-      });
-    },
-    [act, ranges],
-  );
-
   const people = useMemo(() => {
     const grouped = new Map<string, ReferenceChoice[]>();
     for (const one of inputs?.references ?? [])
@@ -270,12 +212,6 @@ export function ScenesBench(): React.JSX.Element {
     },
     [picked],
   );
-
-  const takesByShot = useMemo(() => {
-    const grouped = new Map<string, MotionTake[]>();
-    for (const take of takes) grouped.set(take.shot, [...(grouped.get(take.shot) ?? []), take]);
-    return grouped;
-  }, [takes]);
 
   const card = css({
     border: `1px solid ${theme.colors.borderOpaque}`,
@@ -703,18 +639,7 @@ export function ScenesBench(): React.JSX.Element {
                             </Tag>
                           </div>
                           <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
-                            {frame.approved_for_veo ? (
-                              <Button
-                                size={SIZE.mini}
-                                isLoading={busy === `animate-${frame.name}`}
-                                disabled={busy !== null}
-                                onClick={() => {
-                                  onAnimate(frame.name);
-                                }}
-                              >
-                                Animate
-                              </Button>
-                            ) : (
+                            {frame.approved_for_veo ? null : (
                               <Button
                                 size={SIZE.mini}
                                 disabled={busy !== null}
@@ -773,184 +698,6 @@ export function ScenesBench(): React.JSX.Element {
             </>
           ) : (
             <ParagraphXSmall>Approve a sheet and its panels appear here.</ParagraphXSmall>
-          )}
-
-          <div className={row}>
-            <SectionTitle>5 — Takes</SectionTitle>
-            <Button
-              size={SIZE.mini}
-              kind={showDirection ? BUTTON_KIND.primary : BUTTON_KIND.tertiary}
-              onClick={() => {
-                setShowDirection(!showDirection);
-              }}
-            >
-              {inputs?.motion_prompt && !motionEdit ? "Direction · from canon" : "Direction"}
-            </Button>
-          </div>
-
-          {/* Pre-filled from the scene's shot specification, so it is closed by
-              default: the common case is sending it as written. */}
-          {showDirection ? (
-            <Textarea
-              value={motionPrompt}
-              onChange={(event) => {
-                setMotionEdit(event.currentTarget.value);
-              }}
-              placeholder="Motion direction"
-              rows={6}
-            />
-          ) : null}
-
-          {takes.length === 0 ? (
-            <ParagraphXSmall>No takes yet. Animate an approved panel above.</ParagraphXSmall>
-          ) : (
-            [...takesByShot.entries()].map(([shot, shotTakes]) => (
-              <div key={shot} className={css({ marginTop: "14px" })}>
-                <LabelSmall>{shot}</LabelSmall>
-                <div
-                  className={css({
-                    display: "grid",
-                    gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-                    gap: "12px",
-                    marginTop: "8px",
-                  })}
-                >
-                  {shotTakes.map((take) => {
-                    const range = ranges[take.id] ?? { from: "", to: "" };
-                    return (
-                      <div key={take.id} className={card}>
-                        <video
-                          src={takeVideoSource(take.id)}
-                          controls
-                          preload="metadata"
-                          className={css({
-                            width: "100%",
-                            borderRadius: "6px",
-                            background: theme.colors.backgroundTertiary,
-                          })}
-                        />
-                        <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-                          <Tag
-                            closeable={false}
-                            kind={TAG_KIND.neutral}
-                            overrides={{ Text: { style: { maxWidth: "none" } } }}
-                          >
-                            attempt {take.attempt}
-                          </Tag>
-                          <Tag
-                            closeable={false}
-                            kind={
-                              take.status === "keeper"
-                                ? TAG_KIND.positive
-                                : take.status === "rejected"
-                                  ? TAG_KIND.negative
-                                  : TAG_KIND.warning
-                            }
-                            overrides={{ Text: { style: { maxWidth: "none" } } }}
-                          >
-                            {take.status}
-                          </Tag>
-                          {take.video.has_audio ? (
-                            <Tag
-                              closeable={false}
-                              kind={TAG_KIND.warning}
-                              overrides={{ Text: { style: { maxWidth: "none" } } }}
-                            >
-                              still has sound
-                            </Tag>
-                          ) : null}
-                          {take.stale ? (
-                            <Tag
-                              closeable={false}
-                              kind={TAG_KIND.negative}
-                              overrides={{ Text: { style: { maxWidth: "none" } } }}
-                            >
-                              shot re-extracted since
-                            </Tag>
-                          ) : null}
-                        </div>
-                        <div className={mono}>
-                          {seconds(take.video.duration_ms)} ·{" "}
-                          {take.video.width && take.video.height
-                            ? `${String(take.video.width)}×${String(take.video.height)}`
-                            : "size unknown"}{" "}
-                          · {shortSha(take.video.sha256)}
-                        </div>
-                        {take.keeper_from_ms !== null || take.keeper_to_ms !== null ? (
-                          <div className={mono}>
-                            keeper {take.keeper_from_ms ?? 0}–{take.keeper_to_ms ?? "end"}ms
-                          </div>
-                        ) : null}
-                        {take.status === "rejected" ? null : (
-                          <>
-                            <div className={css({ display: "flex", gap: "6px" })}>
-                              <Input
-                                size={SIZE.mini}
-                                value={range.from}
-                                onChange={(event) => {
-                                  setRanges({
-                                    ...ranges,
-                                    [take.id]: { ...range, from: event.currentTarget.value },
-                                  });
-                                }}
-                                placeholder="from ms"
-                              />
-                              <Input
-                                size={SIZE.mini}
-                                value={range.to}
-                                onChange={(event) => {
-                                  setRanges({
-                                    ...ranges,
-                                    [take.id]: { ...range, to: event.currentTarget.value },
-                                  });
-                                }}
-                                placeholder="to ms"
-                              />
-                            </div>
-                            <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
-                              <Button
-                                size={SIZE.mini}
-                                isLoading={busy === `keep-${take.id}`}
-                                disabled={busy !== null}
-                                onClick={() => {
-                                  onKeep(take);
-                                }}
-                              >
-                                Keep
-                              </Button>
-                              <Button
-                                size={SIZE.mini}
-                                kind={BUTTON_KIND.tertiary}
-                                disabled={busy !== null}
-                                onClick={() =>
-                                  void act(`reject-${take.id}`, async () => {
-                                    await rejectMotionTake(take.id, "Rejected on the bench");
-                                    return "Rejected and kept. Animate again for the next attempt.";
-                                  })
-                                }
-                              >
-                                Reject
-                              </Button>
-                              <Button
-                                size={SIZE.mini}
-                                kind={BUTTON_KIND.tertiary}
-                                isLoading={busy === `animate-${take.shot}`}
-                                disabled={busy !== null}
-                                onClick={() => {
-                                  onAnimate(take.shot);
-                                }}
-                              >
-                                Redo
-                              </Button>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            ))
           )}
         </>
       ) : scene ? (

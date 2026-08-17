@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import datetime as dt
 import uuid
-from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import (
@@ -37,7 +36,6 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
-    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -54,7 +52,6 @@ from app.db.models import SHA256_HEX_LENGTH, _enum
 from app.domain.enums import (
     LicenceStatus,
     LocationAssetRole,
-    VideoAssetStatus,
     VisualAssetKind,
     VisualAssetSourceType,
     VisualAssetStatus,
@@ -617,123 +614,6 @@ class GenerationCall(Base):
     created_at: Mapped[dt.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
-
-
-class VideoAsset(Base, TimestampMixin):
-    """One immutable clip.
-
-    A third sibling beside images and audio. A clip knows its duration, its
-    frame rate and whether it still carries the sound the model generated —
-    none of which means anything on a still, and the last of which cannot be
-    told from the filename.
-    """
-
-    __tablename__ = "video_assets"
-    __table_args__ = (
-        UniqueConstraint("sha256", name="uq_video_assets_sha256"),
-        CheckConstraint("byte_size > 0", name="byte_size_positive"),
-        CheckConstraint("duration_ms IS NULL OR duration_ms > 0", name="duration_positive"),
-    )
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
-    )
-    storage_key: Mapped[str] = mapped_column(String(512), nullable=False)
-    sha256: Mapped[str] = mapped_column(String(SHA256_HEX_LENGTH), nullable=False)
-    mime_type: Mapped[str] = mapped_column(String(64), nullable=False)
-    byte_size: Mapped[int] = mapped_column(Integer, nullable=False)
-    duration_ms: Mapped[int | None] = mapped_column(Integer)
-    width: Mapped[int | None] = mapped_column(Integer)
-    height: Mapped[int | None] = mapped_column(Integer)
-    frame_rate: Mapped[Decimal | None] = mapped_column(Numeric(6, 3))
-    has_audio: Mapped[bool | None] = mapped_column(Boolean)
-    provider: Mapped[str | None] = mapped_column(String(64))
-    model: Mapped[str | None] = mapped_column(String(128))
-    status: Mapped[VideoAssetStatus] = mapped_column(
-        _enum(VideoAssetStatus, "video_asset_status"),
-        nullable=False,
-        default=VideoAssetStatus.PENDING,
-        server_default=VideoAssetStatus.PENDING.value,
-    )
-    rights_status: Mapped[LicenceStatus] = mapped_column(
-        _enum(LicenceStatus, "licence_status"),
-        nullable=False,
-        default=LicenceStatus.VERIFIED,
-        server_default=LicenceStatus.VERIFIED.value,
-    )
-    metadata_json: Mapped[dict[str, Any]] = mapped_column(
-        "metadata_json", JSONB, nullable=False, server_default=text("'{}'::jsonb")
-    )
-    approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
-    approved_by: Mapped[str | None] = mapped_column(String(64))
-
-    @property
-    def duration_seconds(self) -> float | None:
-        return None if self.duration_ms is None else self.duration_ms / 1000
-
-
-class MotionTake(Base, TimestampMixin):
-    """One attempt at animating one shot.
-
-    Plural on purpose. SHOTLIST.md asks for six to eight seconds a shot and
-    expects one and a half to four of them to survive, so most takes are wrong
-    and the wrong ones are worth keeping: a rejected take is the cheapest
-    evidence there is about what the motion prompt does. A rerun is the next
-    attempt number, never an overwrite.
-
-    ``first_frame_sha256`` is the still that was actually sent. It is stored
-    beside the foreign key because a shot can be re-extracted, and a take
-    animated from the previous still is not a take of the current one.
-    """
-
-    __tablename__ = "motion_takes"
-    __table_args__ = (
-        UniqueConstraint("video_asset_id", name="uq_motion_takes_video_asset_id"),
-        UniqueConstraint(
-            "coverage_frame_id", "attempt", name="uq_motion_takes_coverage_frame_id_attempt"
-        ),
-        Index("ix_motion_takes_coverage_frame_id_attempt", "coverage_frame_id", "attempt"),
-        Index(
-            "uq_motion_takes_one_keeper_per_frame",
-            "coverage_frame_id",
-            unique=True,
-            postgresql_where=text("status = 'keeper'"),
-        ),
-        CheckConstraint("attempt > 0", name="attempt_positive"),
-        CheckConstraint("status IN ('pending','keeper','rejected')", name="status_known"),
-        CheckConstraint(
-            "keeper_from_ms IS NULL OR keeper_to_ms IS NULL OR keeper_to_ms > keeper_from_ms",
-            name="keeper_range_ordered",
-        ),
-    )
-
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
-    )
-    coverage_frame_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("coverage_frames.id", ondelete="RESTRICT"), nullable=False
-    )
-    video_asset_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("video_assets.id", ondelete="RESTRICT"), nullable=False
-    )
-    attempt: Mapped[int] = mapped_column(Integer, nullable=False)
-    prompt_sha256: Mapped[str | None] = mapped_column(String(SHA256_HEX_LENGTH))
-    first_frame_sha256: Mapped[str] = mapped_column(String(SHA256_HEX_LENGTH), nullable=False)
-    status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="pending")
-    keeper_from_ms: Mapped[int | None] = mapped_column(Integer)
-    keeper_to_ms: Mapped[int | None] = mapped_column(Integer)
-    notes: Mapped[str | None] = mapped_column(Text)
-    decided_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
-    decided_by: Mapped[str | None] = mapped_column(String(64))
-
-    frame: Mapped[CoverageFrame] = relationship(lazy="joined")
-    video: Mapped[VideoAsset] = relationship(lazy="joined")
-
-    @property
-    def keeper_length_ms(self) -> int | None:
-        if self.keeper_from_ms is None or self.keeper_to_ms is None:
-            return None
-        return self.keeper_to_ms - self.keeper_from_ms
 
 
 class Tag(Base):

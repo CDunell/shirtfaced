@@ -28,11 +28,9 @@ from app.db.visual_models import (
     AssetLineage,
     CoverageFrame,
     LocationAsset,
-    MotionTake,
     SceneContactSheet,
     SceneMaster,
     ScoutLocation,
-    VideoAsset,
     VisualAsset,
 )
 from app.domain.enums import LocationAssetRole, VisualAssetKind, VisualAssetSourceType
@@ -40,7 +38,6 @@ from app.services import (
     coverage_library,
     generation_ledger,
     location_library,
-    motion_library,
     nano_pipeline,
     visual_library,
 )
@@ -526,10 +523,6 @@ class ScenePromptOut(BaseModel):
     scene_key: str
     prompt: str | None
     source: str | None
-    # The shared motion direction from the scene's own shot specification, as a
-    # starting point for stage four. Editable, and null where no world holds a
-    # specification for this scene.
-    motion_prompt: str | None = None
     # Every coverage prompt the worlds hold, for a scene whose key does not
     # match a filename. Scenes named as their own canon names them do match, so
     # this is the fallback rather than the path.
@@ -582,7 +575,6 @@ def pipeline_inputs(
             ReferenceChoice(key=f"{one.slug}:{one.role}", slug=one.slug, role=one.role)
             for one in nano_pipeline.available_references(session)
         ],
-        motion_prompt=motion_library.scene_motion_prompt(settings.worlds_root_resolved, scene_key),
         attempts=generation_ledger.calls_for_scene(session, scene_key),
         media_live=settings.google_media_live,
     )
@@ -679,179 +671,6 @@ def reject_take(asset_id: uuid.UUID, payload: DecisionIn, session: SessionDepend
     session.commit()
     session.refresh(asset)
     return AssetBrief.of(asset)
-
-
-class VideoBrief(BaseModel):
-    """A clip, as the interface needs it."""
-
-    id: uuid.UUID
-    sha256: str
-    status: str
-    duration_ms: int | None
-    width: int | None
-    height: int | None
-    frame_rate: float | None
-    has_audio: bool | None
-    byte_size: int
-
-    @classmethod
-    def of(cls, asset: VideoAsset) -> VideoBrief:
-        return cls(
-            id=asset.id,
-            sha256=asset.sha256,
-            status=asset.status.value,
-            duration_ms=asset.duration_ms,
-            width=asset.width,
-            height=asset.height,
-            frame_rate=None if asset.frame_rate is None else float(asset.frame_rate),
-            has_audio=asset.has_audio,
-            byte_size=asset.byte_size,
-        )
-
-
-class MotionTakeOut(BaseModel):
-    id: uuid.UUID
-    shot: str
-    coverage_frame_id: uuid.UUID
-    attempt: int
-    status: str
-    keeper_from_ms: int | None
-    keeper_to_ms: int | None
-    notes: str | None
-    first_frame_sha256: str
-    # True when the shot has been re-extracted since this take was animated, so
-    # the clip animates a still that is no longer the approved one.
-    stale: bool
-    video: VideoBrief
-
-
-class GenerateTakeIn(BaseModel):
-    name: str = Field(min_length=1, max_length=96)
-    prompt: str | None = None
-    aspect_ratio: str = "9:16"
-
-
-class KeeperIn(BaseModel):
-    keeper_from_ms: int | None = Field(default=None, ge=0)
-    keeper_to_ms: int | None = Field(default=None, ge=1)
-    note: str | None = None
-    actor: str = "owner"
-
-
-def _take_out(take: MotionTake) -> MotionTakeOut:
-    return MotionTakeOut(
-        id=take.id,
-        shot=take.frame.name,
-        coverage_frame_id=take.coverage_frame_id,
-        attempt=take.attempt,
-        status=take.status,
-        keeper_from_ms=take.keeper_from_ms,
-        keeper_to_ms=take.keeper_to_ms,
-        notes=take.notes,
-        first_frame_sha256=take.first_frame_sha256,
-        stale=take.first_frame_sha256 != take.frame.frame_sha256,
-        video=VideoBrief.of(take.video),
-    )
-
-
-@router.get("/scenes/{scene_key}/takes", summary="Every motion take this scene has accumulated")
-def list_takes(scene_key: str, session: SessionDependency) -> list[MotionTakeOut]:
-    """Rejected ones included. A take nobody kept is still what it cost to learn."""
-    return [_take_out(one) for one in motion_library.takes_for_scene(session, scene_key)]
-
-
-@router.post(
-    "/scenes/{scene_key}/generate-take",
-    status_code=status.HTTP_201_CREATED,
-    summary="Animate an approved shot with Veo",
-)
-def generate_take(
-    scene_key: str,
-    payload: GenerateTakeIn,
-    session: SessionDependency,
-    settings: SettingsDependency,
-) -> MotionTakeOut:
-    """The seed is resolved from the scene and the shot, never named as a file."""
-    prompt = payload.prompt
-    if not prompt:
-        prompt = motion_library.scene_motion_prompt(settings.worlds_root_resolved, scene_key)
-        if not prompt:
-            raise HTTPException(
-                status.HTTP_409_CONFLICT,
-                f"{scene_key} has no shot specification holding motion direction, and no "
-                "prompt was supplied. A scene does not inherit another scene's direction.",
-            )
-
-    try:
-        take = motion_library.generate_take(
-            session,
-            _store(settings),
-            settings,
-            scene_key=scene_key,
-            name=payload.name,
-            prompt=prompt,
-            aspect_ratio=payload.aspect_ratio,
-        )
-    except motion_library.MotionUnavailable as error:
-        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
-    except motion_library.MotionRejected as error:
-        session.rollback()
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(error)) from error
-
-    session.commit()
-    session.refresh(take)
-    return _take_out(take)
-
-
-@router.post("/takes/{take_id}/keep", summary="Make this the take the edit cuts from")
-def keep_take(take_id: uuid.UUID, payload: KeeperIn, session: SessionDependency) -> MotionTakeOut:
-    """One keeper per shot. Naming a new one stands the previous one down."""
-    take = session.get(MotionTake, take_id)
-    if take is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such take.")
-    try:
-        motion_library.keep_take(
-            session,
-            take,
-            from_ms=payload.keeper_from_ms,
-            to_ms=payload.keeper_to_ms,
-            note=payload.note,
-            actor=payload.actor,
-        )
-    except motion_library.MotionRejected as error:
-        session.rollback()
-        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
-    session.commit()
-    session.refresh(take)
-    return _take_out(take)
-
-
-@router.post("/takes/{take_id}/reject", summary="Say no to a take without deleting it")
-def reject_motion_take(
-    take_id: uuid.UUID, payload: DecisionIn, session: SessionDependency
-) -> MotionTakeOut:
-    """The clip stays. Rerunning is the next attempt number, never an overwrite."""
-    take = session.get(MotionTake, take_id)
-    if take is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such take.")
-    motion_library.reject_take(session, take, note=payload.note, actor=payload.actor)
-    session.commit()
-    session.refresh(take)
-    return _take_out(take)
-
-
-@router.get("/takes/{take_id}/video", summary="A take's bytes, for the interface")
-def take_video(
-    take_id: uuid.UUID, session: SessionDependency, settings: SettingsDependency
-) -> Response:
-    take = session.get(MotionTake, take_id)
-    if take is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such take.")
-    try:
-        data = _store(settings).load(take.video.storage_key)
-    except AssetStoreError as error:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
-    return Response(content=data, media_type=take.video.mime_type)
 
 
 def _location_asset_out(link: LocationAsset) -> LocationAssetOut:

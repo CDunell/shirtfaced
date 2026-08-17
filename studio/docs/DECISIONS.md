@@ -814,6 +814,12 @@ was the only place the wrong name ever came from.
 
 ## ADR-024 — A shot accumulates takes; the keeper and its range are chosen
 
+> **Withdrawn 18 August 2026. Superseded by ADR-025**: the Veo route this
+> described already existed, in the workflow §17 of the production pipeline
+> records, and that one strips the generated audio. Migration 0042 drops the
+> tables. Left in place because a withdrawn decision that explains itself is
+> worth more than a gap.
+
 **18 August 2026.** Migration 0040 adds `video_assets` and `motion_takes`, the
 last leg of the Nano contract's §5: an approved standalone shot becomes a Veo
 first frame.
@@ -852,3 +858,44 @@ track list and sample count in its own header boxes, so those are parsed
 directly and `ffprobe` is tried only for anything else. ffmpeg is now installed
 on the box, but the parser does not depend on that staying true — and the months
 it was missing are why two Veo scripts were quietly broken.
+
+## ADR-025 — The Veo route already existed, and it strips the audio
+
+**18 August 2026.** ADR-024 is withdrawn, and migration 0042 drops the tables it
+described. `motion_library.py`, four endpoints and the Takes stage on the Scenes
+bench go with them.
+
+`NANO_BANANA_VEO_SCENE_PRODUCTION_PIPELINE.md` §17 records a Veo route that was
+already in this repository and already proven: a trigger written under
+`studio/veo-coverage-triggers/` runs a workflow that resolves the seed path on
+the Studio server, verifies its SHA-256, calls `run_pub_coverage_veo.py`,
+generates, **strips the generated audio**, probes the result, checksums it and
+uploads it as an artifact.
+
+§20 requires that stripping — generated audio is discarded so it cannot control
+timing, musical continuity or editorial decisions, and the soundtrack is
+authored in post. The route built in 0040 recorded whether a clip still had
+audio. It did not remove it.
+
+Owner's ruling, given both: *remove yours, the other one is proven to work.*
+
+**Why it happened is the part worth keeping.** That document was not in the
+repository. `docs/stage-2/social-ai-production/` held an earlier, shorter
+pipeline note with no §17 in it, so a search of the repo found no owner of the
+motion stage and one got built. `CLAUDE.md` says to name the document that
+governs what you are about to build, and to search for it rather than start
+without one — and its opening warning is that the first attempt at the design
+engine went straight to code and duplicated something that already existed. This
+is the same failure with a different subject.
+
+The document is now in the repository, and
+`tests/unit/test_nano_pipeline_shape.py` asserts it is there.
+
+**What survives from 0040:** nothing in the schema. The audit event values
+`motion_take_generated`, `motion_take_approved` and `motion_take_rejected` stay
+in PostgreSQL because removing an enum value means rewriting the type, and three
+unused labels are cheaper. Nothing writes them.
+
+The Scenes bench now ends where the pipeline says Studio's part ends: at an
+approved standalone shot, persisted with its lineage and checksum, which is
+exactly what §13 asks Studio to hold and what §17's trigger reads.

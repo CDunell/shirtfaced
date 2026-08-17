@@ -24,7 +24,7 @@ listed as such in the table.
 | §15 Phase E | Built — a Veo run names a scene and a shot, and cannot reach an unapproved or stale frame |
 | Nano contact sheets, §5 of the pipeline contract | Built, migration 0036 — sheet → panel extraction, one approved sheet per master |
 | Soundtrack audio | Built, migrations 0037–0038 — `audio_assets`, `soundtrack_tracks`, MP3 and WAV read without ffmpeg |
-| Motion takes | Built, migration 0040 — `video_assets`, `motion_takes`, one keeper per shot, see ADR-024 |
+| Motion takes | **Removed, migration 0042** — the Veo route in §17 of the production pipeline already existed and strips the generated audio. See ADR-025 |
 | Scene naming | Settled, migration 0039 — the pub scene is `W01-P28`, see ADR-023 |
 
 The cutover is what §2.1's audit describes as missing, so specifically: the
@@ -570,22 +570,6 @@ Suggested endpoints:
 - `GET /api/scene-masters/{id}/coverage`
 - `POST /api/coverage/{id}/approve-for-veo`
 - `POST /api/coverage/{id}/attach-shot`
-
-### Motion
-
-```
-GET    /api/scenes/{scene_key}/takes            every take, rejected ones included
-POST   /api/scenes/{scene_key}/generate-take    animate an approved shot with Veo
-POST   /api/takes/{take_id}/keep                the take the edit cuts from, and its range
-POST   /api/takes/{take_id}/reject              no, without deleting
-GET    /api/takes/{take_id}/video               the clip's bytes
-```
-
-The seed is never named. `generate-take` takes a scene and a shot name, and
-`resolve_veo_seed` re-checks approval, master currency and sheet currency before
-anything is sent. The motion prompt defaults to the scene's own shot
-specification (§6, Motion direction) and is editable; what was sent is what the
-ledger records.
 
 ### Compatibility
 
