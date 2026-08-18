@@ -1,0 +1,117 @@
+name: W01-P28 refine B master-pixel crop
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/coverage-refine-triggers/*.json"
+
+permissions:
+  contents: write
+
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: w01-p28-refine-b
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Re-cut B tighter from exact approved master
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/shirtfaced-studio
+          set -a
+          . .env
+          set +a
+          ./.venv/bin/python - <<'PY'
+          import json
+          from pathlib import Path
+          from app.adapters.asset_store import FilesystemAssetStore
+          from app.config import get_settings
+          from app.db.session import get_session_factory
+          from app.db.visual_models import VisualAsset
+          from app.services.coverage_library import derive_coverage_frame
+          from app.services.reference_resolution import resolve_scene_master
+
+          EXPECTED = "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88"
+          settings = get_settings()
+          store = FilesystemAssetStore(settings.assets_root_resolved)
+          out = Path("var/diagnostics/w01-p28-refined-b")
+          out.mkdir(parents=True, exist_ok=True)
+
+          with get_session_factory()() as session:
+              master = resolve_scene_master(session, store, scene_key="W01-P28")
+              if master.sha256 != EXPECTED:
+                  raise SystemExit(f"Approved master changed: {master.sha256}. Nothing cut.")
+              frame = derive_coverage_frame(
+                  session,
+                  store,
+                  scene_key="W01-P28",
+                  name="w01-p28-b-damo-close",
+                  x=340,
+                  y=0,
+                  height=512,
+                  notes="Provider-filter fallback B QA refinement: exact 288x512 master-pixel crop; closer face/upper-body/cue observation; human review required before Veo.",
+                  actor="production-fallback-qa",
+              )
+              session.flush()
+              asset = session.get(VisualAsset, frame.visual_asset_id)
+              if asset is None:
+                  raise SystemExit("B coverage asset missing after derive")
+              (out / "B-damo-close.png").write_bytes(store.load(asset.storage_key))
+              result = {
+                  "scene": "W01-P28",
+                  "provider_called": False,
+                  "human_review_required": True,
+                  "master_sha256": EXPECTED,
+                  "frame": {
+                      "name": frame.name,
+                      "coverage_frame_id": str(frame.id),
+                      "visual_asset_id": str(frame.visual_asset_id),
+                      "operation": frame.operation,
+                      "x": frame.x,
+                      "y": frame.y,
+                      "width": frame.width,
+                      "height": frame.height,
+                      "frame_sha256": frame.frame_sha256,
+                      "source_master_sha256": frame.source_master_sha256,
+                      "approved_for_veo": frame.approved_for_veo,
+                  },
+              }
+              session.commit()
+          (out / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+          PY
+          REMOTE
+          mkdir -p w01-p28-refined-b
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28-refined-b/. w01-p28-refined-b/
+          test -s w01-p28-refined-b/B-damo-close.png
+          grep -q '"approved_for_veo": false' w01-p28-refined-b/result.json
+      - name: Upload refined B review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: w01-p28-refined-b-${{ github.run_id }}
+          path: w01-p28-refined-b/
+          if-no-files-found: error
+          retention-days: 1
+      - name: Record refined B result
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          mkdir -p studio/worlds/world-01/shots/diagnostics
+          cp w01-p28-refined-b/result.json studio/worlds/world-01/shots/diagnostics/W01-P28.refined-b-result.json
+          printf '{"run_id":%s,"artifact_name":"w01-p28-refined-b-%s","provider_called":false}\n' '${{ github.run_id }}' '${{ github.run_id }}' > studio/worlds/world-01/shots/diagnostics/W01-P28.refined-b-run.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/worlds/world-01/shots/diagnostics/W01-P28.refined-b-result.json studio/worlds/world-01/shots/diagnostics/W01-P28.refined-b-run.json
+          git commit -m "chore(W01-P28): record refined B crop [skip ci]"
+          git push origin main

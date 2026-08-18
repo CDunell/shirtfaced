@@ -1,0 +1,1 @@
+W01-P28 crop fallback inspection is generated remotely with no provider call.

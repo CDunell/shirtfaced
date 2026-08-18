@@ -17,8 +17,8 @@ back into what gets offered.
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from pathlib import Path
 
 from app.archive import registry
 from app.archive.assemble import AssembledDesign, assemble
@@ -30,7 +30,7 @@ from app.archive.placements import placement as get_placement
 from app.archive.render import Palette, RefusedToRender
 from app.archive.svg import rng_for
 from app.domain.element import Element
-from app.services.composition_engine import PRIOR, ApprovalStore
+from app.services.composition_engine import PRIOR
 
 MAX_OPTIONS = 6
 
@@ -170,8 +170,20 @@ def _confidence(decisions: int, approved: int, score: float) -> float:
 class DesignComposer:
     """Builds whole designs for a brief, from every part the archive holds."""
 
-    def __init__(self, approvals_path: Path, elements: tuple[Element, ...] | None = None) -> None:
-        self.approvals = ApprovalStore(approvals_path)
+    def __init__(
+        self,
+        history: Mapping[str, tuple[int, int]] | None = None,
+        elements: tuple[Element, ...] | None = None,
+    ) -> None:
+        """``history`` maps grammar key to ``(approved, decisions)``.
+
+        The counts come from the decisions actually recorded -- the
+        ``composed_designs`` table, via ``design_composition.grammar_history``
+        -- not from a store of the composer's own. The table is the record;
+        keeping a second copy here is how the training signal spent its whole
+        life at zero while decisions accumulated three tables away.
+        """
+        self.history = dict(history or {})
         self.elements = elements if elements is not None else registry.all_elements()
 
     def compose(
@@ -294,7 +306,7 @@ class DesignComposer:
                 continue
 
             score, rationale = _score(grammar, brief, design)
-            approved, decisions = self.approvals.history(grammar.key)
+            approved, decisions = self.history.get(grammar.key, (0, 0))
             options.append(
                 DesignOption(
                     grammar_key=grammar.key,
@@ -369,7 +381,3 @@ class DesignComposer:
             rejections=tuple(rejections),
             gaps=tuple(gaps),
         )
-
-    def record_decision(self, grammar_key: str, approved: bool) -> None:
-        """Feed a decision back. This is what moves confidence."""
-        self.approvals.record(grammar_key, approved)

@@ -1,0 +1,37 @@
+name: Design data refresh
+
+# Runs `python -m app.cli design-data --refresh` on the box: measures the
+# design corpus into PostgreSQL (design_measurements), merges the design
+# archive into the vintage evidence root, and prints the status report.
+# Manual only -- a data operation, not a deploy.
+#
+# Requires the branch carrying migration 0044 and the design-data command to
+# be deployed. Until then the command does not exist on the box and this
+# workflow fails loudly rather than doing something older quietly.
+on:
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    concurrency:
+      group: design-data-refresh
+      cancel-in-progress: false
+    steps:
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Refresh and report
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -u
+          STUDIO=/home/ubuntu/shirtfaced-studio
+          cd "$STUDIO"
+          set -a && . ./.env && set +a
+          nice -n 10 ./.venv/bin/python -m app.cli design-data --refresh
+          REMOTE
