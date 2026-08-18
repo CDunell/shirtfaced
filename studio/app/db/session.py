@@ -17,6 +17,12 @@ from sqlalchemy.pool import NullPool
 
 from app.config import Settings, get_settings
 
+# Imported for its side effect: every mapped class registers itself with
+# Base.metadata on import, and a foreign key across modules cannot resolve
+# against a half-populated metadata. Anything holding a session gets the whole
+# schema. See app/db/registry.py.
+from app.db import registry  # noqa: F401
+
 
 def connect_args_for(settings: Settings, url: URL) -> dict[str, Any]:
     """Driver keyword arguments derived from settings.

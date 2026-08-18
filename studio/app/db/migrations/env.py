@@ -12,17 +12,9 @@ from logging.config import fileConfig
 from alembic import context
 
 from app.config import get_settings
-from app.db import (  # noqa: F401
-    archive_models,
-    audio_models,
-    campaign_models,
-    concept_models,
-    email_models,
-    models,
-    observation_models,
-    social_models,
-    visual_models,
-)
+
+# The same registry the application uses, so the two cannot drift.
+from app.db import registry  # noqa: F401
 from app.db.base import Base
 from app.db.session import build_migration_engine
 
