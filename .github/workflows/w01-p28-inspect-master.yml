@@ -13,8 +13,8 @@ jobs:
   inspect:
     runs-on: ubuntu-latest
     concurrency:
-      group: deploy-production
-      cancel-in-progress: false
+      group: w01-p28-readonly-inspection
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
       - name: Set up deploy key
@@ -26,7 +26,9 @@ jobs:
       - name: Inspect current approved master and all coverage rows
         run: |
           set -euo pipefail
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' > w01-p28-inspection.json <<'REMOTE'
+          success=0
+          for attempt in 1 2 3 4 5 6; do
+            if ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' > w01-p28-inspection.json <<'REMOTE'
           set -euo pipefail
           cd /home/ubuntu/shirtfaced-studio
           set -a
@@ -85,6 +87,13 @@ jobs:
               }, indent=2, sort_keys=True))
           PY
           REMOTE
+            then
+              success=1
+              break
+            fi
+            sleep 10
+          done
+          test "$success" = 1
           cat w01-p28-inspection.json
       - name: Record inspection
         run: |
