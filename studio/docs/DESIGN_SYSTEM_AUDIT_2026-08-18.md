@@ -243,6 +243,17 @@ next compose, read straight from the table.
 
 ### 7b. Data operations (on the box — the runbook's Step 0)
 
+**Where the corpora actually are — checked 18 August, not assumed.** The
+production box holds neither `var/design_corpus` nor `var/design_archive`
+(confirmed by running the refresh there: both absent), and its evidence root
+holds 607 eBay listings at the service's default path against a documented
+3,639 — either collection continued elsewhere or the box's `.env` points
+`VINTAGE_EVIDENCE_ROOT` somewhere this check did not look. The cloud
+session's clone has no corpora either (`var/` was never in git), and its
+network policy blocks the retail domains, so re-collection cannot run there.
+The corpora exist only on the machine that ran the collectors. One rsync of
+the two directories to the box, then Step 0, closes this permanently.
+
 - Deploy this branch (migrations run on deploy), then run
   `python -m app.cli design-data --refresh` on the box. That single command
   measures the corpus into the database and merges the archive into
