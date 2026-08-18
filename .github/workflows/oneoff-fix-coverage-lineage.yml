@@ -1,0 +1,79 @@
+name: One-off coverage lineage fix
+
+on:
+  push:
+    paths:
+      - .github/workflows/oneoff-fix-coverage-lineage.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch scene API to expose only current-sheet Nano extractions
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('studio/app/routes/production_library.py')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''    return SceneMasterOut(
+        id=master.id,
+        scene_key=master.scene_key,
+        status=master.status,
+        approved_at=master.approved_at.isoformat() if master.approved_at else None,
+        notes=master.notes,
+        asset=AssetBrief.of(master.asset),
+        coverage=[_coverage_out(frame) for frame in frames],
+        contact_sheets=[_sheet_out(session, sheet) for sheet in sheets],
+    )
+'''
+
+          new = '''    # Historical Nano extractions stay in the database for audit, but the
+    # Scenes bench must never receive a panel from a rejected/superseded sheet.
+    # A crop has no contact_sheet_id and remains visible; a Nano extraction is
+    # visible only when it belongs to the sheet that is approved right now.
+    approved_sheet_id = next((sheet.id for sheet in sheets if sheet.status == "approved"), None)
+    visible_frames = [
+        frame
+        for frame in frames
+        if frame.contact_sheet_id is None or frame.contact_sheet_id == approved_sheet_id
+    ]
+
+    return SceneMasterOut(
+        id=master.id,
+        scene_key=master.scene_key,
+        status=master.status,
+        approved_at=master.approved_at.isoformat() if master.approved_at else None,
+        notes=master.notes,
+        asset=AssetBrief.of(master.asset),
+        coverage=[_coverage_out(frame) for frame in visible_frames],
+        contact_sheets=[_sheet_out(session, sheet) for sheet in sheets],
+    )
+'''
+
+          if old not in text:
+              raise SystemExit('Expected _master_out block not found; refusing to guess.')
+          text = text.replace(old, new, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Syntax check
+        run: python -m compileall -q studio/app/routes/production_library.py
+
+      - name: Remove one-off workflow and commit fix
+        run: |
+          git rm .github/workflows/oneoff-fix-coverage-lineage.yml
+          git add studio/app/routes/production_library.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(studio): hide panels from non-current contact sheets"
+          git push origin main
