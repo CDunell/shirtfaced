@@ -69,6 +69,28 @@ jobs:
           git add "$out"
           git commit -m "chore(renderer): record Veo take inspection [skip ci]"
           git push origin HEAD:main
+      - name: Retrieve existing take for inspection
+        if: steps.trigger.outputs.inspect_only == 'true'
+        run: |
+          set -euo pipefail
+          scene='${{ steps.trigger.outputs.scene }}'
+          shot='${{ steps.trigger.outputs.shot }}'
+          latest=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "ls -1dt /home/ubuntu/shirtfaced-studio/var/renderer-validation/$scene/*-coverage-$shot 2>/dev/null | head -1")
+          test -n "$latest"
+          mkdir -p veo-result
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:"$latest/video-1.mp4" veo-result/video-1.mp4
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:"$latest/manifest.json" veo-result/manifest.json
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:"$latest/probe.json" veo-result/probe.json
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:"$latest/motion-prompt.txt" veo-result/motion-prompt.txt
+          test -s veo-result/video-1.mp4
+      - name: Upload inspected existing take
+        if: steps.trigger.outputs.inspect_only == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: w01-p28-a-existing-veo-take
+          path: veo-result/
+          if-no-files-found: error
+          retention-days: 7
       - name: Install ffmpeg
         if: steps.trigger.outputs.inspect_only != 'true'
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
@@ -101,8 +123,9 @@ jobs:
           ffprobe -v error -select_streams a -show_entries stream=index -of csv=p=0 veo-result/video-1.mp4 | test ! -s /dev/stdin
           ffprobe -v error -show_entries stream=width,height,r_frame_rate -show_entries format=duration -of json veo-result/video-1.mp4 > veo-result/probe.json
           sha256sum veo-result/video-1.mp4 > veo-result/video-1.sha256
-      - uses: actions/upload-artifact@v4
+      - name: Upload generated take
         if: steps.trigger.outputs.inspect_only != 'true'
+        uses: actions/upload-artifact@v4
         with:
           name: pub-1105-coverage-veo-lite
           path: veo-result/
