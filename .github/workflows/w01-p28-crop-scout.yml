@@ -1,0 +1,109 @@
+name: W01-P28 zero-provider crop scout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/coverage-scout-triggers/*.json"
+
+permissions:
+  contents: write
+
+jobs:
+  scout:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: w01-p28-crop-scout
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Build crop scout from approved master pixels
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/shirtfaced-studio
+          set -a
+          . .env
+          set +a
+          ./.venv/bin/python - <<'PY'
+          import json
+          from io import BytesIO
+          from pathlib import Path
+          from PIL import Image, ImageDraw
+          from app.adapters.asset_store import FilesystemAssetStore
+          from app.config import get_settings
+          from app.db.session import get_session_factory
+          from app.services.reference_resolution import resolve_scene_master
+
+          settings = get_settings()
+          store = FilesystemAssetStore(settings.assets_root_resolved)
+          with get_session_factory()() as session:
+              resolved = resolve_scene_master(session, store, scene_key="W01-P28")
+
+          image = Image.open(BytesIO(resolved.data)).convert("RGB")
+          width, height = image.size
+          crop_h = (height // 16) * 16
+          crop_w = crop_h * 9 // 16
+          max_x = width - crop_w
+          xs = [round(max_x * i / 8) for i in range(9)]
+
+          thumb_w = 216
+          thumb_h = 384
+          label_h = 26
+          gap = 8
+          sheet_w = 3 * thumb_w + 2 * gap
+          master_h = round(sheet_w * height / width)
+          sheet_h = master_h + 18 + 3 * (thumb_h + label_h) + 2 * gap
+          sheet = Image.new("RGB", (sheet_w, sheet_h), "white")
+          draw = ImageDraw.Draw(sheet)
+
+          master_preview = image.resize((sheet_w, master_h), Image.Resampling.LANCZOS)
+          sheet.paste(master_preview, (0, 0))
+          draw.text((6, master_h + 2), f"MASTER {width}x{height} sha {resolved.sha256[:12]}", fill="black")
+          top = master_h + 18
+          boxes = []
+          for i, x in enumerate(xs):
+              y = max(0, (height - crop_h) // 2)
+              crop = image.crop((x, y, x + crop_w, y + crop_h))
+              thumb = crop.resize((thumb_w, thumb_h), Image.Resampling.LANCZOS)
+              row, col = divmod(i, 3)
+              left = col * (thumb_w + gap)
+              cell_top = top + row * (thumb_h + label_h + gap)
+              sheet.paste(thumb, (left, cell_top))
+              draw.text((left + 4, cell_top + thumb_h + 4), f"C{i} x={x} box={x},{y},{x+crop_w},{y+crop_h}", fill="black")
+              boxes.append({"candidate": f"C{i}", "x": x, "y": y, "width": crop_w, "height": crop_h, "box": [x, y, x + crop_w, y + crop_h]})
+
+          out = Path("var/diagnostics/w01-p28")
+          out.mkdir(parents=True, exist_ok=True)
+          sheet.save(out / "crop-scout.jpg", "JPEG", quality=82, optimize=True)
+          (out / "crop-scout.json").write_text(json.dumps({
+              "scene": "W01-P28",
+              "provider_called": False,
+              "master_asset_id": str(resolved.asset_id),
+              "master_sha256": resolved.sha256,
+              "master_dimensions": [width, height],
+              "crop_dimensions": [crop_w, crop_h],
+              "candidates": boxes,
+          }, indent=2), encoding="utf-8")
+          PY
+          REMOTE
+          mkdir -p studio/worlds/world-01/shots/diagnostics
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28/crop-scout.jpg studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.jpg
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28/crop-scout.json studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.json
+      - name: Record diagnostic scout
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.jpg studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.json
+          git commit -m "chore(W01-P28): record zero-provider crop scout [skip ci]"
+          git push origin main
