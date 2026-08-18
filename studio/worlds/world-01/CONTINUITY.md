@@ -187,6 +187,20 @@ Current approved scene state is recorded in `SHOTLIST.md`.
 
 These are rejected **attempts** unless `SHOTLIST.md` separately marks the scene rejected. A rejected attempt never silently changes scene status.
 
+## W01-P28 — Nano full-scene coverage provider refusals — 18 August 2026
+
+**Attempt status:** REJECTED ATTEMPTS  
+**Scene status:** IN PROGRESS
+
+Two paid W01-P28 Nano scene-coverage calls using the approved master plus `damo:contact_sheet`, `emma:contact_sheet` and `brock:contact_sheet` reached Google and were rejected at generated-image filtering rather than transport.
+
+- The first post-containment attempt returned a controlled recorded refusal instead of the earlier raw HTTP 500 path.
+- Commit `338b0d5` then narrowed the prompt so Damo's object was explicitly ordinary billiards equipment and the action a friendly celebratory pub gesture. The one post-deployment paid retry still returned HTTP 409 from Studio wrapping Google's HTTP 400 prohibited-content/generated-image-filter refusal.
+- The machine record for that retry is retained at repository root as `W01-P28_PAID_RETRY_RESULT.md`.
+- At the time of that retry, Studio's `attempts` field counted successful calls only, so the recorded 31 → 31 did not mean the refusal vanished. Commit `99f33fc` corrected that counter to include failed provider calls as attempts, matching the ledger contract.
+
+**Permanent lesson:** Do not keep paying to rephrase the same Damo/cue regeneration after repeated generated-image filtering. Preserve Damo directly from the approved master for A/B/E via deterministic original-pixel crops. Use the explicit non-Damo Nano coverage family for Emma/Brock, band and room-energy observations, with only the identity references those views actually require. The approved master remains spatial authority throughout.
+
 ## W01-015 — Sunrise balcony attempt
 
 **Attempt status:** REJECTED  

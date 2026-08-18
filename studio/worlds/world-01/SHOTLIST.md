@@ -58,21 +58,25 @@ The approved lookout scene is location-generic. Historical reference material ma
 
 ### Coverage rule
 
-The 16:9 master is not handed to Veo with permission to choose a vertical composition. **Each clip declares its own 9:16 focus first.** The production path is:
+Every clip resolves its source still before Veo; Veo does not choose scene coverage. The active W01-P28 path is now hybrid because repeated paid Nano full-scene coverage attempts containing Damo's pool-table action were output-filtered by Google even after neutral billiards wording.
 
-`approved 16:9 master + shot focus -> deterministic 9:16 crop/reframe -> checksum -> Veo first-frame I2V -> keeper selection -> post edit`
+- **A — Wide discovery** and **B — Damo close:** deterministic original-pixel 9:16 crop/reframe from the currently approved 16:9 master -> checksum -> human approval -> Veo first-frame I2V.
+- **C — Emma + Brock** and **D — Band / crowd source:** approved master + only relevant identity refs -> explicitly selected `W01-P28Z-non-damo.nano-banana-coverage.txt` -> reviewed scene contact sheet -> selected-panel extraction -> human approval -> Veo first-frame I2V.
+- **E — Return wide:** reuse A when the motion contains a strong return range. If a genuinely different return is required, derive another original-pixel master crop rather than buying another Damo/cue image regeneration.
 
-A focus crop changes framing only. It does not regenerate the pub, characters, crowd, lighting or props. Every derived frame records the parent-master SHA256 and its own crop/frame SHA256.
+A deterministic crop changes framing only. It does not regenerate the pub, characters, crowd, lighting or props. Every derived frame records the parent-master SHA256 and its own crop/frame SHA256. A Nano non-Damo observation also remains subordinate to the same master and does not remove Damo from the event; its phone simply faces another part of the room.
+
+The detailed active authority is `shots/W01-P28.md` §2.1. Do not issue another paid full-scene Nano retry with Damo/cue coverage merely to rephrase the same action.
 
 ### Shot package
 
-| Shot | Raw target | 9:16 focus | Purpose / expected keeper |
+| Shot | Raw target | 9:16 source / focus | Purpose / expected keeper |
 | --- | ---: | --- | --- |
-| **W01-P28-A — Wide discovery** | 6s | Damo + full pool-table incident, retaining band and surrounding crowd | Establish that the room is already going off; viewer discovers Damo on the table. Expect ~2.5–4s usable. |
-| **W01-P28-B — Damo close** | 6s | Tight Damo crop from the same master: face, upper body, cue overhead, enough neighbouring bodies/geography to stay documentary | Brief identity/performance hit. Head back, eyes shut, roaring; no hero re-staging. Expect ~1.5–2.5s usable. |
-| **W01-P28-C — Emma + Brock cutaway** | 6s | Right-side social cluster containing Emma/Brock, with Damo peripheral or absent | Prove the room exists independently of Damo. They continue their own pre-existing behaviour, not a reaction shot staged for him. Expect ~2–3s usable. |
-| **W01-P28-D — Band / crowd source** | 6s | Stage and dense mid-room crowd; band clearly remains the performance source | Reset attention away from Damo, add rhythm and explain what everyone is actually singing to. Expect ~1.5–3s usable. |
-| **W01-P28-E — Return wide / collision** | 6s | Alternate vertical window across pool table + foreground crowd; not necessarily identical to A | Return to the incident with foreground obstruction, crowd surge or a small phone bump; leave on energy rather than a generated ending. Expect ~2–4s usable. |
+| **W01-P28-A — Wide discovery** | 6s | Approved original-pixel master crop: Damo + full pool-table incident, retaining band and surrounding crowd | Establish that the room is already going off; viewer discovers Damo on the table. Expect ~2.5–4s usable. |
+| **W01-P28-B — Damo close** | 6s | Tighter approved original-pixel crop from the same master: face, upper body, cue overhead, enough neighbouring bodies/geography to stay documentary | Brief identity/performance hit. Head back, eyes shut, roaring; no hero re-staging. Expect ~1.5–2.5s usable. |
+| **W01-P28-C — Emma + Brock cutaway** | 6s | Approved extracted panel from the explicit non-Damo Nano coverage family, using Emma/Brock identity refs only as needed | Prove the room exists independently of Damo. They continue their own pre-existing behaviour, not a reaction shot staged for him. Expect ~2–3s usable. |
+| **W01-P28-D — Band / crowd source** | 6s | Approved extracted band/room panel from the explicit non-Damo coverage family; no Damo identity ref required | Reset attention away from Damo, add rhythm and explain what everyone is actually singing to. Expect ~1.5–3s usable. |
+| **W01-P28-E — Return wide / collision** | 6s | Prefer later keeper range from A; otherwise another approved original-pixel window across pool table + foreground crowd | Return to the incident with foreground obstruction, crowd surge or a small phone bump; leave on energy rather than a generated ending. Expect ~2–4s usable. |
 
 ### Editorial intent
 
