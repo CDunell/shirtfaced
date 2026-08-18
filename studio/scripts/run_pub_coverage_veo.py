@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Animate one approved 9:16 coverage crop with minimal Veo motion.
+"""Animate one approved coverage frame with minimal Veo motion.
 
 The supplied crop is already the camera composition. Veo is not asked to reveal
 new geography or perform a major reframing; it only animates the established shot.
@@ -131,8 +131,19 @@ def main() -> None:
             "coverage_frame_sha256": resolved.sha256,
         }
 
-    if source_dimensions[0] * 16 != source_dimensions[1] * 9:
-        raise SystemExit(f"seed must be exact 9:16, got {source_dimensions}")
+    # The seed's own shape, not a shape asserted here. This used to demand exact
+    # 9:16 and then request 9:16 from Veo, which was coherent when a coverage
+    # frame was a deterministic vertical crop of the master. §8 and §10
+    # superseded that: a panel is extracted as it sits on the sheet, and §10's
+    # method expands it to fill the canvas rather than reshaping it. A landscape
+    # panel is now the normal output, and asking Veo for a vertical clip of a
+    # landscape still is asking it to reframe -- which is what §11 forbids
+    # everywhere else in this pipeline.
+    #
+    # So motion preserves the frame, and the vertical social crop is the edit's
+    # job, where a person picks it. §19 assembles the cut in post regardless.
+    width, height = source_dimensions
+    aspect_ratio = "16:9" if width >= height else "9:16"
 
     settings = get_settings()
     if not settings.google_media_live or settings.gemini_api_key is None:
@@ -151,7 +162,7 @@ def main() -> None:
             prompt=prompt,
             first_frame=data,
             first_frame_mime=mime,
-            aspect_ratio="9:16",
+            aspect_ratio=aspect_ratio,
             resolution=DEV_RESOLUTION,
         )
     )
@@ -167,7 +178,7 @@ def main() -> None:
         "experiment": "approved-9x16-coverage-crop-to-minimal-motion-veo",
         "generated_at": stamp,
         "model": result.model,
-        "aspect_ratio": "9:16",
+        "aspect_ratio": aspect_ratio,
         "resolution": DEV_RESOLUTION,
         "seed_path": str(seed),
         "seed_sha256": actual_sha,
