@@ -235,6 +235,16 @@ def _master_out(session: Session, master: SceneMaster) -> SceneMasterOut:
         .scalars()
         .all()
     )
+    # Historical Nano extractions stay in the database for audit, but Stage 4
+    # must never receive a panel from a rejected or superseded contact sheet.
+    # Crops carry no contact_sheet_id and remain visible. Nano extractions are
+    # returned only when they belong to the sheet that is approved right now.
+    approved_sheet_id = next((sheet.id for sheet in sheets if sheet.status == "approved"), None)
+    visible_frames = [
+        frame
+        for frame in frames
+        if frame.contact_sheet_id is None or frame.contact_sheet_id == approved_sheet_id
+    ]
     return SceneMasterOut(
         id=master.id,
         scene_key=master.scene_key,
@@ -242,7 +252,7 @@ def _master_out(session: Session, master: SceneMaster) -> SceneMasterOut:
         approved_at=master.approved_at.isoformat() if master.approved_at else None,
         notes=master.notes,
         asset=AssetBrief.of(master.asset),
-        coverage=[_coverage_out(frame) for frame in frames],
+        coverage=[_coverage_out(frame) for frame in visible_frames],
         contact_sheets=[_sheet_out(session, sheet) for sheet in sheets],
     )
 
