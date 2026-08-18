@@ -1,0 +1,260 @@
+name: W01-P28 direct shot C candidate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/direct-c-triggers/*.json"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.sha }}"
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Place exact direct-C prompt on Studio
+        run: |
+          scp -i ~/.ssh/deploy_key studio/worlds/world-01/shots/W01-P28C-direct-shot.txt ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/world-01/shots/W01-P28C-direct-shot.txt
+      - name: Generate at most one direct C candidate
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/shirtfaced-studio
+          set -a
+          . .env
+          set +a
+          ./.venv/bin/python - <<'PY'
+          import hashlib
+          import json
+          import time
+          import uuid
+          from pathlib import Path
+
+          from sqlalchemy import func, select
+
+          from app.adapters.asset_store import FilesystemAssetStore
+          from app.adapters.google_media import GoogleImageClient, GoogleImageRequest, GoogleMediaError
+          from app.adapters.reference_images import ReferenceImage
+          from app.config import get_settings
+          from app.db.session import get_session_factory
+          from app.db.visual_models import GenerationCall, SceneContactSheet
+          from app.domain.enums import VisualAssetKind, VisualAssetSourceType
+          from app.services import coverage_library, generation_ledger, nano_pipeline, visual_library
+          from app.services.reference_resolution import resolve_scene_master
+
+          BASELINE_ATTEMPTS = 35
+          FAILED_C_SHEET = uuid.UUID("a8207c95-c1ce-4c70-a075-cb81107a1a53")
+          PROMPT_PATH = Path("worlds/world-01/shots/W01-P28C-direct-shot.txt")
+          LABEL = "W01-P28 C direct vertical candidate"
+          selections = ["emma:contact_sheet", "brock:contact_sheet"]
+          out = Path("var/diagnostics/w01-p28-direct-c")
+          out.mkdir(parents=True, exist_ok=True)
+
+          settings = get_settings()
+          store = FilesystemAssetStore(settings.assets_root_resolved)
+          prompt = PROMPT_PATH.read_text(encoding="utf-8")
+          for required in (
+              "exactly ONE",
+              "vertical 9:16",
+              "DIFFERENT DEPTHS",
+              "Do not create a contact sheet",
+          ):
+              if required not in prompt:
+                  raise SystemExit(f"Direct C prompt missing guard: {required}")
+
+          with get_session_factory()() as session:
+              # Reject the unusable 5x2/10-cell shot-C sheet before creating a replacement candidate.
+              bad_sheet = session.get(SceneContactSheet, FAILED_C_SHEET)
+              if bad_sheet is not None and bad_sheet.status != "rejected":
+                  coverage_library.reject_contact_sheet(
+                      session,
+                      bad_sheet,
+                      note="Production QA reject: requested 3x3/9 portrait observations but provider returned a 5x2/10-image layout. Direct shot C replaces contact-sheet discovery for this shot.",
+                      actor="production-qa",
+                  )
+                  session.commit()
+
+              attempts_before = int(
+                  session.execute(
+                      select(func.count()).select_from(GenerationCall).where(GenerationCall.scene_key == "W01-P28")
+                  ).scalar()
+                  or 0
+              )
+              result_record = {
+                  "scene": "W01-P28",
+                  "shot": "C",
+                  "method": "direct_scene_shot_candidate",
+                  "baseline_attempts": BASELINE_ATTEMPTS,
+                  "attempts_before": attempts_before,
+                  "provider_called": False,
+                  "duplicate_spend_prevented": False,
+                  "human_review_required": True,
+                  "approved_automatically": False,
+                  "selections": selections,
+                  "aspect_ratio": "9:16",
+              }
+
+              # If any call landed since the C-sheet review, do not guess what happened and spend again.
+              if attempts_before > BASELINE_ATTEMPTS:
+                  result_record["duplicate_spend_prevented"] = True
+                  result_record["reason"] = "A provider call is already recorded after the C-sheet attempt; direct-C recovery did not call Google."
+              elif attempts_before < BASELINE_ATTEMPTS:
+                  raise SystemExit(f"Generation ledger regressed: {attempts_before} < {BASELINE_ATTEMPTS}")
+              else:
+                  master = resolve_scene_master(session, store, scene_key="W01-P28")
+                  chosen = nano_pipeline.resolve_selected_references(session, store, selections)
+                  references = (
+                      ReferenceImage(name="scene-master", data=master.data, mime_type=master.mime_type, locked=True),
+                      *(image for _, image in chosen),
+                  )
+                  inputs = [master.asset_id, *(one.asset_id for one, _ in chosen)]
+                  if not settings.google_media_live or settings.gemini_api_key is None:
+                      raise SystemExit("Google media is not live; refusing to spend")
+                  client = GoogleImageClient(
+                      api_key=settings.gemini_api_key.get_secret_value(),
+                      model=settings.google_image_model,
+                  )
+                  started = time.monotonic()
+                  try:
+                      generated = client.generate(
+                          GoogleImageRequest(
+                              prompt=prompt,
+                              references=references,
+                              aspect_ratio="9:16",
+                              image_size=settings.google_sheet_image_size,
+                          )
+                      )
+                  except GoogleMediaError as error:
+                      generation_ledger.record_call(
+                          session,
+                          operation="direct_scene_shot",
+                          model=settings.google_image_model,
+                          scene_key="W01-P28",
+                          subject=LABEL,
+                          prompt=prompt,
+                          inputs=inputs,
+                          output_asset_id=None,
+                          succeeded=False,
+                          failure=str(error),
+                          duration_ms=round((time.monotonic() - started) * 1000),
+                          actor="production-direct-shot",
+                      )
+                      session.commit()
+                      result_record["provider_called"] = True
+                      result_record["succeeded"] = False
+                      result_record["failure"] = str(error)
+                  else:
+                      duration_ms = round((time.monotonic() - started) * 1000)
+                      ingested = visual_library.ingest_asset(
+                          session,
+                          store,
+                          data=generated.data,
+                          kind=VisualAssetKind.COVERAGE,
+                          source_type=VisualAssetSourceType.GENERATED,
+                          role="w01-p28-c-direct-candidate",
+                          description="W01-P28 shot C direct vertical candidate; pending human review",
+                          provider="google",
+                          model=generated.model,
+                          prompt_hash=hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+                          metadata={
+                              "scene": "W01-P28",
+                              "shot": "C",
+                              "method": "direct_scene_shot_candidate",
+                              "source_master_sha256": master.sha256,
+                              "reference_selections": selections,
+                              "requested_aspect_ratio": "9:16",
+                          },
+                      )
+                      asset = ingested.asset
+                      coverage_library._record_lineage_edge(
+                          session,
+                          parent=master.asset_id,
+                          child=asset.id,
+                          relationship="generated_from_reference",
+                          operation_metadata={"role": "scene_master", "shot": "C", "method": "direct_scene_shot_candidate"},
+                      )
+                      for selected, _image in chosen:
+                          coverage_library._record_lineage_edge(
+                              session,
+                              parent=selected.asset_id,
+                              child=asset.id,
+                              relationship="generated_from_reference",
+                              operation_metadata={"role": selected.slug, "reference_role": selected.role, "shot": "C"},
+                          )
+                      generation_ledger.record_call(
+                          session,
+                          operation="direct_scene_shot",
+                          model=generated.model,
+                          scene_key="W01-P28",
+                          subject=LABEL,
+                          prompt=prompt,
+                          inputs=inputs,
+                          output_asset_id=asset.id,
+                          succeeded=True,
+                          failure=None,
+                          duration_ms=duration_ms,
+                          actor="production-direct-shot",
+                      )
+                      session.commit()
+                      (out / "C-direct-candidate.jpg").write_bytes(generated.data)
+                      result_record.update({
+                          "provider_called": True,
+                          "succeeded": True,
+                          "visual_asset_id": str(asset.id),
+                          "asset_status": asset.status.value,
+                          "asset_sha256": asset.sha256,
+                          "asset_dimensions": [asset.width, asset.height],
+                          "source_master_sha256": master.sha256,
+                          "review_file": "C-direct-candidate.jpg",
+                          "duration_ms": duration_ms,
+                      })
+
+              result_record["attempts_after"] = int(
+                  session.execute(
+                      select(func.count()).select_from(GenerationCall).where(GenerationCall.scene_key == "W01-P28")
+                  ).scalar()
+                  or 0
+              )
+              (out / "result.json").write_text(json.dumps(result_record, indent=2, sort_keys=True), encoding="utf-8")
+              print(json.dumps(result_record, indent=2, sort_keys=True))
+          PY
+          REMOTE
+
+          mkdir -p w01-p28-direct-c
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28-direct-c/. w01-p28-direct-c/
+          test -s w01-p28-direct-c/result.json
+          cat w01-p28-direct-c/result.json
+      - name: Upload direct C review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: w01-p28-direct-c-${{ github.run_id }}
+          path: w01-p28-direct-c/
+          if-no-files-found: error
+          retention-days: 1
+      - name: Record direct C result
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          mkdir -p studio/worlds/world-01/shots/diagnostics
+          cp w01-p28-direct-c/result.json studio/worlds/world-01/shots/diagnostics/W01-P28.direct-c-result.json
+          printf '{"run_id":%s,"artifact_name":"w01-p28-direct-c-%s"}\n' '${{ github.run_id }}' '${{ github.run_id }}' > studio/worlds/world-01/shots/diagnostics/W01-P28.direct-c-run.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/worlds/world-01/shots/diagnostics/W01-P28.direct-c-result.json studio/worlds/world-01/shots/diagnostics/W01-P28.direct-c-run.json
+          git commit -m "chore(W01-P28): record direct C candidate [skip ci]"
+          git push origin main
