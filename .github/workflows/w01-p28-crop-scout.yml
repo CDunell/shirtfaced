@@ -97,13 +97,25 @@ jobs:
           mkdir -p studio/worlds/world-01/shots/diagnostics
           scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28/crop-scout.jpg studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.jpg
           scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28/crop-scout.json studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.json
-      - name: Record diagnostic scout
+      - name: Upload crop scout artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: w01-p28-crop-scout-${{ github.run_id }}
+          path: |
+            studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.jpg
+            studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.json
+          if-no-files-found: error
+          retention-days: 1
+      - name: Record diagnostic scout and run id
         run: |
           set -euo pipefail
+          run_id='${{ github.run_id }}'
+          artifact_name="w01-p28-crop-scout-${run_id}"
+          printf '{"run_id":%s,"artifact_name":"%s","provider_called":false}\n' "$run_id" "$artifact_name" > studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout-run.json
           git fetch origin main
           git checkout -B main origin/main
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.jpg studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.json
-          git commit -m "chore(W01-P28): record zero-provider crop scout [skip ci]"
+          git add studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.jpg studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout.json studio/worlds/world-01/shots/diagnostics/W01-P28.crop-scout-run.json
+          git commit -m "chore(W01-P28): record zero-provider crop scout artifact [skip ci]"
           git push origin main
