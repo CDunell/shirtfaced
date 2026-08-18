@@ -32,7 +32,10 @@ jobs:
           seed_path=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["seed_relative_path"])' "$trigger")
           seed_sha=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["seed_sha256"])' "$trigger")
           shot=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["shot"])' "$trigger")
-          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "set -euo pipefail; root=/home/ubuntu/shirtfaced-studio; seed=\"\$root/$seed_path\"; test -s \"\$seed\"; actual=\$(sha256sum \"\$seed\" | awk '{print \$1}'); test \"\$actual\" = '$seed_sha'; result=\$(\$root/.venv/bin/python \$root/scripts/run_pub_coverage_veo.py --seed \"\$seed\" --expected-sha256 '$seed_sha' --shot '$shot'); dir=\$(printf '%s\\n' \"\$result\" | sed -n 's/^RESULT_DIR=//p' | tail -1); test -n \"\$dir\"; echo RESULT_DIR=\$dir")
+          # The scene names which world's motion direction to read. It has always
+          # been in the trigger; the runner used to default it to one pub.
+          scene=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["scene"])' "$trigger")
+          output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "set -euo pipefail; root=/home/ubuntu/shirtfaced-studio; seed=\"\$root/$seed_path\"; test -s \"\$seed\"; actual=\$(sha256sum \"\$seed\" | awk '{print \$1}'); test \"\$actual\" = '$seed_sha'; result=\$(\$root/.venv/bin/python \$root/scripts/run_pub_coverage_veo.py --seed \"\$seed\" --expected-sha256 '$seed_sha' --shot '$shot' --scene '$scene'); dir=\$(printf '%s\\n' \"\$result\" | sed -n 's/^RESULT_DIR=//p' | tail -1); test -n \"\$dir\"; echo RESULT_DIR=\$dir")
           printf '%s\n' "$output"
           echo "result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1)" >> "$GITHUB_OUTPUT"
       - name: Retrieve raw generation and strip audio

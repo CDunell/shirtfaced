@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import pytest
 
-from app.services.renderer_validation import SCENES, harness_manifest, scene_package
+from app.services.renderer_validation import harness_manifest, scene_package, scenes
 
 
 def test_validation_harness_has_five_distinct_scenes() -> None:
-    assert len(SCENES) == 5
-    assert len({scene.id for scene in SCENES}) == 5
+    assert len(scenes()) == 5
+    assert len({scene.id for scene in scenes()}) == 5
 
 
 def test_pub_scene_locks_cue_overhead_and_table_position() -> None:

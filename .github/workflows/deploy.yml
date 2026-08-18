@@ -50,7 +50,16 @@ jobs:
             --exclude=web/node_modules --exclude=web/dist \
             --exclude=__pycache__ --exclude=.pytest_cache \
             studio/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/
-          rsync -az --ignore-existing \
+          # worlds/ carries scene configuration -- coverage prompts, shot specs,
+          # motion direction -- so an edit to an existing file has to land. This
+          # used to be --ignore-existing, which copies only files the box does not
+          # already have: every canon edit since has deployed as a no-op, and it
+          # went unnoticed until a prompt fix failed to reach a generation.
+          #
+          # No --delete. Nothing under worlds/ on the box is untracked today, but a
+          # world that later writes something of its own should not lose it to a
+          # deploy. Binaries the server provisions live under var/ and assets/.
+          rsync -az \
             -e "ssh -i ~/.ssh/deploy_key" \
             studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
 

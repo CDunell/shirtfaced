@@ -62,26 +62,45 @@ def scene_lineage(seed: Path, scene_key: str) -> dict:
 DEV_MODEL = "veo-3.1-lite-generate-preview"
 DEV_RESOLUTION = "720p"
 
-PROMPTS = {
-    "emma-brock": """Animate this exact supplied 9:16 pub crop as a short piece of accidental handheld phone footage from the same instant. The camera composition is already correct: DO NOT pan, zoom, reframe, reveal new parts of the pub, or rebuild the environment. Keep the existing red-lit back bar, pool table edge, hanging lamp, crowd positions, wardrobe, faces and spatial relationships.
 
-The elevated woman already in frame continues cheering and singing with natural upper-body movement. The man directly beneath/supporting her continues reacting and moving with the crowd. Nearby punters jostle, shout, laugh, raise hands and shift independently. Foreground bodies may partially obstruct the frame for moments. Movement should feel messy and physically plausible, not choreographed.
+def motion_prompt(scene_key: str, shot: str) -> str:
+    """The scene's motion direction, from the world rather than from here.
 
-Preserve the exact people and clothing from the supplied frame. Do not replace faces, change garments, add principal people, clear space around the pair, create a performer/audience relationship, alter the bar geography, or move the pool table. Keep ugly uneven late-night pub lighting and documentary exposure. Nobody looks at or acknowledges the camera. No cuts, no slow motion, no text. Audio will be replaced in post.""",
-    "damo": """Animate this exact supplied 9:16 pub crop as a short piece of accidental handheld phone footage from the same instant. The camera composition is already correct: DO NOT pan, zoom, reframe, reveal new parts of the pub, or rebuild the environment. Preserve the pool table, stool and beer, crowd, lighting, Damo's olive/grey-green shirt, his bare head, overhead cue and every visible spatial relationship.
+    Two prompts used to live in this file as string literals, and ``--shot`` was
+    ``choices=sorted(PROMPTS)`` -- so the only animatable shots in the world were
+    the two somebody had typed into a script named after one pub. A panel called
+    ``damo-incident-in-context`` was rejected by argparse before anything reached
+    Veo.
 
-Damo continues roaring the chorus with the cue overhead while the crowd around him moves independently: jostling, shouting, laughing, shifting and occasionally crossing the foreground. Keep his feet planted exactly on the pool table and preserve physically plausible weight and contact. Nobody reorganises around him or treats him as a performer.
+    Motion direction is scene configuration, so it lives beside the coverage
+    prompt it belongs to:
 
-Preserve the exact people and clothing from the supplied frame. No tattoos or jewellery added, no audience semicircle, no hero lighting, no cuts, no slow motion, no text. Audio will be replaced in post.""",
-}
+        worlds/<world>/shots/<SCENE>.veo-motion.txt          the scene's own
+        worlds/<world>/shots/<SCENE>.<shot>.veo-motion.txt   one shot's override
+
+    A shot with nothing of its own uses the scene's. A scene with nothing at all
+    is refused by name, because §14 says the Veo prompt describes what changes
+    through time and nothing else can guess that for a room it has never seen.
+    """
+    worlds = get_settings().worlds_root_resolved
+    for candidate in (f"{scene_key}.{shot}.veo-motion.txt", f"{scene_key}.veo-motion.txt"):
+        for shots in sorted(worlds.glob("*/shots")):
+            path = shots / candidate
+            if path.is_file():
+                return path.read_text(encoding="utf-8").strip()
+    raise SystemExit(
+        f"{scene_key}: no motion direction. Write "
+        f"worlds/<world>/shots/{scene_key}.veo-motion.txt, or "
+        f"{scene_key}.{shot}.veo-motion.txt for this shot alone."
+    )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed", help="Legacy: a file. Omit to resolve the approved frame.")
     parser.add_argument("--expected-sha256", help="Required with --seed.")
-    parser.add_argument("--shot", choices=sorted(PROMPTS), required=True)
-    parser.add_argument("--scene", default="W01-P28")
+    parser.add_argument("--shot", required=True)
+    parser.add_argument("--scene", required=True)
     args = parser.parse_args()
 
     if args.seed:
@@ -126,7 +145,7 @@ def main() -> None:
         poll_seconds=settings.google_video_poll_seconds,
         timeout_seconds=settings.google_video_timeout_seconds,
     )
-    prompt = PROMPTS[args.shot]
+    prompt = motion_prompt(args.scene, args.shot)
     result = client.generate(
         GoogleVideoRequest(
             prompt=prompt,

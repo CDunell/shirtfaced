@@ -1,0 +1,109 @@
+{
+  "world": "world-01",
+  "scenes": [
+    {
+      "id": "W01-P28",
+      "title": "Pub chorus",
+      "purpose": "crowd + identity + prop + I2V",
+      "hero": "damo",
+      "exact_instant": "Damo stands on the pool table with both boots on it, cue horizontal overhead in both fists, head back, eyes shut, roaring the chorus, facing away from the stage; stool and full beer remain on the table. Preserve the successful identity, pose, composition and pub geography from the accepted attempts; correct lighting only. This is a genuinely dark pub back room at 11:05pm, approximately 1 to 1.5 stops darker than a normally exposed interior. The pool-table lamp is the dominant local light on Damo and the table, with weak coloured stage spill behind him and sparse warm practical highlights. Most of the crowd and room must fall into deep shadow. Windows read nearly black except for reflections and condensation. Faces are readable only where practical light happens to strike them, not uniformly illuminated. No ceiling-wide fill, no bright house lights, no promo-photo exposure, no community-hall or bingo-night brightness.",
+      "required_refs": [
+        "damo:identity",
+        "damo:body",
+        "brock:identity",
+        "emma:identity"
+      ],
+      "still_gate": [
+        "damo_identity",
+        "damo_on_table",
+        "cue_overhead",
+        "no_invented_identity_marks",
+        "stool_and_beer",
+        "camera_premise",
+        "late_night_pub_exposure"
+      ],
+      "motion": "Damo keeps the cue overhead and rocks with the chorus; the crowd and band move independently; a nearby patron lightly bumps the phone, causing a brief imperfect reframe; native pub audio overloads the phone mic slightly."
+    },
+    {
+      "id": "ute-0341",
+      "title": "Ute tray",
+      "purpose": "close identity + geometry + wet night",
+      "hero": "damo",
+      "exact_instant": "Damo lies in the open tray hugging the wooden pub stool, comfortable, while the others continue toward the building.",
+      "required_refs": [
+        "damo:identity",
+        "damo:body",
+        "brock:identity",
+        "emma:identity"
+      ],
+      "still_gate": [
+        "damo_identity",
+        "open_tray_geometry",
+        "stool_contact",
+        "no_invented_identity_marks",
+        "wet_asphalt"
+      ],
+      "motion": "Small breathing and settling movements; the others continue walking; the ice bag drips; handheld observer movement remains physically plausible."
+    },
+    {
+      "id": "takeaway-0230",
+      "title": "Takeaway kerb",
+      "purpose": "four-person continuity + object counting",
+      "hero": "ensemble",
+      "exact_instant": "Four established people sit on the kerb around a pub stool carrying five food containers; exactly one container is closed.",
+      "required_refs": [
+        "damo:identity",
+        "brock:identity",
+        "emma:identity"
+      ],
+      "still_gate": [
+        "cast_identity",
+        "four_people",
+        "five_containers",
+        "one_closed",
+        "stool_present",
+        "camera_premise"
+      ],
+      "motion": "Natural eating and conversation continue; hands move minimally and independently; traffic and the takeaway background remain alive."
+    },
+    {
+      "id": "side-street-2126",
+      "title": "Side street",
+      "purpose": "group continuity + moving geography",
+      "hero": "damo",
+      "exact_instant": "Damo walks backwards carrying the stool while talking; milk crates are directly behind him and he has not noticed them.",
+      "required_refs": [
+        "damo:identity",
+        "damo:body",
+        "brock:identity",
+        "emma:identity"
+      ],
+      "still_gate": [
+        "damo_identity",
+        "stool_present",
+        "crates_behind_damo",
+        "group_geography",
+        "camera_premise"
+      ],
+      "motion": "Damo continues backwards while talking; the group advances naturally; no one performs for camera; camera remains across the street."
+    },
+    {
+      "id": "continuity-bridge",
+      "title": "Continuity bridge",
+      "purpose": "approved-frame reuse",
+      "hero": "damo",
+      "exact_instant": "Begin from an approved in-world frame without resetting identity or wardrobe.",
+      "required_refs": [
+        "approved_previous_frame",
+        "canonical_identity_manifest"
+      ],
+      "still_gate": [
+        "identity_continuity",
+        "wardrobe_continuity",
+        "prop_continuity",
+        "camera_premise"
+      ],
+      "motion": "Only the next narrative event changes; preserve successful identity, wardrobe, environment and capture language."
+    }
+  ]
+}
