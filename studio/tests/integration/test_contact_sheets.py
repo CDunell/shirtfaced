@@ -327,3 +327,63 @@ def test_the_crop_route_still_works(session: Session, store: FilesystemAssetStor
     assert frame.is_extraction is False
     assert frame.operation == "crop_only"
     assert frame.x == 0 and frame.width is not None
+
+
+def test_the_same_shot_can_be_re_extracted_from_a_new_sheet(
+    session: Session, store: FilesystemAssetStore
+) -> None:
+    """Reject a sheet, generate another, extract the same shots. The normal loop.
+
+    Extraction used to find the frame to update by ``(contact_sheet_id, panel)``,
+    so a shot extracted from a replacement sheet was a new row -- and collided
+    with the one the rejected sheet had left behind on
+    ``uq_coverage_frames_scene_master_id_name``. Every re-extraction after a
+    rejection failed with a 500, which is the path a person takes whenever a
+    sheet is not good enough.
+    """
+    master = approved_master(session, store)
+    first = sheet_for(session, store, shade=41)
+    frame = record_panel_extraction(
+        session, store, scene_key="W01-P28", name="damo-medium", panel=4, data=png(shade=60)
+    )
+    session.flush()
+    original = frame.id
+
+    coverage_library.reject_contact_sheet(session, first)
+    second = sheet_for(session, store, shade=42, label="w01-p28-coverage-v2")
+    session.flush()
+
+    again = record_panel_extraction(
+        session, store, scene_key="W01-P28", name="damo-medium", panel=4, data=png(shade=61)
+    )
+    session.flush()
+
+    # One shot, not two, and it now belongs to the sheet it was cut from.
+    assert again.id == original
+    assert again.contact_sheet_id == second.id
+    assert again.scene_master_id == master.id
+    held = (
+        session.execute(select(CoverageFrame).where(CoverageFrame.scene_master_id == master.id))
+        .scalars()
+        .all()
+    )
+    assert [one.name for one in held] == ["damo-medium"]
+
+
+def test_a_shot_can_move_to_a_different_panel_number(
+    session: Session, store: FilesystemAssetStore
+) -> None:
+    """The prompt's numbering can change between sheets; the shot is the name."""
+    approved_master(session, store)
+    sheet_for(session, store, shade=43)
+    record_panel_extraction(
+        session, store, scene_key="W01-P28", name="world-return", panel=9, data=png(shade=70)
+    )
+    session.flush()
+
+    moved = record_panel_extraction(
+        session, store, scene_key="W01-P28", name="world-return", panel=8, data=png(shade=71)
+    )
+    session.flush()
+
+    assert moved.panel == 8

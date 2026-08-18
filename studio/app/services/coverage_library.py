@@ -706,16 +706,43 @@ def record_panel_extraction(
         operation_metadata={"panel": panel},
     )
 
-    frame = session.execute(
+    # Two uniques govern a frame and an extraction can hit either:
+    # (scene_master_id, name), one shot of that name per master, and
+    # (contact_sheet_id, panel), one shot per panel of a sheet. So both are
+    # looked up.
+    #
+    # Same sheet, same panel, new name -> a rename of that shot.
+    # New sheet, same name -> the shot re-cut from the replacement sheet, which
+    #   is the normal loop: reject a sheet, generate another, extract again.
+    #   Keying on the panel alone made that a new row every time, colliding with
+    #   whatever the rejected sheet had left behind, and every re-extraction
+    #   after a rejection failed with a 500.
+    by_name = session.execute(
+        select(CoverageFrame).where(
+            CoverageFrame.scene_master_id == sheet.scene_master_id, CoverageFrame.name == name
+        )
+    ).scalar_one_or_none()
+    by_panel = session.execute(
         select(CoverageFrame).where(
             CoverageFrame.contact_sheet_id == sheet.id, CoverageFrame.panel == panel
         )
     ).scalar_one_or_none()
-    if frame is None:
-        frame = CoverageFrame(
-            scene_master_id=sheet.scene_master_id, contact_sheet_id=sheet.id, panel=panel
+
+    if by_name is not None and by_panel is not None and by_name.id != by_panel.id:
+        raise CoverageRejected(
+            f"{scene_key}: panel {panel} already holds {by_panel.name!r} and {name!r} is "
+            f"already panel {by_name.panel} of this master. Rename one of them; an "
+            "extraction cannot merge two shots into one."
         )
+
+    frame = by_name or by_panel
+    if frame is None:
+        frame = CoverageFrame(scene_master_id=sheet.scene_master_id)
         session.add(frame)
+
+    # Both move: the shot now comes from this sheet, at this panel.
+    frame.contact_sheet_id = sheet.id
+    frame.panel = panel
 
     frame.name = name
     frame.visual_asset_id = ingested.asset.id
