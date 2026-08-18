@@ -3,6 +3,8 @@ on:
   push:
     branches: [main]
     paths: ["studio/veo-coverage-triggers/*.json"]
+permissions:
+  contents: write
 jobs:
   video:
     runs-on: ubuntu-latest
@@ -10,19 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: {ref: "${{ github.sha }}", fetch-depth: 2}
-      - name: Install ffmpeg
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
-      - name: Set up deploy key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
-      - name: Install exact runner on Studio
-        run: |
-          scp -i ~/.ssh/deploy_key studio/scripts/run_pub_coverage_veo.py ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/scripts/run_pub_coverage_veo.py
-      - name: Approve reviewed frame and run one Lite take
-        id: run
+      - name: Read trigger
+        id: trigger
         run: |
           set -euo pipefail
           mapfile -t triggers < <(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" -- 'studio/veo-coverage-triggers/*.json')
@@ -32,15 +23,72 @@ jobs:
           scene=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["scene"])' "$trigger")
           shot=$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["shot"])' "$trigger")
           human_approved=$(python -c 'import json,sys; print(str(json.load(open(sys.argv[1])).get("human_approved", False)).lower())' "$trigger")
-          test "$human_approved" = "true"
-
-          # The runner resolves the exact current coverage asset from Studio by
-          # scene + shot. The old trigger-level seed path/SHA check was redundant
-          # and could become stale independently of the database gate.
+          inspect_only=$(python -c 'import json,sys; print(str(json.load(open(sys.argv[1])).get("inspect_only", False)).lower())' "$trigger")
+          echo "scene=$scene" >> "$GITHUB_OUTPUT"
+          echo "shot=$shot" >> "$GITHUB_OUTPUT"
+          echo "human_approved=$human_approved" >> "$GITHUB_OUTPUT"
+          echo "inspect_only=$inspect_only" >> "$GITHUB_OUTPUT"
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Inspect existing Studio takes without provider call
+        if: steps.trigger.outputs.inspect_only == 'true'
+        run: |
+          set -euo pipefail
+          mkdir -p studio/veo-coverage-results
+          scene='${{ steps.trigger.outputs.scene }}'
+          shot='${{ steps.trigger.outputs.shot }}'
+          out="studio/veo-coverage-results/${GITHUB_RUN_ID}-${shot}.json"
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "ROOT=/home/ubuntu/shirtfaced-studio SCENE='$scene' SHOT='$shot' python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          root=Path(os.environ['ROOT'])/'var/renderer-validation'/os.environ['SCENE']
+          shot=os.environ['SHOT']
+          rows=[]
+          if root.exists():
+              for d in sorted(root.glob(f'*-coverage-{shot}')):
+                  manifest=d/'manifest.json'
+                  probe=d/'probe.json'
+                  video=d/'video-1.mp4'
+                  row={'directory':str(d),'video_exists':video.is_file(),'video_bytes':video.stat().st_size if video.is_file() else None}
+                  if manifest.is_file():
+                      try: row['manifest']=json.loads(manifest.read_text())
+                      except Exception as e: row['manifest_error']=str(e)
+                  if probe.is_file():
+                      try: row['probe']=json.loads(probe.read_text())
+                      except Exception as e: row['probe_error']=str(e)
+                  rows.append(row)
+          print(json.dumps({'scene':os.environ['SCENE'],'shot':shot,'provider_called':False,'take_count':len(rows),'takes':rows}, indent=2))
+          PY" > "$out"
+          cat "$out"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$out"
+          git commit -m "chore(renderer): record Veo take inspection [skip ci]"
+          git push origin HEAD:main
+      - name: Install ffmpeg
+        if: steps.trigger.outputs.inspect_only != 'true'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install exact runner on Studio
+        if: steps.trigger.outputs.inspect_only != 'true'
+        run: |
+          scp -i ~/.ssh/deploy_key studio/scripts/run_pub_coverage_veo.py ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/scripts/run_pub_coverage_veo.py
+      - name: Approve reviewed frame and run one Lite take
+        if: steps.trigger.outputs.inspect_only != 'true'
+        id: run
+        run: |
+          set -euo pipefail
+          test '${{ steps.trigger.outputs.human_approved }}' = 'true'
+          scene='${{ steps.trigger.outputs.scene }}'
+          shot='${{ steps.trigger.outputs.shot }}'
           output=$(ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} "set -euo pipefail; root=/home/ubuntu/shirtfaced-studio; cd \"\$root\"; set -a; . .env; set +a; \$root/.venv/bin/python -m app.cli coverage '$scene' --approve '$shot'; result=\$(\$root/.venv/bin/python \$root/scripts/run_pub_coverage_veo.py --shot '$shot' --scene '$scene'); dir=\$(printf '%s\\n' \"\$result\" | sed -n 's/^RESULT_DIR=//p' | tail -1); test -n \"\$dir\"; echo RESULT_DIR=\$dir")
           printf '%s\n' "$output"
           echo "result_dir=$(printf '%s\n' "$output" | sed -n 's/^RESULT_DIR=//p' | tail -1)" >> "$GITHUB_OUTPUT"
       - name: Retrieve raw generation and strip audio
+        if: steps.trigger.outputs.inspect_only != 'true'
         run: |
           set -euo pipefail
           mkdir -p veo-result
@@ -54,6 +102,7 @@ jobs:
           ffprobe -v error -show_entries stream=width,height,r_frame_rate -show_entries format=duration -of json veo-result/video-1.mp4 > veo-result/probe.json
           sha256sum veo-result/video-1.mp4 > veo-result/video-1.sha256
       - uses: actions/upload-artifact@v4
+        if: steps.trigger.outputs.inspect_only != 'true'
         with:
           name: pub-1105-coverage-veo-lite
           path: veo-result/
