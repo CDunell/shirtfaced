@@ -688,7 +688,7 @@ def _measure_corpus(corpus_root: Path, scripts_root: Path) -> int | None:
                 values: dict[str, object] = {
                     "corpus": "design_corpus",
                     "brand_slug": brand_dir.name,
-                    "product_slug": product_dir.name,
+                    "product_slug": product_dir.name[:128],
                     "image_path": images[0],
                     "product_name": product.get("name", ""),
                     "tradition": tradition,
