@@ -1,8 +1,9 @@
 name: Check corpora transfer
 
-# Read-only. Counts what has landed under var/design_corpus, var/design_archive
-# and the evidence root, with a snapshot 15s later so growth (still
-# transferring) is visible against a stall (finished, or stuck).
+# Read-only except for one defensive mkdir -p on the transfer's destination.
+# Counts what has landed under var/design_corpus, var/design_archive and the
+# evidence root, with a snapshot 15s later so growth (still transferring) is
+# visible against a stall (finished, or stuck).
 on:
   workflow_dispatch:
 
@@ -24,6 +25,15 @@ jobs:
           STUDIO=/home/ubuntu/shirtfaced-studio
           EVIDENCE=/home/ubuntu/shirtfaced-research/vintage-ebay-images
 
+          echo "----- destination directory tar -x needs -----"
+          if [ -d "$STUDIO/var" ]; then
+            echo "  $STUDIO/var: present ($(ls -1 "$STUDIO/var" | wc -l) entries)"
+          else
+            echo "  $STUDIO/var: ABSENT -- creating it now (tar -x would have failed silently on every file)"
+            mkdir -p "$STUDIO/var"
+          fi
+          echo
+
           snapshot() {
             echo "----- $(date -u +%H:%M:%S) UTC -----"
             for root in "$STUDIO/var/design_corpus" "$STUDIO/var/design_archive" "$EVIDENCE"; do
@@ -44,4 +54,8 @@ jobs:
           echo
           echo "----- most recently modified files (proof of active writes) -----"
           find "$STUDIO/var" -type f -newermt '-2 minutes' 2>/dev/null | tail -5
+
+          echo
+          echo "----- active SSH sessions from the owner's key -----"
+          who
           REMOTE
