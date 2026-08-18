@@ -116,12 +116,18 @@ def main() -> None:
                 f"seed SHA mismatch: expected {args.expected_sha256}, got {actual_sha}"
             )
         lineage = scene_lineage(seed, args.scene)
+        seed_path = str(seed)
         source_format = "PNG" if seed.suffix.lower() == ".png" else "JPEG"
         with Image.open(BytesIO(data)) as image:
             source_dimensions = list(image.size)
     else:
         resolved = resolve_seed(args.scene, args.shot)
         data = resolved.data
+        # Resolved by scene and shot, so there is no path to record -- the asset
+        # id and the SHA in the lineage below are the identity, and they are
+        # better ones. The legacy branch sets this to a file.
+        seed_path = None
+        actual_sha = resolved.sha256
         source_dimensions = [resolved.width, resolved.height]
         source_format = "PNG" if resolved.mime_type == "image/png" else "JPEG"
         lineage = {
@@ -175,12 +181,12 @@ def main() -> None:
     manifest = {
         **lineage,
         "shot": args.shot,
-        "experiment": "approved-9x16-coverage-crop-to-minimal-motion-veo",
+        "experiment": "approved-panel-extraction-to-minimal-motion-veo",
         "generated_at": stamp,
         "model": result.model,
         "aspect_ratio": aspect_ratio,
         "resolution": DEV_RESOLUTION,
-        "seed_path": str(seed),
+        "seed_path": seed_path,
         "seed_sha256": actual_sha,
         "source_dimensions": source_dimensions,
         "source_format": source_format,
