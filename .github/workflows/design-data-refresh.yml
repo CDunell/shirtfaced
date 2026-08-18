@@ -1,0 +1,114 @@
+name: Design data refresh
+
+# Produces the mined-corpus artefacts on the box, in dependency order, and
+# prints the status the design-data CLI reports. Manual only: this is a data
+# operation, not a deploy, and it mutates var/design_corpus/ and the evidence
+# root. It runs the same steps as `python -m app.cli design-data --refresh`
+# so it can be retired the day that command is deployed and run there instead.
+#
+# Each step is skipped honestly when its input corpus is absent from the box —
+# the corpora live wherever the collectors were run, and reporting absence is
+# a finding, not a failure. See studio/docs/DESIGN_SYSTEM_AUDIT_2026-08-18.md.
+on:
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    concurrency:
+      group: design-data-refresh
+      cancel-in-progress: false
+    steps:
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Refresh and report
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -u
+          STUDIO=/home/ubuntu/shirtfaced-studio
+          PY=$STUDIO/.venv/bin/python
+          EVIDENCE=/home/ubuntu/shirtfaced-research/vintage-ebay-images
+          cd "$STUDIO"
+
+          echo "===== corpora on this box ====="
+          for root in var/design_corpus var/design_archive "$EVIDENCE"; do
+            if [ -d "$root" ]; then
+              count=$(find "$root" -type f | wc -l)
+              echo "present: $root ($count files)"
+            else
+              echo "absent:  $root"
+            fi
+          done
+          echo
+
+          run_step() {
+            echo "===== $1 ====="
+            shift
+            if ! nice -n 10 "$@"; then
+              echo "FAILED. Re-run alone on the box:"
+              echo "  $*"
+              exit 1
+            fi
+            echo
+          }
+
+          if [ -d var/design_archive ]; then
+            run_step "merge design archive into evidence" \
+              "$PY" scripts/adapt_archive_to_evidence.py --out "$EVIDENCE"
+          else
+            echo "skip: no design archive on this box, nothing to merge"
+          fi
+
+          if [ -d var/design_corpus ]; then
+            run_step "mine_design_patterns" "$PY" scripts/mine_design_patterns.py
+            run_step "mine_design_structure" "$PY" scripts/mine_design_structure.py
+            run_step "learn_design_templates" "$PY" scripts/learn_design_templates.py
+            run_step "join_design_patterns" "$PY" scripts/join_design_patterns.py
+          else
+            echo "skip: no design corpus on this box, nothing to mine"
+          fi
+
+          # The approvals rebuild needs code this box has not been deployed
+          # yet (rebuild_approvals, on the audit branch). The store starts
+          # accumulating from decisions the day that lands; nothing to do here.
+
+          echo "===== status ====="
+          "$PY" - <<'STATUS'
+          import json, time
+          from pathlib import Path
+
+          corpus = Path("var/design_corpus")
+          rows = [
+              ("design_patterns.json", "scoring thresholds"),
+              ("design_structure.json", "structure rows (template input)"),
+              ("design_templates.json", "composition engine (/api/range)"),
+              ("joined.json", "design advisor (/api/design/advise)"),
+              ("../approvals.json", "composer confidence"),
+          ]
+          for name, consumer in rows:
+              path = corpus / name
+              label = Path(name).name
+              if not path.is_file():
+                  print(f"  {label:<28} ABSENT{'':<26} feeds {consumer}")
+                  continue
+              age = (time.time() - path.stat().st_mtime) / 86400
+              try:
+                  entries = len(json.loads(path.read_text(encoding="utf-8")))
+                  state = f"{entries} entries, {age:.1f}d old"
+              except (json.JSONDecodeError, OSError):
+                  state = f"present but unreadable ({age:.1f}d old)"
+              print(f"  {label:<28} {state:<32} feeds {consumer}")
+
+          evidence = Path("/home/ubuntu/shirtfaced-research/vintage-ebay-images")
+          listings = sum(
+              1 for child in evidence.iterdir() if child.is_dir() and child.name.isdigit()
+          ) if evidence.is_dir() else 0
+          print(f"\n  evidence root {evidence}: {listings} listing(s)")
+          STATUS
+          REMOTE
