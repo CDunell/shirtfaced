@@ -77,3 +77,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "fix(studio): hide panels from non-current contact sheets"
           git push origin main
+
+# second push intentionally triggers this workflow after it exists on main
