@@ -1,0 +1,36 @@
+<instruction>
+Create one 3x3 observational phone contact sheet for W01-P28 shot C only: Emma and Brock inside the already-approved Friday 11:05pm pub crowd.
+
+AUTHORITY:
+- The supplied approved W01-P28 master is spatial truth: same pub, bar, lighting, crowd density, geography and established Emma/Brock region.
+- The supplied approved Emma and Brock contact sheets are identity truth only. Do not relocate them or rebuild the room around cleaner faces.
+- Damo and the pool-table action are outside every one of these nine phone frames. Do not invent, remove or restage that event; the observer is simply facing the bar-side crowd.
+
+OUTPUT GEOMETRY — HARD REQUIREMENT:
+- Deliver ONE landscape 16:9 canvas containing EXACTLY THREE COLUMNS × THREE ROWS.
+- Each of the nine grid cells contains ONE COMPLETE TALL PORTRAIT 9:16 PHONE PHOTOGRAPH.
+- The portrait photograph must visibly remain tall and narrow inside its cell. Neutral side gutters inside a grid cell are correct and expected.
+- DO NOT stretch a portrait photograph sideways to fill a cell. DO NOT make wide/landscape panel images. DO NOT make a 5-over-4 montage, strip, poster, collage with unequal cells, or clean cinematic storyboard.
+- No labels, captions, numbers or phone UI inside the generated image.
+
+CAMERA LAW:
+Every panel is photographed by the SAME ordinary person wedged at floor level beside the bar queue, holding a phone vertically at chest or face height. No camera crane, overhead, stage camera, wide establishing view or impossible relocation. The observer may turn slightly or switch between 1x and 2x, but remains trapped in the same crowd position.
+
+COMPOSITION LAW:
+The crowd must interfere. Close heads, shoulders, backs, hair, elbows, arms, pints and phones occupy roughly one-third to one-half of every portrait photograph. Emma and Brock are never cleared, paired symmetrically, centred together or posed. They remain at different depths inside ongoing crowd activity. Nobody looks at the camera. If identity clarity conflicts with believable obstruction, keep the obstruction.
+
+Generate these nine portrait phone observations in this exact order:
+
+1. **Emma and Brock through one narrow gap:** vertical phone at face height, 1x. A close head separates them and a raised pint hides part of Brock. Emma and Brock appear at different depths, both singing with the room.
+2. **Emma foreground, Brock deeper:** same observer, vertical phone at face height, 2x. Emma is nearer but partly crossed by a moving arm; Brock survives deeper through shoulders, not beside her.
+3. **Brock foreground, Emma at the edge:** same position, vertical phone at face height, 2x. A nearby back hides part of Brock's torso while Emma appears only as an off-centre partial view at another depth.
+4. **Both divided by a passing patron:** same vertical phone at chest height, 1x. A passing torso occupies the middle third and divides Emma from Brock; neither has a clean full-body view.
+5. **Emma behind raised arms and drinks:** vertical phone at face height, 2x. Emma sings through a temporary opening while a forearm and pint cross her frame; Brock remains deeper and partially hidden.
+6. **Brock behind two shoulders:** vertical phone at face height, 2x. Brock sings enthusiastically through a shoulder gap; Emma is only a partial edge/background presence.
+7. **Bar-queue compression:** vertical phone at chest height, 1x. Close backs and elbows dominate the lower half; Emma and Brock are both present but small, separated and partly blocked among other patrons.
+8. **Momentary obstruction:** vertical phone at face height, 1x. A patron crosses immediately in front of the lens and blocks roughly half the portrait; Emma and Brock survive only as incomplete glimpses around that body.
+9. **Return through the same crowd gap:** same observer and vertical phone at face height, 1x. Heads and a close pint dominate foreground; Emma and Brock remain at different depths in one narrow asymmetric opening, still inside the same uninterrupted chorus.
+
+Across all nine: same exact Emma, same exact Brock, same approved pub, same established positions, same lighting and crowd. They are inhabitants of the event, not the reason the event exists. Preserve imperfect phone framing and substantial obstruction.
+</instruction>
+A 3x3 contact sheet of nine TALL PORTRAIT 9:16 phone photographs of the same Emma/Brock bar-side crowd moment. Every grid cell visibly contains a tall narrow portrait photograph with side gutters where required; never landscape cells.
