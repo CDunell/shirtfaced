@@ -11,19 +11,22 @@ No scoring, banding or status decision happens here. Those belong to
 to feed, not a second implementation of it
 (``studio/docs/DESIGN_ENGINE_ADAPTATION.md`` Section 8).
 
-No database. Measuring a design touches no world, no attempt and no canon, so
-this router depends on nothing but the uploaded bytes.
+The only database read is the thresholds: what the measured corpus
+(``design_measurements``) says normal is, so a measurement can be read in
+context. Measuring itself touches no world, no attempt and no canon.
 """
 
 from __future__ import annotations
 
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Annotated, Any
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from pydantic import BaseModel
+from sqlalchemy.orm import Session
 
+from app.db.session import get_db_session
 from app.services.design_extraction import (
     CATEGORY_LIMITS,
     extract,
@@ -33,6 +36,8 @@ from app.services.design_extraction import (
 )
 
 router = APIRouter(prefix="/api/design", tags=["design"])
+
+SessionDependency = Annotated[Session, Depends(get_db_session)]
 
 # Product photographs from the corpus run to a few hundred kilobytes. Ten
 # megabytes is generous for a design file and small enough to refuse abuse.
@@ -76,10 +81,10 @@ class ScoreResponse(BaseModel):
 
 
 @router.get("/thresholds", summary="Corpus-derived scoring thresholds")
-def get_thresholds() -> dict[str, Any]:
+def get_thresholds(session: SessionDependency) -> dict[str, Any]:
     """What the corpus says normal is, so a score can be read in context."""
     return {
-        "thresholds": load_thresholds(),
+        "thresholds": load_thresholds(session),
         "categories": {
             category_id: {
                 "label": label,
@@ -93,6 +98,7 @@ def get_thresholds() -> dict[str, Any]:
 
 @router.post("/score", response_model=ScoreResponse, summary="Measure a design image")
 async def score_design_image(
+    session: SessionDependency,
     image: UploadFile = File(..., description="The design, worn or flat"),
     design_name: str = Form(default=""),
 ) -> ScoreResponse:
@@ -146,5 +152,5 @@ async def score_design_image(
         measurements=measurements.to_dict(),
         hardGates=[GateView(**gate) for gate in review["hardGates"]],
         scoreCategories=[CategoryView(**category) for category in review["scoreCategories"]],
-        thresholds=load_thresholds(),
+        thresholds=load_thresholds(session),
     )

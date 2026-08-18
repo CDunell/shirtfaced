@@ -9,7 +9,6 @@ together in the first place.
 from __future__ import annotations
 
 from dataclasses import replace
-from pathlib import Path
 
 import pytest
 
@@ -26,8 +25,8 @@ BRIEF = Brief(
 
 
 @pytest.fixture
-def composer(tmp_path: Path) -> DesignComposer:
-    return DesignComposer(tmp_path / "approvals.json")
+def composer() -> DesignComposer:
+    return DesignComposer()
 
 
 def test_a_brief_returns_whole_designs(composer: DesignComposer) -> None:
@@ -138,32 +137,26 @@ def test_composing_never_raises(composer: DesignComposer) -> None:
 # --- The feedback edge ------------------------------------------------------
 
 
-def test_approving_moves_confidence(tmp_path: Path) -> None:
-    path = tmp_path / "approvals.json"
-    composer = DesignComposer(path)
-    before = composer.compose(BRIEF, seed=8374).options[0]
+def test_approving_moves_confidence() -> None:
+    """History comes from composed_designs via grammar_history; the composer
+    only has to believe what it is handed and move the number."""
+    before = DesignComposer().compose(BRIEF, seed=8374).options[0]
 
-    for _ in range(5):
-        composer.record_decision(before.grammar_key, approved=True)
-
+    with_history = DesignComposer({before.grammar_key: (5, 5)})
     after = next(
         option
-        for option in DesignComposer(path).compose(BRIEF, seed=8374).options
+        for option in with_history.compose(BRIEF, seed=8374).options
         if option.grammar_key == before.grammar_key
     )
     assert after.confidence > before.confidence
     assert after.decisions == 5
 
 
-def test_rejecting_lowers_confidence(tmp_path: Path) -> None:
-    path = tmp_path / "approvals.json"
-    composer = DesignComposer(path)
-    before = composer.compose(BRIEF, seed=8374).options[0]
+def test_rejecting_lowers_confidence() -> None:
+    before = DesignComposer().compose(BRIEF, seed=8374).options[0]
 
-    for _ in range(5):
-        composer.record_decision(before.grammar_key, approved=False)
-
-    options = DesignComposer(path).compose(BRIEF, seed=8374, limit=99).options
+    with_history = DesignComposer({before.grammar_key: (0, 5)})
+    options = with_history.compose(BRIEF, seed=8374, limit=99).options
     after = next(option for option in options if option.grammar_key == before.grammar_key)
     assert after.confidence < before.confidence
     # And it should no longer lead, which is the visible half of the same fact.

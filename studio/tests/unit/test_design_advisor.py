@@ -53,7 +53,7 @@ def test_advise_with_no_corpus_only_returns_the_default_archetype() -> None:
     assert len(direction.recommendations) == 1
     assert direction.recommendations[0].field_name == "Graphic archetype"
     assert direction.recommendations[0].confidence == "default"
-    assert any("not been mined" in note for note in direction.not_decided)
+    assert any("not been measured" in note for note in direction.not_decided)
 
 
 def test_intent_and_archetype_follow_the_three_way_split() -> None:
@@ -133,3 +133,20 @@ def test_not_decided_always_names_what_it_cannot_judge() -> None:
 
     assert len(direction.not_decided) == 4
     assert any("funny" in note or "good" in note for note in direction.not_decided)
+
+
+def test_measurement_rows_translates_the_table_into_advisor_rows() -> None:
+    """The advisor's row vocabulary is stable; the table feeds it directly."""
+    from app.services.design_advisor import measurement_rows
+
+    class _Session:
+        def execute(self, _query):
+            class _Result:
+                def all(self) -> list[tuple]:
+                    return [("skate", 2, 0.12, 3, "middle", True)]
+
+            return _Result()
+
+    assert measurement_rows(_Session()) == [
+        {"t": "skate", "w": 2, "cov": 0.12, "ink": 3, "band": "middle", "lod": True}
+    ]

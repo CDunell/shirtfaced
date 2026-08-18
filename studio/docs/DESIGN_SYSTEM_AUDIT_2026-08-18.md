@@ -202,33 +202,51 @@ box, and what is the owner's to decide.
 
 ### 7a. Changed in this branch (code)
 
-1. **The learning loop is closed.** Deciding a composed design — through either
-   decision surface — now records the verdict against its grammar in the
-   composer's approval store, so the next compose ranks by what the owner
-   actually approved. Approve and reject feed it; a variation request does not,
-   because it is a verdict on the content, not the construction. A rebuild
-   function derives the store from the `composed_designs` table, so the file is
-   a regenerable view of the authoritative record rather than a second truth
-   that can drift.
-2. **`sync-archive` syncs what the composer uses.** `registry.all_elements()`
+The organising decision, made by the owner mid-fix and correct: **derived
+design data lives in PostgreSQL, not in JSON files.** The first version of
+this fix built better plumbing for the files — a status command that watched
+for their absence, a workflow that ferried them to the box. That was
+infrastructure for the defect. A table cannot be absent from the box, and an
+empty one is loudly visible, so the failure class that starved the advisor
+for months simply does not exist in the database.
+
+1. **The corpus is measured into `design_measurements`** (migration 0044) —
+   one row per primary product shot, refusals recorded with their reason,
+   identity columns matching `design_observations` so measured and observed
+   join without sharing a column, per that schema's own rule. The advisor
+   (`measurement_rows`) and the scoring thresholds (`load_thresholds`, now
+   SQL percentiles) read the table; the documented-default fallback keeps its
+   honest meaning when the table is empty. `joined.json` and
+   `design_patterns.json` have no readers left.
+2. **The learning loop is closed, with no store to drift.** The composer's
+   per-grammar confidence derives from `composed_designs` at compose time
+   (`grammar_history`): settling the row *is* the training signal. Approve
+   and reject count; a variation request does not — it judges the content,
+   not the construction. `var/approvals.json` is gone; the three disjoint
+   approval stores of §4b are one table, which was the record all along.
+   `recompose` composes uncapped and history-blind so determinism checks
+   cannot mistake learning-moved ranking for drift.
+3. **`sync-archive` syncs what the composer uses.** `registry.all_elements()`
    — authored and drawn both — so the provenance join stops dropping ~83% of
    parts.
-3. **One command owns the data operations.** `python -m app.cli design-data`
-   reports, for every derived artefact and every consumer, what exists, how old
-   it is, and what the consumer is currently running on (corpus or default) —
-   so "the advisor is uninformed" is a visible fact rather than an archaeology
-   finding. `design-data --refresh` runs the whole chain in dependency order —
-   archive→evidence merge, mine, structure, templates, join, approvals rebuild
-   — stopping at the first failure with the exact command that failed. What was
-   seven hand-run scripts in an order nothing recorded is one command that
-   fails closed.
+4. **One command owns the data operation.** `python -m app.cli design-data`
+   reports what the tables hold — measured frames by tradition, refusals,
+   decisions per grammar — and `--refresh` measures the corpus into the
+   database (reusing the mining scripts' analyser and walk order unchanged)
+   and merges the design archive into the evidence root, the one genuinely
+   file-domain step, since it feeds a bench that reads image files.
 
-### 7b. Data operations (on the box, or wherever the corpora live — the runbook's Step 0)
+Proven on a real PostgreSQL: the full integration suite migrates from empty
+through 0044 and passes, including the thread the architecture said to prove
+first — compose, keep, decide, and the decision measurably reweights the
+next compose, read straight from the table.
 
-- Run `design-data --refresh` where `var/design_corpus/` and
-  `var/design_archive/` actually live, then get the five JSON artefacts onto
-  the production box. This is the single act that turns the advisor, the
-  thresholds and the template engine from default to corpus-informed.
+### 7b. Data operations (on the box — the runbook's Step 0)
+
+- Deploy this branch (migrations run on deploy), then run
+  `python -m app.cli design-data --refresh` on the box. That single command
+  measures the corpus into the database and merges the archive into
+  evidence; the advisor and thresholds are corpus-informed from that moment.
 - Re-collect the retail corpus now the cap bug is fixed, if the 18-product
   truncation matters to the medians. Optional; the medians are honest about
   their pool size either way.
@@ -273,6 +291,7 @@ this branch; each is safe the day the owner nods.
 | `element_renders` table | Never written, never read. The determinism claim it was built for is carried by `composed_designs.content_hash` + `recompose()`. |
 | pgvector `feature` column, HNSW index, `similar_to()` | Computed on every sync for rows nothing queries. If "what else is like this" is wanted later, it returns with a caller. |
 | `mine_arrangement.py`, `derive_forms.py`, `mine_placement.py`, `mine_brand_voice.py`, `visual_pass_queue.py` outputs | Zero readers; the first two additionally measured marketplace submissions and called it the corpus (`corpus_tiers.py:7-10`). |
+| `join_design_patterns.py`, and `mine_design_patterns.py`'s report output | Superseded by `design-data --refresh` measuring into PostgreSQL. `mine_design_patterns.py` itself stays — the CLI imports its analyser — but nothing reads `joined.json` or `design_patterns.json` any more. |
 | `design_observations` + `observation_zones` (schema kept, decision needed) | Write-only: ingested by one script, queried by nothing. Either build the reader the ingest script's own docstring promises, or stop ingesting. |
 | `ix_archive_elements_usable` partial index | Filters on `licence_status = 'verified'` for a query that deliberately does not filter on licence. Can never serve. |
 | `studio/r.json` | A stray composer output dump at the studio root. |

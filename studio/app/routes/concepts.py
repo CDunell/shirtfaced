@@ -70,7 +70,7 @@ from app.domain.enums import (
 )
 from app.services.approved_print import PrintRefused, available_garments, print_approved
 from app.services.brief_package import compose_brief
-from app.services.design_extraction import measure, to_review
+from app.services.design_extraction import load_thresholds, measure, to_review
 from app.services.design_pipeline import (
     DesignPipelineConflict,
     InvalidDesignAction,
@@ -1155,7 +1155,12 @@ def post_measure(
         temp_path = Path(handle.name)
     try:
         measurements = measure(temp_path)
-        measured = to_review(str(attempt.id), str(attempt.id), measurements)
+        measured = to_review(
+            str(attempt.id),
+            str(attempt.id),
+            measurements,
+            thresholds=load_thresholds(session),
+        )
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

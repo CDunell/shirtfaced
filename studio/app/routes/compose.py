@@ -37,6 +37,7 @@ from app.services.design_composition import (
     Request,
     compose,
     decide,
+    grammar_history,
     recompose,
     store,
 )
@@ -163,10 +164,14 @@ def list_palettes() -> list[dict[str, Any]]:
 
 
 @router.post("", response_model=list[OptionView], summary="Compose options for a brief")
-def compose_brief(brief: BriefIn) -> list[OptionView]:
-    """Answer a brief. Stores nothing -- looking is free and reversible."""
+def compose_brief(brief: BriefIn, session: SessionDependency) -> list[OptionView]:
+    """Answer a brief. Stores nothing -- looking is free and reversible.
+
+    The session is read-only here: it supplies the approve/reject history that
+    weights each option's confidence, straight from ``composed_designs``.
+    """
     try:
-        _, options = compose(brief.to_request())
+        _, options = compose(brief.to_request(), grammar_history(session))
     except CompositionRefused as error:
         raise _refused(error) from error
 
@@ -219,7 +224,7 @@ def keep_design(
     """
     request = brief.to_request()
     try:
-        _, options = compose(request)
+        _, options = compose(request, grammar_history(session))
     except CompositionRefused as error:
         raise _refused(error) from error
 

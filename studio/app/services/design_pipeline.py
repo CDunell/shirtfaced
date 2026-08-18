@@ -508,14 +508,9 @@ def _settle_linked_composition(
     design.decided_by = actor
     design.decided_at = dt.datetime.now(dt.UTC)
     design.decision_note = note or ""
-
-    # The decision is also the composer's training signal. Approve and reject
-    # feed its per-grammar confidence; a variation request does not, because it
-    # judges the content rather than the construction that set it.
-    if decision in (DesignDecisionKind.APPROVED, DesignDecisionKind.REJECTED):
-        from app.services.design_composition import record_learning
-
-        record_learning(design.grammar_key, decision is DesignDecisionKind.APPROVED)
+    # Settling this row IS the composer's training signal: compose derives its
+    # per-grammar confidence from composed_designs at read time
+    # (design_composition.grammar_history), so there is nothing else to write.
 
 
 def approve_design(

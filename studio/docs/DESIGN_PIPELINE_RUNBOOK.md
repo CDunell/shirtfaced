@@ -11,30 +11,28 @@ for what happens inside each step are `DESIGN_FLOW_PLAN.md` (the chain),
 
 ---
 
-## Step 0 — make the references reachable (a terminal, once, and after each collection run)
-
-Run where the corpora live, then get `var/design_corpus/*.json` onto the box:
+## Step 0 — measure the references into the database (on the box, once, and after each collection run)
 
 ```
-python -m app.cli design-data            # what exists, what is stale, what each consumer runs on
-python -m app.cli design-data --refresh  # merge archive into evidence, mine, join, rebuild approvals
+python -m app.cli design-data            # what the tables hold, and what each consumer runs on
+python -m app.cli design-data --refresh  # measure the corpus into PostgreSQL, merge archive into evidence
 ```
 
-`--refresh` does, in order, stopping at the first failure with the command
-that failed:
+`--refresh` does two things, stopping at the first failure:
 
-1. `adapt_archive_to_evidence.py` — hard-links the 18,633-image design archive
-   into the evidence root, so Research sees every pool, not just eBay.
-2. `mine_design_patterns.py` — measures the retail corpus; feeds the scoring
-   thresholds.
-3. `mine_design_structure.py` — per-design structure rows.
-4. `learn_design_templates.py` — layout templates for the composition engine.
-5. `join_design_patterns.py` — per-design rows joined to phrase length; feeds
-   the advisor.
-6. Rebuilds the composer's approval store from the decisions table.
+1. Hard-links the 18,633-image design archive into the vintage evidence root,
+   so Research sees every pool, not just eBay. The one file-domain step —
+   the bench reads image files.
+2. Measures the retail corpus into `design_measurements` — one row per
+   primary product shot, refusals recorded with their reason. This is what
+   the advisor and the scoring thresholds read; the composer's confidence
+   needs nothing here, deriving from the decisions table on its own.
 
-Until this has run, the advisor and the engine refuse rather than guess — that
-is them working, not failing. The status command says which state you are in.
+There are no files to copy anywhere. The measurements live in the same
+PostgreSQL the rest of the pipeline already uses, and the status command
+reports the tables directly. Until the corpus is measured, the advisor and
+the thresholds run on documented defaults and say so — that is them working,
+not failing.
 
 ## Step 1 — Research: from references to ten concepts (no spend)
 

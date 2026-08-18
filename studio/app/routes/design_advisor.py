@@ -4,18 +4,26 @@ The other direction from ``design.py``: that route measures a design that
 already exists, this one recommends how to present content that doesn't yet.
 See ``app/services/design_advisor.py`` for what it will and will not decide.
 
-No database. Advising touches no world, no attempt and no canon, so this
-router depends on nothing but the request body and the mined corpus file.
+The evidence is ``design_measurements`` -- the corpus measured by code, in
+the database where it cannot be absent from the box the way the mined JSON
+file it replaced always was. An empty table keeps the same honest meaning:
+every recommendation is a marked default until the corpus is measured.
 """
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
+from typing import Annotated
 
-from app.services.design_advisor import advise
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from app.db.session import get_db_session
+from app.services.design_advisor import advise, measurement_rows
 
 router = APIRouter(prefix="/api/design", tags=["design"])
+
+SessionDependency = Annotated[Session, Depends(get_db_session)]
 
 
 class AdviseRequest(BaseModel):
@@ -43,7 +51,7 @@ class DirectionResponse(BaseModel):
 
 
 @router.post("/advise", response_model=DirectionResponse, summary="Recommend presentation")
-def advise_design(payload: AdviseRequest) -> DirectionResponse:
+def advise_design(payload: AdviseRequest, session: SessionDependency) -> DirectionResponse:
     """Recommend how to present a supplied phrase and/or graphic.
 
     Prescribes presentation only -- archetype, scale, coverage, ink count,
@@ -62,5 +70,6 @@ def advise_design(payload: AdviseRequest) -> DirectionResponse:
         phrase=payload.phrase,
         has_graphic=payload.has_graphic,
         tradition=payload.tradition,
+        rows=measurement_rows(session),
     )
     return DirectionResponse(**direction.to_dict())

@@ -506,126 +506,230 @@ def _ingest_cast(
 
 
 def _design_data(refresh: bool) -> int:
-    """Report -- or produce -- the derived data the design pipeline reads.
+    """Report -- or produce -- the measured corpus the design pipeline reads.
 
-    Every consumer of the mined corpus refuses honestly when its artefact is
-    absent, which is correct and also invisible: the advisor answered from
-    defaults for months before anyone noticed, because nothing reported which
-    state the system was in. This command is that report. With ``--refresh``
-    it also runs the producers, in dependency order, stopping at the first
-    failure with the exact command that failed -- the same scripts as before,
-    no longer seven hand-run steps in an order nothing records.
+    The consumers (the advisor, the scoring thresholds, the composer's
+    confidence) read PostgreSQL: ``design_measurements`` for the corpus,
+    ``composed_designs`` for the decisions. This command reports both, and
+    with ``--refresh`` it measures the corpus into the table -- one row per
+    primary product shot, refusals recorded with their reason -- and merges
+    the design archive into the vintage evidence root.
+
+    The measurements used to be JSON files under ``var/design_corpus/`` that
+    existed only on whichever machine last ran a mining script, which for the
+    advisor's whole life was no machine at all. A table cannot be absent from
+    the box, and this report is how an empty one stays loud.
     """
-    import json as json_module
     import subprocess
-    import time
+
+    from sqlalchemy import func as sa_func
+    from sqlalchemy import select as sa_select
 
     from app.config import PROJECT_ROOT
+    from app.db.archive_models import ComposedDesign
+    from app.db.measurement_models import DesignMeasurement
+    from app.domain.enums import AttemptState
     from app.services.vintage_research import root as evidence_root
 
     corpus_root = PROJECT_ROOT / "var" / "design_corpus"
     archive_root = PROJECT_ROOT / "var" / "design_archive"
     scripts_root = PROJECT_ROOT / "scripts"
 
-    def describe(path: Path) -> str:
-        if not path.is_file():
-            return "ABSENT"
-        age_days = (time.time() - path.stat().st_mtime) / 86400
-        try:
-            loaded = json_module.loads(path.read_text(encoding="utf-8"))
-            count = len(loaded)
-        except (json_module.JSONDecodeError, OSError):
-            return f"present but unreadable ({age_days:.0f}d old)"
-        return f"{count} entries, {age_days:.0f}d old"
-
-    # (artefact, producer script, the consumer that starves without it)
-    artefacts = (
-        ("design_patterns.json", "mine_design_patterns.py", "scoring thresholds"),
-        ("design_structure.json", "mine_design_structure.py", "structure rows (template input)"),
-        ("design_templates.json", "learn_design_templates.py", "composition engine (/api/range)"),
-        ("joined.json", "join_design_patterns.py", "design advisor (/api/design/advise)"),
-    )
-
     if refresh:
-        steps: list[tuple[str, list[str]]] = []
+        # The archive merge is genuinely file-domain: it hard-links reference
+        # images into the root the Research bench reads. Everything measured
+        # goes to the database below.
         if archive_root.is_dir():
-            steps.append(
-                (
-                    "merge design archive into evidence",
-                    [
-                        sys.executable,
-                        str(scripts_root / "adapt_archive_to_evidence.py"),
-                        "--out",
-                        str(evidence_root()),
-                    ],
-                )
-            )
+            command = [
+                sys.executable,
+                str(scripts_root / "adapt_archive_to_evidence.py"),
+                "--out",
+                str(evidence_root()),
+            ]
+            print("-> merge design archive into evidence")
+            if subprocess.run(command, cwd=PROJECT_ROOT).returncode != 0:
+                print(f"FAILED. Re-run alone:\n  {' '.join(command)}")
+                return EXIT_FAILED
         else:
             print(f"skip: no design archive at {archive_root}, nothing to merge")
+
         if corpus_root.is_dir():
-            for script in (
-                "mine_design_patterns.py",
-                "mine_design_structure.py",
-                "learn_design_templates.py",
-                "join_design_patterns.py",
-            ):
-                steps.append((script, [sys.executable, str(scripts_root / script)]))
-        else:
-            print(f"skip: no design corpus at {corpus_root}, nothing to mine")
-
-        for name, command in steps:
-            print(f"-> {name}")
-            completed = subprocess.run(command, cwd=PROJECT_ROOT)
-            if completed.returncode != 0:
-                print(f"FAILED at {name}. Re-run it alone:\n  {' '.join(command)}")
+            result = _measure_corpus(corpus_root, scripts_root)
+            if result is None:
                 return EXIT_FAILED
+        else:
+            print(f"skip: no design corpus at {corpus_root}, nothing to measure")
 
-        # The approval store derives from the decisions table, so a rebuild
-        # cannot drift from what was actually decided.
-        try:
-            from app.services.design_composition import rebuild_approvals
+    try:
+        with get_session_factory()() as session:
+            measured = session.execute(
+                sa_select(
+                    DesignMeasurement.tradition,
+                    sa_func.count(DesignMeasurement.id),
+                )
+                .where(DesignMeasurement.refusal_reason.is_(None))
+                .group_by(DesignMeasurement.tradition)
+                .order_by(sa_func.count(DesignMeasurement.id).desc())
+            ).all()
+            refused = session.execute(
+                sa_select(sa_func.count(DesignMeasurement.id)).where(
+                    DesignMeasurement.refusal_reason.is_not(None)
+                )
+            ).scalar_one()
+            decisions = session.execute(
+                sa_select(
+                    ComposedDesign.grammar_key,
+                    ComposedDesign.state,
+                    sa_func.count(ComposedDesign.id),
+                )
+                .where(
+                    ComposedDesign.state.in_(
+                        (AttemptState.APPROVED.value, AttemptState.REJECTED.value)
+                    )
+                )
+                .group_by(ComposedDesign.grammar_key, ComposedDesign.state)
+            ).all()
+    except Exception as error:
+        print(f"database unreachable: {error}")
+        return EXIT_FAILED
 
-            session_factory = get_session_factory()
-            with session_factory() as session:
-                data = rebuild_approvals(session)
-            decisions = sum(entry["decisions"] for entry in data.values())
-            print(
-                f"-> approval store rebuilt: {decisions} decision(s) "
-                f"across {len(data)} grammar(s)"
-            )
-        except Exception as error:
-            print(f"skip: approval store not rebuilt (database unreachable: {error})")
+    total = sum(count for _, count in measured)
+    print(f"\nmeasured corpus (design_measurements): {total} frames, {refused} refused")
+    for tradition, count in measured:
+        print(f"  {tradition or '(no tradition)':<24} {count}")
+    if not total:
+        print(
+            "  The corpus has not been measured; the advisor and thresholds run\n"
+            "  on documented defaults. Run: python -m app.cli design-data --refresh"
+        )
 
-    print(f"\ndesign data under {corpus_root}:")
-    for artefact, producer, consumer in artefacts:
-        state = describe(corpus_root / artefact)
-        print(f"  {artefact:<28} {state:<32} feeds {consumer}")
-        if state == "ABSENT":
-            print(f"  {'':<28} produce with: python scripts/{producer}")
-
-    approvals = PROJECT_ROOT / "var" / "approvals.json"
-    print(f"  {'approvals.json':<28} {describe(approvals):<32} feeds composer confidence")
+    if decisions:
+        print("\ncomposer learning (composed_designs decisions):")
+        by_grammar: dict[str, list[int]] = {}
+        for grammar_key, state, count in decisions:
+            entry = by_grammar.setdefault(grammar_key, [0, 0])
+            entry[1] += count
+            if state == AttemptState.APPROVED.value:
+                entry[0] += count
+        for grammar_key, (approved, decided) in sorted(by_grammar.items()):
+            print(f"  {grammar_key:<24} {approved}/{decided} approved")
+    else:
+        print("\ncomposer learning: no decisions yet -- confidence is baseline until some exist")
 
     evidence = evidence_root()
-    listing_count = (
+    listings = (
         sum(1 for child in evidence.iterdir() if child.is_dir() and child.name.isdigit())
         if evidence.is_dir()
         else 0
     )
-    print(f"\nevidence root {evidence}: {listing_count} listing(s)")
-    if archive_root.is_dir():
-        print(f"design archive {archive_root}: present (merge runs on --refresh)")
-    else:
-        print(f"design archive {archive_root}: absent")
-
-    absent = [a for a, _, _ in artefacts if not (corpus_root / a).is_file()]
-    if absent:
-        print(
-            "\nUntil the artefacts above exist, their consumers answer from "
-            "documented defaults or refuse -- honestly, but uninformed. "
-            "Run: python -m app.cli design-data --refresh"
-        )
+    print(f"\nevidence root {evidence}: {listings} listing(s)")
     return EXIT_OK
+
+
+def _measure_corpus(corpus_root: Path, scripts_root: Path) -> int | None:
+    """Measure every brand's primary product shots into design_measurements.
+
+    Reuses the analyser and the walk order of the mining scripts unchanged --
+    first image per product, later ones are alternate angles of the same
+    design and would double-count it. A refusal is a row with its reason; a
+    frame with no detected print is skipped, matching the joiner this
+    replaces. Idempotent: re-measuring a frame replaces its row.
+    """
+    import json as json_module
+
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+    from app.db.measurement_models import DesignMeasurement
+    from app.services.design_advisor import phrase_words
+
+    sys.path.insert(0, str(scripts_root))
+    try:
+        from corpus_tiers import is_excluded  # type: ignore[import-not-found]
+        from mine_design_patterns import (  # type: ignore[import-not-found]
+            _analyse,
+            _placement_band,
+        )
+    finally:
+        sys.path.remove(str(scripts_root))
+
+    import hashlib
+
+    analyser_version = hashlib.sha256(
+        (scripts_root / "mine_design_patterns.py").read_bytes()
+    ).hexdigest()[:12]
+
+    session_factory = get_session_factory()
+    measured = refused = skipped = 0
+    with session_factory() as session:
+        for brand_dir in sorted(corpus_root.iterdir()):
+            if not brand_dir.is_dir() or is_excluded(brand_dir.name):
+                continue
+            brand_file = brand_dir / "brand.json"
+            if not brand_file.is_file():
+                continue
+            brand = json_module.loads(brand_file.read_text(encoding="utf-8-sig"))
+            tradition = brand.get("design_tradition", "unknown")
+            products_dir = brand_dir / "products"
+            if not products_dir.is_dir():
+                continue
+            for product_dir in sorted(products_dir.iterdir()):
+                product_file = product_dir / "product.json"
+                if not product_file.is_file():
+                    continue
+                product = json_module.loads(product_file.read_text(encoding="utf-8-sig"))
+                images = product.get("images") or []
+                if not images:
+                    continue
+                result = _analyse(product_dir / images[0])
+                if result is None:
+                    skipped += 1
+                    continue
+
+                values: dict[str, object] = {
+                    "corpus": "design_corpus",
+                    "brand_slug": brand_dir.name,
+                    "product_slug": product_dir.name,
+                    "image_path": images[0],
+                    "product_name": product.get("name", ""),
+                    "tradition": tradition,
+                    "phrase_words": len(phrase_words(product.get("name", ""))),
+                    "analyser_version": analyser_version,
+                }
+                if "refused" in result:
+                    values["refusal_reason"] = str(result["refused"])[:64]
+                    refused += 1
+                elif not result.get("has_print"):
+                    skipped += 1
+                    continue
+                else:
+                    values.update(
+                        refusal_reason=None,
+                        print_coverage=result["print_coverage"],
+                        ink_colours=result["ink_colours"],
+                        placement_band=_placement_band(result["centroid_y"]),
+                        light_on_dark=result["light_on_dark"],
+                    )
+                    measured += 1
+
+                statement = pg_insert(DesignMeasurement).values(**values)
+                session.execute(
+                    statement.on_conflict_do_update(
+                        constraint="uq_design_measurements_frame",
+                        set_={
+                            key: getattr(statement.excluded, key)
+                            for key in values
+                            if key not in ("corpus", "brand_slug", "product_slug", "image_path")
+                        },
+                    )
+                )
+                if (measured + refused) % 250 == 0:
+                    print(f"  {measured} measured, {refused} refused...", flush=True)
+                    session.commit()
+        session.commit()
+
+    print(f"-> corpus measured: {measured} frames, {refused} refused, {skipped} skipped")
+    return measured
+
 
 
 def _split_specification(specification: str, flag: str) -> tuple[str, str, str]:

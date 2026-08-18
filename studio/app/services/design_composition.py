@@ -18,20 +18,18 @@ only way out of ``awaiting_decision`` is a person.
 from __future__ import annotations
 
 import datetime as dt
-import json
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.archive.design_composer import Brief, DesignComposer, DesignOption
+from app.archive.design_composer import MAX_OPTIONS, Brief, DesignComposer, DesignOption
 from app.archive.garment import Garment, GarmentError
 from app.archive.garment import load as load_garment
-from app.config import GARMENTS_DIR, PROJECT_ROOT
+from app.config import GARMENTS_DIR
 from app.db.archive_models import ComposedDesign
 from app.domain.enums import AttemptState
-from app.services.composition_engine import ApprovalStore
 
 if TYPE_CHECKING:
     from app.db.concept_models import DesignAttempt
@@ -41,10 +39,6 @@ if TYPE_CHECKING:
 # outside the deployment and finds nothing. See config._garments_dir.
 GARMENT_DIR = GARMENTS_DIR
 
-# Where approvals are remembered for the composer's own confidence weighting.
-# Separate from the database on purpose: it is the composer's learning, not the
-# record of what was decided, and that record is the table.
-APPROVALS_PATH = PROJECT_ROOT / "var" / "approvals.json"
 
 
 class CompositionRefused(Exception):
@@ -93,10 +87,54 @@ def garment_for(key: str) -> Garment:
         raise CompositionRefused(error.reason, error.detail) from error
 
 
-def compose(request: Request) -> tuple[Garment, list[DesignOption]]:
-    """Answer a brief. Raises only when nothing can be composed at all."""
+def grammar_history(session: Session) -> dict[str, tuple[int, int]]:
+    """Approve/reject counts per grammar, from the decisions actually made.
+
+    The table is the training signal. There used to be a separate approvals
+    file "for the composer's own learning", and no decision path ever wrote to
+    it, so every option carried ``decisions: 0`` for the system's whole life
+    while real decisions accumulated in ``composed_designs``. Deriving the
+    counts here at read time means the signal cannot drift from the record and
+    cannot be absent from the box.
+
+    A variation request is deliberately not counted: it is a verdict on the
+    content, not on the construction that set it.
+    """
+    from sqlalchemy import func
+
+    rows = session.execute(
+        select(
+            ComposedDesign.grammar_key,
+            ComposedDesign.state,
+            func.count(ComposedDesign.id),
+        )
+        .where(
+            ComposedDesign.state.in_(
+                (AttemptState.APPROVED.value, AttemptState.REJECTED.value)
+            )
+        )
+        .group_by(ComposedDesign.grammar_key, ComposedDesign.state)
+    ).all()
+    history: dict[str, tuple[int, int]] = {}
+    for grammar_key, state, count in rows:
+        approved, decisions = history.get(grammar_key, (0, 0))
+        decisions += count
+        if state == AttemptState.APPROVED.value:
+            approved += count
+        history[grammar_key] = (approved, decisions)
+    return history
+
+
+def compose(
+    request: Request, history: dict[str, tuple[int, int]] | None = None
+) -> tuple[Garment, list[DesignOption]]:
+    """Answer a brief. Raises only when nothing can be composed at all.
+
+    ``history`` is ``grammar_history(session)`` where a session exists; it
+    moves each option's confidence and the ranking, never the geometry.
+    """
     garment = garment_for(request.garment_key)
-    composer = DesignComposer(APPROVALS_PATH)
+    composer = DesignComposer(history)
     result = composer.compose(
         Brief(
             primary_text=request.primary_text,
@@ -199,50 +237,10 @@ def decide(
     design.decided_at = dt.datetime.now(dt.UTC)
     design.decision_note = note
     session.flush()
-    record_learning(design.grammar_key, approved)
+    # No learning write here: the composer's confidence is derived from this
+    # very table at compose time (grammar_history), so settling the row IS the
+    # training signal.
     return design
-
-
-def record_learning(grammar_key: str, approved: bool) -> None:
-    """Feed one settled decision to the composer's approval store.
-
-    The approve control is the training signal -- the engine ranks its options
-    by ``approvals / decisions`` per grammar, and until this existed no
-    decision path ever wrote to the store, so every option carried
-    ``decisions: 0`` forever and the confidence weighting was decorative.
-
-    Approve and reject both count. A variation request does not: it is a
-    verdict on the content, not on the construction that set it.
-    """
-    ApprovalStore(APPROVALS_PATH).record(grammar_key, approved)
-
-
-def rebuild_approvals(session: Session) -> dict[str, dict[str, int]]:
-    """Derive the approval store from the decisions actually recorded.
-
-    The table is the record; the store is the composer's reading of it. A file
-    written incrementally can drift from the rows -- decisions made before the
-    learning wire existed, a store lost with a box, a corrupt write. Rebuilding
-    from ``composed_designs`` makes the store a regenerable view, so drift
-    self-heals instead of accumulating.
-    """
-    data: dict[str, dict[str, int]] = {}
-    rows = session.execute(
-        select(ComposedDesign.grammar_key, ComposedDesign.state).where(
-            ComposedDesign.state.in_(
-                (AttemptState.APPROVED.value, AttemptState.REJECTED.value)
-            )
-        )
-    ).all()
-    for grammar_key, state in rows:
-        entry = data.setdefault(grammar_key, {"approved": 0, "decisions": 0})
-        entry["decisions"] += 1
-        if state == AttemptState.APPROVED.value:
-            entry["approved"] += 1
-
-    APPROVALS_PATH.parent.mkdir(parents=True, exist_ok=True)
-    APPROVALS_PATH.write_text(json.dumps(data, indent=2), encoding="utf-8")
-    return data
 
 
 def recompose(design: ComposedDesign) -> str:
@@ -251,6 +249,12 @@ def recompose(design: ComposedDesign) -> str:
     This is the determinism claim made checkable across a restart rather than
     only inside one process: the row keeps the brief, and the same brief must
     produce the same bytes months later on another machine.
+
+    Composed with no learning history and no option cap, deliberately: the
+    decisions accumulated since this design was kept move ranking, and a
+    design that has slipped down the order is still the same bytes. Verifying
+    determinism through a ranking filter would report drift where there is
+    only learning.
     """
     request = Request(
         seed=design.seed,
@@ -263,6 +267,7 @@ def recompose(design: ComposedDesign) -> str:
         garment_colour=str(design.palette.get("garment", "#101010")),
         inks=int(design.palette.get("inks", 2)),
         colour_system=str(design.palette.get("system", "")),
+        limit=MAX_OPTIONS * 2,
     )
     _, options = compose(request)
     for option in options:
