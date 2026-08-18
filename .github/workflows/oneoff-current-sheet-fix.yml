@@ -62,3 +62,5 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "fix(studio): retire old panels when a newer sheet exists"
           git push origin main
+
+# trigger after workflow exists on main
