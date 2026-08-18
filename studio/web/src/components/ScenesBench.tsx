@@ -78,7 +78,10 @@ function currentFrameForPanel(frames: CoverageFrame[], sheet: ContactSheet | nul
   const matches = frames.filter((one) => one.panel === panel);
   if (matches.length === 0) return null;
   const planned = plannedName(sheet, panel);
-  return matches.find((one) => one.name === planned) ?? (matches.length === 1 ? matches[0] : null);
+  // Never fall back to an arbitrary historical extraction just because it is
+  // the only row carrying this panel number. The current sheet owns the shot
+  // name; until that exact shot has been extracted, Stage 4 must show Extract.
+  return matches.find((one) => one.name === planned) ?? null;
 }
 
 function shortSha(sha: string): string { return sha.slice(0, 12); }
