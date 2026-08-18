@@ -1,0 +1,88 @@
+{
+  "approved_automatically": false,
+  "aspect_ratio": "16:9",
+  "attempt_incremented_once": true,
+  "attempts_after": 34,
+  "attempts_before": 33,
+  "http_status": 201,
+  "human_review_required": true,
+  "prompt_name": "W01-P28Z-non-damo.nano-banana-coverage.txt",
+  "provider_call_limit": 1,
+  "response": {
+    "approved_at": null,
+    "asset": {
+      "height": 3072,
+      "id": "73ce47f0-9c90-45e9-9bac-751c850718ca",
+      "mime_type": "image/jpeg",
+      "rights_status": "verified",
+      "sha256": "a04e76a3f14e5cf115076f433a87cc848634f4e3bcdb7185c80271dc6b6fc25b",
+      "status": "pending",
+      "width": 5504
+    },
+    "columns": 3,
+    "id": "23ff4d35-dbd8-43bf-a586-9ddba4e1740c",
+    "label": "W01-P28 non-Damo coverage after Damo filter fallback",
+    "panel_plan": [
+      {
+        "panel": 1,
+        "summary": "Observer B holds the vertical phone at face height at 1x and points along the packed bar-side bodies toward Emma's established region. A close shoulder and back cover much of one side and lower foreground while a raised drink interrupts the other. Emma is visible only through the available gap, singing with the room rather than presenting to camera.",
+        "title": "Emma through the bar queue"
+      },
+      {
+        "panel": 2,
+        "summary": "Observer B stays in the same position and uses ordinary 2x zoom after the foreground patron shifts. Hair, an ear and a moving arm still clip the vertical frame. Emma's face and upper torso are available briefly, with other patrons crossing depth behind and in front of her.",
+        "title": "Emma tighter through a temporary gap"
+      },
+      {
+        "panel": 3,
+        "summary": "Observer B turns from the same post toward Brock's established crowd position at 2x. Two nearby patrons divide the sightline, hiding part of his torso and one side of the frame. Brock is singing enthusiastically inside the crowd, not isolated and not looking at camera.",
+        "title": "Brock caught behind two patrons"
+      },
+      {
+        "panel": 4,
+        "summary": "Observer B remains wedged beside the bar post and catches one narrow diagonal where both are present at different distances. A foreground head separates them and a raised drink hides part of one body. They are not aligned, paired, cleared or reacting to each other for the camera.",
+        "title": "Emma and Brock at different depths"
+      },
+      {
+        "panel": 5,
+        "summary": "Observer B lowers the vertical phone to chest height at 1x and points along the bar queue. Close backs, elbows, hands, glasses and passing bodies dominate. The frame is about the room's simultaneous social energy; Emma and Brock may be completely outside frame.",
+        "title": "Bar crowd without recurring cast"
+      },
+      {
+        "panel": 6,
+        "summary": "Observer C holds the vertical phone at face height at 1x between two heads. Shoulders cover at least the lower third and a raised arm, phone or drink cuts across the sightline. Only restricted pieces of the four musicians and low stage are visible; never a clean concert photograph.",
+        "title": "Band through the stage-side crowd"
+      },
+      {
+        "panel": 7,
+        "summary": "Observer C remains in the same crowd position and turns slightly at 2x toward a temporary opening near the drummer. Foreground hair and a raised forearm interrupt the frame. Catch only a partial musician, instrument movement, stage practical light and surrounding crowd shoulders rather than a composed performer portrait.",
+        "title": "Snare-side room-energy fragment"
+      },
+      {
+        "panel": 8,
+        "summary": "Observer B returns attention toward the bar at chest height, 1x. The red practical glow, condensation, shelves, close patrons and moving drinks create the frame. Keep the view human-scale and messy; no recurring character needs to resolve and no object is isolated like a product shot.",
+        "title": "Red-neon bar fragment"
+      },
+      {
+        "panel": 9,
+        "summary": "Observer B turns from the bar toward the stage-side direction but remains trapped at the same floor position. The vertical 1x view catches layered backs, raised hands and only a narrow fragment of the low stage beyond them. Emma or Brock may appear incidentally at an edge, but the room remains the subject and the frame does not reveal the pool-table action.",
+        "title": "Bar-to-stage crowd return"
+      }
+    ],
+    "panels": 9,
+    "prompt_template": "NANO_BANANA_SCENE_COVERAGE_PROMPT.md",
+    "reference_asset_ids": [
+      "f6305b8a-92bd-405a-b6bc-7ed29fe759f3",
+      "128b6a89-71fc-42f1-8827-c3f4b0f50685"
+    ],
+    "rows": 3,
+    "status": "candidate"
+  },
+  "review_file": "non-damo-coverage-sheet.jpg",
+  "scene": "W01-P28",
+  "selections": [
+    "emma:contact_sheet",
+    "brock:contact_sheet"
+  ],
+  "sheet_asset_id": "73ce47f0-9c90-45e9-9bac-751c850718ca"
+}
