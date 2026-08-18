@@ -1,0 +1,186 @@
+name: W01-P28 generate non-Damo coverage candidate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/nondamo-coverage-triggers/*.json"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.sha }}"
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Run exactly one guarded non-Damo coverage generation
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/shirtfaced-studio
+          set -a
+          . .env
+          set +a
+
+          prompt='worlds/world-01/shots/W01-P28Z-non-damo.nano-banana-coverage.txt'
+          test -s "$prompt"
+          grep -q 'Do not require or supply a Damo identity reference' "$prompt"
+          grep -q 'remain outside every one of these nine phone frames' "$prompt"
+
+          ./.venv/bin/python - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          from app.adapters.asset_store import FilesystemAssetStore
+          from app.config import get_settings
+          from app.db.session import get_session_factory
+          from app.db.visual_models import VisualAsset
+
+          PROMPT_NAME = "W01-P28Z-non-damo.nano-banana-coverage.txt"
+          REQUIRED = {"emma:contact_sheet", "brock:contact_sheet"}
+          FORBIDDEN = "damo:contact_sheet"
+
+          host = os.environ["APP_HOST"]
+          if host in {"0.0.0.0", "::", ""}:
+              host = "127.0.0.1"
+          base = f"http://{host}:{os.environ['APP_PORT']}"
+
+          def get_json(path):
+              request = urllib.request.Request(base + path, method="GET")
+              with urllib.request.urlopen(request, timeout=60) as response:
+                  return response.status, json.loads(response.read().decode("utf-8"))
+
+          def post_json(path, payload):
+              request = urllib.request.Request(
+                  base + path,
+                  data=json.dumps(payload).encode("utf-8"),
+                  method="POST",
+                  headers={"Content-Type": "application/json"},
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=420) as response:
+                      raw = response.read().decode("utf-8")
+                      return response.status, json.loads(raw) if raw else None
+              except urllib.error.HTTPError as error:
+                  raw = error.read().decode("utf-8")
+                  try:
+                      body = json.loads(raw) if raw else None
+                  except json.JSONDecodeError:
+                      body = raw
+                  return error.code, body
+
+          _, pipeline = get_json("/api/scenes/W01-P28/pipeline")
+          if pipeline.get("media_live") is not True:
+              raise SystemExit("Google media is not live; refusing to spend")
+          available = {
+              one.get("key") for one in pipeline.get("references", []) if isinstance(one, dict)
+          }
+          missing = sorted(REQUIRED - available)
+          if missing:
+              raise SystemExit(f"Required approved references missing: {missing}")
+          prompts = {
+              one.get("name") for one in pipeline.get("available_prompts", []) if isinstance(one, dict)
+          }
+          if PROMPT_NAME not in prompts:
+              raise SystemExit(f"Deployed pipeline does not offer {PROMPT_NAME}")
+
+          selections = ["emma:contact_sheet", "brock:contact_sheet"]
+          if FORBIDDEN in selections:
+              raise SystemExit("Damo reference must not be sent on the non-Damo pass")
+
+          before = int(pipeline.get("attempts", 0))
+          payload = {
+              "label": "W01-P28 non-Damo coverage after Damo filter fallback",
+              "selections": selections,
+              "aspect_ratio": "16:9",
+              "prompt_name": PROMPT_NAME,
+          }
+
+          # The only billable provider call in this workflow.
+          status, body = post_json("/api/scenes/W01-P28/generate-sheet", payload)
+
+          _, after_pipeline = get_json("/api/scenes/W01-P28/pipeline")
+          after = int(after_pipeline.get("attempts", 0))
+          out = Path("var/diagnostics/w01-p28-nondamo")
+          out.mkdir(parents=True, exist_ok=True)
+
+          result = {
+              "scene": "W01-P28",
+              "provider_call_limit": 1,
+              "selections": selections,
+              "prompt_name": PROMPT_NAME,
+              "aspect_ratio": "16:9",
+              "attempts_before": before,
+              "attempts_after": after,
+              "attempt_incremented_once": after == before + 1,
+              "http_status": status,
+              "response": body,
+              "human_review_required": True,
+              "approved_automatically": False,
+          }
+
+          if status == 201 and isinstance(body, dict):
+              asset_brief = body.get("asset")
+              if isinstance(asset_brief, dict) and asset_brief.get("id"):
+                  import uuid
+                  asset_id = uuid.UUID(str(asset_brief["id"]))
+                  settings = get_settings()
+                  store = FilesystemAssetStore(settings.assets_root_resolved)
+                  with get_session_factory()() as session:
+                      asset = session.get(VisualAsset, asset_id)
+                      if asset is None:
+                          raise SystemExit(f"Generated sheet asset {asset_id} missing from DB")
+                      data = store.load(asset.storage_key)
+                      suffix = ".png" if asset.mime_type == "image/png" else ".jpg"
+                      sheet_path = out / f"non-damo-coverage-sheet{suffix}"
+                      sheet_path.write_bytes(data)
+                      result["review_file"] = sheet_path.name
+                      result["sheet_asset_id"] = str(asset_id)
+
+          (out / "result.json").write_text(
+              json.dumps(result, indent=2, sort_keys=True), encoding="utf-8"
+          )
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY
+          REMOTE
+
+          mkdir -p w01-p28-nondamo
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28-nondamo/. w01-p28-nondamo/
+          test -s w01-p28-nondamo/result.json
+          cat w01-p28-nondamo/result.json
+      - name: Upload non-Damo coverage review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: w01-p28-nondamo-${{ github.run_id }}
+          path: w01-p28-nondamo/
+          if-no-files-found: error
+          retention-days: 1
+      - name: Record paid non-Damo result and artifact run
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          mkdir -p studio/worlds/world-01/shots/diagnostics
+          cp w01-p28-nondamo/result.json studio/worlds/world-01/shots/diagnostics/W01-P28.nondamo-result.json
+          printf '{"run_id":%s,"artifact_name":"w01-p28-nondamo-%s"}\n' '${{ github.run_id }}' '${{ github.run_id }}' > studio/worlds/world-01/shots/diagnostics/W01-P28.nondamo-run.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/worlds/world-01/shots/diagnostics/W01-P28.nondamo-result.json studio/worlds/world-01/shots/diagnostics/W01-P28.nondamo-run.json
+          git commit -m "chore(W01-P28): record non-Damo coverage result [skip ci]"
+          git push origin main
