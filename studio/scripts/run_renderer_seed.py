@@ -35,7 +35,7 @@ LIGHTING: genuinely dark late-night pub. General house lights OFF. Black ceiling
 
 CAMERA: one-handed phone held by a friend in the crowd at chest/head height, 24mm-equivalent, native portrait 9:16. Damo/cue/table/stool remain within the central 4:5-safe region but DO NOT protect them from foreground occlusion. Cue can approach or clip a frame edge. Nearby bodies can fill corners. Slight motion imperfection, close-range distortion and awkward framing are desirable. Nobody notices the camera.
 
-Wardrobe: Damo black cap, faded olive tee, dark denim, ordinary worn trainers. No logos. The final image should communicate instantly: some dickhead climbed onto the pool table and his mates are dealing with the consequences — not 'man poses enthusiastically on pool table'. Preserve exact identity and required props while prioritising physical spontaneity, crowd entropy, occlusion, depth and accidental-camera realism."""
+Wardrobe: Damo bare-headed, faded olive tee, dark denim, ordinary worn trainers. No logos. The final image should communicate instantly: some dickhead climbed onto the pool table and his mates are dealing with the consequences — not 'man poses enthusiastically on pool table'. Preserve exact identity and required props while prioritising physical spontaneity, crowd entropy, occlusion, depth and accidental-camera realism."""
 # Cast slots, by identity. These were six hard-coded paths until the Phase 5
 # cutover; the frames were then renamed on disk and every one of them broke.
 # A slot now says which member and which role, and the library says which bytes.

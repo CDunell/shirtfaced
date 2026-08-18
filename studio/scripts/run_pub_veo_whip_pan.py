@@ -28,7 +28,7 @@ CAMERA MOVE: begin from the existing Damo side of the scene for only a fraction 
 
 The room must continue independently during the move: people sing, jostle, talk, raise hands and look in different directions. Nobody notices the camera. Nobody reorganises around Damo or around the woman. Do not make either of them performers or heroes. Preserve competing foreground obstruction and ugly late-night pub exposure.
 
-This is a camera observation of one continuous event, not a new scene. Do not invent a new pub, do not replace or add principal people, do not change Damo's olive/grey-green shirt, black cap, cue, pool-table position or the existing woman/man pair at camera-right. No cuts, no camera teleport, no slow motion, no staged audience semicircle, no tattoos, no jewellery added to Damo, no halo, no text. AUDIO WILL BE ADDED IN POST; generated audio is irrelevant."""
+This is a camera observation of one continuous event, not a new scene. Do not invent a new pub, do not replace or add principal people, do not change Damo's olive/grey-green shirt, his bare head, cue, pool-table position or the existing woman/man pair at camera-right. No cuts, no camera teleport, no slow motion, no staged audience semicircle, no tattoos, no jewellery added to Damo, no halo, no text. AUDIO WILL BE ADDED IN POST; generated audio is irrelevant."""
 
 
 def scene_lineage(seed: Path, scene_key: str) -> dict:
