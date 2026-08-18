@@ -1,0 +1,19 @@
+{
+  "frame": {
+    "approved_for_veo": false,
+    "coverage_frame_id": "6300e002-3d2a-4516-95b4-c2dfc6baedc6",
+    "frame_sha256": "b122de47a70ca39c45f363e56d682bb12ddfbd840e2471a045b5a24260eb8605",
+    "height": 512,
+    "name": "w01-p28-b-damo-close",
+    "operation": "crop_only",
+    "source_master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+    "visual_asset_id": "d90f3e73-c215-49bf-9f68-9a339531dd32",
+    "width": 288,
+    "x": 340,
+    "y": 0
+  },
+  "human_review_required": true,
+  "master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+  "provider_called": false,
+  "scene": "W01-P28"
+}
