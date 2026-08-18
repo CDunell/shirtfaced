@@ -60,17 +60,30 @@ Long negative lists can become the dominant semantic content of a prompt and can
 
 ## 3. Legacy cleanup completed before implementation
 
-Three obsolete production paths were still capable of confusing the audit and, in two cases, of triggering paid pub-specific generations:
+The audit found several pub-specific Veo routes that predate the current production path. They were still live GitHub workflows triggered by committed JSON and some could still spend money while bypassing the scene-configured motion resolver.
+
+Removed on this branch:
 
 - `studio/scripts/run_renderer_video.py` — hard-coded W01-P28/pub runner with an embedded `MOTION_PROMPT` and forced 9:16 output;
 - `.github/workflows/renderer-video-validation.yml` — old pub validation route invoking that script;
-- `.github/workflows/renderer-paid-video-validation.yml` — duplicate paid pub validation route invoking the same script.
+- `.github/workflows/renderer-paid-video-validation.yml` — duplicate paid pub validation route invoking that script;
+- `studio/scripts/run_pub_veo_ab.py` — approved-master A/B experiment with another embedded pub prompt;
+- `.github/workflows/renderer-veo-ab.yml` — paid trigger for that A/B experiment;
+- `studio/scripts/run_pub_veo_whip_pan.py` — pub-specific Damo-to-Emma/Brock whip-pan experiment with embedded motion direction;
+- `.github/workflows/renderer-veo-whip-pan.yml` — paid trigger for the whip-pan experiment;
+- `.github/workflows/recover-pub-veo-whip-pan.yml` — artifact-recovery workflow for that retired experiment.
 
-They are removed on this branch. Historical trigger JSON and past result directories remain evidence and are not rewritten.
+Historical trigger JSON and past result directories remain evidence and are not rewritten. Removing a workflow does not rewrite what was actually tried.
 
-The active production path remains `motion_run.py -> run_pub_coverage_veo.py -> GoogleVideoClient`.
+The active production family remains:
+
+`ScenesBench/API -> motion_run.py -> run_pub_coverage_veo.py -> GoogleVideoClient`
+
+with `.github/workflows/renderer-veo-coverage.yml` retained as the alternate caller of the same runner for reproducible artifact-producing runs.
 
 `run_pub_coverage_veo.py` is now generic despite its legacy filename. Renaming it is **not part of this prompt change** because the name is referenced by the active workflow, service, tests and historical ADRs. A cosmetic rename is lower value than preserving one proven runner during prompt work. The file name is accepted compatibility debt, not a second production path.
+
+No other pub-specific Veo workflow is permitted to become an active production route during this work. New experiments must enter through the same runner and prompt resolver.
 
 ---
 
@@ -184,11 +197,12 @@ The engine must remain capable of adding a second scene without Python changes.
 
 - branch from current working `main`;
 - identify active Studio -> runner -> provider route;
-- identify and remove obsolete hard-coded pub runner/workflows;
-- record authority/tension decisions in this document;
+- identify and remove obsolete hard-coded pub runners/workflows;
+- resolve prompt-authority tensions explicitly;
+- preserve historical trigger/results evidence;
 - no paid generation.
 
-**Gate:** only one active production runner family remains.
+**Gate:** only one active production runner family remains and no retired pub-specific workflow can spend independently.
 
 ### Phase 1 — Prompt component domain and compiler
 
