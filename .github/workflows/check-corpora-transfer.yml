@@ -1,9 +1,10 @@
 name: Check corpora transfer
 
 # Read-only except for one defensive mkdir -p on the transfer's destination.
-# Counts what has landed under var/design_corpus, var/design_archive and the
-# evidence root, with a snapshot 15s later so growth (still transferring) is
-# visible against a stall (finished, or stuck).
+# Counts what has landed under var/design_corpus, var/design_archive, the
+# evidence root and the /home/ubuntu/tartest diagnostic scratch folder, with
+# a snapshot 15s later so growth (still transferring) is visible against a
+# stall (finished, or stuck).
 on:
   workflow_dispatch:
 
@@ -24,6 +25,7 @@ jobs:
           set -u
           STUDIO=/home/ubuntu/shirtfaced-studio
           EVIDENCE=/home/ubuntu/shirtfaced-research/vintage-ebay-images
+          TARTEST=/home/ubuntu/tartest
 
           echo "----- destination directory tar -x needs -----"
           if [ -d "$STUDIO/var" ]; then
@@ -36,7 +38,7 @@ jobs:
 
           snapshot() {
             echo "----- $(date -u +%H:%M:%S) UTC -----"
-            for root in "$STUDIO/var/design_corpus" "$STUDIO/var/design_archive" "$EVIDENCE"; do
+            for root in "$STUDIO/var/design_corpus" "$STUDIO/var/design_archive" "$EVIDENCE" "$TARTEST"; do
               if [ -d "$root" ]; then
                 count=$(find "$root" -type f 2>/dev/null | wc -l)
                 size=$(du -sh "$root" 2>/dev/null | cut -f1)
@@ -52,10 +54,10 @@ jobs:
           snapshot
 
           echo
-          echo "----- most recently modified files (proof of active writes) -----"
-          find "$STUDIO/var" -type f -newermt '-2 minutes' 2>/dev/null | tail -5
+          echo "----- most recently modified files anywhere under /home/ubuntu (proof of active writes) -----"
+          find /home/ubuntu -type f -newermt '-2 minutes' 2>/dev/null | grep -v '^/home/ubuntu/shirtfaced-studio/\(app\|web\|scripts\|docs\)/' | tail -10
 
           echo
-          echo "----- active SSH sessions from the owner's key -----"
-          who
+          echo "----- disk space -----"
+          df -h /home
           REMOTE
