@@ -1,0 +1,64 @@
+name: One-off current coverage sheet fix
+
+on:
+  push:
+    paths:
+      - .github/workflows/oneoff-current-sheet-fix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Make newest sheet the only Stage 4 authority
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('studio/app/routes/production_library.py')
+          text = path.read_text(encoding='utf-8')
+          old = '''    # Historical Nano extractions stay in the database for audit, but Stage 4
+    # must never receive a panel from a rejected or superseded contact sheet.
+    # Crops carry no contact_sheet_id and remain visible. Nano extractions are
+    # returned only when they belong to the sheet that is approved right now.
+    approved_sheet_id = next((sheet.id for sheet in sheets if sheet.status == "approved"), None)
+    visible_frames = [
+        frame
+        for frame in frames
+        if frame.contact_sheet_id is None or frame.contact_sheet_id == approved_sheet_id
+    ]
+'''
+          new = '''    # The newest sheet is the workflow authority. Generating a replacement
+    # immediately retires old panel extractions from Stage 4, even before the
+    # replacement is approved. If the newest sheet is candidate or rejected,
+    # Stage 4 gets no Nano extraction at all. Historical rows remain in the DB.
+    latest_sheet = sheets[0] if sheets else None
+    active_sheet_id = (
+        latest_sheet.id if latest_sheet is not None and latest_sheet.status == "approved" else None
+    )
+    visible_frames = [
+        frame
+        for frame in frames
+        if frame.contact_sheet_id is None
+        or (active_sheet_id is not None and frame.contact_sheet_id == active_sheet_id)
+    ]
+'''
+          if old not in text:
+              raise SystemExit('Expected approved-sheet filter block not found; refusing to guess.')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+      - name: Verify backend syntax
+        run: python -m compileall -q studio/app/routes/production_library.py
+      - name: Commit fix and remove one-off workflow
+        run: |
+          git rm .github/workflows/oneoff-current-sheet-fix.yml
+          git add studio/app/routes/production_library.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "fix(studio): retire old panels when a newer sheet exists"
+          git push origin main
