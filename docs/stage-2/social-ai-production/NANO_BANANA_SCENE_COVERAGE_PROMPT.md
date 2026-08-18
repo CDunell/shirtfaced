@@ -1,28 +1,35 @@
 <instruction>
-Analyze the entire scene in the input master image. Identify ALL key subjects present, including named characters, groups, the event source, props, furniture and important environmental features, and understand their spatial relationship/interaction.
-Use the approved character reference image(s) and/or approved character contact sheet(s) supplied with the scene master as identity authority for any recurring character visible in the requested coverage. Multiple character references may be supplied when a panel contains multiple identity-critical characters. Preserve those identities while the scene master remains the spatial and compositional authority.
-Generate a cohesive 3x3 grid "Documentary Contact Sheet" featuring 9 distinct camera observations of exactly these subjects in the same environment and the same uninterrupted event.
-You must adapt the camera observations to fit the actual content of the scene. Do not mechanically force generic cinematic shot types when the established scene suggests a stronger observation:
-**Row 1 (World / Event):**
-1. **Environmental Discovery:** A wider observation showing the established environment, crowd density and primary event. The world is the subject before any named character.
-2. **Primary Incident in Context:** The main character incident is visible inside the larger event, with surrounding people and environment retained. Do not isolate the character or arrange the scene around them.
-3. **Independent Social Activity:** Observe another active part of the same scene where other people are engaged with their own mates, actions or interactions. This is not a reaction shot to the primary incident.
-**Row 2 (Core Human Coverage):**
-4. **Incident Medium:** A closer observation of the primary incident while retaining neighbouring bodies, obstruction and enough geography to remain part of the established world.
-5. **Secondary Character / Group:** A meaningful secondary person, pair or group already present in the scene continuing their own existing behaviour. When more than one recurring character is visible, preserve each supplied identity independently.
-6. **Event Source:** The person, group or activity actually driving the larger event, observed through the existing environment rather than restaged as a clean performance shot.
-**Row 3 (Details & Alternate Observations):**
-7. **Physical Detail:** A tight observation of an important existing physical detail or relationship such as hands, feet, drink, clothing, prop, furniture, contact or texture.
-8. **Crowd-Level Alternate View:** A different physically plausible view from inside the established environment, with natural foreground bodies or objects allowed to interfere with the frame.
-9. **World Return:** A broader observation showing the same event continuing across the environment. Nothing has reset, concluded or reorganised around a named character.
-Ensure strict consistency: The same people, faces, body proportions, clothes, props, furniture scale, room geography, lighting, crowd density and event state across all 9 panels. Different panels change only the camera observation.
-The scene master controls world geography, blocking, crowd placement, furniture, props, lighting and event state. Approved character references/contact sheets control recurring-character identity. Neither may be rewritten to accommodate the other.
-Do not add, remove, duplicate, relocate or redesign people, props, furniture or major environmental elements. Do not clean up or empty the scene for composition. Do not create clear hero space, halo lighting, audience formation or collective attention around a named character. Do not synchronise independent people into one action. Preserve natural collisions, overlapping bodies, partial visibility and occlusion. Camera positions must be physically plausible for a person present in the scene. No impossible overhead views, artificial heroic low angles, crane perspectives or staged cinematic compositions unless explicitly supported by the scene.
-The scene exists independently of the camera. Continuity is achieved by observing another part of the same world, never by regenerating or rearranging the world.
+Analyze the entire approved scene master as one uninterrupted world. Identify the event, distributed human activity, important props/furniture, recurring characters and the physical spaces in which a real person could plausibly stand with a phone.
+
+Use supplied approved character references/contact sheets only as identity authority for recurring people who are visible in the requested observations. The scene master remains spatial authority. An identity reference never grants permission to relocate somebody, clear a sightline or rebuild the scene around them.
+
+Generate one cohesive 3x3 "Observational Phone Contact Sheet" containing exactly 9 distinct observations of this same event.
+
+CAMERA LAW: every panel is conceived through a vertically held 9:16 phone viewfinder operated by a real person physically inside the established environment at plausible chest/eye height. The landscape contact-sheet canvas is only a transport/layout device for a reliable 3x3 sheet; it does not make the imagined camera landscape. Each observation should feel narrow, close, imperfect and limited by what that person can actually see.
+
+Before composing the panels, establish a small number of plausible observer positions. Prefer 2-3 observer positions for the sheet rather than inventing nine ideal camera locations. Several panels may come from the same observer by turning/panning, changing phone zoom, or catching a different temporary sightline. A major perspective change requires a different physically plausible observer position.
+
+Foreground obstruction is desirable evidence that the camera is inside the event. Shoulders, backs of heads, raised arms, phones, drinks, hair, furniture and people crossing close to lens may partially hide important subjects. Prefer a credible interrupted sightline over complete subject visibility. The camera does not need to explain the whole room.
+
+Create these nine observational jobs, adapted to the actual scene:
+1. **Observer A — World Sightline:** From a plausible position inside the event, show enough environment and distributed activity to understand where the observer is, while accepting narrow vertical framing and foreground interference.
+2. **Observer A — Primary Incident:** From the same physical position, turn/pan toward the primary incident or human moment. Keep surrounding bodies and obstruction. The incident is found inside the world, not staged for the camera.
+3. **Observer A — Alternate Zoom / Gap:** Stay at the same observer position and obtain a tighter or differently obstructed view through phone zoom, a small turn, or a temporary gap in nearby people. Perspective must remain consistent with Observer A.
+4. **Observer B — Independent Activity:** From a second plausible human position, observe another part of the same event where people continue their own actions independently of the primary incident.
+5. **Observer B — Secondary Person / Group:** From Observer B's position, turn or zoom toward a meaningful secondary person, pair or group already present. Preserve multiple supplied identities independently when more than one recurring character is visible.
+6. **Observer C — Event Source:** From a third plausible crowd/floor-level position where required, observe the person, group or activity actually driving the larger event through whatever people and objects physically stand between camera and source.
+7. **Existing Position — Available Physical Detail:** Without inventing a magical insert position, use one of the established observer positions to notice an existing detail that is genuinely visible there: hands, feet, drink, clothing, prop, furniture, contact or texture.
+8. **Existing Position — Obstructed Transient View:** A close, imperfect observation in which foreground bodies or objects significantly interfere. Important action may sit near an edge or be partly hidden.
+9. **Return to Existing Observer:** Return to Observer A or another already established observer position. The event has continued independently. This is not a panoramic reset or a newly invented wide shot.
+
+Consistency law: the same people, faces, body proportions, clothes, props, furniture scale, geography, lighting, crowd density and event state persist across all 9 panels. Panels change only observer position, viewing direction, phone zoom and the instant of observation.
+
+The photographer cannot float, see through people, obtain impossible overhead coverage, cross the room without creating a new observer position, or make people clear a view. Do not produce panoramic crowd vistas, crane/elevated views, protected hero space or staged compositions that reveal implausibly complete information from inside a dense event.
+
+Partial visibility, clipped bodies, edge framing, temporary disappearance behind foreground people and inconvenient sightlines are valid and often preferable.
+
+The scene exists independently of the camera. Continuity is achieved by observing physically available sightlines within the same world, never by regenerating or rearranging the world.
 </instruction>
-A professional 3x3 documentary storyboard grid containing 9 panels.
-The grid showcases the exact same established subjects and environment from the input master image through a comprehensive range of useful observational coverage.
-**Top Row:** World/environment view, primary incident in context, independent social activity.
-**Middle Row:** Incident medium, secondary character/group view, event source.
-**Bottom Row:** Physical detail, crowd-level alternate view, world return.
-All frames feature photorealistic textures, consistent natural lighting, realistic depth of field and physically plausible documentary framing for the specific subjects and environment analyzed. The same people, objects, clothing, proportions, geography and event state remain consistent across every panel. Recurring-character faces and bodies match the supplied approved character references/contact sheets. No repeated shots. No regenerated version of the world.
+A professional 3x3 observational phone contact sheet containing 9 panels of the exact same event.
+Each panel reads as a vertically held phone observation made by a real person standing inside the environment, even though the overall 3x3 sheet uses a landscape canvas for layout reliability.
+Use a small set of recurring observer positions, narrow fields of view, close human-scale perspective, foreground occlusion, partial visibility and imperfect framing. No panoramic coverage, elevated overview or staged hero composition. The same world and identities persist across every panel.
