@@ -24,6 +24,7 @@ sys.path.insert(0, str(ROOT))
 
 from app.adapters.google_media import GoogleVideoClient, GoogleVideoRequest
 from app.config import get_settings
+from app.services.veo_prompt import build_motion_prompt
 
 
 def resolve_seed(scene_key: str, shot: str):
@@ -66,30 +67,24 @@ DEV_RESOLUTION = "720p"
 
 
 def motion_prompt(scene_key: str, shot: str) -> str:
-    """The scene's motion direction, from the world rather than from here.
+    """Compile reusable motion law around direction owned by the world.
 
-    Two prompts used to live in this file as string literals, and ``--shot`` was
-    ``choices=sorted(PROMPTS)`` -- so the only animatable shots in the world were
-    the two somebody had typed into a script named after one pub. A panel called
-    ``damo-incident-in-context`` was rejected by argparse before anything reached
-    Veo.
-
-    Motion direction is scene configuration, so it lives beside the coverage
-    prompt it belongs to:
+    Motion direction remains scene configuration and still lives beside the
+    coverage prompt it belongs to:
 
         worlds/<world>/shots/<SCENE>.veo-motion.txt          the scene's own
         worlds/<world>/shots/<SCENE>.<shot>.veo-motion.txt   one shot's override
 
-    A shot with nothing of its own uses the scene's. A scene with nothing at all
-    is refused by name, because §14 says the Veo prompt describes what changes
-    through time and nothing else can guess that for a room it has never seen.
+    The file describes this scene/shot. ``build_motion_prompt`` supplies the
+    generic temporal, camera, crowd and first-frame contracts that every Veo
+    take needs. A new scene therefore still needs configuration, not runner code.
     """
     worlds = get_settings().worlds_root_resolved
     for candidate in (f"{scene_key}.{shot}.veo-motion.txt", f"{scene_key}.veo-motion.txt"):
         for shots in sorted(worlds.glob("*/shots")):
             path = shots / candidate
             if path.is_file():
-                return path.read_text(encoding="utf-8").strip()
+                return build_motion_prompt(path.read_text(encoding="utf-8"))
     raise SystemExit(
         f"{scene_key}: no motion direction. Write "
         f"worlds/<world>/shots/{scene_key}.veo-motion.txt, or "
@@ -125,9 +120,6 @@ def main() -> None:
     else:
         resolved = resolve_seed(args.scene, args.shot)
         data = resolved.data
-        # Resolved by scene and shot, so there is no path to record -- the asset
-        # id and the SHA in the lineage below are the identity, and they are
-        # better ones. The legacy branch sets this to a file.
         seed_path = None
         actual_sha = resolved.sha256
         source_dimensions = [resolved.width, resolved.height]
@@ -139,17 +131,6 @@ def main() -> None:
             "coverage_frame_sha256": resolved.sha256,
         }
 
-    # The seed's own shape, not a shape asserted here. This used to demand exact
-    # 9:16 and then request 9:16 from Veo, which was coherent when a coverage
-    # frame was a deterministic vertical crop of the master. §8 and §10
-    # superseded that: a panel is extracted as it sits on the sheet, and §10's
-    # method expands it to fill the canvas rather than reshaping it. A landscape
-    # panel is now the normal output, and asking Veo for a vertical clip of a
-    # landscape still is asking it to reframe -- which is what §11 forbids
-    # everywhere else in this pipeline.
-    #
-    # So motion preserves the frame, and the vertical social crop is the edit's
-    # job, where a person picks it. §19 assembles the cut in post regardless.
     width, height = source_dimensions
     aspect_ratio = "16:9" if width >= height else "9:16"
 
@@ -183,7 +164,7 @@ def main() -> None:
     manifest = {
         **lineage,
         "shot": args.shot,
-        "experiment": "approved-panel-extraction-to-minimal-motion-veo",
+        "experiment": "approved-panel-extraction-to-bounded-motion-veo",
         "generated_at": stamp,
         "model": result.model,
         "aspect_ratio": aspect_ratio,
@@ -192,16 +173,12 @@ def main() -> None:
         "seed_sha256": actual_sha,
         "source_dimensions": source_dimensions,
         "source_format": source_format,
-        "camera": "composition_locked_no_pan_no_reframe",
+        "camera": "composition_locked_observational_handheld",
+        "prompt_contract": "bounded_motion_state_v1",
         "audio": "strip_in_post",
         "raw_video_sha256": hashlib.sha256(result.data).hexdigest(),
-        "manual_gate": "inspect identity geography contact and usable seconds",
+        "manual_gate": "inspect identity geography contact motion arc and usable seconds",
     }
-    # Strip the generated audio and probe the result, here rather than in the
-    # workflow. §20 discards Veo's audio so it cannot drive timing, and until
-    # now that happened in a GitHub Action -- which meant the only way to get a
-    # silent, probed clip was to commit a trigger file. The box has ffmpeg, so
-    # both callers get the same output from the same code.
     silent = out / "video-1.mp4"
     if shutil.which("ffmpeg") and shutil.which("ffprobe"):
         subprocess.run(
