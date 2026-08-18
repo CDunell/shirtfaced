@@ -1,0 +1,36 @@
+{
+  "frames": [
+    {
+      "approved_for_veo": false,
+      "coverage_frame_id": "75fdd102-b7af-4c58-ac5e-72f230d80bd6",
+      "frame_sha256": "f191a3c2b96250cf010ca25f6a5ded55060ca426c4111dc29a89a6b5617e3ddd",
+      "height": 768,
+      "name": "w01-p28-a-wide-discovery",
+      "operation": "crop_only",
+      "review_file": "A-wide-discovery.png",
+      "source_master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+      "visual_asset_id": "b1218402-dad2-4a71-ad8c-2f25a9bfa2a1",
+      "width": 432,
+      "x": 233,
+      "y": 0
+    },
+    {
+      "approved_for_veo": false,
+      "coverage_frame_id": "6300e002-3d2a-4516-95b4-c2dfc6baedc6",
+      "frame_sha256": "4139918a98ac4da450ffee0f4dacab76deedf244fefdf767d5db04f811828eb6",
+      "height": 576,
+      "name": "w01-p28-b-damo-close",
+      "operation": "crop_only",
+      "review_file": "B-damo-close.png",
+      "source_master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+      "visual_asset_id": "b31fee9a-4f5b-4510-a3e9-deb106d1342f",
+      "width": 324,
+      "x": 300,
+      "y": 0
+    }
+  ],
+  "human_review_required": true,
+  "master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+  "provider_called": false,
+  "scene": "W01-P28"
+}
