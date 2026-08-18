@@ -56,9 +56,7 @@ def upgrade() -> None:
             name="uq_design_measurements_frame",
         ),
     )
-    op.create_index(
-        "ix_design_measurements_tradition", "design_measurements", ["tradition"]
-    )
+    op.create_index("ix_design_measurements_tradition", "design_measurements", ["tradition"])
 
 
 def downgrade() -> None:

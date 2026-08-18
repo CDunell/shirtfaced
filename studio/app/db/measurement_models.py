@@ -50,7 +50,10 @@ class DesignMeasurement(Base):
         # the analyser is deterministic, so two rows for one frame could only
         # mean two analyser versions, and that is what analyser_version is for.
         UniqueConstraint(
-            "corpus", "brand_slug", "product_slug", "image_path",
+            "corpus",
+            "brand_slug",
+            "product_slug",
+            "image_path",
             name="uq_design_measurements_frame",
         ),
         # The advisor and the thresholds both slice by tradition before they

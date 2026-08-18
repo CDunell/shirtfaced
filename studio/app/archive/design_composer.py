@@ -381,4 +381,3 @@ class DesignComposer:
             rejections=tuple(rejections),
             gaps=tuple(gaps),
         )
-

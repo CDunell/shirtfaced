@@ -40,7 +40,6 @@ if TYPE_CHECKING:
 GARMENT_DIR = GARMENTS_DIR
 
 
-
 class CompositionRefused(Exception):
     """The brief could not be answered, with a durable reason code."""
 
@@ -108,11 +107,7 @@ def grammar_history(session: Session) -> dict[str, tuple[int, int]]:
             ComposedDesign.state,
             func.count(ComposedDesign.id),
         )
-        .where(
-            ComposedDesign.state.in_(
-                (AttemptState.APPROVED.value, AttemptState.REJECTED.value)
-            )
-        )
+        .where(ComposedDesign.state.in_((AttemptState.APPROVED.value, AttemptState.REJECTED.value)))
         .group_by(ComposedDesign.grammar_key, ComposedDesign.state)
     ).all()
     history: dict[str, tuple[int, int]] = {}
