@@ -18,6 +18,7 @@ only way out of ``awaiting_decision`` is a person.
 from __future__ import annotations
 
 import datetime as dt
+import json
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -30,6 +31,7 @@ from app.archive.garment import load as load_garment
 from app.config import GARMENTS_DIR, PROJECT_ROOT
 from app.db.archive_models import ComposedDesign
 from app.domain.enums import AttemptState
+from app.services.composition_engine import ApprovalStore
 
 if TYPE_CHECKING:
     from app.db.concept_models import DesignAttempt
@@ -197,7 +199,50 @@ def decide(
     design.decided_at = dt.datetime.now(dt.UTC)
     design.decision_note = note
     session.flush()
+    record_learning(design.grammar_key, approved)
     return design
+
+
+def record_learning(grammar_key: str, approved: bool) -> None:
+    """Feed one settled decision to the composer's approval store.
+
+    The approve control is the training signal -- the engine ranks its options
+    by ``approvals / decisions`` per grammar, and until this existed no
+    decision path ever wrote to the store, so every option carried
+    ``decisions: 0`` forever and the confidence weighting was decorative.
+
+    Approve and reject both count. A variation request does not: it is a
+    verdict on the content, not on the construction that set it.
+    """
+    ApprovalStore(APPROVALS_PATH).record(grammar_key, approved)
+
+
+def rebuild_approvals(session: Session) -> dict[str, dict[str, int]]:
+    """Derive the approval store from the decisions actually recorded.
+
+    The table is the record; the store is the composer's reading of it. A file
+    written incrementally can drift from the rows -- decisions made before the
+    learning wire existed, a store lost with a box, a corrupt write. Rebuilding
+    from ``composed_designs`` makes the store a regenerable view, so drift
+    self-heals instead of accumulating.
+    """
+    data: dict[str, dict[str, int]] = {}
+    rows = session.execute(
+        select(ComposedDesign.grammar_key, ComposedDesign.state).where(
+            ComposedDesign.state.in_(
+                (AttemptState.APPROVED.value, AttemptState.REJECTED.value)
+            )
+        )
+    ).all()
+    for grammar_key, state in rows:
+        entry = data.setdefault(grammar_key, {"approved": 0, "decisions": 0})
+        entry["decisions"] += 1
+        if state == AttemptState.APPROVED.value:
+            entry["approved"] += 1
+
+    APPROVALS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    APPROVALS_PATH.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return data
 
 
 def recompose(design: ComposedDesign) -> str:

@@ -14,6 +14,8 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli resolve-reference damo head_shoulders_neutral
     python -m app.cli register-scene-master W01-P28 master.png [--approve]
     python -m app.cli ingest-soundtrack all-in-tonight canonical_12s5 mix.wav --approve --primary
+    python -m app.cli sync-archive
+    python -m app.cli design-data [--refresh]
 """
 
 from __future__ import annotations
@@ -503,6 +505,129 @@ def _ingest_cast(
     return EXIT_OK
 
 
+def _design_data(refresh: bool) -> int:
+    """Report -- or produce -- the derived data the design pipeline reads.
+
+    Every consumer of the mined corpus refuses honestly when its artefact is
+    absent, which is correct and also invisible: the advisor answered from
+    defaults for months before anyone noticed, because nothing reported which
+    state the system was in. This command is that report. With ``--refresh``
+    it also runs the producers, in dependency order, stopping at the first
+    failure with the exact command that failed -- the same scripts as before,
+    no longer seven hand-run steps in an order nothing records.
+    """
+    import json as json_module
+    import subprocess
+    import time
+
+    from app.config import PROJECT_ROOT
+    from app.services.vintage_research import root as evidence_root
+
+    corpus_root = PROJECT_ROOT / "var" / "design_corpus"
+    archive_root = PROJECT_ROOT / "var" / "design_archive"
+    scripts_root = PROJECT_ROOT / "scripts"
+
+    def describe(path: Path) -> str:
+        if not path.is_file():
+            return "ABSENT"
+        age_days = (time.time() - path.stat().st_mtime) / 86400
+        try:
+            loaded = json_module.loads(path.read_text(encoding="utf-8"))
+            count = len(loaded)
+        except (json_module.JSONDecodeError, OSError):
+            return f"present but unreadable ({age_days:.0f}d old)"
+        return f"{count} entries, {age_days:.0f}d old"
+
+    # (artefact, producer script, the consumer that starves without it)
+    artefacts = (
+        ("design_patterns.json", "mine_design_patterns.py", "scoring thresholds"),
+        ("design_structure.json", "mine_design_structure.py", "structure rows (template input)"),
+        ("design_templates.json", "learn_design_templates.py", "composition engine (/api/range)"),
+        ("joined.json", "join_design_patterns.py", "design advisor (/api/design/advise)"),
+    )
+
+    if refresh:
+        steps: list[tuple[str, list[str]]] = []
+        if archive_root.is_dir():
+            steps.append(
+                (
+                    "merge design archive into evidence",
+                    [
+                        sys.executable,
+                        str(scripts_root / "adapt_archive_to_evidence.py"),
+                        "--out",
+                        str(evidence_root()),
+                    ],
+                )
+            )
+        else:
+            print(f"skip: no design archive at {archive_root}, nothing to merge")
+        if corpus_root.is_dir():
+            for script in (
+                "mine_design_patterns.py",
+                "mine_design_structure.py",
+                "learn_design_templates.py",
+                "join_design_patterns.py",
+            ):
+                steps.append((script, [sys.executable, str(scripts_root / script)]))
+        else:
+            print(f"skip: no design corpus at {corpus_root}, nothing to mine")
+
+        for name, command in steps:
+            print(f"-> {name}")
+            completed = subprocess.run(command, cwd=PROJECT_ROOT)
+            if completed.returncode != 0:
+                print(f"FAILED at {name}. Re-run it alone:\n  {' '.join(command)}")
+                return EXIT_FAILED
+
+        # The approval store derives from the decisions table, so a rebuild
+        # cannot drift from what was actually decided.
+        try:
+            from app.services.design_composition import rebuild_approvals
+
+            session_factory = get_session_factory()
+            with session_factory() as session:
+                data = rebuild_approvals(session)
+            decisions = sum(entry["decisions"] for entry in data.values())
+            print(
+                f"-> approval store rebuilt: {decisions} decision(s) "
+                f"across {len(data)} grammar(s)"
+            )
+        except Exception as error:
+            print(f"skip: approval store not rebuilt (database unreachable: {error})")
+
+    print(f"\ndesign data under {corpus_root}:")
+    for artefact, producer, consumer in artefacts:
+        state = describe(corpus_root / artefact)
+        print(f"  {artefact:<28} {state:<32} feeds {consumer}")
+        if state == "ABSENT":
+            print(f"  {'':<28} produce with: python scripts/{producer}")
+
+    approvals = PROJECT_ROOT / "var" / "approvals.json"
+    print(f"  {'approvals.json':<28} {describe(approvals):<32} feeds composer confidence")
+
+    evidence = evidence_root()
+    listing_count = (
+        sum(1 for child in evidence.iterdir() if child.is_dir() and child.name.isdigit())
+        if evidence.is_dir()
+        else 0
+    )
+    print(f"\nevidence root {evidence}: {listing_count} listing(s)")
+    if archive_root.is_dir():
+        print(f"design archive {archive_root}: present (merge runs on --refresh)")
+    else:
+        print(f"design archive {archive_root}: absent")
+
+    absent = [a for a, _, _ in artefacts if not (corpus_root / a).is_file()]
+    if absent:
+        print(
+            "\nUntil the artefacts above exist, their consumers answer from "
+            "documented defaults or refuse -- honestly, but uninformed. "
+            "Run: python -m app.cli design-data --refresh"
+        )
+    return EXIT_OK
+
+
 def _split_specification(specification: str, flag: str) -> tuple[str, str, str]:
     """``a=b=path`` -- split on the first two separators so Windows paths survive."""
     parts = specification.split("=", 2)
@@ -512,24 +637,32 @@ def _split_specification(specification: str, flag: str) -> tuple[str, str, str]:
 
 
 def _sync_archive() -> int:
-    """Bring the stored archive in line with the authored elements.
+    """Bring the stored archive in line with the elements the composer uses.
 
     Idempotent, and it says what it changed. A sync that reports work it did not
     do makes the report worthless, which is the only reason anyone runs it.
+
+    The set synced is ``registry.all_elements()`` -- authored and drawn both --
+    because that is the set the composer draws from. Syncing only the authored
+    elements left every drawn part unresolvable at provenance time: the compose
+    route joins chosen parts against ``archive_elements`` and silently skips a
+    key it cannot find, so most of a composed design's parts produced no
+    ``ElementUse`` row.
     """
-    from app.archive import authored
+    from app.archive import registry
     from app.archive.repository import ElementRepository
 
+    elements = registry.all_elements()
     session_factory = get_session_factory()
     with session_factory() as session:
         repository = ElementRepository(session)
-        result = repository.sync(authored.ALL)
+        result = repository.sync(elements)
         audit = repository.licence_audit()
         unverified = repository.unverified()
         session.commit()
 
     print(
-        f"{result.total} authored element(s): "
+        f"{result.total} element(s) in the composer's set: "
         f"{len(result.added)} added, {len(result.updated)} updated, "
         f"{len(result.unchanged)} unchanged"
     )
@@ -540,7 +673,7 @@ def _sync_archive() -> int:
     # Named rather than counted. An element held but unusable is work already
     # done that nobody can reach, and it should be visible on every run rather
     # than waiting for someone to think of querying for it.
-    standing_in = [element for element in authored.ALL if element.provisional]
+    standing_in = [element for element in elements if element.provisional]
     if standing_in:
         print(f"  {len(standing_in)} element(s) standing in for better artwork:")
         for element in standing_in:
@@ -699,7 +832,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     subcommands.add_parser(
         "sync-archive",
-        help="Store the authored archive elements and their feature vectors",
+        help="Store the composer's element set (authored and drawn) and its feature vectors",
+    )
+
+    design_data = subcommands.add_parser(
+        "design-data",
+        help="Report the mined-corpus artefacts and what each consumer runs on",
+    )
+    design_data.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Run the producers in order: merge archive into evidence, mine, join, rebuild",
     )
 
     cast = subcommands.add_parser(
@@ -804,6 +947,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _import_design_concepts(arguments.path)
         if arguments.command == "sync-archive":
             return _sync_archive()
+        if arguments.command == "design-data":
+            return _design_data(refresh=arguments.refresh)
         if arguments.command == "ingest-soundtrack":
             return _ingest_soundtrack(
                 arguments.slug,
