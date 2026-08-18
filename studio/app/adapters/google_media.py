@@ -84,11 +84,21 @@ class GoogleImageClient:
         if request.aspect_ratio is not None:
             response_format["aspect_ratio"] = request.aspect_ratio
 
-        interaction = self._client.interactions.create(
-            model=self._model,
-            input=inputs,
-            response_format=response_format,
-        )
+        try:
+            interaction = self._client.interactions.create(
+                model=self._model,
+                input=inputs,
+                response_format=response_format,
+            )
+        except Exception as error:
+            # The interactions API raises generated SDK exception classes for
+            # content-policy, quota and provider failures.  Letting those escape
+            # turns a classified provider refusal into an opaque HTTP 500 and
+            # bypasses the generation ledger.  Keep the provider's useful text,
+            # but route every SDK failure through the adapter's stable contract.
+            raise GoogleMediaError(
+                f"{type(error).__name__}: {error}"
+            ) from error
         output = getattr(interaction, "output_image", None)
         if output is None or not getattr(output, "data", None):
             raise GoogleMediaError("Gemini returned no image")

@@ -90,9 +90,9 @@ def test_pub_prompt_rejects_the_latest_sheet_and_composition_failures() -> None:
         "one complete tall 9:16 portrait phone photograph",
         "neutral side gutters inside its grid slot",
         "roughly one-third to one-half",
-        "must overlap Damo or the table",
+        "cross the sightline to Damo or the table",
         "never show a complete clean stage",
-        "adult wooden stool standing on the table",
+        "full-size wooden pub stool standing on the table",
     ):
         assert required in text
 
@@ -100,7 +100,7 @@ def test_pub_prompt_rejects_the_latest_sheet_and_composition_failures() -> None:
         "five-over-four",
         "five columns",
         "two rows",
-        "unobstructed centred full-body figure",
+        "centred and fully visible from head to boots",
         "clean front-facing concert photograph",
         "isolated close-up",
     ):
