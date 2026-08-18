@@ -1,0 +1,36 @@
+{
+  "frames": [
+    {
+      "approved_for_veo": false,
+      "coverage_frame_id": "28cdbfff-690e-4ed0-b803-1175dd717d39",
+      "frame_sha256": "ef9eef2895fecfb2c37c14baa5478836cd19c622b0daa09270470eabc949a90c",
+      "height": 768,
+      "name": "w01-p28-c-emma-brock-crowd",
+      "operation": "crop_only",
+      "review_file": "C-emma-brock-crowd.png",
+      "source_master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+      "visual_asset_id": "0808622b-83b4-4db0-9c31-9c12bc53dd95",
+      "width": 432,
+      "x": 816,
+      "y": 0
+    },
+    {
+      "approved_for_veo": false,
+      "coverage_frame_id": "d7cc61b1-ea02-4312-99c5-83b61d19a8b5",
+      "frame_sha256": "2f1328aff65aecc3931773cdddb6e4e23541c59674254358e258ebba1858af04",
+      "height": 768,
+      "name": "w01-p28-d-band-room-energy",
+      "operation": "crop_only",
+      "review_file": "D-band-room-energy.png",
+      "source_master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+      "visual_asset_id": "db45d426-2c9a-4f71-9f11-fd058e7a07e7",
+      "width": 432,
+      "x": 700,
+      "y": 0
+    }
+  ],
+  "human_review_required": true,
+  "master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+  "provider_called": false,
+  "scene": "W01-P28"
+}
