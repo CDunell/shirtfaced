@@ -12,8 +12,14 @@ afterEach(() => {
 
 const noop = (): void => undefined;
 
+/** Every destination lives behind the hamburger now, at every width. */
+async function openMenu(): Promise<void> {
+  await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+}
+
 /** The shell opens on Work, so a dashboard assertion has to go there first. */
 async function showDashboard(): Promise<void> {
+  await openMenu();
   await userEvent.click(screen.getByRole("button", { name: "Dashboard" }));
 }
 
@@ -37,13 +43,14 @@ describe("App", () => {
     });
   });
 
-  it("groups the destinations by pipeline rather than listing ten in a row", () => {
+  it("groups the destinations by pipeline rather than listing ten in a row", async () => {
     // The 14 August audit's largest structural finding was two pipelines
     // interleaved in one interface, and that it is the first thing a person
     // hits. Nothing has moved -- but which is which is now stated.
     stubApi();
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
+    await openMenu();
 
     const banner = screen.getByRole("banner");
     expect(banner).toHaveTextContent("Product");
@@ -56,12 +63,13 @@ describe("App", () => {
     expect(labels.indexOf("Work")).toBeLessThan(labels.indexOf("Evidence"));
   });
 
-  it("no longer offers Compose or Score as destinations", () => {
+  it("no longer offers Compose or Score as destinations", async () => {
     // Phase 5. They were three screens that each knew part of one journey.
     // The capabilities did not go anywhere -- they fold into Designs.
     stubApi();
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
+    await openMenu();
 
     const banner = screen.getByRole("banner");
     const labels = Array.from(banner.querySelectorAll("button")).map((b) => b.textContent);
@@ -113,6 +121,7 @@ describe("App", () => {
     const onToggleTheme = vi.fn();
 
     renderWithBase(<App themeName="light" onToggleTheme={onToggleTheme} />);
+    await openMenu();
     await userEvent.click(screen.getByRole("button", { name: "Dark theme" }));
 
     expect(onToggleTheme).toHaveBeenCalledOnce();

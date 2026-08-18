@@ -464,6 +464,20 @@ def approve_sheet(
     return _sheet_out(session, sheet)
 
 
+@router.post("/contact-sheets/{sheet_id}/reject", summary="Say no to a sheet")
+def reject_sheet(
+    sheet_id: uuid.UUID, payload: DecisionIn, session: SessionDependency
+) -> ContactSheetOut:
+    """Records the decision on the sheet, not only on its bytes. Nothing deleted."""
+    sheet = session.get(SceneContactSheet, sheet_id)
+    if sheet is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such contact sheet.")
+    coverage_library.reject_contact_sheet(session, sheet, note=payload.note, actor=payload.actor)
+    session.commit()
+    session.refresh(sheet)
+    return _sheet_out(session, sheet)
+
+
 @router.post(
     "/scenes/{scene_key}/panels",
     status_code=status.HTTP_201_CREATED,

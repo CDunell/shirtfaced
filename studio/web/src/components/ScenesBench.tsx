@@ -52,7 +52,7 @@ import {
   generateSheet,
   previewSource,
   registerMaster,
-  rejectTake,
+  rejectContactSheet,
   type ContactSheet,
   type CoverageFrame,
   type PanelPlanEntry,
@@ -109,6 +109,9 @@ export function ScenesBench(): React.JSX.Element {
 
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [showFrames, setShowFrames] = useState(false);
+  // A thumbnail is 120-200px of a 4K sheet. Judging a panel means looking at
+  // it, and every review in this pipeline is somebody looking at an image.
+  const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [promptName, setPromptName] = useState<string | null>(null);
   const [shotNames, setShotNames] = useState<Record<number, string>>({});
@@ -268,6 +271,43 @@ export function ScenesBench(): React.JSX.Element {
 
   return (
     <>
+      {/* Full size, on a dark ground, filling whatever screen it is on. Click
+          anywhere or press Escape. A sheet is 3072px wide and the decision it
+          exists for cannot be made at 190. */}
+      {zoom ? (
+        <div
+          role="button"
+          tabIndex={0}
+          aria-label="Close the enlarged image"
+          onClick={() => {
+            setZoom(null);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape" || event.key === "Enter" || event.key === " ") setZoom(null);
+          }}
+          className={css({
+            position: "fixed",
+            inset: "0",
+            zIndex: "80",
+            background: "rgba(0,0,0,0.88)",
+            display: "grid",
+            placeItems: "center",
+            padding: "16px",
+            cursor: "zoom-out",
+          })}
+        >
+          <img
+            src={zoom.src}
+            alt={zoom.alt}
+            className={css({
+              maxWidth: "100%",
+              maxHeight: "100%",
+              objectFit: "contain",
+            })}
+          />
+        </div>
+      ) : null}
+
       <PageTitle
         meta={
           loading
@@ -385,12 +425,16 @@ export function ScenesBench(): React.JSX.Element {
               <img
                 src={previewSource(one.asset)}
                 alt={`${scene.scene_key} master`}
+                onClick={() => {
+                  setZoom({ src: previewSource(one.asset), alt: `${scene.scene_key} master` });
+                }}
                 className={css({
                   width: "100%",
                   height: "120px",
                   objectFit: "contain",
                   background: theme.colors.backgroundTertiary,
                   borderRadius: "6px",
+                  cursor: "zoom-in",
                 })}
               />
               <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
@@ -540,12 +584,16 @@ export function ScenesBench(): React.JSX.Element {
                 <img
                   src={previewSource(sheet.asset)}
                   alt={sheet.label}
+                  onClick={() => {
+                    setZoom({ src: previewSource(sheet.asset), alt: sheet.label });
+                  }}
                   className={css({
                     width: "100%",
                     height: "190px",
                     objectFit: "contain",
                     background: theme.colors.backgroundTertiary,
                     borderRadius: "6px",
+                    cursor: "zoom-in",
                   })}
                 />
                 <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
@@ -590,7 +638,7 @@ export function ScenesBench(): React.JSX.Element {
                       disabled={busy !== null}
                       onClick={() =>
                         void act("reject-sheet", async () => {
-                          await rejectTake(sheet.asset.id, "Rejected from the Scenes bench");
+                          await rejectContactSheet(sheet.id, "Rejected from the Scenes bench");
                           return "Rejected and kept. Generate another when you are ready.";
                         })
                       }
@@ -625,12 +673,16 @@ export function ScenesBench(): React.JSX.Element {
                         <img
                           src={previewSource(frame.asset)}
                           alt={frame.name}
+                          onClick={() => {
+                            setZoom({ src: previewSource(frame.asset), alt: frame.name });
+                          }}
                           className={css({
                             width: "100%",
                             height: "200px",
                             objectFit: "contain",
                             background: theme.colors.backgroundTertiary,
                             borderRadius: "6px",
+                            cursor: "zoom-in",
                           })}
                         />
                       ) : (

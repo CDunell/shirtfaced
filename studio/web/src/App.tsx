@@ -1,4 +1,16 @@
-/** Application shell. */
+/**
+ * Application shell.
+ *
+ * Eleven destinations in two pipelines. They used to sit in one row across the
+ * header on anything wider than 760px, with the hamburger reserved for phones —
+ * which meant the widest screen got the most cramped nav, three groups and a
+ * theme toggle competing for the same strip beside the wordmark.
+ *
+ * So the hamburger is the nav at every width. The header holds the wordmark and
+ * one button; the panel underneath holds the destinations, grouped, with the
+ * pipeline blurb that never fitted in the row. A person aiming at one
+ * destination reads a list instead of scanning a strip.
+ */
 import { useState } from "react";
 import { useStyletron } from "baseui";
 import { ParagraphMedium } from "baseui/typography";
@@ -88,7 +100,6 @@ const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
   { id: "email", label: "Email", pipeline: "world" },
 ];
 const ADMIN_URL = "https://admin.shirtfaced.wtf";
-const MOBILE = "@media screen and (max-width: 760px)";
 const iconBase = {
   viewBox: "0 0 24 24",
   fill: "none",
@@ -139,25 +150,6 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
     setView(id);
     setMenuOpen(false);
   };
-  // The group label. Quiet on purpose: it names the pipeline without competing
-  // with the destinations, which are what a person is actually aiming at.
-  const groupLabel = css({
-    fontSize: "10px",
-    fontWeight: 700,
-    letterSpacing: "0.12em",
-    textTransform: "uppercase",
-    color: theme.colors.contentTertiary,
-    alignSelf: "center",
-    paddingRight: "2px",
-    whiteSpace: "nowrap",
-  });
-  const divider = css({
-    width: "1px",
-    alignSelf: "stretch",
-    marginTop: "8px",
-    marginBottom: "8px",
-    backgroundColor: `color-mix(in srgb, ${theme.colors.contentPrimary} 14%, transparent)`,
-  });
   return (
     <div className={css({ minHeight: "100vh", backgroundColor: theme.colors.backgroundPrimary })}>
       <header
@@ -181,57 +173,20 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           })}
         >
           <span className="wordmark">shirtfaced / studio</span>
-          <nav
-            className={css({
-              display: "flex",
-              gap: "4px",
-              alignItems: "center",
-              [MOBILE]: { display: "none" },
-            })}
-          >
-            {PIPELINES.map((pipeline, index) => (
-              <div
-                key={pipeline.id}
-                className={css({ display: "flex", gap: "4px", alignItems: "center" })}
-              >
-                {index > 0 ? <span className={divider} aria-hidden="true" /> : null}
-                <span className={groupLabel} title={pipeline.blurb}>
-                  {pipeline.label}
-                </span>
-                {VIEWS.filter((v) => v.pipeline === pipeline.id).map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => {
-                      pick(v.id);
-                    }}
-                    className={item(view === v.id)}
-                  >
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            ))}
-            <span className={divider} aria-hidden="true" />
-            <a href={ADMIN_URL} className={item(false)}>
-              Admin ↗
-            </a>
-            <button onClick={onToggleTheme} className={item(false)}>
-              {themeName === "light" ? "Dark theme" : "Light theme"}
-            </button>
-          </nav>
           <button
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             onClick={() => {
               setMenuOpen((x) => !x);
             }}
             className={css({
-              display: "none",
-              [MOBILE]: { display: "grid" },
+              display: "grid",
               placeItems: "center",
               width: "44px",
               height: "44px",
               border: 0,
               background: "transparent",
+              cursor: "pointer",
+              color: theme.colors.contentPrimary,
             })}
           >
             {menuOpen ? <IconClose /> : <IconMenu />}
@@ -240,10 +195,14 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
         {menuOpen ? (
           <nav
             className={css({
-              display: "none",
-              [MOBILE]: { display: "flex" },
-              flexDirection: "column",
-              gap: "4px",
+              display: "grid",
+              // Two pipelines side by side where there is room, stacked where
+              // there is not. The blurb is the point of the grouping and only
+              // fits in a panel.
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+              gap: "4px 24px",
+              maxWidth: "1024px",
+              margin: "auto",
               padding: "12px 16px 16px",
               borderTop: hairline,
             })}
@@ -278,9 +237,32 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
                 ))}
               </div>
             ))}
-            <a href={ADMIN_URL} className={item(false)}>
-              Admin ↗
-            </a>
+            <div className={css({ display: "flex", flexDirection: "column", gap: "4px" })}>
+              <span
+                className={css({
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  color: theme.colors.contentTertiary,
+                  paddingTop: "8px",
+                })}
+              >
+                Elsewhere
+              </span>
+              <a href={ADMIN_URL} className={item(false)}>
+                Admin ↗
+              </a>
+              <button
+                onClick={() => {
+                  onToggleTheme();
+                  setMenuOpen(false);
+                }}
+                className={item(false)}
+              >
+                {themeName === "light" ? "Dark theme" : "Light theme"}
+              </button>
+            </div>
           </nav>
         ) : null}
       </header>

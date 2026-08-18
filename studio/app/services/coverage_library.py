@@ -594,6 +594,39 @@ def approve_contact_sheet(
     return sheet
 
 
+def reject_contact_sheet(
+    session: Session, sheet: SceneContactSheet, *, actor: str = OWNER, note: str | None = None
+) -> SceneContactSheet:
+    """Say no to a sheet, on the sheet and not only on its bytes.
+
+    Rejecting used to deprecate the asset and leave ``status`` alone, so a
+    rejected candidate stayed a candidate forever and a rejected approved sheet
+    stayed the one ``approved_contact_sheet`` returns -- with deprecated bytes
+    behind it. The decision belongs on the row that records decisions.
+
+    Kept, not deleted. A sheet nobody approved is still what the prompt produced.
+    """
+    prior = sheet.status
+    sheet.status = "rejected"
+    if sheet.asset.status is not VisualAssetStatus.DEPRECATED:
+        visual_library.deprecate_asset(session, sheet.asset, actor=actor, note=note or "Rejected")
+    session.add(
+        AuditEvent(
+            event_type=AuditEventType.CONTACT_SHEET_REJECTED,
+            actor=actor,
+            payload_json={
+                "contact_sheet_id": str(sheet.id),
+                "scene": sheet.master.scene_key,
+                "label": sheet.label,
+                "sha256": sheet.asset.sha256,
+                "prior_state": prior,
+                "note": note,
+            },
+        )
+    )
+    return sheet
+
+
 def approved_contact_sheet(session: Session, *, scene_key: str) -> SceneContactSheet:
     """The sheet panels are chosen from, or a refusal naming what is missing."""
     sheet = session.execute(

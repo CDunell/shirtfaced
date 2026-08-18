@@ -207,6 +207,13 @@ export function registerContactSheet(
   return upload<ContactSheet>(`/api/scenes/${sceneKey}/contact-sheets`, body);
 }
 
+/** Says no on the sheet, not only on its bytes. Nothing is deleted. */
+export function rejectContactSheet(sheetId: string, note?: string): Promise<ContactSheet> {
+  return send<ContactSheet>(`/api/contact-sheets/${sheetId}/reject`, "POST", {
+    note: note ?? null,
+  });
+}
+
 export function approveContactSheet(sheetId: string, note?: string): Promise<ContactSheet> {
   return send<ContactSheet>(`/api/contact-sheets/${sheetId}/approve`, "POST", {
     note: note ?? null,

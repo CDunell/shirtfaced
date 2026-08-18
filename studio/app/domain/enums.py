@@ -115,6 +115,7 @@ class AuditEventType(StrEnum):
     SCENE_MASTER_APPROVED = "scene_master_approved"
     CONTACT_SHEET_REGISTERED = "contact_sheet_registered"
     CONTACT_SHEET_APPROVED = "contact_sheet_approved"
+    CONTACT_SHEET_REJECTED = "contact_sheet_rejected"
     COVERAGE_FRAME_DERIVED = "coverage_frame_derived"
     COVERAGE_FRAME_APPROVED = "coverage_frame_approved"
     AUDIO_ASSET_INGESTED = "audio_asset_ingested"
