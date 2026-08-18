@@ -51,32 +51,30 @@ The approved lookout scene is location-generic. Historical reference material ma
 ## W01-P28 — 11:05pm live-music/pool-table sequence
 
 **Status:** 🟡 In Progress  
-**Master:** one approved 16:9 world master is the spatial source of truth.  
+**Master:** approved 1365×768 master, SHA-256 `7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88`.  
 **Delivery:** vertical 9:16 social edit assembled in post from several short Veo takes.  
-**Raw take policy:** generate approximately **6 seconds per shot**; do not require all 6 seconds to survive the edit. A 1.5–4 second keeper fragment is a successful take.  
-**Audio:** generated audio is discarded/stripped. Build one continuous pub/band/crowd sound bed in post so cuts remain inside the same event.
+**Raw take policy:** approximately **6 seconds per shot**; a 1.5–4 second keeper fragment is a successful take.  
+**Audio:** discard/strip generated audio and build one continuous pub/band/crowd sound bed in post.
 
-### Coverage rule
+### Coverage rule — locked 19 August 2026
 
-Every clip resolves its source still before Veo; Veo does not choose scene coverage. The active W01-P28 path is now hybrid because repeated paid Nano full-scene coverage attempts containing Damo's pool-table action were output-filtered by Google even after neutral billiards wording.
+W01-P28 source-still discovery is finished. Do not issue further Nano source-coverage calls for this scene by default.
 
-- **A — Wide discovery** and **B — Damo close:** deterministic original-pixel 9:16 crop/reframe from the currently approved 16:9 master -> checksum -> human approval -> Veo first-frame I2V.
-- **C — Emma + Brock** and **D — Band / crowd source:** approved master + only relevant identity refs -> explicitly selected `W01-P28Z-non-damo.nano-banana-coverage.txt` -> reviewed scene contact sheet -> selected-panel extraction -> human approval -> Veo first-frame I2V.
-- **E — Return wide:** reuse A when the motion contains a strong return range. If a genuinely different return is required, derive another original-pixel master crop rather than buying another Damo/cue image regeneration.
+Repeated Damo/cue generations were provider-filtered. Subsequent non-Damo contact-sheet tests cleared the filter but did not reliably obey the requested 3×3/panel mapping. The approved master already contains the needed observations, so A/B/C/D now use deterministic exact-pixel crops from that master and E reuses A.
 
-A deterministic crop changes framing only. It does not regenerate the pub, characters, crowd, lighting or props. Every derived frame records the parent-master SHA256 and its own crop/frame SHA256. A Nano non-Damo observation also remains subordinate to the same master and does not remove Damo from the event; its phone simply faces another part of the room.
+A deterministic crop changes framing only. It does not regenerate the pub, characters, crowd, lighting or props. Every derived frame records the parent-master SHA256 and its own frame SHA256. All current frames remain `approved_for_veo=false` until the owner's explicit approval decision.
 
-The detailed active authority is `shots/W01-P28.md` §2.1. Do not issue another paid full-scene Nano retry with Damo/cue coverage merely to rephrase the same action.
+The detailed active authority is `shots/W01-P28.md` §2.1.
 
 ### Shot package
 
-| Shot | Raw target | 9:16 source / focus | Purpose / expected keeper |
+| Shot | Raw target | Locked 9:16 source | Purpose / expected keeper |
 | --- | ---: | --- | --- |
-| **W01-P28-A — Wide discovery** | 6s | Approved original-pixel master crop: Damo + full pool-table incident, retaining band and surrounding crowd | Establish that the room is already going off; viewer discovers Damo on the table. Expect ~2.5–4s usable. |
-| **W01-P28-B — Damo close** | 6s | Tighter approved original-pixel crop from the same master: face, upper body, cue overhead, enough neighbouring bodies/geography to stay documentary | Brief identity/performance hit. Head back, eyes shut, roaring; no hero re-staging. Expect ~1.5–2.5s usable. |
-| **W01-P28-C — Emma + Brock cutaway** | 6s | Approved extracted panel from the explicit non-Damo Nano coverage family, using Emma/Brock identity refs only as needed | Prove the room exists independently of Damo. They continue their own pre-existing behaviour, not a reaction shot staged for him. Expect ~2–3s usable. |
-| **W01-P28-D — Band / crowd source** | 6s | Approved extracted band/room panel from the explicit non-Damo coverage family; no Damo identity ref required | Reset attention away from Damo, add rhythm and explain what everyone is actually singing to. Expect ~1.5–3s usable. |
-| **W01-P28-E — Return wide / collision** | 6s | Prefer later keeper range from A; otherwise another approved original-pixel window across pool table + foreground crowd | Return to the incident with foreground obstruction, crowd surge or a small phone bump; leave on energy rather than a generated ending. Expect ~2–4s usable. |
+| **W01-P28-A — Wide discovery** | 6s | `w01-p28-a-wide-discovery` — x233/y0, 432×768, frame `f191a3c2…` | Establish that the room is already going off; viewer discovers Damo on the table. Expect ~2.5–4s usable. |
+| **W01-P28-B — Damo close** | 6s | `w01-p28-b-damo-close` — x340/y0, 288×512, frame `b122de47…` | Brief identity/performance hit; face, upper body and cue dominate without turning into a portrait. Expect ~1.5–2.5s usable. |
+| **W01-P28-C — Emma + Brock cutaway** | 6s | `w01-p28-c-emma-brock-crowd` — x816/y0, 432×768, frame `ef9eef28…` | Prove the room exists independently of Damo. Bar-side recurring crowd action stays inside the same master world. Expect ~2–3s usable. |
+| **W01-P28-D — Band / crowd source** | 6s | `w01-p28-d-band-room-energy` — x700/y0, 432×768, frame `2f1328af…` | Reset attention to the actual musical source through crowd bodies, hands and drinks. Expect ~1.5–3s usable. |
+| **W01-P28-E — Return wide / collision** | reuse A | Later keeper range from A; no second source still | Return to the incident with the same room/crowd continuity. Expect ~2–4s usable. |
 
 ### Editorial intent
 
@@ -86,7 +84,7 @@ Likely cut rhythm, adjusted after reviewing actual keeper ranges:
 
 The finished scene is expected to be roughly **10–15 seconds**, assembled from the strongest moments rather than five complete six-second takes. Cuts may be abrupt; continuous post sound is what makes them feel like simultaneous observations of the same 11:05pm event.
 
-### Motion constraints shared by all five takes
+### Motion constraints shared by all takes
 
 - The scene already exists before the camera observes it.
 - Background people continue independent pre-existing actions.
@@ -95,6 +93,7 @@ The finished scene is expected to be roughly **10–15 seconds**, assembled from
 - No invented tattoos, jewellery, signage, people or hero lighting.
 - Camera motion stays small and physically motivated: handheld sway, crowd bump, obstruction, imperfect reframe.
 - Do not ask Veo to cut, teleport camera position, explain the whole room or manufacture an ending.
+- Preserve the exact world and identities visible in each approved source frame rather than reconstructing the scene.
 
 ------------------------------------------------------------------------
 
