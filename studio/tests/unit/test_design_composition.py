@@ -104,3 +104,60 @@ def test_an_unknown_placement_is_refused() -> None:
         )
 
     assert caught.value.reason == "UNKNOWN_PLACEMENT"
+
+
+# --- The learning loop -------------------------------------------------------
+#
+# The approve control is the composer's training signal, and the signal is the
+# ``composed_designs`` table itself: ``grammar_history`` derives approve/reject
+# counts from the rows at compose time. There is no separate store to write,
+# which is the fix -- the separate store spent the system's whole life at zero
+# while decisions accumulated in the table.
+
+
+class _StubSession:
+    """Just enough session for code that only reads grouped rows back."""
+
+    def __init__(self, rows: list[tuple[str, str, int]] | None = None) -> None:
+        self._rows = rows or []
+
+    def execute(self, _query):
+        rows = self._rows
+
+        class _Result:
+            def all(self) -> list[tuple[str, str, int]]:
+                return rows
+
+        return _Result()
+
+
+def test_grammar_history_derives_counts_from_the_table() -> None:
+    from app.services.design_composition import grammar_history
+
+    rows = [("stamp", "approved", 3), ("stamp", "rejected", 1), ("banner", "rejected", 2)]
+    assert grammar_history(_StubSession(rows)) == {
+        "stamp": (3, 4),
+        "banner": (0, 2),
+    }
+
+
+def test_no_decisions_means_empty_history_not_an_error() -> None:
+    from app.services.design_composition import grammar_history
+
+    assert grammar_history(_StubSession()) == {}
+
+
+def test_history_moves_what_compose_offers() -> None:
+    """The loop end to end at the service layer: the same brief, ranked
+    differently once the table says the leader keeps being rejected."""
+    brief = Request(seed=8374, garment_key="garment_tee_crew_front", primary_text="SHIRTFACED")
+    before = compose(brief)[1]
+    leader = before[0].grammar_key
+
+    after = compose(brief, history={leader: (0, 5)})[1]
+    assert after[0].grammar_key != leader, "five rejections must cost the lead"
+    # And the bytes for the demoted option are unchanged -- learning moves
+    # ranking, never geometry.
+    demoted = next(o for o in after if o.grammar_key == leader)
+    original = next(o for o in before if o.grammar_key == leader)
+    assert demoted.design.content_hash == original.design.content_hash

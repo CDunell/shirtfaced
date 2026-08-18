@@ -26,20 +26,23 @@ decision in Python is exactly the duplication
 ``studio/docs/DESIGN_ENGINE_ADAPTATION.md`` Section 8 had to delete once
 already. This module only measures and reports.
 
-Deterministic and offline: same image in, same review out. The corpus mined by
-``scripts/mine_design_patterns.py`` supplies the thresholds, so "too many inks"
-means more than real production work uses rather than a number someone liked.
+Deterministic and offline: same image in, same review out. The measured corpus
+(``design_measurements``, written by ``design-data --refresh``) supplies the
+thresholds, so "too many inks" means more than real production work uses
+rather than a number someone liked.
 """
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 from PIL import Image, ImageFilter
+
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 # The gate ids, labels, category limits and floors live in
 # ``app/domain/design_review.py`` and are imported rather than restated. They
@@ -106,22 +109,36 @@ class Measurements:
         }
 
 
-def load_thresholds(corpus_root: Path | None = None) -> dict[str, float]:
-    """Corpus-derived thresholds, or the documented fallbacks."""
-    if corpus_root is None:
-        corpus_root = Path(__file__).resolve().parents[2] / "var" / "design_corpus"
-    report = corpus_root / "design_patterns.json"
-    if not report.is_file():
+def load_thresholds(session: Session | None = None) -> dict[str, float]:
+    """Corpus-derived thresholds, or the documented fallbacks.
+
+    Derived from ``design_measurements`` -- the corpus measured by code, in
+    the database -- rather than from the ``design_patterns.json`` file this
+    used to read, which existed only on whichever machine last ran the miner.
+    An empty table means the corpus has not been measured, and the documented
+    fallbacks apply with the same honest meaning as before.
+    """
+    if session is None:
         return dict(DEFAULT_THRESHOLDS)
-    try:
-        overall = json.loads(report.read_text(encoding="utf-8"))["overall"]
-        return {
-            "ink_colours_p90": overall["ink_colours"]["p90"],
-            "print_coverage_p10": overall["print_coverage"]["p10"],
-            "print_coverage_p90": overall["print_coverage"]["p90"],
-        }
-    except (KeyError, ValueError, TypeError):
+
+    from sqlalchemy import func, select
+
+    from app.db.measurement_models import DesignMeasurement
+
+    row = session.execute(
+        select(
+            func.percentile_cont(0.9).within_group(DesignMeasurement.ink_colours),
+            func.percentile_cont(0.1).within_group(DesignMeasurement.print_coverage),
+            func.percentile_cont(0.9).within_group(DesignMeasurement.print_coverage),
+        ).where(DesignMeasurement.refusal_reason.is_(None))
+    ).one()
+    if row[0] is None:
         return dict(DEFAULT_THRESHOLDS)
+    return {
+        "ink_colours_p90": float(row[0]),
+        "print_coverage_p10": float(row[1]),
+        "print_coverage_p90": float(row[2]),
+    }
 
 
 def _torso(pixels: np.ndarray) -> np.ndarray:

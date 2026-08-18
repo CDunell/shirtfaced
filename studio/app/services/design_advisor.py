@@ -20,15 +20,14 @@ marked as a default, not dressed up as a finding.
 
 from __future__ import annotations
 
-import json
 import re
 import statistics
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
-CORPUS_ROOT = Path(__file__).resolve().parents[2] / "var" / "design_corpus"
+if TYPE_CHECKING:
+    from sqlalchemy.orm import Session
 
 # Garment words are not part of the design's phrase. "Squawk 1200 Sweatshirt" is
 # a two-word design, not three.
@@ -118,18 +117,42 @@ class DesignDirection:
         }
 
 
-def _load_joined() -> list[dict[str, Any]]:
-    """Measured designs joined to their phrase length. Empty when unmined."""
-    path = CORPUS_ROOT / "joined.json"
-    if not path.is_file():
-        return []
-    try:
-        # json.loads is Any; the file is written by our own miner and its
-        # shape is asserted by the caller rather than trusted here.
-        loaded: list[dict[str, Any]] = json.loads(path.read_text(encoding="utf-8"))
-        return loaded
-    except ValueError:
-        return []
+def measurement_rows(session: Session) -> list[dict[str, Any]]:
+    """Measured designs joined to their phrase length. Empty when unmined.
+
+    Reads ``design_measurements`` -- the corpus measured by code, one row per
+    frame, written by ``python -m app.cli design-data --refresh``. This used
+    to read ``var/design_corpus/joined.json``, a file that existed only on
+    whichever machine last ran the joiner, which for this advisor's whole
+    life was no machine at all. The table cannot be absent from the box, and
+    an empty result keeps the same honest meaning: unmined, so every
+    recommendation below is a default.
+    """
+    from sqlalchemy import select
+
+    from app.db.measurement_models import DesignMeasurement
+
+    rows = session.execute(
+        select(
+            DesignMeasurement.tradition,
+            DesignMeasurement.phrase_words,
+            DesignMeasurement.print_coverage,
+            DesignMeasurement.ink_colours,
+            DesignMeasurement.placement_band,
+            DesignMeasurement.light_on_dark,
+        ).where(DesignMeasurement.refusal_reason.is_(None))
+    ).all()
+    return [
+        {
+            "t": tradition,
+            "w": words,
+            "cov": coverage,
+            "ink": inks,
+            "band": band,
+            "lod": light_on_dark,
+        }
+        for tradition, words, coverage, inks, band, light_on_dark in rows
+    ]
 
 
 def _scale_role(coverage: float) -> tuple[str, str]:
@@ -151,7 +174,7 @@ def advise(
     prints very differently from a skate brand, and averaging them produces a
     design that belongs to neither.
     """
-    rows = _load_joined() if rows is None else rows
+    rows = [] if rows is None else rows
     words = phrase_words(phrase)
     bucket = length_bucket(len(words))
 
@@ -207,8 +230,8 @@ def advise(
 
     if not pool:
         direction.not_decided.append(
-            "The corpus has not been mined, so nothing below is evidence-backed. "
-            "Run scripts/mine_design_patterns.py."
+            "The corpus has not been measured, so nothing below is evidence-backed. "
+            "Run: python -m app.cli design-data --refresh"
         )
         return direction
 

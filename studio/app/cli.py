@@ -14,6 +14,8 @@ application startup, so it lives here rather than in a request handler.
     python -m app.cli resolve-reference damo head_shoulders_neutral
     python -m app.cli register-scene-master W01-P28 master.png [--approve]
     python -m app.cli ingest-soundtrack all-in-tonight canonical_12s5 mix.wav --approve --primary
+    python -m app.cli sync-archive
+    python -m app.cli design-data [--refresh]
 """
 
 from __future__ import annotations
@@ -503,6 +505,233 @@ def _ingest_cast(
     return EXIT_OK
 
 
+def _design_data(refresh: bool) -> int:
+    """Report -- or produce -- the measured corpus the design pipeline reads.
+
+    The consumers (the advisor, the scoring thresholds, the composer's
+    confidence) read PostgreSQL: ``design_measurements`` for the corpus,
+    ``composed_designs`` for the decisions. This command reports both, and
+    with ``--refresh`` it measures the corpus into the table -- one row per
+    primary product shot, refusals recorded with their reason -- and merges
+    the design archive into the vintage evidence root.
+
+    The measurements used to be JSON files under ``var/design_corpus/`` that
+    existed only on whichever machine last ran a mining script, which for the
+    advisor's whole life was no machine at all. A table cannot be absent from
+    the box, and this report is how an empty one stays loud.
+    """
+    import subprocess
+
+    from sqlalchemy import func as sa_func
+    from sqlalchemy import select as sa_select
+
+    from app.config import PROJECT_ROOT
+    from app.db.archive_models import ComposedDesign
+    from app.db.measurement_models import DesignMeasurement
+    from app.domain.enums import AttemptState
+    from app.services.vintage_research import root as evidence_root
+
+    corpus_root = PROJECT_ROOT / "var" / "design_corpus"
+    archive_root = PROJECT_ROOT / "var" / "design_archive"
+    scripts_root = PROJECT_ROOT / "scripts"
+
+    if refresh:
+        # The archive merge is genuinely file-domain: it hard-links reference
+        # images into the root the Research bench reads. Everything measured
+        # goes to the database below.
+        if archive_root.is_dir():
+            command = [
+                sys.executable,
+                str(scripts_root / "adapt_archive_to_evidence.py"),
+                "--out",
+                str(evidence_root()),
+            ]
+            print("-> merge design archive into evidence")
+            if subprocess.run(command, cwd=PROJECT_ROOT).returncode != 0:
+                print(f"FAILED. Re-run alone:\n  {' '.join(command)}")
+                return EXIT_FAILED
+        else:
+            print(f"skip: no design archive at {archive_root}, nothing to merge")
+
+        if corpus_root.is_dir():
+            result = _measure_corpus(corpus_root, scripts_root)
+            if result is None:
+                return EXIT_FAILED
+        else:
+            print(f"skip: no design corpus at {corpus_root}, nothing to measure")
+
+    try:
+        with get_session_factory()() as session:
+            measured = session.execute(
+                sa_select(
+                    DesignMeasurement.tradition,
+                    sa_func.count(DesignMeasurement.id),
+                )
+                .where(DesignMeasurement.refusal_reason.is_(None))
+                .group_by(DesignMeasurement.tradition)
+                .order_by(sa_func.count(DesignMeasurement.id).desc())
+            ).all()
+            refused = session.execute(
+                sa_select(sa_func.count(DesignMeasurement.id)).where(
+                    DesignMeasurement.refusal_reason.is_not(None)
+                )
+            ).scalar_one()
+            decisions = session.execute(
+                sa_select(
+                    ComposedDesign.grammar_key,
+                    ComposedDesign.state,
+                    sa_func.count(ComposedDesign.id),
+                )
+                .where(
+                    ComposedDesign.state.in_(
+                        (AttemptState.APPROVED.value, AttemptState.REJECTED.value)
+                    )
+                )
+                .group_by(ComposedDesign.grammar_key, ComposedDesign.state)
+            ).all()
+    except Exception as error:
+        print(f"database unreachable: {error}")
+        return EXIT_FAILED
+
+    total = sum(count for _, count in measured)
+    print(f"\nmeasured corpus (design_measurements): {total} frames, {refused} refused")
+    for tradition, count in measured:
+        print(f"  {tradition or '(no tradition)':<24} {count}")
+    if not total:
+        print(
+            "  The corpus has not been measured; the advisor and thresholds run\n"
+            "  on documented defaults. Run: python -m app.cli design-data --refresh"
+        )
+
+    if decisions:
+        print("\ncomposer learning (composed_designs decisions):")
+        by_grammar: dict[str, list[int]] = {}
+        for grammar_key, state, count in decisions:
+            entry = by_grammar.setdefault(grammar_key, [0, 0])
+            entry[1] += count
+            if state == AttemptState.APPROVED.value:
+                entry[0] += count
+        for grammar_key, (approved, decided) in sorted(by_grammar.items()):
+            print(f"  {grammar_key:<24} {approved}/{decided} approved")
+    else:
+        print("\ncomposer learning: no decisions yet -- confidence is baseline until some exist")
+
+    evidence = evidence_root()
+    listings = (
+        sum(1 for child in evidence.iterdir() if child.is_dir() and child.name.isdigit())
+        if evidence.is_dir()
+        else 0
+    )
+    print(f"\nevidence root {evidence}: {listings} listing(s)")
+    return EXIT_OK
+
+
+def _measure_corpus(corpus_root: Path, scripts_root: Path) -> int | None:
+    """Measure every brand's primary product shots into design_measurements.
+
+    Reuses the analyser and the walk order of the mining scripts unchanged --
+    first image per product, later ones are alternate angles of the same
+    design and would double-count it. A refusal is a row with its reason; a
+    frame with no detected print is skipped, matching the joiner this
+    replaces. Idempotent: re-measuring a frame replaces its row.
+    """
+    import json as json_module
+
+    from sqlalchemy.dialects.postgresql import insert as pg_insert
+
+    from app.db.measurement_models import DesignMeasurement
+    from app.services.design_advisor import phrase_words
+
+    sys.path.insert(0, str(scripts_root))
+    try:
+        from corpus_tiers import is_excluded  # type: ignore[import-not-found]
+        from mine_design_patterns import (  # type: ignore[import-not-found]
+            _analyse,
+            _placement_band,
+        )
+    finally:
+        sys.path.remove(str(scripts_root))
+
+    import hashlib
+
+    analyser_version = hashlib.sha256(
+        (scripts_root / "mine_design_patterns.py").read_bytes()
+    ).hexdigest()[:12]
+
+    session_factory = get_session_factory()
+    measured = refused = skipped = 0
+    with session_factory() as session:
+        for brand_dir in sorted(corpus_root.iterdir()):
+            if not brand_dir.is_dir() or is_excluded(brand_dir.name):
+                continue
+            brand_file = brand_dir / "brand.json"
+            if not brand_file.is_file():
+                continue
+            brand = json_module.loads(brand_file.read_text(encoding="utf-8-sig"))
+            tradition = brand.get("design_tradition", "unknown")
+            products_dir = brand_dir / "products"
+            if not products_dir.is_dir():
+                continue
+            for product_dir in sorted(products_dir.iterdir()):
+                product_file = product_dir / "product.json"
+                if not product_file.is_file():
+                    continue
+                product = json_module.loads(product_file.read_text(encoding="utf-8-sig"))
+                images = product.get("images") or []
+                if not images:
+                    continue
+                result = _analyse(product_dir / images[0])
+                if result is None:
+                    skipped += 1
+                    continue
+
+                values: dict[str, object] = {
+                    "corpus": "design_corpus",
+                    "brand_slug": brand_dir.name,
+                    "product_slug": product_dir.name,
+                    "image_path": images[0],
+                    "product_name": product.get("name", ""),
+                    "tradition": tradition,
+                    "phrase_words": len(phrase_words(product.get("name", ""))),
+                    "analyser_version": analyser_version,
+                }
+                if "refused" in result:
+                    values["refusal_reason"] = str(result["refused"])[:64]
+                    refused += 1
+                elif not result.get("has_print"):
+                    skipped += 1
+                    continue
+                else:
+                    values.update(
+                        refusal_reason=None,
+                        print_coverage=result["print_coverage"],
+                        ink_colours=result["ink_colours"],
+                        placement_band=_placement_band(result["centroid_y"]),
+                        light_on_dark=result["light_on_dark"],
+                    )
+                    measured += 1
+
+                statement = pg_insert(DesignMeasurement).values(**values)
+                session.execute(
+                    statement.on_conflict_do_update(
+                        constraint="uq_design_measurements_frame",
+                        set_={
+                            key: getattr(statement.excluded, key)
+                            for key in values
+                            if key not in ("corpus", "brand_slug", "product_slug", "image_path")
+                        },
+                    )
+                )
+                if (measured + refused) % 250 == 0:
+                    print(f"  {measured} measured, {refused} refused...", flush=True)
+                    session.commit()
+        session.commit()
+
+    print(f"-> corpus measured: {measured} frames, {refused} refused, {skipped} skipped")
+    return measured
+
+
+
 def _split_specification(specification: str, flag: str) -> tuple[str, str, str]:
     """``a=b=path`` -- split on the first two separators so Windows paths survive."""
     parts = specification.split("=", 2)
@@ -512,24 +741,32 @@ def _split_specification(specification: str, flag: str) -> tuple[str, str, str]:
 
 
 def _sync_archive() -> int:
-    """Bring the stored archive in line with the authored elements.
+    """Bring the stored archive in line with the elements the composer uses.
 
     Idempotent, and it says what it changed. A sync that reports work it did not
     do makes the report worthless, which is the only reason anyone runs it.
+
+    The set synced is ``registry.all_elements()`` -- authored and drawn both --
+    because that is the set the composer draws from. Syncing only the authored
+    elements left every drawn part unresolvable at provenance time: the compose
+    route joins chosen parts against ``archive_elements`` and silently skips a
+    key it cannot find, so most of a composed design's parts produced no
+    ``ElementUse`` row.
     """
-    from app.archive import authored
+    from app.archive import registry
     from app.archive.repository import ElementRepository
 
+    elements = registry.all_elements()
     session_factory = get_session_factory()
     with session_factory() as session:
         repository = ElementRepository(session)
-        result = repository.sync(authored.ALL)
+        result = repository.sync(elements)
         audit = repository.licence_audit()
         unverified = repository.unverified()
         session.commit()
 
     print(
-        f"{result.total} authored element(s): "
+        f"{result.total} element(s) in the composer's set: "
         f"{len(result.added)} added, {len(result.updated)} updated, "
         f"{len(result.unchanged)} unchanged"
     )
@@ -540,7 +777,7 @@ def _sync_archive() -> int:
     # Named rather than counted. An element held but unusable is work already
     # done that nobody can reach, and it should be visible on every run rather
     # than waiting for someone to think of querying for it.
-    standing_in = [element for element in authored.ALL if element.provisional]
+    standing_in = [element for element in elements if element.provisional]
     if standing_in:
         print(f"  {len(standing_in)} element(s) standing in for better artwork:")
         for element in standing_in:
@@ -699,7 +936,17 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     subcommands.add_parser(
         "sync-archive",
-        help="Store the authored archive elements and their feature vectors",
+        help="Store the composer's element set (authored and drawn) and its feature vectors",
+    )
+
+    design_data = subcommands.add_parser(
+        "design-data",
+        help="Report the mined-corpus artefacts and what each consumer runs on",
+    )
+    design_data.add_argument(
+        "--refresh",
+        action="store_true",
+        help="Run the producers in order: merge archive into evidence, mine, join, rebuild",
     )
 
     cast = subcommands.add_parser(
@@ -804,6 +1051,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _import_design_concepts(arguments.path)
         if arguments.command == "sync-archive":
             return _sync_archive()
+        if arguments.command == "design-data":
+            return _design_data(refresh=arguments.refresh)
         if arguments.command == "ingest-soundtrack":
             return _ingest_soundtrack(
                 arguments.slug,
