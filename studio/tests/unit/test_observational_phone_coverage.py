@@ -51,6 +51,36 @@ def test_pub_coverage_reuses_three_physical_observers() -> None:
     assert len(panel_plan_from_prompt(text)) == 9
 
 
+def test_pub_panels_are_literal_vertical_phone_sightlines() -> None:
+    """W01-P28 names physical views, not cinematography coverage categories."""
+    panels = panel_plan_from_prompt(W01_P28.read_text(encoding="utf-8"))
+
+    assert len(panels) == 9
+    for panel in panels:
+        sightline = f"{panel['title']} {panel['summary']}".lower()
+        assert "phone" in sightline
+        assert "vertically" in sightline or "vertical phone" in sightline
+        assert "height" in sightline
+        assert "9:16" in sightline
+        assert "1x" in sightline or "2x" in sightline
+        assert any(
+            obstruction in sightline
+            for obstruction in ("head", "shoulder", "back", "arm", "torso", "hair")
+        )
+
+    forbidden_categories = (
+        "damo discovery",
+        "damo incident",
+        "damo tighter",
+        "emma + brock sightline",
+        "band through crowd",
+        "available table detail",
+        "return to the incident",
+    )
+    titles = " ".join(panel["title"].lower() for panel in panels)
+    assert not any(category in titles for category in forbidden_categories)
+
+
 def test_sheet_container_stays_landscape_for_known_3x3_reliability() -> None:
     """Native vertical observation does not reopen the failed 9:16-sheet experiment."""
     default = inspect.signature(generate_coverage_sheet).parameters["aspect_ratio"].default
