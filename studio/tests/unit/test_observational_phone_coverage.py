@@ -81,6 +81,32 @@ def test_pub_panels_are_literal_vertical_phone_sightlines() -> None:
     assert not any(category in titles for category in forbidden_categories)
 
 
+def test_pub_prompt_rejects_the_latest_sheet_and_composition_failures() -> None:
+    """The 18 August candidate returned portrait cells but a 5-over-4 hero montage."""
+    text = W01_P28.read_text(encoding="utf-8")
+
+    for required in (
+        "exactly THREE COLUMNS and exactly THREE ROWS",
+        "one complete tall 9:16 portrait phone photograph",
+        "neutral side gutters inside its grid slot",
+        "roughly one-third to one-half",
+        "must overlap Damo or the table",
+        "never show a complete clean stage",
+        "adult wooden stool standing on the table",
+    ):
+        assert required in text
+
+    for rejected in (
+        "five-over-four",
+        "five columns",
+        "two rows",
+        "unobstructed centred full-body figure",
+        "clean front-facing concert photograph",
+        "isolated close-up",
+    ):
+        assert rejected in text
+
+
 def test_sheet_container_stays_landscape_for_known_3x3_reliability() -> None:
     """Native vertical observation does not reopen the failed 9:16-sheet experiment."""
     default = inspect.signature(generate_coverage_sheet).parameters["aspect_ratio"].default
