@@ -1,0 +1,52 @@
+{
+  "scene": "W01-P28",
+  "shot": "w01-p28-a-wide-discovery",
+  "provider_called": false,
+  "take_count": 1,
+  "takes": [
+    {
+      "directory": "/home/ubuntu/shirtfaced-studio/var/renderer-validation/W01-P28/20260818T202151Z-coverage-w01-p28-a-wide-discovery",
+      "video_exists": true,
+      "video_bytes": 3751467,
+      "manifest": {
+        "scene": "W01-P28",
+        "coverage_shot": "w01-p28-a-wide-discovery",
+        "coverage_frame_asset_id": "b1218402-dad2-4a71-ad8c-2f25a9bfa2a1",
+        "coverage_frame_sha256": "f191a3c2b96250cf010ca25f6a5ded55060ca426c4111dc29a89a6b5617e3ddd",
+        "shot": "w01-p28-a-wide-discovery",
+        "experiment": "approved-panel-extraction-to-bounded-motion-veo",
+        "generated_at": "20260818T202151Z",
+        "model": "veo-3.1-lite-generate-preview",
+        "aspect_ratio": "9:16",
+        "resolution": "720p",
+        "seed_path": null,
+        "seed_sha256": "f191a3c2b96250cf010ca25f6a5ded55060ca426c4111dc29a89a6b5617e3ddd",
+        "source_dimensions": [
+          432,
+          768
+        ],
+        "source_format": "PNG",
+        "camera": "composition_locked_observational_handheld",
+        "prompt_contract": "bounded_motion_state_v1",
+        "audio": "stripped",
+        "raw_video_sha256": "146ca87df550e6abfc4f85717b58c4f19f4df716f17e9b288a2665751329655e",
+        "manual_gate": "inspect identity geography contact motion arc and usable seconds",
+        "silent_video_sha256": "8bc8a7ceb41f7a6141c40f08c039b9248b9deb04fc92cba4a424732a9ba45b43",
+        "silent_video_bytes": 3751467
+      },
+      "probe": {
+        "programs": [],
+        "streams": [
+          {
+            "width": 720,
+            "height": 1280,
+            "r_frame_rate": "24/1"
+          }
+        ],
+        "format": {
+          "duration": "8.000000"
+        }
+      }
+    }
+  ]
+}
