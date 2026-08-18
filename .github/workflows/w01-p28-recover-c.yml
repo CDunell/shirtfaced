@@ -1,0 +1,227 @@
+name: W01-P28 recover shot C generation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/c-recovery-triggers/*.json"
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "${{ github.sha }}"
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Place exact C prompt on Studio
+        run: |
+          scp -i ~/.ssh/deploy_key studio/worlds/world-01/shots/W01-P28C-emma-brock.nano-banana-coverage.txt ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/world-01/shots/W01-P28C-emma-brock.nano-banana-coverage.txt
+      - name: Recover or run C without duplicate spend
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/shirtfaced-studio
+          set -a
+          . .env
+          set +a
+          ./.venv/bin/python - <<'PY'
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          import uuid
+          from pathlib import Path
+          from sqlalchemy import select
+
+          from app.adapters.asset_store import FilesystemAssetStore
+          from app.config import get_settings
+          from app.db.session import get_session_factory
+          from app.db.visual_models import SceneContactSheet, SceneMaster, VisualAsset
+
+          BASELINE_ATTEMPTS = 34
+          OLD_SHEET = uuid.UUID("23ff4d35-dbd8-43bf-a586-9ddba4e1740c")
+          PROMPT = "W01-P28C-emma-brock.nano-banana-coverage.txt"
+          LABEL = "W01-P28 C Emma-Brock shot-specific coverage"
+          selections = ["emma:contact_sheet", "brock:contact_sheet"]
+
+          host = os.environ["APP_HOST"]
+          if host in {"0.0.0.0", "::", ""}:
+              host = "127.0.0.1"
+          base = f"http://{host}:{os.environ['APP_PORT']}"
+
+          def request_json(path, method="GET", payload=None, timeout=60):
+              data = None if payload is None else json.dumps(payload).encode("utf-8")
+              request = urllib.request.Request(
+                  base + path,
+                  data=data,
+                  method=method,
+                  headers={"Content-Type": "application/json"} if data is not None else {},
+              )
+              try:
+                  with urllib.request.urlopen(request, timeout=timeout) as response:
+                      raw = response.read().decode("utf-8")
+                      return response.status, json.loads(raw) if raw else None
+              except urllib.error.HTTPError as error:
+                  raw = error.read().decode("utf-8")
+                  try:
+                      body = json.loads(raw) if raw else None
+                  except json.JSONDecodeError:
+                      body = raw
+                  return error.code, body
+
+          def find_existing_c():
+              with get_session_factory()() as session:
+                  master = session.execute(
+                      select(SceneMaster).where(
+                          SceneMaster.scene_key == "W01-P28",
+                          SceneMaster.status == "approved",
+                      )
+                  ).scalar_one()
+                  sheets = session.execute(
+                      select(SceneContactSheet)
+                      .where(
+                          SceneContactSheet.scene_master_id == master.id,
+                          SceneContactSheet.label == LABEL,
+                      )
+                      .order_by(SceneContactSheet.created_at.desc())
+                  ).scalars().all()
+                  if not sheets:
+                      return None
+                  sheet = sheets[0]
+                  asset = session.get(VisualAsset, sheet.visual_asset_id)
+                  if asset is None:
+                      raise SystemExit("Existing C sheet has no visual asset")
+                  return sheet, asset
+
+          _, pipeline = request_json("/api/scenes/W01-P28/pipeline")
+          current = int(pipeline.get("attempts", 0))
+          out = Path("var/diagnostics/w01-p28-c-recovery")
+          out.mkdir(parents=True, exist_ok=True)
+          result = {
+              "scene": "W01-P28",
+              "shot": "C",
+              "baseline_attempts": BASELINE_ATTEMPTS,
+              "attempts_on_recovery_start": current,
+              "provider_called_by_recovery": False,
+              "duplicate_spend_prevented": False,
+              "human_review_required": True,
+              "approved_automatically": False,
+          }
+
+          existing = find_existing_c()
+          body = None
+          status = None
+
+          if current > BASELINE_ATTEMPTS:
+              result["duplicate_spend_prevented"] = True
+              result["reason"] = "A C-era provider call is already recorded; recovery will not call Google again."
+              if existing is not None:
+                  sheet, asset = existing
+                  result["recovered_existing_candidate"] = True
+                  result["sheet_id"] = str(sheet.id)
+                  result["sheet_status"] = sheet.status
+                  result["sheet_asset_id"] = str(asset.id)
+              else:
+                  result["recovered_existing_candidate"] = False
+                  result["reason"] += " No C candidate exists, so the prior call failed/refused after being recorded."
+          elif current == BASELINE_ATTEMPTS:
+              # No C provider call happened. Record the invalid combined-sheet rejection and make one C call.
+              reject_status, reject_body = request_json(
+                  f"/api/contact-sheets/{OLD_SHEET}/reject",
+                  method="POST",
+                  payload={
+                      "note": "Production QA reject: landscape cells and visual panel order did not match the numbered non-Damo plan. Split coverage into C and D.",
+                      "actor": "production-qa",
+                  },
+              )
+              result["old_combined_sheet_reject_status"] = reject_status
+              result["old_combined_sheet_reject_response"] = reject_body
+
+              _, pipeline = request_json("/api/scenes/W01-P28/pipeline")
+              available = {one.get("key") for one in pipeline.get("references", []) if isinstance(one, dict)}
+              missing = sorted(set(selections) - available)
+              if missing:
+                  raise SystemExit(f"Missing approved C references: {missing}")
+              prompts = {one.get("name") for one in pipeline.get("available_prompts", []) if isinstance(one, dict)}
+              if PROMPT not in prompts:
+                  raise SystemExit(f"Studio does not offer exact C prompt {PROMPT}")
+              if pipeline.get("media_live") is not True:
+                  raise SystemExit("Google media is not live; refusing to spend")
+
+              status, body = request_json(
+                  "/api/scenes/W01-P28/generate-sheet",
+                  method="POST",
+                  payload={
+                      "label": LABEL,
+                      "selections": selections,
+                      "aspect_ratio": "16:9",
+                      "prompt_name": PROMPT,
+                  },
+                  timeout=420,
+              )
+              result["provider_called_by_recovery"] = True
+              result["http_status"] = status
+              result["response"] = body
+              existing = find_existing_c()
+          else:
+              raise SystemExit(f"Attempt count regressed unexpectedly: {current} < {BASELINE_ATTEMPTS}")
+
+          _, after_pipeline = request_json("/api/scenes/W01-P28/pipeline")
+          result["attempts_after_recovery"] = int(after_pipeline.get("attempts", 0))
+
+          if existing is not None:
+              sheet, asset = existing
+              settings = get_settings()
+              store = FilesystemAssetStore(settings.assets_root_resolved)
+              suffix = ".png" if asset.mime_type == "image/png" else ".jpg"
+              review = out / f"C-emma-brock-sheet{suffix}"
+              review.write_bytes(store.load(asset.storage_key))
+              result["review_file"] = review.name
+              result["sheet_id"] = str(sheet.id)
+              result["sheet_status"] = sheet.status
+              result["sheet_asset_id"] = str(asset.id)
+              result["sheet_dimensions"] = [asset.width, asset.height]
+              result["sheet_sha256"] = asset.sha256
+
+          (out / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True), encoding="utf-8")
+          print(json.dumps(result, indent=2, sort_keys=True))
+          PY
+          REMOTE
+
+          mkdir -p w01-p28-c-recovery
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28-c-recovery/. w01-p28-c-recovery/
+          test -s w01-p28-c-recovery/result.json
+          cat w01-p28-c-recovery/result.json
+      - name: Upload C recovery artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: w01-p28-c-recovery-${{ github.run_id }}
+          path: w01-p28-c-recovery/
+          if-no-files-found: error
+          retention-days: 1
+      - name: Record C recovery result
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          mkdir -p studio/worlds/world-01/shots/diagnostics
+          cp w01-p28-c-recovery/result.json studio/worlds/world-01/shots/diagnostics/W01-P28.c-recovery-result.json
+          printf '{"run_id":%s,"artifact_name":"w01-p28-c-recovery-%s"}\n' '${{ github.run_id }}' '${{ github.run_id }}' > studio/worlds/world-01/shots/diagnostics/W01-P28.c-recovery-run.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/worlds/world-01/shots/diagnostics/W01-P28.c-recovery-result.json studio/worlds/world-01/shots/diagnostics/W01-P28.c-recovery-run.json
+          git commit -m "chore(W01-P28): record C recovery result [skip ci]"
+          git push origin main
