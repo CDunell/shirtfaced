@@ -64,12 +64,12 @@ def record_call(
 
 
 def calls_for_scene(session: Session, scene_key: str) -> int:
-    """How many successful provider calls this scene has behind it."""
+    """How many provider calls this scene has behind it, successful or failed."""
     return int(
         session.execute(
             select(func.count())
             .select_from(GenerationCall)
-            .where(GenerationCall.scene_key == scene_key, GenerationCall.succeeded.is_(True))
+            .where(GenerationCall.scene_key == scene_key)
         ).scalar()
         or 0
     )
