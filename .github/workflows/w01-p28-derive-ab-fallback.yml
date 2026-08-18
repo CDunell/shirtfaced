@@ -1,0 +1,146 @@
+name: W01-P28 derive A/B master-pixel fallback
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/coverage-fallback-triggers/*.json"
+
+permissions:
+  contents: write
+
+jobs:
+  derive:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: w01-p28-derive-ab-fallback
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Derive A/B from exact approved master pixels
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/shirtfaced-studio
+          set -a
+          . .env
+          set +a
+          ./.venv/bin/python - <<'PY'
+          import json
+          from pathlib import Path
+          from app.adapters.asset_store import FilesystemAssetStore
+          from app.config import get_settings
+          from app.db.session import get_session_factory
+          from app.db.visual_models import VisualAsset
+          from app.services.coverage_library import derive_coverage_frame
+          from app.services.reference_resolution import resolve_scene_master
+
+          EXPECTED = "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88"
+          settings = get_settings()
+          store = FilesystemAssetStore(settings.assets_root_resolved)
+          out = Path("var/diagnostics/w01-p28-derived-ab")
+          out.mkdir(parents=True, exist_ok=True)
+
+          with get_session_factory()() as session:
+              master = resolve_scene_master(session, store, scene_key="W01-P28")
+              if master.sha256 != EXPECTED:
+                  raise SystemExit(
+                      f"Approved master changed: expected {EXPECTED}, got {master.sha256}. Nothing cut."
+                  )
+
+              planned = [
+                  {
+                      "name": "w01-p28-a-wide-discovery",
+                      "x": 233,
+                      "y": 0,
+                      "height": 768,
+                      "notes": "Provider-filter fallback A: full-height exact master-pixel crop selected from zero-provider scout C2; human review required before Veo.",
+                      "file": "A-wide-discovery.png",
+                  },
+                  {
+                      "name": "w01-p28-b-damo-close",
+                      "x": 300,
+                      "y": 0,
+                      "height": 576,
+                      "notes": "Provider-filter fallback B: tighter exact master-pixel Damo observation; human review required before Veo.",
+                      "file": "B-damo-close.png",
+                  },
+              ]
+              results = []
+              for shot in planned:
+                  frame = derive_coverage_frame(
+                      session,
+                      store,
+                      scene_key="W01-P28",
+                      name=shot["name"],
+                      x=shot["x"],
+                      y=shot["y"],
+                      height=shot["height"],
+                      notes=shot["notes"],
+                      actor="production-fallback",
+                  )
+                  session.flush()
+                  asset = session.get(VisualAsset, frame.visual_asset_id)
+                  if asset is None:
+                      raise SystemExit(f"{shot['name']}: coverage asset missing after derive")
+                  data = store.load(asset.storage_key)
+                  (out / shot["file"]).write_bytes(data)
+                  results.append({
+                      "name": frame.name,
+                      "coverage_frame_id": str(frame.id),
+                      "visual_asset_id": str(frame.visual_asset_id),
+                      "operation": frame.operation,
+                      "x": frame.x,
+                      "y": frame.y,
+                      "width": frame.width,
+                      "height": frame.height,
+                      "frame_sha256": frame.frame_sha256,
+                      "source_master_sha256": frame.source_master_sha256,
+                      "approved_for_veo": frame.approved_for_veo,
+                      "review_file": shot["file"],
+                  })
+              session.commit()
+
+          (out / "result.json").write_text(json.dumps({
+              "scene": "W01-P28",
+              "provider_called": False,
+              "master_sha256": EXPECTED,
+              "human_review_required": True,
+              "frames": results,
+          }, indent=2, sort_keys=True), encoding="utf-8")
+          PY
+          REMOTE
+          mkdir -p w01-p28-derived-ab
+          scp -i ~/.ssh/deploy_key -r ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/var/diagnostics/w01-p28-derived-ab/. w01-p28-derived-ab/
+          test -s w01-p28-derived-ab/A-wide-discovery.png
+          test -s w01-p28-derived-ab/B-damo-close.png
+          test -s w01-p28-derived-ab/result.json
+          grep -q '"provider_called": false' w01-p28-derived-ab/result.json
+          grep -q '"approved_for_veo": false' w01-p28-derived-ab/result.json
+      - name: Upload derived A/B review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: w01-p28-derived-ab-${{ github.run_id }}
+          path: w01-p28-derived-ab/
+          if-no-files-found: error
+          retention-days: 1
+      - name: Record A/B derivation result and artifact run
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          mkdir -p studio/worlds/world-01/shots/diagnostics
+          cp w01-p28-derived-ab/result.json studio/worlds/world-01/shots/diagnostics/W01-P28.derived-ab-result.json
+          printf '{"run_id":%s,"artifact_name":"w01-p28-derived-ab-%s","provider_called":false}\n' '${{ github.run_id }}' '${{ github.run_id }}' > studio/worlds/world-01/shots/diagnostics/W01-P28.derived-ab-run.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/worlds/world-01/shots/diagnostics/W01-P28.derived-ab-result.json studio/worlds/world-01/shots/diagnostics/W01-P28.derived-ab-run.json
+          git commit -m "chore(W01-P28): record master-pixel A/B fallback [skip ci]"
+          git push origin main
