@@ -1,0 +1,133 @@
+{
+  "scene": "W01-P28",
+  "provider_called": false,
+  "master_asset_id": "7a6bd196-6318-49f1-a3ab-07203f400d8b",
+  "master_sha256": "7fd91e38bc021298cc563f0c41e95d89e2ca5ef995bcb22eaa430258a2376e88",
+  "master_dimensions": [
+    1365,
+    768
+  ],
+  "crop_dimensions": [
+    432,
+    768
+  ],
+  "candidates": [
+    {
+      "candidate": "C0",
+      "x": 0,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        0,
+        0,
+        432,
+        768
+      ]
+    },
+    {
+      "candidate": "C1",
+      "x": 117,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        117,
+        0,
+        549,
+        768
+      ]
+    },
+    {
+      "candidate": "C2",
+      "x": 233,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        233,
+        0,
+        665,
+        768
+      ]
+    },
+    {
+      "candidate": "C3",
+      "x": 350,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        350,
+        0,
+        782,
+        768
+      ]
+    },
+    {
+      "candidate": "C4",
+      "x": 466,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        466,
+        0,
+        898,
+        768
+      ]
+    },
+    {
+      "candidate": "C5",
+      "x": 583,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        583,
+        0,
+        1015,
+        768
+      ]
+    },
+    {
+      "candidate": "C6",
+      "x": 700,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        700,
+        0,
+        1132,
+        768
+      ]
+    },
+    {
+      "candidate": "C7",
+      "x": 816,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        816,
+        0,
+        1248,
+        768
+      ]
+    },
+    {
+      "candidate": "C8",
+      "x": 933,
+      "y": 0,
+      "width": 432,
+      "height": 768,
+      "box": [
+        933,
+        0,
+        1365,
+        768
+      ]
+    }
+  ]
+}
