@@ -107,6 +107,15 @@ def test_pub_prompt_rejects_the_latest_sheet_and_composition_failures() -> None:
         assert rejected in text
 
 
+def test_pub_prompt_keeps_the_pool_cue_reading_as_sports_equipment() -> None:
+    """The provider must not misread Damo's celebratory billiards gesture."""
+    text = W01_P28.read_text(encoding="utf-8")
+
+    assert "ordinary billiards equipment" in text
+    assert "celebratory pub gesture" in text
+    assert "part of the pool-table setting" in text
+
+
 def test_sheet_container_stays_landscape_for_known_3x3_reliability() -> None:
     """Native vertical observation does not reopen the failed 9:16-sheet experiment."""
     default = inspect.signature(generate_coverage_sheet).parameters["aspect_ratio"].default
