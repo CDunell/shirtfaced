@@ -18,6 +18,7 @@ import json
 import re
 from io import BytesIO
 from pathlib import Path
+from urllib.parse import parse_qs, urlparse
 
 import pytest
 from PIL import Image
@@ -183,3 +184,40 @@ def test_the_filename_says_which_shot_it_animates(
     built = veo_trigger(session, store, frame=frame, purpose="p", stamp="20260818T0100Z")
 
     assert built.filename == "20260818T0100Z-damo-medium.json"
+    assert built.path == "studio/veo-coverage-triggers/20260818T0100Z-damo-medium.json"
+
+
+def test_the_commit_url_writes_the_file_where_the_workflow_watches(
+    session: Session, store: FilesystemAssetStore
+) -> None:
+    """The workflow starts on a push under studio/veo-coverage-triggers/.
+
+    Studio cannot make that push: the box is an rsync target with no git remote
+    and no GitHub credential. So the handover is GitHub's own new-file editor,
+    pre-filled — the commit stays the operator's, and no token goes near the
+    box.
+    """
+    approved_master(session, store)
+    frame = approved_shot(session, store)
+
+    built = veo_trigger(
+        session,
+        store,
+        frame=frame,
+        purpose="p",
+        stamp="20260818T0100Z",
+        repository="CDunell/shirtfaced",
+        branch="main",
+    )
+    parsed = urlparse(built.commit_url)
+    query = parse_qs(parsed.query)
+
+    assert parsed.netloc == "github.com"
+    assert parsed.path == "/CDunell/shirtfaced/new/main"
+    assert query["filename"] == [built.path]
+    assert json.loads(query["value"][0]) == json.loads(built.content)
+
+    watched = (
+        Path(__file__).resolve().parents[3] / ".github" / "workflows" / "renderer-veo-coverage.yml"
+    ).read_text(encoding="utf-8")
+    assert 'paths: ["studio/veo-coverage-triggers/*.json"]' in watched

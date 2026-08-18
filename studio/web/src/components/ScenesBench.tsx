@@ -676,15 +676,20 @@ export function ScenesBench(): React.JSX.Element {
                                 size={SIZE.mini}
                                 isLoading={busy === `trigger-${frame.id}`}
                                 disabled={busy !== null}
-                                onClick={() =>
+                                onClick={() => {
+                                  // Opened before the await: a window opened
+                                  // after one is a popup as far as the browser
+                                  // is concerned, and gets blocked.
+                                  const tab = window.open("", "_blank");
                                   void act(`trigger-${frame.id}`, async () => {
                                     const built = await fetchVeoTrigger(frame.id);
-                                    await navigator.clipboard.writeText(built.content);
-                                    return `Copied. Save as ${built.directory}/${built.filename}, commit and push.`;
-                                  })
-                                }
+                                    if (tab) tab.location.href = built.commit_url;
+                                    else window.location.href = built.commit_url;
+                                    return `GitHub is open with ${built.path} written. Press Commit and the run starts.`;
+                                  });
+                                }}
                               >
-                                Copy Veo trigger
+                                Commit Veo trigger
                               </Button>
                             ) : (
                               <Button

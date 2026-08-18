@@ -331,9 +331,11 @@ export function takeVideoSource(takeId: string): string {
 }
 
 export interface VeoTrigger {
-  filename: string;
+  /** Where the file goes, repository-relative. */
+  path: string;
   content: string;
-  directory: string;
+  /** GitHub's new-file editor, pre-filled. The operator presses Commit. */
+  commit_url: string;
 }
 
 /** The trigger file that animates an approved shot, built server-side. */

@@ -32,6 +32,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from math import gcd
 from typing import Any
+from urllib.parse import urlencode
 
 from PIL import Image
 from sqlalchemy import select
@@ -383,16 +384,31 @@ def resolve_veo_seed(
     return resolve_asset(session, store, asset.id, label=f"{scene_key}/{name}")
 
 
+TRIGGER_DIRECTORY = "studio/veo-coverage-triggers"
+
+
 @dataclass(frozen=True)
 class VeoTrigger:
-    """The trigger file §17's workflow reads, and the name to save it under."""
+    """The trigger file §17's workflow reads, and how to get it committed."""
 
     filename: str
     content: str
+    commit_url: str
+
+    @property
+    def path(self) -> str:
+        return f"{TRIGGER_DIRECTORY}/{self.filename}"
 
 
 def veo_trigger(
-    session: Session, store: AssetStore, *, frame: CoverageFrame, purpose: str, stamp: str
+    session: Session,
+    store: AssetStore,
+    *,
+    frame: CoverageFrame,
+    purpose: str,
+    stamp: str,
+    repository: str = "CDunell/shirtfaced",
+    branch: str = "main",
 ) -> VeoTrigger:
     """Build the trigger for one approved shot, or refuse with the reason why.
 
@@ -422,9 +438,16 @@ def veo_trigger(
         "source_master_sha256": frame.source_master_sha256,
         "purpose": purpose,
     }
+    filename = f"{stamp}-{frame.name}.json"
+    content = json.dumps(payload, separators=(",", ":"))
+    # GitHub's own new-file editor, pre-filled. The commit is still the
+    # operator's, made with their account, and no credential goes anywhere near
+    # the box -- which is the reason for choosing this over a token.
+    query = urlencode({"filename": f"{TRIGGER_DIRECTORY}/{filename}", "value": content})
     return VeoTrigger(
-        filename=f"{stamp}-{frame.name}.json",
-        content=json.dumps(payload, separators=(",", ":")),
+        filename=filename,
+        content=content,
+        commit_url=f"https://github.com/{repository}/new/{branch}?{query}",
     )
 
 

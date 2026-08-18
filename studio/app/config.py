@@ -71,6 +71,14 @@ class Settings(BaseSettings):
     # 1K on a 9:16 frame is 768x1376, which is under the 1080x1920 a Veo first
     # frame wants and was being upscaled into it.
     google_image_size: str = "2K"
+
+    # Where the Veo trigger gets committed. The box is an rsync target with no
+    # git remote and no GitHub credential, and the workflow only starts on a
+    # push, so Studio cannot fire it — it can only hand the operator a
+    # pre-filled commit. Overridable so a fork is not asking somebody else to
+    # commit to this repository.
+    github_repository: str = "CDunell/shirtfaced"
+    github_branch: str = "main"
     # A contact sheet is nine images in one file, so a size that is generous for
     # a single frame is a thumbnail for each panel. The first sheet came back
     # 1376x768: nine cells of roughly 459x256, and the extraction was then asked

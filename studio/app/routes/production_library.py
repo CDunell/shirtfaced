@@ -677,9 +677,11 @@ def reject_take(asset_id: uuid.UUID, payload: DecisionIn, session: SessionDepend
 class VeoTriggerOut(BaseModel):
     """A ready-to-commit trigger file, so nobody assembles one by hand."""
 
-    filename: str
+    path: str
     content: str
-    directory: str = "studio/veo-coverage-triggers"
+    # GitHub's new-file editor with the file already written. One tap, the
+    # operator presses Commit, and the workflow starts on the push.
+    commit_url: str
 
 
 @router.get(
@@ -720,11 +722,13 @@ def veo_trigger(
             frame=frame,
             purpose=purpose,
             stamp=dt.datetime.now(dt.UTC).strftime("%Y%m%dT%H%M%SZ"),
+            repository=settings.github_repository,
+            branch=settings.github_branch,
         )
     except (coverage_library.CoverageRejected, ReferenceUnavailable) as error:
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
 
-    return VeoTriggerOut(filename=built.filename, content=built.content)
+    return VeoTriggerOut(path=built.path, content=built.content, commit_url=built.commit_url)
 
 
 def _location_asset_out(link: LocationAsset) -> LocationAssetOut:
