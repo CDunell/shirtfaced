@@ -1,0 +1,99 @@
+name: W01-P28 inspect master and coverage
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "studio/coverage-inspect-triggers/*.json"
+
+permissions:
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Inspect current approved master and all coverage rows
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' > w01-p28-inspection.json <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/shirtfaced-studio
+          set -a
+          . .env
+          set +a
+          ./.venv/bin/python - <<'PY'
+          import json
+          from sqlalchemy import select
+          from app.adapters.asset_store import FilesystemAssetStore
+          from app.config import get_settings
+          from app.db.session import get_session_factory
+          from app.db.visual_models import CoverageFrame, SceneMaster
+          from app.services.reference_resolution import resolve_scene_master
+
+          settings = get_settings()
+          store = FilesystemAssetStore(settings.assets_root_resolved)
+          with get_session_factory()() as session:
+              resolved = resolve_scene_master(session, store, scene_key="W01-P28")
+              master = session.execute(
+                  select(SceneMaster).where(
+                      SceneMaster.scene_key == "W01-P28",
+                      SceneMaster.status == "approved",
+                  )
+              ).scalar_one()
+              rows = session.execute(
+                  select(CoverageFrame)
+                  .where(CoverageFrame.scene_master_id == master.id)
+                  .order_by(CoverageFrame.created_at, CoverageFrame.name)
+              ).scalars().all()
+              print(json.dumps({
+                  "scene": "W01-P28",
+                  "provider_called": False,
+                  "master": {
+                      "scene_master_id": str(master.id),
+                      "asset_id": str(resolved.asset_id),
+                      "sha256": resolved.sha256,
+                      "width": resolved.width,
+                      "height": resolved.height,
+                  },
+                  "coverage": [
+                      {
+                          "id": str(row.id),
+                          "name": row.name,
+                          "operation": row.operation,
+                          "x": row.x,
+                          "y": row.y,
+                          "width": row.width,
+                          "height": row.height,
+                          "frame_sha256": row.frame_sha256,
+                          "source_master_sha256": row.source_master_sha256,
+                          "approved_for_veo": row.approved_for_veo,
+                          "stale": row.source_master_sha256 != resolved.sha256,
+                      }
+                      for row in rows
+                  ],
+              }, indent=2, sort_keys=True))
+          PY
+          REMOTE
+          cat w01-p28-inspection.json
+      - name: Record inspection
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git checkout -B main origin/main
+          cp w01-p28-inspection.json studio/worlds/world-01/shots/W01-P28.coverage-inspection.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add studio/worlds/world-01/shots/W01-P28.coverage-inspection.json
+          git commit -m "chore(W01-P28): record approved master coverage inspection [skip ci]"
+          git push origin main
