@@ -225,7 +225,7 @@ def generate_coverage_sheet(
     label: str,
     selections: list[str],
     prompt: str,
-    aspect_ratio: str | None = None,
+    aspect_ratio: str | None = "16:9",
     actor: str = OWNER,
 ) -> SceneContactSheet:
     """Send the master and the chosen references to Nano, keep what comes back.
@@ -234,20 +234,34 @@ def generate_coverage_sheet(
     contract is explicit that a sheet is a planning artefact rather than a
     preview, so it is persisted either way.
 
-    **No aspect ratio is requested.** The sheet comes back the shape the model
-    decides, because the sheet is a layout of nine observations rather than a
-    frame, and the frame shape is chosen later, per panel, at extraction.
+    **16:9, because the canvas decides how many columns come back.** Measured,
+    not derived — five runs of the same prompt, same four references, same
+    model, differing only in the canvas asked for:
 
-    This was got wrong on 18 August 2026 on the theory that a 3x3 grid divides
-    its canvas into nine cells of the canvas's ratio, so a 9:16 canvas would
-    yield nine vertical panels. It does not work that way. The model composes a
-    layout rather than dividing a canvas: asked for a 3x3 grid on a 9:16 canvas
-    it returned 3072x5504 holding **twelve** cells in two columns of six, still
-    landscape. The stated ratio did not reshape the panels, it reshaped the grid
-    — and the sheet record still said nine, so three of them were unreachable.
+    ===========  ===========  ==============================
+    requested    returned     layout
+    ===========  ===========  ==============================
+    16:9         1376x768     3x3, nine cells
+    9:16         3072x5504    2x6, twelve cells
+    none         3372x5056    2/2/2/3, nine cells
+    none         3584x4800    2x5, ten cells
+    16:9         5504x3072    3x3, nine cells
+    ===========  ===========  ==============================
 
-    Stating a shape here is an invented constraint in the plainest sense: not a
-    property of the model, and not a decision the owner made.
+    The model composes a layout to fit the canvas rather than dividing the
+    canvas into cells. A portrait canvas gets two columns; only a landscape one
+    holds three. Since the prompt asks for a 3x3 of nine observations, and the
+    panel plan and the extraction prompt both count on that, the canvas has to
+    be able to hold it.
+
+    Two earlier attempts at this were wrong in opposite directions and both are
+    worth remembering. Forcing 9:16 to make the *panels* vertical reshaped the
+    grid to 2x6 instead: the ratio never reached the cells. Then asking for
+    nothing at all handed the layout to the model, which chose portrait twice
+    and produced a grid that no positional instruction can address.
+
+    Extraction still requests no ratio. §10 expands the panel as it is, and the
+    panel's shape is the panel's business.
     """
     try:
         master = resolve_scene_master(session, store, scene_key=scene_key)

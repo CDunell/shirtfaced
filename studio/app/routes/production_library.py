@@ -551,6 +551,9 @@ class GenerateSheetIn(BaseModel):
     label: str = Field(min_length=1, max_length=96)
     selections: list[str] = Field(default_factory=list)
     prompt: str | None = None
+    # The canvas decides the column count, so it decides whether a 3x3 comes
+    # back at all. Overridable because it is a measurement, not a law.
+    aspect_ratio: str = "16:9"
     # The filename of a world's coverage prompt, when the scene key does not
     # match one by itself.
     prompt_name: str | None = None
@@ -632,6 +635,7 @@ def generate_sheet(
             label=payload.label,
             selections=payload.selections,
             prompt=prompt,
+            aspect_ratio=payload.aspect_ratio,
         )
     except nano_pipeline.PipelineUnavailable as error:
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error

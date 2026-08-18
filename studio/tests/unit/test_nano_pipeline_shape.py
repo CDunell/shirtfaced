@@ -78,9 +78,23 @@ def test_extraction_requests_no_aspect_ratio() -> None:
     assert "aspect_ratio" not in inspect.signature(extract_panel).parameters
 
 
-def test_the_sheet_requests_no_aspect_ratio_either() -> None:
-    """The sheet comes back the shape the model decides. §7 states no shape."""
-    assert inspect.signature(generate_coverage_sheet).parameters["aspect_ratio"].default is None
+def test_the_sheet_asks_for_a_canvas_that_can_hold_three_columns() -> None:
+    """16:9, because the canvas decides the column count. Measured, not derived.
+
+    Five runs of the same prompt, same four references, same model, differing
+    only in the canvas: 16:9 gave 3x3 twice; 9:16 gave 2x6; asking for nothing
+    gave portrait and two columns, twice. The model composes a layout to fit the
+    canvas rather than dividing the canvas into cells, so a 3x3 of nine
+    observations needs a canvas that can hold three columns.
+
+    Both earlier answers were wrong in opposite directions: forcing 9:16 to make
+    the panels vertical reshaped the grid instead, and asking for nothing handed
+    the layout to the model, which chose a shape no positional instruction can
+    address.
+    """
+    default = inspect.signature(generate_coverage_sheet).parameters["aspect_ratio"].default
+
+    assert default == "16:9"
 
 
 def test_a_frame_records_the_ratio_it_came_back_as() -> None:
