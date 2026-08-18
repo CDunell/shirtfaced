@@ -47,6 +47,7 @@ import {
   approveMaster,
   extractPanel,
   fetchPipelineInputs,
+  fetchCoverageTakes,
   fetchScenes,
   animateCoverage,
   generateSheet,
@@ -104,6 +105,21 @@ function currentFrameForPanel(
   return matches.find((one) => one.name === planned) ?? null;
 }
 
+/** Which approved shots already have a take, asked of the server on load. */
+async function discoverTakes(scenes: Scene[], key: string | null): Promise<Record<string, number>> {
+  const scene = scenes.find((one) => one.scene_key === key);
+  const master = scene?.masters.find((one) => one.id === scene.approved_master_id);
+  const approved = (master?.coverage ?? []).filter((one) => one.approved_for_veo);
+  const found: Record<string, number> = {};
+  await Promise.all(
+    approved.map(async (frame) => {
+      const takes = await fetchCoverageTakes(frame.id);
+      if (takes.length > 0) found[frame.id] = 1;
+    }),
+  );
+  return found;
+}
+
 function shortSha(sha: string): string {
   return sha.slice(0, 12);
 }
@@ -137,8 +153,10 @@ export function ScenesBench(): React.JSX.Element {
   // A thumbnail is 120-200px of a 4K sheet. Judging a panel means looking at
   // it, and every review in this pipeline is somebody looking at an image.
   const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
-  // Bumped after a generation so the <video> re-fetches instead of showing
-  // the previous take from cache.
+  // Which shots already have a take, discovered from the server rather than
+  // remembered from the click that made one -- a refresh used to lose the clip,
+  // and a take generated through the commit route never appeared at all. The
+  // number is a cache-buster bumped after each generation.
   const [takes, setTakes] = useState<Record<string, number>>({});
   const [showUpload, setShowUpload] = useState(false);
   const [promptName, setPromptName] = useState<string | null>(null);
@@ -149,6 +167,7 @@ export function ScenesBench(): React.JSX.Element {
     setScenes(data);
     const key = sceneKey ?? data[0]?.scene_key ?? null;
     setInputs(key ? await fetchPipelineInputs(key) : null);
+    setTakes(await discoverTakes(data, key));
     return key;
   }, []);
 
@@ -158,7 +177,10 @@ export function ScenesBench(): React.JSX.Element {
         setScenes(data);
         const key = data[0]?.scene_key ?? null;
         setSelected(key);
-        if (key) setInputs(await fetchPipelineInputs(key));
+        if (key) {
+          setInputs(await fetchPipelineInputs(key));
+          setTakes(await discoverTakes(data, key));
+        }
         setLoading(false);
       })
       .catch((cause: unknown) => {
@@ -207,6 +229,9 @@ export function ScenesBench(): React.JSX.Element {
     setNote(null);
     setPicked(new Set());
     void fetchPipelineInputs(key).then(setInputs);
+    void fetchScenes().then(async (data) => {
+      setTakes(await discoverTakes(data, key));
+    });
   }, []);
 
   const onRegisterMaster = useCallback(() => {

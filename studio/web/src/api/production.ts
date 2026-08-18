@@ -365,6 +365,19 @@ export function animateCoverage(frameId: string): Promise<Take> {
   return send<Take>(`/api/coverage/${frameId}/animate`, "POST");
 }
 
+export interface RecordedTake {
+  stamp: string;
+  duration_seconds: number | null;
+  width: number | null;
+  height: number | null;
+  silent: boolean;
+}
+
+/** Every take on disk for a shot, including ones the workflow generated. */
+export function fetchCoverageTakes(frameId: string): Promise<RecordedTake[]> {
+  return send<RecordedTake[]>(`/api/coverage/${frameId}/takes`, "GET");
+}
+
 /** The newest take's bytes, for a <video> element. */
 export function takeSource(frameId: string): string {
   return `/api/coverage/${frameId}/take`;

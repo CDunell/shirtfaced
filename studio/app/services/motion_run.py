@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -113,3 +114,104 @@ def animate(scene_key: str, shot: str) -> MotionResult:
     )
     logger.info("veo take for %s/%s landed in %s", scene_key, shot, directory)
     return MotionResult(directory=directory, manifest=manifest)
+
+
+@dataclass(frozen=True)
+class RecordedTake:
+    """One take already on disk, whether this process made it or not."""
+
+    stamp: str
+    directory: Path
+    silent: Path | None
+    duration_seconds: float | None
+    width: int | None
+    height: int | None
+
+    @property
+    def has_silent(self) -> bool:
+        return self.silent is not None
+
+
+def _probe_json(directory: Path) -> dict[str, Any]:
+    path = directory / "probe.json"
+    if not path.is_file():
+        return {}
+    try:
+        parsed: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+        return parsed
+    except (OSError, json.JSONDecodeError):  # pragma: no cover - written by ffprobe
+        return {}
+
+
+def ensure_silent(directory: Path) -> Path | None:
+    """The stripped clip, produced now if the take predates in-runner stripping.
+
+    Takes generated through the workflow before 18 August 2026 were stripped on
+    the runner rather than on this box, so the silent file lives only inside a
+    GitHub artifact and the directory holds the raw generation alone. §20 is not
+    a preference -- generated audio must not reach the edit -- so rather than
+    serve the raw file, the strip happens here on demand and is kept.
+    """
+    silent = directory / "video-1.mp4"
+    if silent.is_file():
+        return silent
+    raw = directory / "video-generated.mp4"
+    if not raw.is_file() or not shutil.which("ffmpeg"):
+        return None
+
+    subprocess.run(
+        ["ffmpeg", "-y", "-i", str(raw), "-map", "0:v:0", "-c:v", "copy", "-an", str(silent)],
+        check=True,
+        capture_output=True,
+        timeout=300,
+    )
+    if shutil.which("ffprobe") and not (directory / "probe.json").is_file():
+        probe = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "stream=width,height,r_frame_rate",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "json",
+                str(silent),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        ).stdout
+        (directory / "probe.json").write_text(probe, encoding="utf-8")
+    return silent
+
+
+def takes_for(scene_key: str, shot: str) -> list[RecordedTake]:
+    """Every take on disk for this shot, newest first.
+
+    Read from the filesystem rather than a table. A take is a directory the
+    runner wrote, and both callers -- the bench and the workflow -- write to the
+    same place, so the disk is the one view that sees all of them.
+    """
+    root = PROJECT_ROOT / "var" / "renderer-validation" / scene_key
+    found: list[RecordedTake] = []
+    for directory in sorted(root.glob(f"*-coverage-{shot}"), reverse=True):
+        if not directory.is_dir():
+            continue
+        silent = directory / "video-1.mp4"
+        probe = _probe_json(directory)
+        stream = (probe.get("streams") or [{}])[0]
+        duration = (probe.get("format") or {}).get("duration")
+        found.append(
+            RecordedTake(
+                stamp=directory.name.split("-coverage-")[0],
+                directory=directory,
+                silent=silent if silent.is_file() else None,
+                duration_seconds=None if duration is None else float(duration),
+                width=stream.get("width"),
+                height=stream.get("height"),
+            )
+        )
+    return found

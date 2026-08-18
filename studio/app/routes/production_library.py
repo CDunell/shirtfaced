@@ -26,7 +26,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.adapters.asset_store import AssetStoreError, FilesystemAssetStore
-from app.config import PROJECT_ROOT, Settings, get_settings
+from app.config import Settings, get_settings
 from app.db.session import get_db_session
 from app.db.visual_models import (
     AssetLineage,
@@ -823,21 +823,65 @@ def animate_coverage(
     )
 
 
-@router.get("/coverage/{frame_id}/take", summary="The newest take's bytes")
+class RecordedTakeOut(BaseModel):
+    """A take that exists on disk, whoever generated it."""
+
+    stamp: str
+    duration_seconds: float | None
+    width: int | None
+    height: int | None
+    silent: bool
+
+
+@router.get("/coverage/{frame_id}/takes", summary="Every take this shot has")
+def coverage_takes(frame_id: uuid.UUID, session: SessionDependency) -> list[RecordedTakeOut]:
+    """Read off the disk, so takes made by the workflow are listed too.
+
+    The bench used to show a clip only in the session that generated it: a
+    refresh lost it, and a take produced through the commit route never appeared
+    at all.
+    """
+    frame = session.get(CoverageFrame, frame_id)
+    if frame is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such coverage frame.")
+    return [
+        RecordedTakeOut(
+            stamp=take.stamp,
+            duration_seconds=take.duration_seconds,
+            width=take.width,
+            height=take.height,
+            silent=take.has_silent,
+        )
+        for take in motion_run.takes_for(frame.master.scene_key, frame.name)
+    ]
+
+
+@router.get("/coverage/{frame_id}/take", summary="The newest take's bytes, silent")
 def coverage_take(frame_id: uuid.UUID, session: SessionDependency) -> Response:
-    """The most recent take for this shot, silent where one was stripped."""
+    """Always the stripped clip. Never the raw generation.
+
+    §20 discards Veo's audio so it cannot drive timing or editorial decisions.
+    An earlier version of this fell back to video-generated.mp4 when no stripped
+    file was present, which served the take *with* its audio -- quietly, at 200,
+    to a person about to judge it. Takes from before in-runner stripping are
+    stripped on demand instead, and a box with no ffmpeg gets a refusal.
+    """
     frame = session.get(CoverageFrame, frame_id)
     if frame is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No such coverage frame.")
 
-    root = PROJECT_ROOT / "var" / "renderer-validation" / frame.master.scene_key
-    directories = sorted(root.glob(f"*-coverage-{frame.name}"), reverse=True)
-    for directory in directories:
-        for name in ("video-1.mp4", "video-generated.mp4"):
-            candidate = directory / name
-            if candidate.is_file():
-                return Response(content=candidate.read_bytes(), media_type="video/mp4")
-    raise HTTPException(status.HTTP_404_NOT_FOUND, f"No take yet for {frame.name}.")
+    takes = motion_run.takes_for(frame.master.scene_key, frame.name)
+    if not takes:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"No take yet for {frame.name}.")
+
+    silent = motion_run.ensure_silent(takes[0].directory)
+    if silent is None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            f"{frame.name}: the newest take has not been stripped and ffmpeg is not available "
+            "here, so the only file is the raw generation. It is not served with its audio.",
+        )
+    return Response(content=silent.read_bytes(), media_type="video/mp4")
 
 
 def _location_asset_out(link: LocationAsset) -> LocationAssetOut:
