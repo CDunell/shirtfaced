@@ -350,6 +350,26 @@ export function fetchVeoTrigger(frameId: string): Promise<VeoTrigger> {
   return send<VeoTrigger>(`/api/coverage/${frameId}/veo-trigger`, "GET");
 }
 
+export interface Take {
+  shot: string;
+  directory: string;
+  duration_seconds: number | null;
+  width: number | null;
+  height: number | null;
+  has_audio: boolean;
+  silent_video_sha256: string | null;
+}
+
+/** Runs the Veo leg on the box. No commit, no token, no Action. */
+export function animateCoverage(frameId: string): Promise<Take> {
+  return send<Take>(`/api/coverage/${frameId}/animate`, "POST");
+}
+
+/** The newest take's bytes, for a <video> element. */
+export function takeSource(frameId: string): string {
+  return `/api/coverage/${frameId}/take`;
+}
+
 export function rejectTake(assetId: string, note?: string): Promise<AssetBrief> {
   return send<AssetBrief>(`/api/visual-assets/${assetId}/reject`, "POST", { note: note ?? null });
 }

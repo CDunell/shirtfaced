@@ -48,7 +48,7 @@ import {
   extractPanel,
   fetchPipelineInputs,
   fetchScenes,
-  fetchVeoTrigger,
+  animateCoverage,
   generateSheet,
   previewSource,
   registerMaster,
@@ -56,6 +56,7 @@ import {
   type ContactSheet,
   type CoverageFrame,
   type PanelPlanEntry,
+  takeSource,
   type PipelineInputs,
   type ReferenceChoice,
   type Scene,
@@ -136,6 +137,9 @@ export function ScenesBench(): React.JSX.Element {
   // A thumbnail is 120-200px of a 4K sheet. Judging a panel means looking at
   // it, and every review in this pipeline is somebody looking at an image.
   const [zoom, setZoom] = useState<{ src: string; alt: string } | null>(null);
+  // Bumped after a generation so the <video> re-fetches instead of showing
+  // the previous take from cache.
+  const [takes, setTakes] = useState<Record<string, number>>({});
   const [showUpload, setShowUpload] = useState(false);
   const [promptName, setPromptName] = useState<string | null>(null);
   const [shotNames, setShotNames] = useState<Record<number, string>>({});
@@ -745,26 +749,37 @@ export function ScenesBench(): React.JSX.Element {
                               {frame.approved_for_veo ? "ready for Veo" : "pending"}
                             </Tag>
                           </div>
+                          {frame.approved_for_veo && takes[frame.id] ? (
+                            <video
+                              src={`${takeSource(frame.id)}?v=${String(takes[frame.id])}`}
+                              controls
+                              preload="metadata"
+                              className={css({
+                                width: "100%",
+                                borderRadius: "6px",
+                                background: theme.colors.backgroundTertiary,
+                              })}
+                            />
+                          ) : null}
                           <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
                             {frame.approved_for_veo ? (
                               <Button
                                 size={SIZE.mini}
-                                isLoading={busy === `trigger-${frame.id}`}
+                                isLoading={busy === `animate-${frame.id}`}
                                 disabled={busy !== null}
-                                onClick={() => {
-                                  // Opened before the await: a window opened
-                                  // after one is a popup as far as the browser
-                                  // is concerned, and gets blocked.
-                                  const tab = window.open("", "_blank");
-                                  void act(`trigger-${frame.id}`, async () => {
-                                    const built = await fetchVeoTrigger(frame.id);
-                                    if (tab) tab.location.href = built.commit_url;
-                                    else window.location.href = built.commit_url;
-                                    return `GitHub is open with ${built.path} written. Press Commit and the run starts.`;
-                                  });
-                                }}
+                                onClick={() =>
+                                  void act(`animate-${frame.id}`, async () => {
+                                    const take = await animateCoverage(frame.id);
+                                    setTakes({ ...takes, [frame.id]: Date.now() });
+                                    const length =
+                                      take.duration_seconds === null
+                                        ? "unknown length"
+                                        : `${take.duration_seconds.toFixed(1)}s`;
+                                    return `${take.shot}: ${length}${take.has_audio ? ", AUDIO NOT STRIPPED" : ", silent"}.`;
+                                  })
+                                }
                               >
-                                Commit Veo trigger
+                                Animate
                               </Button>
                             ) : (
                               <Button

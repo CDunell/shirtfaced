@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
+import subprocess
 import sys
 from datetime import UTC, datetime
 from io import BytesIO
@@ -195,6 +197,63 @@ def main() -> None:
         "raw_video_sha256": hashlib.sha256(result.data).hexdigest(),
         "manual_gate": "inspect identity geography contact and usable seconds",
     }
+    # Strip the generated audio and probe the result, here rather than in the
+    # workflow. §20 discards Veo's audio so it cannot drive timing, and until
+    # now that happened in a GitHub Action -- which meant the only way to get a
+    # silent, probed clip was to commit a trigger file. The box has ffmpeg, so
+    # both callers get the same output from the same code.
+    silent = out / "video-1.mp4"
+    if shutil.which("ffmpeg") and shutil.which("ffprobe"):
+        subprocess.run(
+            ["ffmpeg", "-y", "-i", str(raw), "-map", "0:v:0", "-c:v", "copy", "-an", str(silent)],
+            check=True,
+            capture_output=True,
+        )
+        streams = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-select_streams",
+                "a",
+                "-show_entries",
+                "stream=index",
+                "-of",
+                "csv=p=0",
+                str(silent),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        if streams:
+            raise SystemExit(f"audio survived the strip: {streams}")
+        probe = subprocess.run(
+            [
+                "ffprobe",
+                "-v",
+                "error",
+                "-show_entries",
+                "stream=width,height,r_frame_rate",
+                "-show_entries",
+                "format=duration",
+                "-of",
+                "json",
+                str(silent),
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        (out / "probe.json").write_text(probe)
+        silent_bytes = silent.read_bytes()
+        manifest["silent_video_sha256"] = hashlib.sha256(silent_bytes).hexdigest()
+        manifest["silent_video_bytes"] = len(silent_bytes)
+        manifest["audio"] = "stripped"
+        (out / "video-1.sha256").write_text(manifest["silent_video_sha256"])
+    else:
+        manifest["audio"] = "strip_pending_no_ffmpeg"
+
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
     (out / "motion-prompt.txt").write_text(prompt)
     print(f"RESULT_DIR={out}")

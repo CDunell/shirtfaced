@@ -14,7 +14,10 @@ to do next; a bare 409 does not.
 from __future__ import annotations
 
 import datetime as dt
+import json
+import subprocess
 import uuid
+from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
@@ -23,7 +26,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
 from app.adapters.asset_store import AssetStoreError, FilesystemAssetStore
-from app.config import Settings, get_settings
+from app.config import PROJECT_ROOT, Settings, get_settings
 from app.db.session import get_db_session
 from app.db.visual_models import (
     AssetLineage,
@@ -39,6 +42,7 @@ from app.services import (
     coverage_library,
     generation_ledger,
     location_library,
+    motion_run,
     nano_pipeline,
     visual_library,
 )
@@ -757,6 +761,83 @@ def veo_trigger(
         raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
 
     return VeoTriggerOut(path=built.path, content=built.content, commit_url=built.commit_url)
+
+
+class TakeOut(BaseModel):
+    """A generated take: where it is, and what the runner recorded about it."""
+
+    shot: str
+    directory: str
+    duration_seconds: float | None
+    width: int | None
+    height: int | None
+    has_audio: bool
+    silent_video_sha256: str | None
+    manifest: dict[str, Any]
+
+
+def _probe(directory: Path) -> dict[str, Any]:
+    path = directory / "probe.json"
+    if not path.is_file():
+        return {}
+    try:
+        parsed: dict[str, Any] = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):  # pragma: no cover - written by ffprobe
+        return {}
+    return parsed
+
+
+@router.post("/coverage/{frame_id}/animate", summary="Generate a Veo take for this shot")
+def animate_coverage(
+    frame_id: uuid.UUID, session: SessionDependency, settings: SettingsDependency
+) -> TakeOut:
+    """Runs the same runner the workflow runs, on the box that already has it.
+
+    Video was the only stage that needed a git commit: a trigger was pushed, an
+    Action woke up, SSHed in, ran this script, and copied the file back. The key
+    and ffmpeg are both here now, so the detour buys nothing.
+    """
+    frame = session.get(CoverageFrame, frame_id)
+    if frame is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such coverage frame.")
+
+    try:
+        result = motion_run.animate(frame.master.scene_key, frame.name)
+    except motion_run.MotionRunFailed as error:
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+    except subprocess.TimeoutExpired as error:  # pragma: no cover - provider hang
+        raise HTTPException(status.HTTP_504_GATEWAY_TIMEOUT, "Veo did not answer.") from error
+
+    probe = _probe(result.directory)
+    stream = (probe.get("streams") or [{}])[0]
+    duration = (probe.get("format") or {}).get("duration")
+    return TakeOut(
+        shot=frame.name,
+        directory=str(result.directory),
+        duration_seconds=None if duration is None else float(duration),
+        width=stream.get("width"),
+        height=stream.get("height"),
+        has_audio=result.manifest.get("audio") != "stripped",
+        silent_video_sha256=result.manifest.get("silent_video_sha256"),
+        manifest=result.manifest,
+    )
+
+
+@router.get("/coverage/{frame_id}/take", summary="The newest take's bytes")
+def coverage_take(frame_id: uuid.UUID, session: SessionDependency) -> Response:
+    """The most recent take for this shot, silent where one was stripped."""
+    frame = session.get(CoverageFrame, frame_id)
+    if frame is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No such coverage frame.")
+
+    root = PROJECT_ROOT / "var" / "renderer-validation" / frame.master.scene_key
+    directories = sorted(root.glob(f"*-coverage-{frame.name}"), reverse=True)
+    for directory in directories:
+        for name in ("video-1.mp4", "video-generated.mp4"):
+            candidate = directory / name
+            if candidate.is_file():
+                return Response(content=candidate.read_bytes(), media_type="video/mp4")
+    raise HTTPException(status.HTTP_404_NOT_FOUND, f"No take yet for {frame.name}.")
 
 
 def _location_asset_out(link: LocationAsset) -> LocationAssetOut:
