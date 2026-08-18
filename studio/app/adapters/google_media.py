@@ -96,9 +96,7 @@ class GoogleImageClient:
             # turns a classified provider refusal into an opaque HTTP 500 and
             # bypasses the generation ledger.  Keep the provider's useful text,
             # but route every SDK failure through the adapter's stable contract.
-            raise GoogleMediaError(
-                f"{type(error).__name__}: {error}"
-            ) from error
+            raise GoogleMediaError(f"{type(error).__name__}: {error}") from error
         output = getattr(interaction, "output_image", None)
         if output is None or not getattr(output, "data", None):
             raise GoogleMediaError("Gemini returned no image")
