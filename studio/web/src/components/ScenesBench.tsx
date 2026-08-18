@@ -79,6 +79,27 @@ function plannedName(sheet: ContactSheet | null, panel: number): string {
   );
 }
 
+/**
+ * Pick the extraction that belongs to the current panel plan, never whichever
+ * historical row happens to sort last.
+ *
+ * Rejected/superseded sheets are deliberately kept as production history, so a
+ * master can hold more than one extraction carrying the same panel number. The
+ * normal re-extraction loop moves the planned shot name onto the replacement
+ * sheet. If legacy rows make a panel ambiguous and none has the planned name,
+ * show no frame rather than offering Approve on pixels whose lineage is wrong.
+ */
+function currentFrameForPanel(
+  frames: CoverageFrame[],
+  sheet: ContactSheet | null,
+  panel: number,
+): CoverageFrame | null {
+  const matches = frames.filter((one) => one.panel === panel);
+  if (matches.length === 0) return null;
+  const planned = plannedName(sheet, panel);
+  return matches.find((one) => one.name === planned) ?? (matches.length === 1 ? matches[0] : null);
+}
+
 function shortSha(sha: string): string {
   return sha.slice(0, 12);
 }
@@ -173,7 +194,6 @@ export function ScenesBench(): React.JSX.Element {
     [sheets],
   );
   const frames: CoverageFrame[] = master?.coverage ?? [];
-  const frameByPanel = new Map(frames.filter((one) => one.panel !== null).map((f) => [f.panel, f]));
 
   const chooseScene = useCallback((key: string) => {
     setSelected(key);
@@ -666,7 +686,7 @@ export function ScenesBench(): React.JSX.Element {
                 })}
               >
                 {Array.from({ length: panels }, (_, index) => index + 1).map((panel) => {
-                  const frame = frameByPanel.get(panel);
+                  const frame = currentFrameForPanel(frames, approvedSheet, panel);
                   return (
                     <div key={panel} className={card}>
                       {frame ? (
