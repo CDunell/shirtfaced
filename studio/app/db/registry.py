@@ -33,6 +33,7 @@ from app.db import (  # noqa: F401
     measurement_models,
     models,
     observation_models,
+    scene_shot_models,
     social_models,
     visual_models,
 )
@@ -50,6 +51,7 @@ MODEL_MODULES = (
     "measurement_models",
     "models",
     "observation_models",
+    "scene_shot_models",
     "social_models",
     "visual_models",
 )
