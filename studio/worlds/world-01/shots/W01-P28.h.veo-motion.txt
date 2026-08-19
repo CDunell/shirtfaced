@@ -1,7 +1,7 @@
-SHOT H — FINAL THREE-SHOT PAYOFF
+SHOT H — FINAL THREE-SHOT
 
-Animate the exact supplied frame as a strong ongoing moment near the peak of the chorus, not as a staged ending. Damo, Emma and Brock remain together inside the crowd, singing toward the band and laughing naturally between lines. Their movement is loose, overlapping and imperfect: small head turns, shoulder contact, tiny body rhythm, natural expressions and incidental crowd jostling.
+Primary motion: Damo, Emma and Brock stay packed together in the crowd, singing toward the band and laughing naturally between lines as the chorus continues.
 
-Do not create a finale gesture. No arms suddenly thrown overhead, no toast, no synchronized jump, no camera acknowledgement, no group pose and no freeze-frame feeling. The three should remain absorbed in the gig while the anonymous crowd continues moving around them and the band remains active beyond them.
+Secondary motion: loose overlapping head movement, shoulder contact and small body rhythm keep the moment lively without resolving into a pose.
 
-Preserve exact identities, wardrobe, hair, builds, hands, skin state, pub lighting and first-frame geometry. No sweat buildup, redness, wet skin, soaked clothes, new accessories or exaggerated drunkenness. End mid-moment with the chorus still continuing so the editor can cut out without a generated conclusion.
+Environmental motion: the crowd continues independent movement around them while the band remains active beyond them, maintaining the same ongoing room energy.
