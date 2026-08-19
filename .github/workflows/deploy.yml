@@ -126,6 +126,8 @@ jobs:
 
       - name: Generate Social SVG assets
         if: steps.social.outputs.changed == 'true'
+        continue-on-error: true
+        timeout-minutes: 5
         run: |
           node scripts/prepare-social-brand-sources.mjs
           node scripts/build-social-assets.mjs
@@ -148,6 +150,8 @@ jobs:
 
       - name: Install Social SVG rasterizer
         if: steps.social.outputs.changed == 'true'
+        continue-on-error: true
+        timeout-minutes: 5
         run: |
           if command -v rsvg-convert >/dev/null 2>&1; then
             echo "rsvg-convert already installed."
@@ -158,6 +162,8 @@ jobs:
 
       - name: Rasterize Social assets
         if: steps.social.outputs.changed == 'true'
+        continue-on-error: true
+        timeout-minutes: 5
         run: |
           for file in public/social-assets/v3/*.svg; do
             png="${file%.svg}.png"
@@ -174,6 +180,8 @@ jobs:
 
       - name: Sync Social assets into Studio
         if: steps.social.outputs.changed == 'true'
+        continue-on-error: true
+        timeout-minutes: 5
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'mkdir -p /home/ubuntu/shirtfaced-studio/public/social-assets'
