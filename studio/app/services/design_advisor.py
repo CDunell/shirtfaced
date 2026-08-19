@@ -462,17 +462,22 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
     ink_value = by_field.get("Ink colours", "")
     ink_count = ink_value.split(" — ")[0].strip() or "a small number of"
 
+    # Placement says WHERE on the body; scale says HOW BIG. Keeping them in
+    # one combined phrase produced a real contradiction -- "small, tight...
+    # not a big front-hero print" followed immediately by "(a dominant,
+    # large-scale graphic covering most of the torso)" whenever scale role
+    # was S3. They are two separate measured facts and can disagree; say
+    # both, don't let one silently overrule the other's wording.
     placement = by_field.get("Placement", "upper")
     placement_prose = {
-        "upper": "small, tight chest-placement graphic — upper chest only, not a big "
-        "front-hero print",
-        "centre": "centred mid-chest graphic at a self-contained, conversational scale",
-        "lower": "smaller graphic sitting lower on the torso, closer to the hem",
-    }.get(placement, "a compact chest-scale graphic")
+        "upper": "positioned on the upper chest",
+        "centre": "centred at mid-chest",
+        "lower": "sitting lower on the torso, closer to the hem",
+    }.get(placement, "positioned on the chest")
 
     scale_value = by_field.get("Scale role", "")
     if "S1" in scale_value or "S2" in scale_value:
-        scale_prose = "roughly 3-4 inches wide"
+        scale_prose = "small and self-contained, roughly 3-4 inches wide"
     elif "S3" in scale_value:
         scale_prose = "a dominant, large-scale graphic covering most of the torso"
     else:
@@ -497,7 +502,7 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
 
     return (
         f"T-shirt graphic design, {tradition_label} style.{idea_line} "
-        f"{placement_prose.capitalize()} ({scale_prose}). "
+        f"Scale: {scale_prose}. Placement: {placement_prose}. "
         f"Screen-print aesthetic, exactly {ink_count} flat ink colors, no gradients or "
         f"photographic shading. {polarity_prose} {archetype_prose} "
         "Flat vector illustration style, ready for screen printing."
