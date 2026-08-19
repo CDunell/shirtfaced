@@ -493,6 +493,7 @@ export interface AdvisorDirection {
   recommendations: AdvisorRecommendation[];
   alternatives: string[];
   not_decided: string[];
+  generation_prompt: string;
 }
 
 /** The advisor answers constitution steps 3 and 4 from 12,151 measured images.

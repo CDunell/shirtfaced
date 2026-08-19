@@ -16,6 +16,7 @@ import { useStyletron } from "baseui";
 import { ParagraphMedium } from "baseui/typography";
 import { WorkBench } from "./components/WorkBench";
 import { DesignsBench } from "./components/DesignsBench";
+import { DesignPromptBench } from "./components/DesignPromptBench";
 import { EmailBench } from "./components/EmailBench";
 import { VintageEvidenceBench } from "./components/VintageEvidenceBench";
 import { VintageResearchBench } from "./components/VintageResearchBench";
@@ -33,6 +34,7 @@ export interface AppProps {
   onToggleTheme: () => void;
 }
 type View =
+  | "design-prompt"
   | "work"
   | "prompts"
   | "concepts"
@@ -73,6 +75,11 @@ const PIPELINES: { id: Pipeline; label: string; blurb: string }[] = [
 ];
 
 const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
+  // The direct tool: an idea in, a paste-ready generation prompt out. No
+  // brief, no queue, no review -- everything Designs below also does, minus
+  // all of it. Leads the list because it answers what most people actually
+  // want on the first visit.
+  { id: "design-prompt", label: "Prompt", pipeline: "product" },
   // Product: evidence → research → concept → design → approved version → print.
   // Work leads because it is the answer to "what should I be doing", and the
   // other destinations are where its rows send you.
@@ -275,7 +282,9 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           paddingRight: "16px",
         })}
       >
-        {view === "work" ? (
+        {view === "design-prompt" ? (
+          <DesignPromptBench />
+        ) : view === "work" ? (
           <WorkBench
             onOpen={(item: WorkItem) => {
               // Every row lands on the screen that can actually do the thing.
