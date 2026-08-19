@@ -48,6 +48,8 @@ class ShotMasterOut(BaseModel):
     sort_order: int
     notes: str | None
     approved_at: str | None
+    motion_prompt: str | None
+    motion_prompt_source: str
     asset: AssetOut
 
 
@@ -66,7 +68,12 @@ class TakeOut(BaseModel):
     silent: bool
 
 
+class MotionPromptIn(BaseModel):
+    prompt: str | None
+
+
 def _out(shot: SceneShotMaster) -> ShotMasterOut:
+    prompt, source = scene_shot_library.effective_motion_prompt(shot)
     return ShotMasterOut(
         id=shot.id,
         scene_key=shot.scene_key,
@@ -75,6 +82,8 @@ def _out(shot: SceneShotMaster) -> ShotMasterOut:
         sort_order=shot.sort_order,
         notes=shot.notes,
         approved_at=shot.approved_at.isoformat() if shot.approved_at else None,
+        motion_prompt=prompt,
+        motion_prompt_source=source,
         asset=AssetOut(
             id=shot.asset.id,
             sha256=shot.asset.sha256,
@@ -139,6 +148,22 @@ async def register_shot_master(
     return _out(shot)
 
 
+@router.post("/shot-masters/{shot_id}/motion-prompt")
+def update_motion_prompt(
+    shot_id: uuid.UUID, body: MotionPromptIn, session: SessionDependency
+) -> ShotMasterOut:
+    """Save a per-master Veo prompt override. Blank restores repo fallback."""
+    try:
+        shot = scene_shot_library.by_id(session, shot_id)
+        scene_shot_library.set_motion_prompt(shot, body.prompt)
+    except scene_shot_library.DirectShotError as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
+    session.commit()
+    session.refresh(shot)
+    return _out(shot)
+
+
 @router.post("/shot-masters/{shot_id}/approve")
 def approve_shot_master(
     shot_id: uuid.UUID, session: SessionDependency
@@ -176,6 +201,11 @@ def animate_shot_master(
         if shot.status != "approved":
             raise scene_shot_library.DirectShotUnavailable(
                 f"{shot.scene_key}/{shot.name}: approve this shot master before Veo."
+            )
+        prompt, _ = scene_shot_library.effective_motion_prompt(shot)
+        if not prompt:
+            raise scene_shot_library.DirectShotUnavailable(
+                f"{shot.scene_key}/{shot.name}: no Veo motion prompt is configured."
             )
         result = motion_run.animate(shot.scene_key, shot.name)
     except (scene_shot_library.DirectShotError, motion_run.MotionRunFailed) as error:
