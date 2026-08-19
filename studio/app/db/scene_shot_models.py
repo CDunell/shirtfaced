@@ -44,6 +44,7 @@ class SceneShotMaster(Base, TimestampMixin):
     status: Mapped[str] = mapped_column(String(32), nullable=False, server_default="candidate")
     sort_order: Mapped[int] = mapped_column(Integer, nullable=False, server_default=text("0"))
     notes: Mapped[str | None] = mapped_column(Text)
+    motion_prompt: Mapped[str | None] = mapped_column(Text)
     approved_at: Mapped[dt.datetime | None] = mapped_column(DateTime(timezone=True))
     approved_by: Mapped[str | None] = mapped_column(String(64))
 
