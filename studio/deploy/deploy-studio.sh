@@ -52,6 +52,9 @@ sudo -u postgres psql -d "$DB_NAME" -qc 'CREATE EXTENSION IF NOT EXISTS vector'
 say "Applying migrations"
 ./.venv/bin/alembic upgrade head
 
+say "Importing staged scene shot masters"
+./.venv/bin/python scripts/import_scene_shot_masters.py
+
 say "Importing complete worlds"
 for world in worlds/*/; do
   slug=$(basename "$world")
