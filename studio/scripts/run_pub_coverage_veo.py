@@ -76,7 +76,20 @@ DEV_RESOLUTION = "720p"
 
 
 def motion_prompt(scene_key: str, shot: str) -> str:
-    """Compile reusable motion law around direction owned by the world."""
+    """Use a saved per-master override before repo-configured direction."""
+    from app.db.session import get_session_factory
+    from app.services.scene_shot_library import DirectShotNotFound, by_scene_name, effective_motion_prompt
+
+    with get_session_factory()() as session:
+        try:
+            direct = by_scene_name(session, scene_key, shot)
+        except DirectShotNotFound:
+            direct = None
+        if direct is not None:
+            prompt, _source = effective_motion_prompt(direct)
+            if prompt:
+                return build_motion_prompt(prompt)
+
     worlds = get_settings().worlds_root_resolved
     for candidate in (f"{scene_key}.{shot}.veo-motion.txt", f"{scene_key}.veo-motion.txt"):
         for shots in sorted(worlds.glob("*/shots")):
@@ -84,9 +97,8 @@ def motion_prompt(scene_key: str, shot: str) -> str:
             if path.is_file():
                 return build_motion_prompt(path.read_text(encoding="utf-8"))
     raise SystemExit(
-        f"{scene_key}: no motion direction. Write "
-        f"worlds/<world>/shots/{scene_key}.veo-motion.txt, or "
-        f"{scene_key}.{shot}.veo-motion.txt for this shot alone."
+        f"{scene_key}/{shot}: no motion direction. Save one in Scenes or write "
+        f"worlds/<world>/shots/{scene_key}.{shot}.veo-motion.txt."
     )
 
 
