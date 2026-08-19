@@ -14,6 +14,7 @@ import json
 import shutil
 import subprocess
 import tempfile
+import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
@@ -102,13 +103,17 @@ def _take_for(shot: SceneShotMaster, stamp: str | None = None) -> motion_run.Rec
 def _extract_samples(video: Path, duration: float, target: Path) -> list[tuple[float, Path]]:
     if not shutil.which("ffmpeg"):
         raise RoughCutError("ffmpeg is not installed on the Studio host.")
-    sample_times: list[float] = []
-    t = 0.0
-    while t < max(duration, 0.1):
-        sample_times.append(round(t, 2))
-        t += 1.0
-    if duration > 0.25 and (not sample_times or sample_times[-1] < duration - 0.35):
-        sample_times.append(round(max(0.0, duration - 0.2), 2))
+
+    # Four or five low-resolution observations are enough to choose a short edit
+    # window. The first implementation sampled every second and sent every frame
+    # at normal image detail, which could consume an entire TPM bucket before the
+    # fifth shot. Spread samples across the take instead.
+    count = min(5, max(3, int(round(duration / 1.75)) + 1))
+    if count <= 1:
+        sample_times = [0.0]
+    else:
+        last = max(0.0, duration - 0.15)
+        sample_times = [round((last * index) / (count - 1), 2) for index in range(count)]
 
     frames: list[tuple[float, Path]] = []
     for index, seconds in enumerate(sample_times):
@@ -116,7 +121,7 @@ def _extract_samples(video: Path, duration: float, target: Path) -> list[tuple[f
         completed = subprocess.run(
             [
                 "ffmpeg", "-v", "error", "-y", "-ss", str(seconds), "-i", str(video),
-                "-frames:v", "1", "-vf", "scale=512:-2", "-q:v", "3", str(path),
+                "-frames:v", "1", "-vf", "scale=384:-2", "-q:v", "4", str(path),
             ],
             capture_output=True,
             timeout=60,
@@ -156,6 +161,21 @@ Judge visible evidence only. Priorities, in order: preserve the same people and 
 Choose the cleanest continuous window between 1.0 and 3.0 seconds long. Keep the requested range within the supplied video duration. If no clean window exists, return reject. Scores are 5=excellent, 1=unusable. deformation_score is 5 when there is no visible deformation and 1 when deformation is severe. Return concise rationale."""
 
 
+def _responses_create_with_retry(client: Any, **kwargs: Any) -> Any:
+    """Retry a short-lived provider rate limit without losing the whole analysis."""
+    delays = (3.0, 8.0, 18.0)
+    for attempt in range(len(delays) + 1):
+        try:
+            return client.responses.create(**kwargs)
+        except Exception as error:
+            text = str(error).lower()
+            rate_limited = "429" in text or "rate_limit" in text or "rate limit" in text
+            if not rate_limited or attempt >= len(delays):
+                raise
+            time.sleep(delays[attempt])
+    raise AssertionError("unreachable")
+
+
 def _analyse_one(settings: Settings, shot: SceneShotMaster, take: motion_run.RecordedTake) -> ShotEdit:
     if not settings.openai_api_key or not settings.openai_review_model:
         raise RoughCutError("OPENAI_API_KEY and OPENAI_REVIEW_MODEL are required for AI rough-cut analysis.")
@@ -178,11 +198,12 @@ def _analyse_one(settings: Settings, shot: SceneShotMaster, take: motion_run.Rec
                 "type": "input_text",
                 "text": (
                     f"Scene {shot.scene_key}; shot {shot.name}; take {take.stamp}; duration {duration:.3f}s. "
-                    f"Chronological sample timestamps: {', '.join(f'{time:.2f}s' for time, _ in frames)}."
+                    f"Chronological sample timestamps: {', '.join(f'{sample_time:.2f}s' for sample_time, _ in frames)}."
                 ),
             },
             {
                 "type": "input_image",
+                "detail": "low",
                 "image_url": f"data:{shot.asset.mime_type};base64,{base64.b64encode(master_path.read_bytes()).decode()}",
             },
         ]
@@ -190,6 +211,7 @@ def _analyse_one(settings: Settings, shot: SceneShotMaster, take: motion_run.Rec
             content.append(
                 {
                     "type": "input_image",
+                    "detail": "low",
                     "image_url": f"data:image/jpeg;base64,{base64.b64encode(frame.read_bytes()).decode()}",
                 }
             )
@@ -201,7 +223,8 @@ def _analyse_one(settings: Settings, shot: SceneShotMaster, take: motion_run.Rec
             timeout=settings.openai_timeout_seconds,
         )
         try:
-            response = client.responses.create(
+            response = _responses_create_with_retry(
+                client,
                 model=settings.openai_review_model,
                 timeout=settings.openai_timeout_seconds,
                 instructions=ANALYSIS_INSTRUCTIONS,
@@ -248,8 +271,17 @@ def analyse(settings: Settings, shots: list[SceneShotMaster]) -> RoughCutState:
     approved = [shot for shot in sorted(shots, key=lambda row: row.sort_order) if shot.status == "approved"]
     if not approved:
         raise RoughCutError("No approved shot masters are available for this scene.")
-    rows = [_analyse_one(settings, shot, _take_for(shot)) for shot in approved]
-    return _save(RoughCutState(scene_key=approved[0].scene_key, shots=rows))
+
+    # Save each completed shot immediately. A provider failure on shot five must
+    # not throw away four paid analyses and force them all through the TPM bucket
+    # again on the next click.
+    state = RoughCutState(scene_key=approved[0].scene_key, shots=[])
+    output_path(state.scene_key).unlink(missing_ok=True)
+    for shot in approved:
+        row = _analyse_one(settings, shot, _take_for(shot))
+        state.shots.append(row)
+        _save(state)
+    return state
 
 
 def update_shot(
