@@ -68,10 +68,12 @@ def first_frame_locks() -> str:
     """Make stable first-frame facts explicit without asking Veo to redraw them."""
     return (
         "FIRST-FRAME LOCKS — Preserve identities, clothing, props, object scale, spatial "
-        "relationships, lighting logic and room density established by the supplied frame. "
-        "Stable objects remain stable unless the scene direction explicitly says they move. "
-        "Do not invent accessories, tattoos, duplicate people, remove people or clean up the "
-        "environment."
+        "relationships, body orientation, gaze relationships, lighting logic and room density "
+        "established by the supplied frame. A person who is turned toward another person, away "
+        "from the stage, or toward the stage stays broadly in that orientation unless the shot "
+        "direction explicitly calls for a small local turn. Stable objects remain stable unless "
+        "the scene direction explicitly says they move. Do not invent accessories, tattoos, "
+        "duplicate people, remove people or clean up the environment."
     )
 
 
