@@ -459,9 +459,6 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
             archetype_key, "One dominant graphic element, not several competing ideas."
         )
 
-    ink_value = by_field.get("Ink colours", "")
-    ink_count = ink_value.split(" — ")[0].strip() or "a small number of"
-
     # Placement says WHERE on the body; scale says HOW BIG. Keeping them in
     # one combined phrase produced a real contradiction -- "small, tight...
     # not a big front-hero print" followed immediately by "(a dominant,
@@ -500,10 +497,15 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
     idea_text = phrase.strip()
     idea_line = f" Design concept: {idea_text.rstrip('.')}." if idea_text else ""
 
+    # Dropped: "exactly N flat ink colors, no gradients or photographic
+    # shading". A hard colour-count cap combined with "no gradients" pushed
+    # the image generator toward flat, thin, samey colour-blocked graphics --
+    # confirmed against real Grok output, not a guess. The corpus's ink-count
+    # measurement is still real and still shown in the structured
+    # recommendations; it just doesn't belong as a generation constraint.
     return (
         f"T-shirt graphic design, {tradition_label} style.{idea_line} "
         f"Scale: {scale_prose}. Placement: {placement_prose}. "
-        f"Screen-print aesthetic, exactly {ink_count} flat ink colors, no gradients or "
-        f"photographic shading. {polarity_prose} {archetype_prose} "
-        "Flat vector illustration style, ready for screen printing."
+        f"{polarity_prose} {archetype_prose} "
+        "Screen-print-ready illustration, suitable for garment printing."
     )
