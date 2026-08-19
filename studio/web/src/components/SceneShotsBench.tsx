@@ -36,8 +36,14 @@ function cleanName(name: string): string {
   );
 }
 
-function label(name: string): string {
+function displayName(name: string): string {
   return name.length <= 3 ? name.toUpperCase() : name.replace(/-/g, " ");
+}
+
+function statusKind(status: string): TAG_KIND {
+  if (status === "approved") return TAG_KIND.positive;
+  if (status === "rejected") return TAG_KIND.negative;
+  return TAG_KIND.neutral;
 }
 
 export function SceneShotsBench(): React.JSX.Element {
@@ -46,44 +52,43 @@ export function SceneShotsBench(): React.JSX.Element {
   const [sceneKey, setSceneKey] = useState("W01-P28");
   const [scene, setScene] = useState<SceneShotMasters | null>(null);
   const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [note, setNote] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
   const [takes, setTakes] = useState<Record<string, SceneShotTake[]>>({});
   const [promptDraft, setPromptDraft] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [newName, setNewName] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
   const initialUploadRef = useRef<HTMLInputElement>(null);
   const replaceRef = useRef<HTMLInputElement>(null);
   const addRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(async (key: string, preserveShotId?: string | null) => {
+  const load = useCallback(async (key: string): Promise<SceneShotMasters> => {
     const [keys, current] = await Promise.all([
       fetchShotMasterScenes(),
       fetchSceneShotMasters(key),
     ]);
     setSceneKeys(keys);
     setScene(current);
-    setSelectedShotId((currentId) => {
-      const wanted = preserveShotId ?? currentId;
-      return wanted && current.shot_masters.some((shot) => shot.id === wanted) ? wanted : null;
-    });
 
     const found: Record<string, SceneShotTake[]> = {};
     await Promise.all(
       current.shot_masters.map(async (shot) => {
         const rows = await fetchSceneShotTakes(shot.id);
-        if (rows.length) found[shot.id] = rows;
+        if (rows.length > 0) found[shot.id] = rows;
       }),
     );
     setTakes(found);
+    return current;
   }, []);
 
   useEffect(() => {
     setSelectedShotId(null);
     setPromptDraft("");
     setShowAdd(false);
-    void load(sceneKey, null).catch((cause: unknown) => {
+    setError(null);
+    void load(sceneKey).catch((cause: unknown) => {
       setError(cause instanceof ApiError ? cause.message : "Scenes are unavailable.");
     });
   }, [load, sceneKey]);
@@ -96,23 +101,35 @@ export function SceneShotsBench(): React.JSX.Element {
     () => shots.find((shot) => shot.id === selectedShotId) ?? null,
     [selectedShotId, shots],
   );
-  const latest = selected ? takes[selected.id]?.[0] ?? null : null;
   const approved = scene?.approved_count ?? 0;
   const maximum = scene?.maximum_approved ?? 5;
+  const latest = selected ? takes[selected.id]?.[0] ?? null : null;
+  const promptChanged = selected ? promptDraft !== (selected.motion_prompt ?? "") : false;
+  const promptMissing = !promptDraft.trim();
 
   useEffect(() => {
     setPromptDraft(selected?.motion_prompt ?? "");
     setShowAdd(false);
   }, [selected]);
 
+  const refreshSelected = useCallback(
+    async (shotId: string | null) => {
+      const current = await load(sceneKey);
+      setSelectedShotId(
+        shotId && current.shot_masters.some((shot) => shot.id === shotId) ? shotId : null,
+      );
+    },
+    [load, sceneKey],
+  );
+
   const act = useCallback(
-    async (key: string, work: () => Promise<string | null>, preserve?: string | null) => {
+    async (key: string, work: () => Promise<string | null>, shotId: string | null = selectedShotId) => {
       setBusy(key);
       setError(null);
       setNote(null);
       try {
         const message = await work();
-        await load(sceneKey, preserve ?? selectedShotId);
+        await refreshSelected(shotId);
         if (message) setNote(message);
       } catch (cause: unknown) {
         setError(cause instanceof ApiError ? cause.message : "That did not go through.");
@@ -120,36 +137,45 @@ export function SceneShotsBench(): React.JSX.Element {
         setBusy(null);
       }
     },
-    [load, sceneKey, selectedShotId],
+    [refreshSelected, selectedShotId],
   );
 
-  const controls = css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" });
+  const controlRow = css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" });
+  const controlRowTop = css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", marginTop: "8px" });
   const panel = css({
     border: `1px solid ${theme.colors.borderOpaque}`,
     borderRadius: "14px",
     backgroundColor: theme.colors.backgroundSecondary,
     padding: "14px",
   });
-  const mono = css({ fontFamily: "monospace", fontSize: "11px", color: theme.colors.contentTertiary });
+  const mono = css({
+    fontFamily: "monospace",
+    fontSize: "11px",
+    color: theme.colors.contentTertiary,
+  });
 
   const onInitialUpload = useCallback(() => {
     const files = [...(initialUploadRef.current?.files ?? [])];
-    if (!files.length) return;
-    void act("initial-upload", async () => {
-      for (const file of files) await registerSceneShotMaster(sceneKey, file, cleanName(file.name));
-      if (initialUploadRef.current) initialUploadRef.current.value = "";
-      return `${String(files.length)} shot master${files.length === 1 ? "" : "s"} added.`;
-    }, null);
+    if (files.length === 0) return;
+    void act(
+      "initial-upload",
+      async () => {
+        for (const file of files) {
+          await registerSceneShotMaster(sceneKey, file, cleanName(file.name));
+        }
+        if (initialUploadRef.current) initialUploadRef.current.value = "";
+        return `${String(files.length)} shot master${files.length === 1 ? "" : "s"} added.`;
+      },
+      null,
+    );
   }, [act, sceneKey]);
-
-  const promptChanged = selected ? promptDraft !== (selected.motion_prompt ?? "") : false;
-  const promptMissing = !promptDraft.trim();
 
   return (
     <>
       <PageTitle meta={`${String(approved)}/${String(maximum)} approved`}>
         {sceneKey}{scene?.title ? ` — ${scene.title}` : ""}
       </PageTitle>
+
       {scene?.description ? (
         <ParagraphSmall className={css({ maxWidth: "760px", marginTop: "-4px" })}>
           {scene.description}
@@ -170,7 +196,7 @@ export function SceneShotsBench(): React.JSX.Element {
       {sceneKeys.length > 1 ? (
         <div className={css({ marginTop: "18px" })}>
           <SectionTitle>Scene</SectionTitle>
-          <div className={controls}>
+          <div className={controlRow}>
             {sceneKeys.map((key) => (
               <Button
                 key={key}
@@ -190,7 +216,7 @@ export function SceneShotsBench(): React.JSX.Element {
           <SectionTitle>Add shot masters</SectionTitle>
           <div className={panel}>
             <ParagraphSmall>No shot masters are registered for this scene yet.</ParagraphSmall>
-            <div className={controls}>
+            <div className={controlRow}>
               <input ref={initialUploadRef} type="file" accept="image/png,image/jpeg,image/webp" multiple />
               <Button size={SIZE.compact} isLoading={busy === "initial-upload"} onClick={onInitialUpload}>
                 Upload masters
@@ -202,7 +228,7 @@ export function SceneShotsBench(): React.JSX.Element {
         <>
           <div className={css({ marginTop: "24px" })}>
             <SectionTitle>Shot</SectionTitle>
-            <div className={controls}>
+            <div className={controlRow}>
               {shots.map((shot) => (
                 <Button
                   key={shot.id}
@@ -210,7 +236,7 @@ export function SceneShotsBench(): React.JSX.Element {
                   kind={shot.id === selectedShotId ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
                   onClick={() => setSelectedShotId(shot.id)}
                 >
-                  {label(shot.name)} · {shot.status}
+                  {displayName(shot.name)} · {shot.status}
                 </Button>
               ))}
             </div>
@@ -223,46 +249,74 @@ export function SceneShotsBench(): React.JSX.Element {
 
           {selected ? (
             <section className={css({ marginTop: "20px" })}>
-              <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "10px" })}>
+              <div
+                className={css({
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  gap: "12px",
+                  flexWrap: "wrap",
+                  marginBottom: "10px",
+                })}
+              >
                 <div>
-                  <h2 className={css({ margin: 0, fontSize: "22px" })}>{label(selected.name)}</h2>
+                  <h2 className={css({ margin: 0, fontSize: "22px" })}>{displayName(selected.name)}</h2>
                   <span className={mono}>
                     {selected.asset.width}×{selected.asset.height} · {selected.asset.sha256.slice(0, 12)}
                   </span>
                 </div>
-                <Tag
-                  closeable={false}
-                  kind={selected.status === "approved" ? TAG_KIND.positive : selected.status === "rejected" ? TAG_KIND.negative : TAG_KIND.neutral}
-                >
+                <Tag closeable={false} kind={statusKind(selected.status)}>
                   {selected.status}
                 </Tag>
               </div>
 
-              <div className={css({ display: "grid", gridTemplateColumns: "minmax(240px, 360px) minmax(0, 1fr)", gap: "18px", alignItems: "start", '@media screen and (max-width: 760px)': { gridTemplateColumns: "1fr" } })}>
+              <div
+                className={css({
+                  display: "grid",
+                  gridTemplateColumns: "minmax(240px, 360px) minmax(0, 1fr)",
+                  gap: "18px",
+                  alignItems: "start",
+                  "@media screen and (max-width: 760px)": { gridTemplateColumns: "1fr" },
+                })}
+              >
                 <div>
                   <button
                     type="button"
                     onClick={() => window.open(sceneShotPreview(selected.asset.id), "_blank")}
-                    className={css({ border: 0, padding: 0, background: "transparent", cursor: "zoom-in", width: "100%" })}
+                    className={css({
+                      border: 0,
+                      padding: 0,
+                      background: "transparent",
+                      cursor: "zoom-in",
+                      width: "100%",
+                    })}
                   >
                     <img
                       src={sceneShotPreview(selected.asset.id)}
                       alt={`${selected.scene_key} ${selected.name}`}
-                      className={css({ width: "100%", aspectRatio: "9 / 16", objectFit: "cover", display: "block", borderRadius: "12px" })}
+                      className={css({
+                        width: "100%",
+                        aspectRatio: "9 / 16",
+                        objectFit: "cover",
+                        display: "block",
+                        borderRadius: "12px",
+                      })}
                     />
                   </button>
 
                   <div className={css({ marginTop: "10px" })}>
-                    <div className={controls}>
+                    <div className={controlRow}>
                       {selected.status !== "approved" ? (
                         <Button
                           size={SIZE.compact}
                           disabled={approved >= maximum}
                           isLoading={busy === `approve-${selected.id}`}
-                          onClick={() => void act(`approve-${selected.id}`, async () => {
-                            await approveSceneShotMaster(selected.id);
-                            return `${selected.name} approved.`;
-                          })}
+                          onClick={() =>
+                            void act(`approve-${selected.id}`, async () => {
+                              await approveSceneShotMaster(selected.id);
+                              return `${selected.name} approved.`;
+                            })
+                          }
                         >
                           Approve
                         </Button>
@@ -272,10 +326,12 @@ export function SceneShotsBench(): React.JSX.Element {
                           size={SIZE.compact}
                           kind={BUTTON_KIND.secondary}
                           isLoading={busy === `reject-${selected.id}`}
-                          onClick={() => void act(`reject-${selected.id}`, async () => {
-                            await rejectSceneShotMaster(selected.id);
-                            return `${selected.name} rejected.`;
-                          })}
+                          onClick={() =>
+                            void act(`reject-${selected.id}`, async () => {
+                              await rejectSceneShotMaster(selected.id);
+                              return `${selected.name} rejected.`;
+                            })
+                          }
                         >
                           Reject
                         </Button>
@@ -286,28 +342,51 @@ export function SceneShotsBench(): React.JSX.Element {
 
                 <div className={css({ display: "flex", flexDirection: "column", gap: "14px" })}>
                   <div className={panel}>
-                    <div className={css({ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center", marginBottom: "8px" })}>
+                    <div
+                      className={css({
+                        display: "flex",
+                        justifyContent: "space-between",
+                        gap: "8px",
+                        alignItems: "center",
+                        marginBottom: "8px",
+                      })}
+                    >
                       <strong>Veo motion prompt</strong>
                       <Tag closeable={false} kind={promptMissing ? TAG_KIND.negative : TAG_KIND.neutral}>
-                        {selected.motion_prompt_source === "override" ? "edited" : selected.motion_prompt_source === "configured" ? "default" : "missing"}
+                        {selected.motion_prompt_source === "override"
+                          ? "edited"
+                          : selected.motion_prompt_source === "configured"
+                            ? "default"
+                            : "missing"}
                       </Tag>
                     </div>
                     <Textarea
                       value={promptDraft}
                       onChange={(event) => setPromptDraft(event.currentTarget.value)}
                       placeholder="Describe the motion this first frame should perform."
-                      overrides={{ Input: { style: { minHeight: "180px", fontFamily: "monospace", fontSize: "12px", lineHeight: "18px" } } }}
+                      overrides={{
+                        Input: {
+                          style: {
+                            minHeight: "180px",
+                            fontFamily: "monospace",
+                            fontSize: "12px",
+                            lineHeight: "18px",
+                          },
+                        },
+                      }}
                     />
-                    <div className={css({ ...controls, marginTop: "8px" })}>
+                    <div className={controlRowTop}>
                       <Button
                         size={SIZE.compact}
                         kind={BUTTON_KIND.secondary}
                         disabled={!promptChanged || promptMissing}
                         isLoading={busy === `prompt-${selected.id}`}
-                        onClick={() => void act(`prompt-${selected.id}`, async () => {
-                          await saveSceneShotMotionPrompt(selected.id, promptDraft);
-                          return `${selected.name}: prompt saved.`;
-                        })}
+                        onClick={() =>
+                          void act(`prompt-${selected.id}`, async () => {
+                            await saveSceneShotMotionPrompt(selected.id, promptDraft);
+                            return `${selected.name}: prompt saved.`;
+                          })
+                        }
                       >
                         Save prompt
                       </Button>
@@ -316,10 +395,12 @@ export function SceneShotsBench(): React.JSX.Element {
                           size={SIZE.compact}
                           kind={BUTTON_KIND.tertiary}
                           isLoading={busy === `reset-${selected.id}`}
-                          onClick={() => void act(`reset-${selected.id}`, async () => {
-                            await saveSceneShotMotionPrompt(selected.id, null);
-                            return `${selected.name}: default prompt restored.`;
-                          })}
+                          onClick={() =>
+                            void act(`reset-${selected.id}`, async () => {
+                              await saveSceneShotMotionPrompt(selected.id, null);
+                              return `${selected.name}: default prompt restored.`;
+                            })
+                          }
                         >
                           Reset to default
                         </Button>
@@ -329,19 +410,23 @@ export function SceneShotsBench(): React.JSX.Element {
 
                   <div className={panel}>
                     <strong>Veo</strong>
-                    <div className={css({ ...controls, marginTop: "8px" })}>
+                    <div className={controlRowTop}>
                       <Button
                         size={SIZE.compact}
                         disabled={selected.status !== "approved" || promptMissing || promptChanged}
                         isLoading={busy === `animate-${selected.id}`}
-                        onClick={() => void act(`animate-${selected.id}`, async () => {
-                          await animateSceneShotMaster(selected.id);
-                          return `${selected.name}: Veo take generated.`;
-                        })}
+                        onClick={() =>
+                          void act(`animate-${selected.id}`, async () => {
+                            await animateSceneShotMaster(selected.id);
+                            return `${selected.name}: Veo take generated.`;
+                          })
+                        }
                       >
                         {latest ? "Redo Veo" : "Animate"}
                       </Button>
-                      {selected.status !== "approved" ? <ParagraphXSmall margin={0}>Approve this master before animation.</ParagraphXSmall> : null}
+                      {selected.status !== "approved" ? (
+                        <ParagraphXSmall margin={0}>Approve this master before animation.</ParagraphXSmall>
+                      ) : null}
                     </div>
 
                     {latest ? (
@@ -356,7 +441,9 @@ export function SceneShotsBench(): React.JSX.Element {
                         />
                         <ParagraphXSmall marginBottom={0}>
                           Latest take · {latest.duration_seconds ? `${latest.duration_seconds.toFixed(1)}s` : "duration pending"}
-                          {takes[selected.id]?.length ? ` · ${String(takes[selected.id].length)} total take${takes[selected.id].length === 1 ? "" : "s"}` : ""}
+                          {takes[selected.id]?.length
+                            ? ` · ${String(takes[selected.id].length)} total take${takes[selected.id].length === 1 ? "" : "s"}`
+                            : ""}
                         </ParagraphXSmall>
                       </div>
                     ) : (
@@ -366,8 +453,10 @@ export function SceneShotsBench(): React.JSX.Element {
 
                   <div className={panel}>
                     <strong>Master file</strong>
-                    <ParagraphXSmall>Replacing the image returns this shot to candidate so the new pixels require approval before Veo.</ParagraphXSmall>
-                    <div className={controls}>
+                    <ParagraphXSmall>
+                      Replacing this image returns the shot to candidate so the new frame requires approval before Veo.
+                    </ParagraphXSmall>
+                    <div className={controlRow}>
                       <input ref={replaceRef} type="file" accept="image/png,image/jpeg,image/webp" />
                       <Button
                         size={SIZE.compact}
@@ -385,17 +474,33 @@ export function SceneShotsBench(): React.JSX.Element {
                       >
                         Replace master
                       </Button>
-                      <Button size={SIZE.compact} kind={BUTTON_KIND.tertiary} onClick={() => setShowAdd((value) => !value)}>
+                      <Button
+                        size={SIZE.compact}
+                        kind={BUTTON_KIND.tertiary}
+                        onClick={() => setShowAdd((value) => !value)}
+                      >
                         {showAdd ? "Cancel add" : "Add another master"}
                       </Button>
                     </div>
 
                     {showAdd ? (
-                      <div className={css({ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" })}>
+                      <div
+                        className={css({
+                          marginTop: "12px",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: "8px",
+                        })}
+                      >
                         <div className={css({ maxWidth: "260px" })}>
-                          <Input value={newName} onChange={(event) => setNewName(event.currentTarget.value)} placeholder="shot name, e.g. c" size={SIZE.compact} />
+                          <Input
+                            value={newName}
+                            onChange={(event) => setNewName(event.currentTarget.value)}
+                            placeholder="shot name, e.g. c"
+                            size={SIZE.compact}
+                          />
                         </div>
-                        <div className={controls}>
+                        <div className={controlRow}>
                           <input ref={addRef} type="file" accept="image/png,image/jpeg,image/webp" />
                           <Button
                             size={SIZE.compact}
@@ -403,16 +508,24 @@ export function SceneShotsBench(): React.JSX.Element {
                             isLoading={busy === "add-master"}
                             onClick={() => {
                               const file = addRef.current?.files?.[0];
-                              const name = cleanName(newName || file?.name || "");
-                              if (!file || !name) return;
-                              void act("add-master", async () => {
-                                const created = await registerSceneShotMaster(sceneKey, file, name);
-                                setNewName("");
-                                setShowAdd(false);
-                                if (addRef.current) addRef.current.value = "";
-                                setSelectedShotId(created.id);
-                                return `${name}: master added.`;
-                              }, createdPlaceholder);
+                              if (!file) return;
+                              const name = cleanName(newName || file.name);
+                              setBusy("add-master");
+                              setError(null);
+                              setNote(null);
+                              void registerSceneShotMaster(sceneKey, file, name)
+                                .then(async (created) => {
+                                  if (addRef.current) addRef.current.value = "";
+                                  setNewName("");
+                                  setShowAdd(false);
+                                  await load(sceneKey);
+                                  setSelectedShotId(created.id);
+                                  setNote(`${name}: master added.`);
+                                })
+                                .catch((cause: unknown) => {
+                                  setError(cause instanceof ApiError ? cause.message : "That did not go through.");
+                                })
+                                .finally(() => setBusy(null));
                             }}
                           >
                             Add master
@@ -430,7 +543,3 @@ export function SceneShotsBench(): React.JSX.Element {
     </>
   );
 }
-
-// ``act`` accepts a preserve id. New-master creation sets selection directly after
-// reload, so this sentinel forces the reload to avoid preserving the prior shot.
-const createdPlaceholder = null;
