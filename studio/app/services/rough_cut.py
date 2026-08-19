@@ -1,11 +1,4 @@
-"""AI-assisted rough cuts from existing Veo takes.
-
-This is intentionally an editing layer, not another renderer. It samples the
-silent Veo takes already on disk, asks the configured review model to identify
-the strongest usable temporal window, records those decisions locally, then
-uses ffmpeg to build one vertical rough cut. Generated Veo audio never enters
-the edit.
-"""
+"""AI-assisted rough cuts from existing Veo takes and owned audio beds."""
 
 from __future__ import annotations
 
@@ -15,15 +8,19 @@ import shutil
 import subprocess
 import tempfile
 import time
+import uuid
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from sqlalchemy.orm import Session
+
 from app.adapters.asset_store import FilesystemAssetStore
 from app.config import PROJECT_ROOT, Settings
+from app.db.audio_models import AudioAsset
 from app.db.scene_shot_models import SceneShotMaster
 from app.domain.errors import StudioError
-from app.services import motion_run
+from app.services import audio_library, motion_run
 
 
 class RoughCutError(StudioError):
@@ -47,10 +44,22 @@ class ShotEdit:
 
 
 @dataclass
+class AudioEdit:
+    asset_id: str
+    filename: str
+    mime_type: str
+    duration_seconds: float | None
+    in_seconds: float = 0.0
+    gain_db: float = -3.0
+
+
+@dataclass
 class RoughCutState:
     scene_key: str
     shots: list[ShotEdit]
+    audio: AudioEdit | None = None
     output_exists: bool = False
+    final_exists: bool = False
 
 
 def _root(scene_key: str) -> Path:
@@ -65,27 +74,62 @@ def output_path(scene_key: str) -> Path:
     return _root(scene_key) / "rough-cut.mp4"
 
 
+def final_output_path(scene_key: str) -> Path:
+    return _root(scene_key) / "rough-cut-final.mp4"
+
+
 def load(scene_key: str) -> RoughCutState:
     path = _state_path(scene_key)
     if not path.is_file():
-        return RoughCutState(scene_key=scene_key, shots=[], output_exists=output_path(scene_key).is_file())
+        return RoughCutState(
+            scene_key=scene_key,
+            shots=[],
+            output_exists=output_path(scene_key).is_file(),
+            final_exists=final_output_path(scene_key).is_file(),
+        )
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
         shots = [ShotEdit(**row) for row in payload.get("shots", [])]
+        audio_payload = payload.get("audio")
+        audio = AudioEdit(**audio_payload) if isinstance(audio_payload, dict) else None
     except (OSError, json.JSONDecodeError, TypeError) as error:
         raise RoughCutError(f"{scene_key}: rough-cut state is unreadable: {error}") from error
-    return RoughCutState(scene_key=scene_key, shots=shots, output_exists=output_path(scene_key).is_file())
+    return RoughCutState(
+        scene_key=scene_key,
+        shots=shots,
+        audio=audio,
+        output_exists=output_path(scene_key).is_file(),
+        final_exists=final_output_path(scene_key).is_file(),
+    )
 
 
 def _save(state: RoughCutState) -> RoughCutState:
     root = _root(state.scene_key)
     root.mkdir(parents=True, exist_ok=True)
     _state_path(state.scene_key).write_text(
-        json.dumps({"scene_key": state.scene_key, "shots": [asdict(row) for row in state.shots]}, indent=2) + "\n",
+        json.dumps(
+            {
+                "scene_key": state.scene_key,
+                "shots": [asdict(row) for row in state.shots],
+                "audio": asdict(state.audio) if state.audio else None,
+            },
+            indent=2,
+        )
+        + "\n",
         encoding="utf-8",
     )
     state.output_exists = output_path(state.scene_key).is_file()
+    state.final_exists = final_output_path(state.scene_key).is_file()
     return state
+
+
+def _invalidate_video(scene_key: str) -> None:
+    output_path(scene_key).unlink(missing_ok=True)
+    final_output_path(scene_key).unlink(missing_ok=True)
+
+
+def _invalidate_final(scene_key: str) -> None:
+    final_output_path(scene_key).unlink(missing_ok=True)
 
 
 def _take_for(shot: SceneShotMaster, stamp: str | None = None) -> motion_run.RecordedTake:
@@ -104,10 +148,6 @@ def _extract_samples(video: Path, duration: float, target: Path) -> list[tuple[f
     if not shutil.which("ffmpeg"):
         raise RoughCutError("ffmpeg is not installed on the Studio host.")
 
-    # Four or five low-resolution observations are enough to choose a short edit
-    # window. The first implementation sampled every second and sent every frame
-    # at normal image detail, which could consume an entire TPM bucket before the
-    # fifth shot. Spread samples across the take instead.
     count = min(5, max(3, int(round(duration / 1.75)) + 1))
     if count <= 1:
         sample_times = [0.0]
@@ -120,8 +160,21 @@ def _extract_samples(video: Path, duration: float, target: Path) -> list[tuple[f
         path = target / f"frame-{index:02d}.jpg"
         completed = subprocess.run(
             [
-                "ffmpeg", "-v", "error", "-y", "-ss", str(seconds), "-i", str(video),
-                "-frames:v", "1", "-vf", "scale=384:-2", "-q:v", "4", str(path),
+                "ffmpeg",
+                "-v",
+                "error",
+                "-y",
+                "-ss",
+                str(seconds),
+                "-i",
+                str(video),
+                "-frames:v",
+                "1",
+                "-vf",
+                "scale=384:-2",
+                "-q:v",
+                "4",
+                str(path),
             ],
             capture_output=True,
             timeout=60,
@@ -138,8 +191,15 @@ ANALYSIS_SCHEMA: dict[str, Any] = {
     "type": "object",
     "additionalProperties": False,
     "required": [
-        "decision", "in_seconds", "out_seconds", "identity_score", "deformation_score",
-        "continuity_score", "world_score", "energy_score", "rationale",
+        "decision",
+        "in_seconds",
+        "out_seconds",
+        "identity_score",
+        "deformation_score",
+        "continuity_score",
+        "world_score",
+        "energy_score",
+        "rationale",
     ],
     "properties": {
         "decision": {"type": "string", "enum": ["keep", "maybe", "reject"]},
@@ -156,13 +216,12 @@ ANALYSIS_SCHEMA: dict[str, Any] = {
 
 ANALYSIS_INSTRUCTIONS = """You are selecting a usable 1-3 second section from one generated video take for an editorial rough cut. The first supplied image is the authoritative production master. Remaining images are chronological samples from the generated take and are labelled with timestamps in the accompanying text.
 
-Judge visible evidence only. Priorities, in order: preserve the same people and identity as the master; avoid face/body/hand deformation; preserve starting orientation and continuity; keep wardrobe and physical state stable; keep the crowd/world credible and independent; then prefer natural energy and an accidental documentary moment. Do not reward spectacle. Do not invent a need to face the stage or camera.
+Judge visible evidence only. Priorities, in order: preserve the same people and identity as the master; avoid face/body/hand deformation; preserve starting orientation and continuity; keep wardrobe and physical state stable; keep the crowd/world credible and independent; then prefer natural energy and an accidental documentary moment. Brief foreground occlusion by anonymous crowd is acceptable when it reads as accidental and clears quickly. Do not reward spectacle. Do not invent a need to face the stage or camera.
 
 Choose the cleanest continuous window between 1.0 and 3.0 seconds long. Keep the requested range within the supplied video duration. If no clean window exists, return reject. Scores are 5=excellent, 1=unusable. deformation_score is 5 when there is no visible deformation and 1 when deformation is severe. Return concise rationale."""
 
 
 def _responses_create_with_retry(client: Any, **kwargs: Any) -> Any:
-    """Retry a short-lived provider rate limit without losing the whole analysis."""
     delays = (3.0, 8.0, 18.0)
     for attempt in range(len(delays) + 1):
         try:
@@ -272,11 +331,9 @@ def analyse(settings: Settings, shots: list[SceneShotMaster]) -> RoughCutState:
     if not approved:
         raise RoughCutError("No approved shot masters are available for this scene.")
 
-    # Save each completed shot immediately. A provider failure on shot five must
-    # not throw away four paid analyses and force them all through the TPM bucket
-    # again on the next click.
-    state = RoughCutState(scene_key=approved[0].scene_key, shots=[])
-    output_path(state.scene_key).unlink(missing_ok=True)
+    existing = load(approved[0].scene_key)
+    state = RoughCutState(scene_key=approved[0].scene_key, shots=[], audio=existing.audio)
+    _invalidate_video(state.scene_key)
     for shot in approved:
         row = _analyse_one(settings, shot, _take_for(shot))
         state.shots.append(row)
@@ -309,7 +366,7 @@ def update_shot(
         raise RoughCutError("Out time must be after in time.")
     if take_stamp is not None:
         row.take_stamp = take_stamp
-    output_path(scene_key).unlink(missing_ok=True)
+    _invalidate_video(scene_key)
     return _save(state)
 
 
@@ -349,12 +406,149 @@ def render(scene_key: str, shots: list[SceneShotMaster]) -> RoughCutState:
     concat_inputs = "".join(f"[v{index}]" for index in range(len(valid)))
     filters.append(f"{concat_inputs}concat=n={len(valid)}:v=1:a=0[outv]")
     command += [
-        "-filter_complex", ";".join(filters), "-map", "[outv]",
-        "-an", "-c:v", "libx264", "-preset", "medium", "-crf", "18",
-        "-movflags", "+faststart", "-pix_fmt", "yuv420p", str(output),
+        "-filter_complex",
+        ";".join(filters),
+        "-map",
+        "[outv]",
+        "-an",
+        "-c:v",
+        "libx264",
+        "-preset",
+        "medium",
+        "-crf",
+        "18",
+        "-movflags",
+        "+faststart",
+        "-pix_fmt",
+        "yuv420p",
+        str(output),
     ]
     completed = subprocess.run(command, capture_output=True, text=True, timeout=900, check=False)
     if completed.returncode != 0 or not output.is_file():
         detail = (completed.stderr or completed.stdout or "ffmpeg failed").strip().splitlines()
         raise RoughCutError(detail[-1] if detail else "ffmpeg failed to build the rough cut.")
+    _invalidate_final(scene_key)
+    return _save(state)
+
+
+def attach_audio(
+    settings: Settings,
+    session: Session,
+    scene_key: str,
+    *,
+    data: bytes,
+    filename: str,
+) -> RoughCutState:
+    """Ingest one owner-controlled music bed and attach it to this scene edit."""
+    store = FilesystemAssetStore(settings.assets_root_resolved)
+    try:
+        ingested = audio_library.ingest_audio(
+            session,
+            store,
+            data=data,
+            filename=filename,
+            role="scene_edit_music",
+            description=f"Owned music bed for {scene_key} rough cut",
+            metadata={"scene_key": scene_key, "usage": "rough_cut_music"},
+        )
+        asset = ingested.asset
+        if asset.status.value != "approved":
+            audio_library.approve_audio(session, asset, note=f"Owner supplied for {scene_key} edit")
+    except Exception as error:
+        raise RoughCutError(f"{scene_key}: audio upload failed: {error}") from error
+
+    state = load(scene_key)
+    state.audio = AudioEdit(
+        asset_id=str(asset.id),
+        filename=Path(filename).name,
+        mime_type=asset.mime_type,
+        duration_seconds=asset.duration_seconds,
+        in_seconds=0.0,
+        gain_db=-3.0,
+    )
+    _invalidate_final(scene_key)
+    return _save(state)
+
+
+def update_audio(
+    scene_key: str,
+    *,
+    in_seconds: float | None = None,
+    gain_db: float | None = None,
+) -> RoughCutState:
+    state = load(scene_key)
+    if state.audio is None:
+        raise RoughCutError("Upload an owned audio track first.")
+    if in_seconds is not None:
+        value = max(0.0, round(in_seconds, 3))
+        if state.audio.duration_seconds is not None and value >= state.audio.duration_seconds:
+            raise RoughCutError("Audio in-point must be inside the track.")
+        state.audio.in_seconds = value
+    if gain_db is not None:
+        state.audio.gain_db = max(-30.0, min(6.0, round(gain_db, 2)))
+    _invalidate_final(scene_key)
+    return _save(state)
+
+
+def audio_asset(settings: Settings, session: Session, scene_key: str) -> tuple[Path, str]:
+    state = load(scene_key)
+    if state.audio is None:
+        raise RoughCutError("No audio track is attached to this rough cut.")
+    try:
+        asset_id = uuid.UUID(state.audio.asset_id)
+    except ValueError as error:
+        raise RoughCutError("The attached audio asset ID is invalid.") from error
+    asset = session.get(AudioAsset, asset_id)
+    if asset is None:
+        raise RoughCutError("The attached audio asset no longer exists.")
+    path = FilesystemAssetStore(settings.assets_root_resolved).path_for(asset.storage_key)
+    if path is None:
+        raise RoughCutError("The attached audio bytes are unavailable.")
+    return path, asset.mime_type
+
+
+def render_final(settings: Settings, session: Session, scene_key: str) -> RoughCutState:
+    """Mux the owned music bed under the silent rough cut without re-encoding video."""
+    if not shutil.which("ffmpeg"):
+        raise RoughCutError("ffmpeg is not installed on the Studio host.")
+    state = load(scene_key)
+    video = output_path(scene_key)
+    if not video.is_file():
+        raise RoughCutError("Build the silent rough cut before adding audio.")
+    if state.audio is None:
+        raise RoughCutError("Upload an owned audio track before building the final.")
+    audio_path, _ = audio_asset(settings, session, scene_key)
+    output = final_output_path(scene_key)
+    command = [
+        "ffmpeg",
+        "-v",
+        "error",
+        "-y",
+        "-i",
+        str(video),
+        "-ss",
+        str(state.audio.in_seconds),
+        "-i",
+        str(audio_path),
+        "-map",
+        "0:v:0",
+        "-map",
+        "1:a:0",
+        "-c:v",
+        "copy",
+        "-af",
+        f"volume={state.audio.gain_db}dB",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-shortest",
+        "-movflags",
+        "+faststart",
+        str(output),
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, timeout=900, check=False)
+    if completed.returncode != 0 or not output.is_file():
+        detail = (completed.stderr or completed.stdout or "ffmpeg failed").strip().splitlines()
+        raise RoughCutError(detail[-1] if detail else "ffmpeg failed to build the final video.")
     return _save(state)
