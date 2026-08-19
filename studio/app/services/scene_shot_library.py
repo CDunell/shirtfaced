@@ -81,6 +81,27 @@ def list_scene(session: Session, scene_key: str) -> list[SceneShotMaster]:
     )
 
 
+def _ingest(
+    session: Session,
+    store: AssetStore,
+    *,
+    scene_key: str,
+    name: str,
+    data: bytes,
+    source_type: VisualAssetSourceType,
+):
+    return visual_library.ingest_asset(
+        session,
+        store,
+        data=data,
+        kind=VisualAssetKind.SCENE_MASTER,
+        source_type=source_type,
+        role=name,
+        description=f"{scene_key} direct 9:16 shot master — {name}",
+        metadata={"scene": scene_key, "shot_master": name, "pipeline": "direct_vertical"},
+    )
+
+
 def register(
     session: Session,
     store: AssetStore,
@@ -98,22 +119,15 @@ def register(
         )
     ).scalar_one_or_none()
 
-    ingested = visual_library.ingest_asset(
-        session,
-        store,
-        data=data,
-        kind=VisualAssetKind.SCENE_MASTER,
-        source_type=source_type,
-        role=name,
-        description=f"{scene_key} direct 9:16 shot master — {name}",
-        metadata={"scene": scene_key, "shot_master": name, "pipeline": "direct_vertical"},
+    ingested = _ingest(
+        session, store, scene_key=scene_key, name=name, data=data, source_type=source_type
     )
 
     if existing is not None:
         if existing.visual_asset_id != ingested.asset.id:
             if existing.status == "approved":
                 raise DirectShotError(
-                    f"{scene_key}/{name} is approved already. Reject or rename it before replacing bytes."
+                    f"{scene_key}/{name} is approved already. Use explicit replacement instead."
                 )
             existing.visual_asset_id = ingested.asset.id
             existing.status = "candidate"
@@ -135,6 +149,39 @@ def register(
         notes=notes,
     )
     session.add(shot)
+    session.flush()
+    return shot
+
+
+def replace(
+    session: Session,
+    store: AssetStore,
+    *,
+    shot: SceneShotMaster,
+    data: bytes,
+    source_type: VisualAssetSourceType = VisualAssetSourceType.GENERATED,
+) -> SceneShotMaster:
+    """Explicitly replace a shot's first frame and require fresh approval.
+
+    The shot identity and prompt override stay attached to the directing slot, but
+    the new pixels are always a candidate. Existing Veo takes remain historical;
+    they cannot be mistaken for takes from the replacement because the current
+    asset SHA changes and animation cannot run again until owner approval.
+    """
+    ingested = _ingest(
+        session,
+        store,
+        scene_key=shot.scene_key,
+        name=shot.name,
+        data=data,
+        source_type=source_type,
+    )
+    if shot.visual_asset_id == ingested.asset.id:
+        return shot
+    shot.visual_asset_id = ingested.asset.id
+    shot.status = "candidate"
+    shot.approved_at = None
+    shot.approved_by = None
     session.flush()
     return shot
 
