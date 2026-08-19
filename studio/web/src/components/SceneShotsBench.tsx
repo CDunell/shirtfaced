@@ -20,7 +20,6 @@ import {
   saveSceneShotMotionPrompt,
   sceneShotPreview,
   sceneShotTakeSource,
-  type SceneShotMaster,
   type SceneShotMasters,
   type SceneShotTake,
 } from "../api/sceneShots";
@@ -402,7 +401,11 @@ export function SceneShotsBench(): React.JSX.Element {
                         />
                         <ParagraphXSmall marginBottom={0}>
                           Latest take · {latest.duration_seconds ? `${latest.duration_seconds.toFixed(1)}s` : "duration pending"}
-                          {takes[selected.id]?.length ? ` · ${String(takes[selected.id].length)} total take${takes[selected.id].length === 1 ? "" : "s"}` : ""}
+                          {(() => {
+                            const selectedTakes = takes[selected.id];
+                            if (!selectedTakes?.length) return "";
+                            return ` · ${String(selectedTakes.length)} total take${selectedTakes.length === 1 ? "" : "s"}`;
+                          })()}
                         </ParagraphXSmall>
                       </div>
                     ) : (
