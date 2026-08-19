@@ -39,6 +39,27 @@ export interface SceneShotTake {
   silent: boolean;
 }
 
+export interface RoughCutShot {
+  shot_id: string;
+  shot_name: string;
+  take_stamp: string;
+  decision: "keep" | "maybe" | "reject";
+  in_seconds: number;
+  out_seconds: number;
+  identity_score: number;
+  deformation_score: number;
+  continuity_score: number;
+  world_score: number;
+  energy_score: number;
+  rationale: string;
+}
+
+export interface RoughCutState {
+  scene_key: string;
+  shots: RoughCutShot[];
+  output_exists: boolean;
+}
+
 async function failure(response: Response): Promise<ApiError> {
   const detail = await response
     .clone()
@@ -120,6 +141,30 @@ export function animateSceneShotMaster(shotId: string): Promise<SceneShotTake> {
 
 export function fetchSceneShotTakes(shotId: string): Promise<SceneShotTake[]> {
   return send<SceneShotTake[]>(`/api/shot-masters/${shotId}/takes`);
+}
+
+export function fetchRoughCut(sceneKey: string): Promise<RoughCutState> {
+  return send<RoughCutState>(`/api/scenes/${sceneKey}/rough-cut`);
+}
+
+export function analyseRoughCut(sceneKey: string): Promise<RoughCutState> {
+  return send<RoughCutState>(`/api/scenes/${sceneKey}/rough-cut/analyse`, "POST");
+}
+
+export function renderRoughCut(sceneKey: string): Promise<RoughCutState> {
+  return send<RoughCutState>(`/api/scenes/${sceneKey}/rough-cut/render`, "POST");
+}
+
+export function updateRoughCutShot(
+  sceneKey: string,
+  shotId: string,
+  patch: Partial<Pick<RoughCutShot, "decision" | "in_seconds" | "out_seconds" | "take_stamp">>,
+): Promise<RoughCutState> {
+  return send<RoughCutState>(`/api/scenes/${sceneKey}/rough-cut/shots/${shotId}`, "POST", patch);
+}
+
+export function roughCutSource(sceneKey: string): string {
+  return `/api/scenes/${sceneKey}/rough-cut/video`;
 }
 
 export function sceneShotPreview(assetId: string): string {
