@@ -40,7 +40,7 @@ function displayName(name: string): string {
   return name.length <= 3 ? name.toUpperCase() : name.replace(/-/g, " ");
 }
 
-function statusKind(status: string): TAG_KIND {
+function statusKind(status: string) {
   if (status === "approved") return TAG_KIND.positive;
   if (status === "rejected") return TAG_KIND.negative;
   return TAG_KIND.neutral;
