@@ -14,7 +14,11 @@ jobs:
     runs-on: ubuntu-latest
     concurrency:
       group: deploy-production
-      cancel-in-progress: false
+      # Studio changes are often committed as several small GitHub API writes.
+      # Never finish deploying an older intermediate commit after a newer main
+      # commit exists. rsync/build/migrations are idempotent and the next run
+      # re-applies the complete current tree before restart.
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v4
