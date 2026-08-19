@@ -173,7 +173,11 @@ export function SceneShotsBench(): React.JSX.Element {
           <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" })}>
             <strong className={css({ fontSize: "12px" })}>Veo motion prompt</strong>
             <Tag closeable={false} kind={promptMissing ? TAG_KIND.negative : TAG_KIND.neutral}>
-              {shot.motion_prompt_source}
+              {shot.motion_prompt_source === "override"
+                ? "edited"
+                : shot.motion_prompt_source === "configured"
+                  ? "default"
+                  : "missing"}
             </Tag>
           </div>
           <Textarea
@@ -182,7 +186,7 @@ export function SceneShotsBench(): React.JSX.Element {
               const value = event.currentTarget.value;
               setPromptDrafts((current) => ({ ...current, [shot.id]: value }));
             }}
-            placeholder="Describe only the motion this exact first frame should perform."
+            placeholder="Describe the motion this first frame should perform."
             overrides={{
               Input: {
                 style: {
@@ -217,21 +221,14 @@ export function SceneShotsBench(): React.JSX.Element {
                 onClick={() => {
                   void act(`reset-prompt-${shot.id}`, async () => {
                     await saveSceneShotMotionPrompt(shot.id, null);
-                    return `${shot.name}: restored configured Veo prompt.`;
+                    return `${shot.name}: restored default Veo prompt.`;
                   });
                 }}
               >
-                Reset to configured
+                Reset to default
               </Button>
             ) : null}
           </div>
-          <ParagraphXSmall margin={0}>
-            {shot.motion_prompt_source === "override"
-              ? "Saved override. Animate and every redo use this text until reset."
-              : shot.motion_prompt_source === "configured"
-                ? "Loaded from the shot/scene prompt in the world configuration. Edit and save to override it."
-                : "No motion prompt. Save one before animating."}
-          </ParagraphXSmall>
 
           {latest ? (
             <video
@@ -333,9 +330,7 @@ export function SceneShotsBench(): React.JSX.Element {
       </div>
 
       <ParagraphSmall>
-        A scene owns a small set of native vertical first frames. Register as many candidates as needed,
-        approve at most five, edit the Veo motion prompt under each master, then animate or redo that exact frame.
-        There is no 3×3 contact sheet and no panel extraction in this lane.
+        Upload candidate vertical shot masters, approve up to five for production, edit the motion prompt for each shot, then generate and review Veo takes.
       </ParagraphSmall>
 
       <SectionTitle>Shot masters</SectionTitle>
@@ -352,7 +347,7 @@ export function SceneShotsBench(): React.JSX.Element {
       {candidates.length ? (
         <div className={grid}>{candidates.map(renderShot)}</div>
       ) : (
-        <ParagraphSmall>No direct shot masters registered for {sceneKey} yet.</ParagraphSmall>
+        <ParagraphSmall>No shot masters registered for {sceneKey} yet.</ParagraphSmall>
       )}
     </>
   );
