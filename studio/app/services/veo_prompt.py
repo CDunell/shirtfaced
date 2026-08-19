@@ -3,7 +3,7 @@
 The first frame already owns appearance, composition and geography. The prompt
 therefore has one job: constrain what may change through time. Keeping those
 constraints as small named functions makes the behaviour reusable across scenes
-without hard-coding pub-specific text into the runner.
+without hard-coding scene-specific text into the runner.
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ def bounded_subject_motion() -> str:
 
 
 def observational_camera() -> str:
-    """The camera is another body in the crowd, not a cinematography instruction."""
+    """The camera is another body in the event, not a cinematography instruction."""
     return (
         "CAMERA — Keep the supplied composition. The phone is physically inside the event: "
         "tiny handheld sway, small crowd bumps and imperfect corrective settling only. No "
@@ -49,6 +49,18 @@ def world_independence() -> str:
         "with mates or moving through the room. Do not synchronise the crowd or progressively "
         "redirect collective attention toward one person. Maintain approximately the same "
         "crowd density and energy from first frame to last."
+    )
+
+
+def physical_state_invariance() -> str:
+    """Prevent Veo from inventing a new material/health state as motion accumulates."""
+    return (
+        "PHYSICAL STATE — Preserve the physical condition shown in the first frame. Skin, hair "
+        "and clothing may move naturally but must not acquire a new state through time. Do not "
+        "invent or progressively add sweat, wet or glossy skin, soaked or darkened clothing, "
+        "flushing, heat distress, grime, wounds, bruising, tears, blood, spills or other new "
+        "material conditions unless the shot direction explicitly requires one already implied "
+        "by the first frame."
     )
 
 
@@ -88,6 +100,7 @@ def build_motion_prompt(scene_direction: str) -> str:
             bounded_subject_motion(),
             observational_camera(),
             world_independence(),
+            physical_state_invariance(),
             "SCENE / SHOT DIRECTION — " + direction,
             first_frame_locks(),
             finish_state(),
