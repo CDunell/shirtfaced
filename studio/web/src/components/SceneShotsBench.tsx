@@ -16,6 +16,7 @@ import {
   fetchShotMasterScenes,
   registerSceneShotMaster,
   rejectSceneShotMaster,
+  replaceSceneShotMaster,
   saveSceneShotMotionPrompt,
   sceneShotPreview,
   sceneShotTakeSource,
@@ -35,28 +36,39 @@ function cleanName(name: string): string {
   );
 }
 
+function label(name: string): string {
+  return name.length <= 3 ? name.toUpperCase() : name.replace(/-/g, " ");
+}
+
 export function SceneShotsBench(): React.JSX.Element {
   const [css, theme] = useStyletron();
   const [sceneKeys, setSceneKeys] = useState<string[]>([]);
   const [sceneKey, setSceneKey] = useState("W01-P28");
   const [scene, setScene] = useState<SceneShotMasters | null>(null);
+  const [selectedShotId, setSelectedShotId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [takes, setTakes] = useState<Record<string, SceneShotTake[]>>({});
-  const [promptDrafts, setPromptDrafts] = useState<Record<string, string>>({});
-  const filesRef = useRef<HTMLInputElement>(null);
+  const [promptDraft, setPromptDraft] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [newName, setNewName] = useState("");
+  const initialUploadRef = useRef<HTMLInputElement>(null);
+  const replaceRef = useRef<HTMLInputElement>(null);
+  const addRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(async (key: string) => {
+  const load = useCallback(async (key: string, preserveShotId?: string | null) => {
     const [keys, current] = await Promise.all([
       fetchShotMasterScenes(),
       fetchSceneShotMasters(key),
     ]);
     setSceneKeys(keys);
     setScene(current);
-    setPromptDrafts(
-      Object.fromEntries(current.shot_masters.map((shot) => [shot.id, shot.motion_prompt ?? ""])),
-    );
+    setSelectedShotId((currentId) => {
+      const wanted = preserveShotId ?? currentId;
+      return wanted && current.shot_masters.some((shot) => shot.id === wanted) ? wanted : null;
+    });
+
     const found: Record<string, SceneShotTake[]> = {};
     await Promise.all(
       current.shot_masters.map(async (shot) => {
@@ -68,19 +80,39 @@ export function SceneShotsBench(): React.JSX.Element {
   }, []);
 
   useEffect(() => {
-    void load(sceneKey).catch((cause: unknown) => {
+    setSelectedShotId(null);
+    setPromptDraft("");
+    setShowAdd(false);
+    void load(sceneKey, null).catch((cause: unknown) => {
       setError(cause instanceof ApiError ? cause.message : "Scenes are unavailable.");
     });
   }, [load, sceneKey]);
 
+  const shots = useMemo(
+    () => [...(scene?.shot_masters ?? [])].sort((a, b) => a.sort_order - b.sort_order),
+    [scene],
+  );
+  const selected = useMemo(
+    () => shots.find((shot) => shot.id === selectedShotId) ?? null,
+    [selectedShotId, shots],
+  );
+  const latest = selected ? takes[selected.id]?.[0] ?? null : null;
+  const approved = scene?.approved_count ?? 0;
+  const maximum = scene?.maximum_approved ?? 5;
+
+  useEffect(() => {
+    setPromptDraft(selected?.motion_prompt ?? "");
+    setShowAdd(false);
+  }, [selected]);
+
   const act = useCallback(
-    async (label: string, work: () => Promise<string | null>) => {
-      setBusy(label);
+    async (key: string, work: () => Promise<string | null>, preserve?: string | null) => {
+      setBusy(key);
       setError(null);
       setNote(null);
       try {
         const message = await work();
-        await load(sceneKey);
+        await load(sceneKey, preserve ?? selectedShotId);
         if (message) setNote(message);
       } catch (cause: unknown) {
         setError(cause instanceof ApiError ? cause.message : "That did not go through.");
@@ -88,213 +120,41 @@ export function SceneShotsBench(): React.JSX.Element {
         setBusy(null);
       }
     },
-    [load, sceneKey],
+    [load, sceneKey, selectedShotId],
   );
 
-  const approved = scene?.approved_count ?? 0;
-  const maximum = scene?.maximum_approved ?? 5;
-  const candidates = useMemo(
-    () => [...(scene?.shot_masters ?? [])].sort((a, b) => a.sort_order - b.sort_order),
-    [scene],
-  );
+  const controls = css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" });
+  const panel = css({
+    border: `1px solid ${theme.colors.borderOpaque}`,
+    borderRadius: "14px",
+    backgroundColor: theme.colors.backgroundSecondary,
+    padding: "14px",
+  });
+  const mono = css({ fontFamily: "monospace", fontSize: "11px", color: theme.colors.contentTertiary });
 
-  const onUpload = useCallback(() => {
-    const files = [...(filesRef.current?.files ?? [])];
-    if (!files.length || !sceneKey.trim()) return;
-    void act("upload", async () => {
-      for (const file of files) {
-        await registerSceneShotMaster(sceneKey.trim(), file, cleanName(file.name));
-      }
-      if (filesRef.current) filesRef.current.value = "";
-      return `${String(files.length)} shot master${files.length === 1 ? "" : "s"} registered as candidates.`;
-    });
+  const onInitialUpload = useCallback(() => {
+    const files = [...(initialUploadRef.current?.files ?? [])];
+    if (!files.length) return;
+    void act("initial-upload", async () => {
+      for (const file of files) await registerSceneShotMaster(sceneKey, file, cleanName(file.name));
+      if (initialUploadRef.current) initialUploadRef.current.value = "";
+      return `${String(files.length)} shot master${files.length === 1 ? "" : "s"} added.`;
+    }, null);
   }, [act, sceneKey]);
 
-  const card = css({
-    border: `1px solid ${theme.colors.borderOpaque}`,
-    borderRadius: "12px",
-    overflow: "hidden",
-    backgroundColor: theme.colors.backgroundSecondary,
-    display: "flex",
-    flexDirection: "column",
-    minWidth: 0,
-  });
-  const controls = css({
-    display: "flex",
-    gap: "8px",
-    flexWrap: "wrap",
-    alignItems: "center",
-  });
-  const grid = css({
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-    gap: "12px",
-    marginTop: "12px",
-  });
-  const mono = css({
-    fontFamily: "monospace",
-    fontSize: "11px",
-    color: theme.colors.contentTertiary,
-  });
-
-  const renderShot = (shot: SceneShotMaster) => {
-    const latest = takes[shot.id]?.[0] ?? null;
-    const canApprove = shot.status !== "approved" && approved < maximum;
-    const prompt = promptDrafts[shot.id] ?? shot.motion_prompt ?? "";
-    const promptChanged = prompt !== (shot.motion_prompt ?? "");
-    const promptMissing = !prompt.trim();
-    return (
-      <article key={shot.id} className={card}>
-        <button
-          type="button"
-          onClick={() => window.open(sceneShotPreview(shot.asset.id), "_blank")}
-          className={css({ border: 0, padding: 0, background: "transparent", cursor: "zoom-in" })}
-        >
-          <img
-            src={sceneShotPreview(shot.asset.id)}
-            alt={`${shot.scene_key} ${shot.name}`}
-            className={css({ width: "100%", aspectRatio: "9 / 16", objectFit: "cover", display: "block" })}
-          />
-        </button>
-        <div className={css({ padding: "10px", display: "flex", flexDirection: "column", gap: "8px" })}>
-          <div className={css({ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center" })}>
-            <strong>{shot.name}</strong>
-            <Tag
-              closeable={false}
-              kind={shot.status === "approved" ? TAG_KIND.positive : shot.status === "rejected" ? TAG_KIND.negative : TAG_KIND.neutral}
-            >
-              {shot.status}
-            </Tag>
-          </div>
-          <span className={mono}>
-            {shot.asset.width}×{shot.asset.height} · {shot.asset.sha256.slice(0, 12)}
-          </span>
-
-          <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" })}>
-            <strong className={css({ fontSize: "12px" })}>Veo motion prompt</strong>
-            <Tag closeable={false} kind={promptMissing ? TAG_KIND.negative : TAG_KIND.neutral}>
-              {shot.motion_prompt_source === "override"
-                ? "edited"
-                : shot.motion_prompt_source === "configured"
-                  ? "default"
-                  : "missing"}
-            </Tag>
-          </div>
-          <Textarea
-            value={prompt}
-            onChange={(event) => {
-              const value = event.currentTarget.value;
-              setPromptDrafts((current) => ({ ...current, [shot.id]: value }));
-            }}
-            placeholder="Describe the motion this first frame should perform."
-            overrides={{
-              Input: {
-                style: {
-                  minHeight: "220px",
-                  fontFamily: "monospace",
-                  fontSize: "12px",
-                  lineHeight: "18px",
-                },
-              },
-            }}
-          />
-          <div className={controls}>
-            <Button
-              size={SIZE.compact}
-              kind={BUTTON_KIND.secondary}
-              disabled={!promptChanged || promptMissing}
-              isLoading={busy === `prompt-${shot.id}`}
-              onClick={() => {
-                void act(`prompt-${shot.id}`, async () => {
-                  await saveSceneShotMotionPrompt(shot.id, prompt);
-                  return `${shot.name}: Veo motion prompt saved.`;
-                });
-              }}
-            >
-              Save prompt
-            </Button>
-            {shot.motion_prompt_source === "override" ? (
-              <Button
-                size={SIZE.compact}
-                kind={BUTTON_KIND.tertiary}
-                isLoading={busy === `reset-prompt-${shot.id}`}
-                onClick={() => {
-                  void act(`reset-prompt-${shot.id}`, async () => {
-                    await saveSceneShotMotionPrompt(shot.id, null);
-                    return `${shot.name}: restored default Veo prompt.`;
-                  });
-                }}
-              >
-                Reset to default
-              </Button>
-            ) : null}
-          </div>
-
-          {latest ? (
-            <video
-              key={latest.stamp}
-              src={sceneShotTakeSource(shot.id, latest.stamp)}
-              controls
-              playsInline
-              preload="metadata"
-              className={css({ width: "100%", borderRadius: "8px", background: "#000" })}
-            />
-          ) : null}
-
-          <div className={controls}>
-            {shot.status === "approved" ? (
-              <Button
-                size={SIZE.compact}
-                disabled={promptMissing || promptChanged}
-                isLoading={busy === `animate-${shot.id}`}
-                onClick={() => {
-                  void act(`animate-${shot.id}`, async () => {
-                    await animateSceneShotMaster(shot.id);
-                    return `${shot.name}: Veo take generated.`;
-                  });
-                }}
-              >
-                {latest ? "Redo Veo" : "Animate"}
-              </Button>
-            ) : (
-              <Button
-                size={SIZE.compact}
-                disabled={!canApprove}
-                isLoading={busy === `approve-${shot.id}`}
-                onClick={() => {
-                  void act(`approve-${shot.id}`, async () => {
-                    await approveSceneShotMaster(shot.id);
-                    return `${shot.name} approved for this scene.`;
-                  });
-                }}
-              >
-                Approve
-              </Button>
-            )}
-            {shot.status !== "rejected" ? (
-              <Button
-                size={SIZE.compact}
-                kind={BUTTON_KIND.secondary}
-                isLoading={busy === `reject-${shot.id}`}
-                onClick={() => {
-                  void act(`reject-${shot.id}`, async () => {
-                    await rejectSceneShotMaster(shot.id);
-                    return `${shot.name} rejected.`;
-                  });
-                }}
-              >
-                Reject
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      </article>
-    );
-  };
+  const promptChanged = selected ? promptDraft !== (selected.motion_prompt ?? "") : false;
+  const promptMissing = !promptDraft.trim();
 
   return (
     <>
-      <PageTitle meta={`${String(approved)}/${String(maximum)} approved`}>Scenes</PageTitle>
+      <PageTitle meta={`${String(approved)}/${String(maximum)} approved`}>
+        {sceneKey}{scene?.title ? ` — ${scene.title}` : ""}
+      </PageTitle>
+      {scene?.description ? (
+        <ParagraphSmall className={css({ maxWidth: "760px", marginTop: "-4px" })}>
+          {scene.description}
+        </ParagraphSmall>
+      ) : null}
 
       {error ? (
         <Notification kind={NOTIFICATION_KIND.negative} overrides={{ Body: { style: { width: "auto" } } }}>
@@ -307,48 +167,270 @@ export function SceneShotsBench(): React.JSX.Element {
         </Notification>
       ) : null}
 
-      <SectionTitle>Scene</SectionTitle>
-      <div className={controls}>
-        <div className={css({ width: "220px" })}>
-          <Input
-            value={sceneKey}
-            onChange={(event) => setSceneKey(event.currentTarget.value.toUpperCase())}
-            placeholder="W01-P28"
-            size={SIZE.compact}
-          />
+      {sceneKeys.length > 1 ? (
+        <div className={css({ marginTop: "18px" })}>
+          <SectionTitle>Scene</SectionTitle>
+          <div className={controls}>
+            {sceneKeys.map((key) => (
+              <Button
+                key={key}
+                size={SIZE.compact}
+                kind={key === sceneKey ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                onClick={() => setSceneKey(key)}
+              >
+                {key}
+              </Button>
+            ))}
+          </div>
         </div>
-        {sceneKeys.map((key) => (
-          <Button
-            key={key}
-            size={SIZE.compact}
-            kind={key === sceneKey ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
-            onClick={() => setSceneKey(key)}
-          >
-            {key}
-          </Button>
-        ))}
-      </div>
+      ) : null}
 
-      <ParagraphSmall>
-        Upload candidate vertical shot masters, approve up to five for production, edit the motion prompt for each shot, then generate and review Veo takes.
-      </ParagraphSmall>
-
-      <SectionTitle>Shot masters</SectionTitle>
-      <div className={controls}>
-        <input ref={filesRef} type="file" accept="image/png,image/jpeg,image/webp" multiple />
-        <Button size={SIZE.compact} isLoading={busy === "upload"} onClick={onUpload}>
-          Register files
-        </Button>
-        <ParagraphXSmall margin={0}>
-          {String(candidates.length)} candidates · {String(approved)}/{String(maximum)} approved
-        </ParagraphXSmall>
-      </div>
-
-      {candidates.length ? (
-        <div className={grid}>{candidates.map(renderShot)}</div>
+      {shots.length === 0 ? (
+        <div className={css({ marginTop: "24px" })}>
+          <SectionTitle>Add shot masters</SectionTitle>
+          <div className={panel}>
+            <ParagraphSmall>No shot masters are registered for this scene yet.</ParagraphSmall>
+            <div className={controls}>
+              <input ref={initialUploadRef} type="file" accept="image/png,image/jpeg,image/webp" multiple />
+              <Button size={SIZE.compact} isLoading={busy === "initial-upload"} onClick={onInitialUpload}>
+                Upload masters
+              </Button>
+            </div>
+          </div>
+        </div>
       ) : (
-        <ParagraphSmall>No shot masters registered for {sceneKey} yet.</ParagraphSmall>
+        <>
+          <div className={css({ marginTop: "24px" })}>
+            <SectionTitle>Shot</SectionTitle>
+            <div className={controls}>
+              {shots.map((shot) => (
+                <Button
+                  key={shot.id}
+                  size={SIZE.compact}
+                  kind={shot.id === selectedShotId ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                  onClick={() => setSelectedShotId(shot.id)}
+                >
+                  {label(shot.name)} · {shot.status}
+                </Button>
+              ))}
+            </div>
+            {!selected ? (
+              <ParagraphXSmall className={css({ color: theme.colors.contentTertiary })}>
+                Select a shot to open its production workspace.
+              </ParagraphXSmall>
+            ) : null}
+          </div>
+
+          {selected ? (
+            <section className={css({ marginTop: "20px" })}>
+              <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "10px" })}>
+                <div>
+                  <h2 className={css({ margin: 0, fontSize: "22px" })}>{label(selected.name)}</h2>
+                  <span className={mono}>
+                    {selected.asset.width}×{selected.asset.height} · {selected.asset.sha256.slice(0, 12)}
+                  </span>
+                </div>
+                <Tag
+                  closeable={false}
+                  kind={selected.status === "approved" ? TAG_KIND.positive : selected.status === "rejected" ? TAG_KIND.negative : TAG_KIND.neutral}
+                >
+                  {selected.status}
+                </Tag>
+              </div>
+
+              <div className={css({ display: "grid", gridTemplateColumns: "minmax(240px, 360px) minmax(0, 1fr)", gap: "18px", alignItems: "start", '@media screen and (max-width: 760px)': { gridTemplateColumns: "1fr" } })}>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => window.open(sceneShotPreview(selected.asset.id), "_blank")}
+                    className={css({ border: 0, padding: 0, background: "transparent", cursor: "zoom-in", width: "100%" })}
+                  >
+                    <img
+                      src={sceneShotPreview(selected.asset.id)}
+                      alt={`${selected.scene_key} ${selected.name}`}
+                      className={css({ width: "100%", aspectRatio: "9 / 16", objectFit: "cover", display: "block", borderRadius: "12px" })}
+                    />
+                  </button>
+
+                  <div className={css({ marginTop: "10px" })}>
+                    <div className={controls}>
+                      {selected.status !== "approved" ? (
+                        <Button
+                          size={SIZE.compact}
+                          disabled={approved >= maximum}
+                          isLoading={busy === `approve-${selected.id}`}
+                          onClick={() => void act(`approve-${selected.id}`, async () => {
+                            await approveSceneShotMaster(selected.id);
+                            return `${selected.name} approved.`;
+                          })}
+                        >
+                          Approve
+                        </Button>
+                      ) : null}
+                      {selected.status !== "rejected" ? (
+                        <Button
+                          size={SIZE.compact}
+                          kind={BUTTON_KIND.secondary}
+                          isLoading={busy === `reject-${selected.id}`}
+                          onClick={() => void act(`reject-${selected.id}`, async () => {
+                            await rejectSceneShotMaster(selected.id);
+                            return `${selected.name} rejected.`;
+                          })}
+                        >
+                          Reject
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+
+                <div className={css({ display: "flex", flexDirection: "column", gap: "14px" })}>
+                  <div className={panel}>
+                    <div className={css({ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center", marginBottom: "8px" })}>
+                      <strong>Veo motion prompt</strong>
+                      <Tag closeable={false} kind={promptMissing ? TAG_KIND.negative : TAG_KIND.neutral}>
+                        {selected.motion_prompt_source === "override" ? "edited" : selected.motion_prompt_source === "configured" ? "default" : "missing"}
+                      </Tag>
+                    </div>
+                    <Textarea
+                      value={promptDraft}
+                      onChange={(event) => setPromptDraft(event.currentTarget.value)}
+                      placeholder="Describe the motion this first frame should perform."
+                      overrides={{ Input: { style: { minHeight: "180px", fontFamily: "monospace", fontSize: "12px", lineHeight: "18px" } } }}
+                    />
+                    <div className={css({ ...controls, marginTop: "8px" })}>
+                      <Button
+                        size={SIZE.compact}
+                        kind={BUTTON_KIND.secondary}
+                        disabled={!promptChanged || promptMissing}
+                        isLoading={busy === `prompt-${selected.id}`}
+                        onClick={() => void act(`prompt-${selected.id}`, async () => {
+                          await saveSceneShotMotionPrompt(selected.id, promptDraft);
+                          return `${selected.name}: prompt saved.`;
+                        })}
+                      >
+                        Save prompt
+                      </Button>
+                      {selected.motion_prompt_source === "override" ? (
+                        <Button
+                          size={SIZE.compact}
+                          kind={BUTTON_KIND.tertiary}
+                          isLoading={busy === `reset-${selected.id}`}
+                          onClick={() => void act(`reset-${selected.id}`, async () => {
+                            await saveSceneShotMotionPrompt(selected.id, null);
+                            return `${selected.name}: default prompt restored.`;
+                          })}
+                        >
+                          Reset to default
+                        </Button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div className={panel}>
+                    <strong>Veo</strong>
+                    <div className={css({ ...controls, marginTop: "8px" })}>
+                      <Button
+                        size={SIZE.compact}
+                        disabled={selected.status !== "approved" || promptMissing || promptChanged}
+                        isLoading={busy === `animate-${selected.id}`}
+                        onClick={() => void act(`animate-${selected.id}`, async () => {
+                          await animateSceneShotMaster(selected.id);
+                          return `${selected.name}: Veo take generated.`;
+                        })}
+                      >
+                        {latest ? "Redo Veo" : "Animate"}
+                      </Button>
+                      {selected.status !== "approved" ? <ParagraphXSmall margin={0}>Approve this master before animation.</ParagraphXSmall> : null}
+                    </div>
+
+                    {latest ? (
+                      <div className={css({ marginTop: "12px" })}>
+                        <video
+                          key={latest.stamp}
+                          src={sceneShotTakeSource(selected.id, latest.stamp)}
+                          controls
+                          playsInline
+                          preload="metadata"
+                          className={css({ width: "100%", borderRadius: "10px", background: "#000" })}
+                        />
+                        <ParagraphXSmall marginBottom={0}>
+                          Latest take · {latest.duration_seconds ? `${latest.duration_seconds.toFixed(1)}s` : "duration pending"}
+                          {takes[selected.id]?.length ? ` · ${String(takes[selected.id].length)} total take${takes[selected.id].length === 1 ? "" : "s"}` : ""}
+                        </ParagraphXSmall>
+                      </div>
+                    ) : (
+                      <ParagraphXSmall>No Veo take yet.</ParagraphXSmall>
+                    )}
+                  </div>
+
+                  <div className={panel}>
+                    <strong>Master file</strong>
+                    <ParagraphXSmall>Replacing the image returns this shot to candidate so the new pixels require approval before Veo.</ParagraphXSmall>
+                    <div className={controls}>
+                      <input ref={replaceRef} type="file" accept="image/png,image/jpeg,image/webp" />
+                      <Button
+                        size={SIZE.compact}
+                        kind={BUTTON_KIND.secondary}
+                        isLoading={busy === `replace-${selected.id}`}
+                        onClick={() => {
+                          const file = replaceRef.current?.files?.[0];
+                          if (!file) return;
+                          void act(`replace-${selected.id}`, async () => {
+                            await replaceSceneShotMaster(selected.id, file);
+                            if (replaceRef.current) replaceRef.current.value = "";
+                            return `${selected.name}: master replaced; approval required.`;
+                          });
+                        }}
+                      >
+                        Replace master
+                      </Button>
+                      <Button size={SIZE.compact} kind={BUTTON_KIND.tertiary} onClick={() => setShowAdd((value) => !value)}>
+                        {showAdd ? "Cancel add" : "Add another master"}
+                      </Button>
+                    </div>
+
+                    {showAdd ? (
+                      <div className={css({ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" })}>
+                        <div className={css({ maxWidth: "260px" })}>
+                          <Input value={newName} onChange={(event) => setNewName(event.currentTarget.value)} placeholder="shot name, e.g. c" size={SIZE.compact} />
+                        </div>
+                        <div className={controls}>
+                          <input ref={addRef} type="file" accept="image/png,image/jpeg,image/webp" />
+                          <Button
+                            size={SIZE.compact}
+                            kind={BUTTON_KIND.secondary}
+                            isLoading={busy === "add-master"}
+                            onClick={() => {
+                              const file = addRef.current?.files?.[0];
+                              const name = cleanName(newName || file?.name || "");
+                              if (!file || !name) return;
+                              void act("add-master", async () => {
+                                const created = await registerSceneShotMaster(sceneKey, file, name);
+                                setNewName("");
+                                setShowAdd(false);
+                                if (addRef.current) addRef.current.value = "";
+                                setSelectedShotId(created.id);
+                                return `${name}: master added.`;
+                              }, createdPlaceholder);
+                            }}
+                          >
+                            Add master
+                          </Button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            </section>
+          ) : null}
+        </>
       )}
     </>
   );
 }
+
+// ``act`` accepts a preserve id. New-master creation sets selection directly after
+// reload, so this sentinel forces the reload to avoid preserving the prior shot.
+const createdPlaceholder = null;
