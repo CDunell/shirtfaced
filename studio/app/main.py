@@ -28,6 +28,7 @@ from app.routes import (
     printing,
     production_library,
     renderer,
+    rough_cut,
     scene_shot_masters,
     social,
     vintage_agents,
@@ -70,6 +71,7 @@ def create_app() -> FastAPI:
     application.include_router(visual_library.router)
     application.include_router(production_library.router)
     application.include_router(scene_shot_masters.router)
+    application.include_router(rough_cut.router)
     application.include_router(design.router)
     application.include_router(design_advisor.router)
     application.include_router(compose.router)
