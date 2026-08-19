@@ -410,10 +410,16 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
     )
 
     tradition_label = direction.tradition.replace("-", " ")
-    phrase_line = f' "{phrase.strip()}" text.' if phrase.strip() else ""
+    # The input describes what to depict -- it is not a literal string to
+    # typeset. Wrapping it in quotes and calling it "text" told the image
+    # generator to print the sentence "Modern design twist on the classic
+    # surf tee" onto a shirt, which is not what anyone meant by typing that.
+    # If the idea names an actual short slogan, it will read as one in the
+    # description; nothing here forces it to.
+    idea_line = f" Design concept: {phrase.strip()}." if phrase.strip() else ""
 
     return (
-        f"T-shirt graphic design, {tradition_label} style,{phrase_line} "
+        f"T-shirt graphic design, {tradition_label} style.{idea_line} "
         f"{placement_prose.capitalize()} ({scale_prose}). "
         f"Screen-print aesthetic, exactly {ink_count} flat ink colors, no gradients or "
         f"photographic shading. {polarity_prose} {archetype_prose} "
