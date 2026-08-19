@@ -26,6 +26,13 @@ jobs:
           # Social change detection needs the previous push commit.
           fetch-depth: 2
 
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
       - name: Detect Social asset changes
         id: social
         shell: bash
@@ -37,31 +44,48 @@ jobs:
           fi
 
           before="${{ github.event.before }}"
+          source_changed=true
           if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "No usable previous commit: Social assets will be rebuilt."
-            exit 0
-          fi
-
-          if git diff --quiet "$before" "$GITHUB_SHA" -- \
+            echo "No usable previous commit: treating Social sources as changed."
+          elif git diff --quiet "$before" "$GITHUB_SHA" -- \
             scripts/prepare-social-brand-sources.mjs \
             scripts/build-social-assets.mjs \
             DEV/logo-lockup.svg \
             DEV/shirtfaced.svg \
             DEV/smiley.svg; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Social sources unchanged: skipping generation, apt and rasterisation."
-          else
-            echo "changed=true" >> "$GITHUB_OUTPUT"
-            echo "Social sources changed: rebuilding Social assets."
+            source_changed=false
           fi
 
-      - name: Set up deploy key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+          if [ "$source_changed" = "true" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Social sources changed: rebuilding Social assets."
+            exit 0
+          fi
+
+          # Source files are unchanged, but that only means skipping the rebuild
+          # is safe if the box already has the rasterised assets from a previous
+          # deploy. A fresh or wiped box has never produced them, and
+          # deploy-studio.sh's "Checking Social render assets" step requires
+          # every file below to exist -- skipping generation there would fail
+          # the deploy every time until a Social source file happens to change.
+          if ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/light-corner-mark-4x5.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/dark-corner-mark-4x5.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/adaptive-corner-mark-4x5.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/light-feed-4x5.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/dark-feed-4x5.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/adaptive-feed-badge-4x5.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/light-title-bug-9x16.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/dark-title-bug-9x16.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/light-reel-9x16.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/dark-reel-9x16.png &&
+             test -s /home/ubuntu/shirtfaced-studio/public/social-assets/v3/adaptive-reel-badge-9x16.png'; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Social sources unchanged and assets already present on the box: skipping generation, apt and rasterisation."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Social sources unchanged but the box is missing rasterised assets: rebuilding Social assets."
+          fi
 
       - name: Sync admin app
         run: |
