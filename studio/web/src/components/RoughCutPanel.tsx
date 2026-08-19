@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useStyletron } from "baseui";
 import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
@@ -10,8 +10,13 @@ import {
   analyseRoughCut,
   fetchRoughCut,
   renderRoughCut,
+  renderRoughCutFinal,
+  roughCutAudioSource,
+  roughCutFinalSource,
   roughCutSource,
+  updateRoughCutAudio,
   updateRoughCutShot,
+  uploadRoughCutAudio,
   type RoughCutShot,
   type RoughCutState,
 } from "../api/sceneShots";
@@ -37,6 +42,8 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [videoVersion, setVideoVersion] = useState(0);
+  const [finalVersion, setFinalVersion] = useState(0);
+  const audioRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setState(await fetchRoughCut(sceneKey));
@@ -57,6 +64,7 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
       setState(next);
       setNote(message);
       if (next.output_exists) setVideoVersion((value) => value + 1);
+      if (next.final_exists) setFinalVersion((value) => value + 1);
     } catch (cause: unknown) {
       setError(cause instanceof ApiError ? cause.message : "That did not go through.");
     } finally {
@@ -91,7 +99,7 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
     "@media screen and (max-width: 820px)": { gridTemplateColumns: "1fr" },
   });
   const numberInput = css({
-    width: "76px",
+    width: "82px",
     padding: "7px 8px",
     borderRadius: "7px",
     border: `1px solid ${theme.colors.borderOpaque}`,
@@ -214,7 +222,122 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
             preload="metadata"
             className={css({ width: "100%", borderRadius: "12px", background: "#000" })}
           />
-          <ParagraphXSmall marginTop="4px">Silent rough cut. Audio bed comes later.</ParagraphXSmall>
+          <ParagraphXSmall marginTop="4px">Silent rough cut.</ParagraphXSmall>
+        </div>
+      ) : null}
+
+      {state?.output_exists ? (
+        <div className={css({ marginTop: "20px" })}>
+          <strong>Audio</strong>
+          <ParagraphXSmall marginTop="2px">
+            Use one rights-owned music bed. Veo audio stays removed.
+          </ParagraphXSmall>
+          <div className={panel}>
+            <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" })}>
+              <input ref={audioRef} type="file" accept="audio/*,.mp3,.wav,.flac,.m4a,.aif,.aiff,.ogg" />
+              <Button
+                size={SIZE.compact}
+                kind={BUTTON_KIND.secondary}
+                isLoading={busy === "audio-upload"}
+                onClick={() => {
+                  const file = audioRef.current?.files?.[0];
+                  if (!file) return;
+                  void run(
+                    "audio-upload",
+                    () => uploadRoughCutAudio(sceneKey, file),
+                    `${file.name}: audio attached.`,
+                  ).then(() => {
+                    if (audioRef.current) audioRef.current.value = "";
+                  });
+                }}
+              >
+                {state.audio ? "Replace track" : "Upload owned track"}
+              </Button>
+            </div>
+
+            {state.audio ? (
+              <div className={css({ marginTop: "12px" })}>
+                <ParagraphSmall marginTop={0} marginBottom="6px">
+                  <strong>{state.audio.filename}</strong>
+                  {state.audio.duration_seconds ? ` · ${state.audio.duration_seconds.toFixed(1)}s` : ""}
+                </ParagraphSmall>
+                <audio
+                  src={`${roughCutAudioSource(sceneKey)}?asset=${encodeURIComponent(state.audio.asset_id)}`}
+                  controls
+                  preload="metadata"
+                  className={css({ width: "100%", maxWidth: "520px" })}
+                />
+                <div className={css({ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "end", marginTop: "10px" })}>
+                  <label>
+                    <span className={css({ fontSize: "11px", display: "block" })}>Track in-point (sec)</span>
+                    <input
+                      className={numberInput}
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      defaultValue={state.audio.in_seconds}
+                      onBlur={(event) => {
+                        const value = Number(event.currentTarget.value);
+                        if (!Number.isFinite(value) || value === state.audio?.in_seconds) return;
+                        void run(
+                          "audio-settings",
+                          () => updateRoughCutAudio(sceneKey, { in_seconds: value }),
+                          "Audio in-point updated.",
+                        );
+                      }}
+                    />
+                  </label>
+                  <label>
+                    <span className={css({ fontSize: "11px", display: "block" })}>Music gain (dB)</span>
+                    <input
+                      className={numberInput}
+                      type="number"
+                      min="-30"
+                      max="6"
+                      step="0.5"
+                      defaultValue={state.audio.gain_db}
+                      onBlur={(event) => {
+                        const value = Number(event.currentTarget.value);
+                        if (!Number.isFinite(value) || value === state.audio?.gain_db) return;
+                        void run(
+                          "audio-settings",
+                          () => updateRoughCutAudio(sceneKey, { gain_db: value }),
+                          "Music level updated.",
+                        );
+                      }}
+                    />
+                  </label>
+                  <Button
+                    size={SIZE.compact}
+                    isLoading={busy === "final"}
+                    onClick={() => void run(
+                      "final",
+                      () => renderRoughCutFinal(sceneKey),
+                      "Final video built with owned audio.",
+                    )}
+                  >
+                    {state.final_exists ? "Rebuild final" : "Build final"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <ParagraphXSmall marginBottom={0}>Upload the track once, then choose where in the song this 10-second edit starts.</ParagraphXSmall>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {state?.final_exists ? (
+        <div className={css({ marginTop: "16px", maxWidth: "420px" })}>
+          <strong>Final</strong>
+          <video
+            key={finalVersion}
+            src={`${roughCutFinalSource(sceneKey)}?v=${String(finalVersion)}`}
+            controls
+            playsInline
+            preload="metadata"
+            className={css({ width: "100%", borderRadius: "12px", background: "#000", marginTop: "8px" })}
+          />
         </div>
       ) : null}
     </section>
