@@ -20,14 +20,24 @@ marked as a default, not dressed up as a finding.
 
 from __future__ import annotations
 
+import json
 import re
 import statistics
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from functools import lru_cache
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Session
+
+# scripts/mine_design_structure.py's raw per-design output: 4,125 real designs,
+# each with its measured element count, band shape and band geometry. Loaded
+# once and cached -- 1.3MB of JSON nobody wants re-parsed per request.
+STRUCTURE_RAW_PATH = (
+    Path(__file__).resolve().parents[2] / "var" / "design_corpus" / "design_structure_raw.json"
+)
 
 # Garment words are not part of the design's phrase. "Squawk 1200 Sweatshirt" is
 # a two-word design, not three.
@@ -335,6 +345,55 @@ def advise(
     return direction
 
 
+_SHAPE_PROSE = {
+    "single wide mass": "one element spanning wide and shallow across the print area, not "
+    "tall or narrow",
+    "single tall mass": "one element running tall and narrow rather than wide",
+    "single compact mark": "one small, self-contained mark rather than something spread "
+    "across the print area",
+    "lead above, support below": "the main element sits above a smaller supporting line, "
+    "stacked top to bottom",
+    "support above, lead below": "a smaller supporting line sits above the main element, "
+    "which anchors the bottom",
+    "lead on top, stacked support": "the main element leads at the top with supporting "
+    "elements stacked beneath it",
+    "framed centre — support above and below": "the main element sits centred, framed by "
+    "supporting lines above and below it",
+    "stacked support, lead at base": "supporting elements stack above, with the main "
+    "element anchoring the base",
+    "even stack — repeated bands": "several evenly-weighted bands stacked with no single "
+    "dominant element",
+    "two even bands — paired lines": "two lines of roughly equal weight, paired rather than "
+    "one leading the other",
+}
+
+
+@lru_cache(maxsize=1)
+def _structure_rows() -> tuple[dict[str, Any], ...]:
+    """scripts/mine_design_structure.py's raw output, one entry per measured design."""
+    if not STRUCTURE_RAW_PATH.is_file():
+        return ()
+    try:
+        return tuple(json.loads(STRUCTURE_RAW_PATH.read_text(encoding="utf-8")))
+    except (OSError, json.JSONDecodeError):
+        return ()
+
+
+def tradition_shape(tradition: str) -> tuple[str, int, int] | None:
+    """The most common band shape actually measured for this tradition.
+
+    Deterministic: no model, no network, same corpus in and same answer out --
+    the same guarantee ``mine_design_structure.py`` makes. Returns
+    ``(shape, count, tradition_total)`` or ``None`` if this tradition has no
+    measured designs at all.
+    """
+    rows = [r for r in _structure_rows() if r.get("tradition") == tradition]
+    if not rows:
+        return None
+    shape, count = Counter(r["shape"] for r in rows if r.get("shape")).most_common(1)[0]
+    return shape, count, len(rows)
+
+
 _ARCHETYPE_PROSE = {
     "typographic hero": "Bold lettering carries the whole design — no supporting image.",
     "image-led hero": "One dominant illustrated or photographic image carries the design, "
@@ -378,10 +437,27 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
             "evidence-backed to build a prompt from. Run: python -m app.cli design-data --refresh"
         )
 
-    archetype_key = by_field.get("Graphic archetype", "")
-    archetype_prose = _ARCHETYPE_PROSE.get(
-        archetype_key, "One dominant graphic element, not several competing ideas."
-    )
+    # Prefer the real, tradition-specific measurement over the generic
+    # archetype default: mine_design_structure.py measured actual composition
+    # shapes from real designs in this tradition, which is a stronger claim
+    # than "image-and-title lockup" (advise()'s constitutional default for
+    # phrase+graphic, true of every tradition equally because it isn't
+    # measured from any of them).
+    shape_hit = tradition_shape(direction.tradition)
+    if shape_hit is not None:
+        shape, shape_count, tradition_total = shape_hit
+        structure_prose = _SHAPE_PROSE.get(
+            shape, f"the composition follows a '{shape}' arrangement"
+        )
+        archetype_prose = (
+            f"Composition: {structure_prose} — the most common structure in "
+            f"{shape_count} of {tradition_total} measured {direction.tradition} designs."
+        )
+    else:
+        archetype_key = by_field.get("Graphic archetype", "")
+        archetype_prose = _ARCHETYPE_PROSE.get(
+            archetype_key, "One dominant graphic element, not several competing ideas."
+        )
 
     ink_value = by_field.get("Ink colours", "")
     ink_count = ink_value.split(" — ")[0].strip() or "a small number of"
