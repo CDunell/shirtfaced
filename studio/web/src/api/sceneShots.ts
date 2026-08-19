@@ -24,6 +24,8 @@ export interface SceneShotMaster {
 
 export interface SceneShotMasters {
   scene_key: string;
+  title: string | null;
+  description: string | null;
   approved_count: number;
   maximum_approved: number;
   shot_masters: SceneShotMaster[];
@@ -89,6 +91,12 @@ export function registerSceneShotMaster(
   body.append("name", name);
   if (notes) body.append("notes", notes);
   return upload<SceneShotMaster>(`/api/scenes/${sceneKey}/shot-masters`, body);
+}
+
+export function replaceSceneShotMaster(shotId: string, file: File): Promise<SceneShotMaster> {
+  const body = new FormData();
+  body.append("file", file);
+  return upload<SceneShotMaster>(`/api/shot-masters/${shotId}/replace`, body);
 }
 
 export function saveSceneShotMotionPrompt(
