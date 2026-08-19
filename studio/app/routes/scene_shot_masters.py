@@ -16,7 +16,7 @@ from app.config import Settings, get_settings
 from app.db.models import Shot
 from app.db.scene_shot_models import SceneShotMaster
 from app.db.session import get_db_session
-from app.services import motion_run, scene_shot_library, visual_library
+from app.services import motion_run, scene_metadata, scene_shot_library, visual_library
 
 router = APIRouter(prefix="/api", tags=["scene-shot-masters"])
 SessionDependency = Annotated[Session, Depends(get_db_session)]
@@ -95,11 +95,12 @@ def _out(shot: SceneShotMaster) -> ShotMasterOut:
 
 def _scene_out(session: Session, scene_key: str) -> SceneShotMastersOut:
     shots = scene_shot_library.list_scene(session, scene_key)
+    configured_title, configured_description = scene_metadata.configured(scene_key)
     canon = session.execute(select(Shot).where(Shot.external_id == scene_key)).scalars().first()
     return SceneShotMastersOut(
         scene_key=scene_key,
-        title=canon.title if canon else None,
-        description=canon.description if canon else None,
+        title=configured_title or (canon.title if canon else None),
+        description=configured_description or (canon.description if canon else None),
         approved_count=sum(one.status == "approved" for one in shots),
         maximum_approved=scene_shot_library.MAX_APPROVED_SHOT_MASTERS,
         shot_masters=[_out(one) for one in shots],
