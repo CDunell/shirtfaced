@@ -27,13 +27,11 @@ import {
 import { PageTitle, SectionTitle } from "./chrome";
 
 function cleanName(name: string): string {
-  return (
-    name
-      .replace(/\.[^.]+$/, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "") || "shot"
-  );
+  return name
+    .replace(/\.[^.]+$/, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
 }
 
 function displayName(name: string): string {
@@ -60,7 +58,10 @@ export function SceneShotsBench(): React.JSX.Element {
   const [takes, setTakes] = useState<Record<string, SceneShotTake[]>>({});
   const [promptDraft, setPromptDraft] = useState("");
   const [showAdd, setShowAdd] = useState(false);
+  const [initialName, setInitialName] = useState("");
   const [newName, setNewName] = useState("");
+  const [initialFileName, setInitialFileName] = useState("");
+  const [newFileName, setNewFileName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -143,15 +144,24 @@ export function SceneShotsBench(): React.JSX.Element {
   });
   const mono = css({ fontFamily: "monospace", fontSize: "11px", color: theme.colors.contentTertiary });
 
+  const initialSlug = cleanName(initialName);
+  const newSlug = cleanName(newName);
+  const initialDuplicate = shots.some((shot) => shot.name === initialSlug);
+  const newDuplicate = shots.some((shot) => shot.name === newSlug);
+
   const onInitialUpload = useCallback(() => {
-    const files = [...(initialUploadRef.current?.files ?? [])];
-    if (!files.length) return;
+    const file = initialUploadRef.current?.files?.[0];
+    const name = cleanName(initialName);
+    if (!file || !name) return;
     void act("initial-upload", async () => {
-      for (const file of files) await registerSceneShotMaster(sceneKey, file, cleanName(file.name));
+      const created = await registerSceneShotMaster(sceneKey, file, name);
+      setInitialName("");
+      setInitialFileName("");
       if (initialUploadRef.current) initialUploadRef.current.value = "";
-      return `${String(files.length)} shot master${files.length === 1 ? "" : "s"} added.`;
+      setSelectedShotId(created.id);
+      return `${name}: master added.`;
     }, null);
-  }, [act, sceneKey]);
+  }, [act, initialName, sceneKey]);
 
   const promptChanged = selected ? promptDraft !== (selected.motion_prompt ?? "") : false;
   const promptMissing = !promptDraft.trim();
@@ -198,14 +208,42 @@ export function SceneShotsBench(): React.JSX.Element {
 
       {shots.length === 0 ? (
         <div className={css({ marginTop: "24px" })}>
-          <SectionTitle>Add shot masters</SectionTitle>
+          <SectionTitle>Add first shot master</SectionTitle>
           <div className={panel}>
-            <ParagraphSmall>No shot masters are registered for this scene yet.</ParagraphSmall>
-            <div className={controls}>
-              <input ref={initialUploadRef} type="file" accept="image/png,image/jpeg,image/webp" multiple />
-              <Button size={SIZE.compact} isLoading={busy === "initial-upload"} onClick={onInitialUpload}>
-                Upload masters
-              </Button>
+            <ParagraphSmall>
+              Choose the production Shot ID explicitly. The local filename is only a suggestion and is not the shot identity.
+            </ParagraphSmall>
+            <div className={css({ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "520px" })}>
+              <input
+                ref={initialUploadRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  setInitialFileName(file?.name ?? "");
+                  if (file && !initialName.trim()) setInitialName(cleanName(file.name));
+                }}
+              />
+              <Input
+                value={initialName}
+                onChange={(event) => setInitialName(event.currentTarget.value)}
+                placeholder="Shot ID, e.g. trio-wide"
+                size={SIZE.compact}
+              />
+              <ParagraphXSmall margin={0}>
+                Source: {initialFileName || "no file selected"} · Shot ID: <span className={mono}>{initialSlug || "—"}</span>
+              </ParagraphXSmall>
+              {initialDuplicate ? <ParagraphXSmall margin={0}>That Shot ID already exists.</ParagraphXSmall> : null}
+              <div>
+                <Button
+                  size={SIZE.compact}
+                  disabled={!initialFileName || !initialSlug || initialDuplicate}
+                  isLoading={busy === "initial-upload"}
+                  onClick={onInitialUpload}
+                >
+                  Add master
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -238,7 +276,7 @@ export function SceneShotsBench(): React.JSX.Element {
                 <div>
                   <h2 className={css({ margin: 0, fontSize: "22px" })}>{displayName(selected.name)}</h2>
                   <span className={mono}>
-                    {selected.asset.width}×{selected.asset.height} · {selected.asset.sha256.slice(0, 12)}
+                    {selected.name} · {selected.asset.width}×{selected.asset.height} · {selected.asset.sha256.slice(0, 12)}
                   </span>
                 </div>
                 <Tag closeable={false} kind={statusKind(selected.status)}>
@@ -374,7 +412,9 @@ export function SceneShotsBench(): React.JSX.Element {
 
                   <div className={panel}>
                     <strong>Master file</strong>
-                    <ParagraphXSmall>Replacing the image returns this shot to candidate so the new pixels require approval before Veo.</ParagraphXSmall>
+                    <ParagraphXSmall>
+                      Shot ID <span className={mono}>{selected.name}</span> stays fixed on replacement. Replacing the pixels returns the shot to candidate for fresh approval.
+                    </ParagraphXSmall>
                     <div className={controls}>
                       <input ref={replaceRef} type="file" accept="image/png,image/jpeg,image/webp" />
                       <Button
@@ -399,20 +439,40 @@ export function SceneShotsBench(): React.JSX.Element {
                     </div>
 
                     {showAdd ? (
-                      <div className={css({ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px" })}>
-                        <div className={css({ maxWidth: "260px" })}>
-                          <Input value={newName} onChange={(event) => setNewName(event.currentTarget.value)} placeholder="shot name, e.g. brock-close" size={SIZE.compact} />
-                        </div>
-                        <div className={controls}>
-                          <input ref={addRef} type="file" accept="image/png,image/jpeg,image/webp" />
+                      <div className={css({ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px", maxWidth: "520px" })}>
+                        <ParagraphXSmall margin={0}>
+                          Set the production Shot ID. The selected file name is only used to suggest a starting value.
+                        </ParagraphXSmall>
+                        <input
+                          ref={addRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          onChange={(event) => {
+                            const file = event.currentTarget.files?.[0];
+                            setNewFileName(file?.name ?? "");
+                            if (file && !newName.trim()) setNewName(cleanName(file.name));
+                          }}
+                        />
+                        <Input
+                          value={newName}
+                          onChange={(event) => setNewName(event.currentTarget.value)}
+                          placeholder="Shot ID, e.g. brock-pint"
+                          size={SIZE.compact}
+                        />
+                        <ParagraphXSmall margin={0}>
+                          Source: {newFileName || "no file selected"} · Shot ID: <span className={mono}>{newSlug || "—"}</span>
+                        </ParagraphXSmall>
+                        {newDuplicate ? <ParagraphXSmall margin={0}>That Shot ID already exists. Use Replace master on that shot instead.</ParagraphXSmall> : null}
+                        <div>
                           <Button
                             size={SIZE.compact}
                             kind={BUTTON_KIND.secondary}
+                            disabled={!newFileName || !newSlug || newDuplicate}
                             isLoading={busy === "add-master"}
                             onClick={() => {
                               const file = addRef.current?.files?.[0];
-                              if (!file) return;
-                              const name = cleanName(newName || file.name);
+                              const name = cleanName(newName);
+                              if (!file || !name) return;
                               void (async () => {
                                 setBusy("add-master");
                                 setError(null);
@@ -420,6 +480,7 @@ export function SceneShotsBench(): React.JSX.Element {
                                 try {
                                   const created = await registerSceneShotMaster(sceneKey, file, name);
                                   setNewName("");
+                                  setNewFileName("");
                                   setShowAdd(false);
                                   if (addRef.current) addRef.current.value = "";
                                   await load(sceneKey, created.id);
