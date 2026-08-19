@@ -10,6 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStore
+from app.config import get_settings
 from app.db.scene_shot_models import SceneShotMaster
 from app.domain.enums import VisualAssetKind, VisualAssetSourceType, VisualAssetStatus
 from app.domain.errors import StudioError
@@ -37,6 +38,35 @@ def _clean_name(name: str) -> str:
     if not NAME.fullmatch(value):
         raise DirectShotError(f"{name!r} is not a usable shot-master name.")
     return value
+
+
+def configured_motion_prompt(scene_key: str, name: str) -> str | None:
+    """Shot-specific repo prompt, then scene-wide fallback."""
+    name = _clean_name(name)
+    worlds = get_settings().worlds_root_resolved
+    for candidate in (f"{scene_key}.{name}.veo-motion.txt", f"{scene_key}.veo-motion.txt"):
+        for shots in sorted(worlds.glob("*/shots")):
+            path = shots / candidate
+            if path.is_file():
+                return path.read_text(encoding="utf-8").strip()
+    return None
+
+
+def effective_motion_prompt(shot: SceneShotMaster) -> tuple[str | None, str]:
+    """Return the prompt used by Veo and where it came from."""
+    if shot.motion_prompt and shot.motion_prompt.strip():
+        return shot.motion_prompt.strip(), "override"
+    configured = configured_motion_prompt(shot.scene_key, shot.name)
+    if configured:
+        return configured, "configured"
+    return None, "missing"
+
+
+def set_motion_prompt(shot: SceneShotMaster, prompt: str | None) -> SceneShotMaster:
+    """Persist a per-master override. Blank resets to configured fallback."""
+    value = (prompt or "").strip()
+    shot.motion_prompt = value or None
+    return shot
 
 
 def list_scene(session: Session, scene_key: str) -> list[SceneShotMaster]:
@@ -167,6 +197,18 @@ def resolve(
             f"{scene_key}/{name}: direct shot master is {shot.status}, not approved for Veo."
         )
     return resolve_asset(session, store, shot.visual_asset_id, label=f"{scene_key}/{name}")
+
+
+def by_scene_name(session: Session, scene_key: str, name: str) -> SceneShotMaster:
+    name = _clean_name(name)
+    shot = session.execute(
+        select(SceneShotMaster).where(
+            SceneShotMaster.scene_key == scene_key, SceneShotMaster.name == name
+        )
+    ).scalar_one_or_none()
+    if shot is None:
+        raise DirectShotNotFound(f"{scene_key}/{name}: no direct shot master.")
+    return shot
 
 
 def by_id(session: Session, shot_id: uuid.UUID) -> SceneShotMaster:
