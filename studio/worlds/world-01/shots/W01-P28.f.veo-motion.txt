@@ -1,7 +1,7 @@
 SHOT F — BAND / ROOM ENERGY
 
-Animate the exact supplied frame with the band and room as the primary motion. The camera remains embedded in the crowd looking toward the stage. Musicians continue performing with believable small live-gig movement: playing, singing, head movement and body rhythm appropriate to the instruments already visible. Foreground heads, shoulders and a few raised hands shift independently with the music and occasionally occlude the stage.
+Primary motion: the band continues performing with believable live-gig movement appropriate to the instruments and singing already visible.
 
-Damo, Emma and Brock, if visible from behind or at the edge, remain incidental. Do not make the camera seek them out, do not turn them toward the lens and do not make the crowd reorganise around them. The room should feel like it exists whether or not the three recurring characters are visible.
+Secondary motion: foreground heads, shoulders and occasional raised hands move independently with the music and briefly occlude parts of the stage. Damo, Emma and Brock remain incidental if visible from behind or at the edge.
 
-No dramatic stage-light changes, crowd surge, coordinated jumping, hands suddenly multiplying, mosh-pit behaviour or cinematic reveal. Preserve the exact stage, crowd density, lighting, wardrobe and visible people from the first frame. Keep the phone roughly fixed with minor handheld sway and end in the same ongoing performance state.
+Environmental motion: the packed room maintains the same density and energy while different people watch, sing, talk and move with friends on different rhythms.
