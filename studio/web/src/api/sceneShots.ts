@@ -17,6 +17,8 @@ export interface SceneShotMaster {
   sort_order: number;
   notes: string | null;
   approved_at: string | null;
+  motion_prompt: string | null;
+  motion_prompt_source: "override" | "configured" | "missing" | string;
   asset: DirectAsset;
 }
 
@@ -49,8 +51,15 @@ async function failure(response: Response): Promise<ApiError> {
   );
 }
 
-async function send<T>(path: string, method = "GET"): Promise<T> {
-  const response = await fetch(path, { method, headers: { Accept: "application/json" } });
+async function send<T>(path: string, method = "GET", body?: unknown): Promise<T> {
+  const response = await fetch(path, {
+    method,
+    headers: {
+      Accept: "application/json",
+      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+    },
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
   if (!response.ok) throw await failure(response);
   return (await response.json()) as T;
 }
@@ -80,6 +89,13 @@ export function registerSceneShotMaster(
   body.append("name", name);
   if (notes) body.append("notes", notes);
   return upload<SceneShotMaster>(`/api/scenes/${sceneKey}/shot-masters`, body);
+}
+
+export function saveSceneShotMotionPrompt(
+  shotId: string,
+  prompt: string | null,
+): Promise<SceneShotMaster> {
+  return send<SceneShotMaster>(`/api/shot-masters/${shotId}/motion-prompt`, "POST", { prompt });
 }
 
 export function approveSceneShotMaster(shotId: string): Promise<SceneShotMasters> {
