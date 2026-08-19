@@ -492,7 +492,8 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
     # surf tee" onto a shirt, which is not what anyone meant by typing that.
     # If the idea names an actual short slogan, it will read as one in the
     # description; nothing here forces it to.
-    idea_line = f" Design concept: {phrase.strip()}." if phrase.strip() else ""
+    idea_text = phrase.strip()
+    idea_line = f" Design concept: {idea_text.rstrip('.')}." if idea_text else ""
 
     return (
         f"T-shirt graphic design, {tradition_label} style.{idea_line} "

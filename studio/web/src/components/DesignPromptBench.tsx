@@ -7,7 +7,8 @@ import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 import { useStyletron } from "baseui";
 
-import { fetchAdvice, type AdvisorDirection } from "../api/concepts";
+import { ApiError } from "../api/client";
+import { fetchAdvice, fetchRandomConcept, type AdvisorDirection } from "../api/concepts";
 import { CopyButton, PageTitle } from "./chrome";
 
 const TRADITIONS = [
@@ -71,6 +72,26 @@ export function DesignPromptBench(): React.JSX.Element {
     }
   }
 
+  async function surpriseMe(): Promise<void> {
+    setBusy(true);
+    setError("");
+    try {
+      const result = await fetchRandomConcept(tradition.id);
+      setDirection(result);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        setError(
+          `No batch-written concepts for "${tradition.id}" yet -- this is a first pass covering ` +
+            "a handful of traditions, not all of them. Type your own idea above instead.",
+        );
+      } else {
+        setError(err instanceof Error ? err.message : "Something went wrong.");
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className={css({ maxWidth: "720px" })}>
       <PageTitle>Prompt</PageTitle>
@@ -123,7 +144,14 @@ export function DesignPromptBench(): React.JSX.Element {
         >
           Generate prompt
         </Button>
+        <Button size={SIZE.compact} kind="secondary" isLoading={busy} onClick={() => void surpriseMe()}>
+          Surprise me
+        </Button>
       </div>
+      <ParagraphXSmall color="mono600" marginTop="6px">
+        No idea yet? "Surprise me" picks a batch-written concept for the selected tradition
+        instead of one you type — real corpus grounding either way, just not your words.
+      </ParagraphXSmall>
 
       {error ? (
         <Notification kind={NOTIFICATION_KIND.negative} overrides={{ Body: { style: { marginTop: "16px" } } }}>

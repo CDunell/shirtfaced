@@ -16,8 +16,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.db.concept_pool_models import DesignConceptPoolEntry
 from app.db.session import get_db_session
 from app.services.design_advisor import advise, measurement_rows, render_generation_prompt
 
@@ -49,6 +51,11 @@ class DirectionResponse(BaseModel):
     alternatives: list[str]
     not_decided: list[str]
     generation_prompt: str
+    concept_id: str | None = None
+
+
+class RandomRequest(BaseModel):
+    tradition: str = "novelty"
 
 
 @router.post("/advise", response_model=DirectionResponse, summary="Recommend presentation")
@@ -76,4 +83,45 @@ def advise_design(payload: AdviseRequest, session: SessionDependency) -> Directi
     return DirectionResponse(
         **direction.to_dict(),
         generation_prompt=render_generation_prompt(direction, payload.phrase),
+    )
+
+
+@router.post(
+    "/random", response_model=DirectionResponse, summary="A batch-written concept, not typed"
+)
+def random_design(payload: RandomRequest, session: SessionDependency) -> DirectionResponse:
+    """Pick one batch-generated concept for this tradition and advise on it.
+
+    The concept text was written once, in a session, ahead of time -- see
+    ``app/db/concept_pool_models.py`` -- never a live model call. This picks a
+    row at random and runs it through the same ``advise()`` +
+    ``render_generation_prompt()`` path as a typed idea, so the output is
+    exactly as evidence-backed either way. Hit and miss by nature: nobody
+    curated any one row, only the batch as a whole.
+    """
+    entry = session.execute(
+        select(DesignConceptPoolEntry)
+        .where(
+            DesignConceptPoolEntry.tradition == payload.tradition,
+            DesignConceptPoolEntry.active.is_(True),
+        )
+        .order_by(func.random())
+        .limit(1)
+    ).scalar_one_or_none()
+    if entry is None:
+        raise HTTPException(
+            status.HTTP_404_NOT_FOUND,
+            f"No batch-generated concepts for tradition '{payload.tradition}' yet.",
+        )
+
+    direction = advise(
+        phrase=entry.concept_text,
+        has_graphic=True,
+        tradition=payload.tradition,
+        rows=measurement_rows(session),
+    )
+    return DirectionResponse(
+        **direction.to_dict(),
+        generation_prompt=render_generation_prompt(direction, entry.concept_text),
+        concept_id=str(entry.id),
     )

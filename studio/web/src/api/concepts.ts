@@ -494,6 +494,7 @@ export interface AdvisorDirection {
   alternatives: string[];
   not_decided: string[];
   generation_prompt: string;
+  concept_id: string | null;
 }
 
 /** The advisor answers constitution steps 3 and 4 from 12,151 measured images.
@@ -506,6 +507,16 @@ export async function fetchAdvice(
   return await json<AdvisorDirection>("/api/design/advise", {
     method: "POST",
     body: JSON.stringify({ phrase, has_graphic: hasGraphic, tradition }),
+  });
+}
+
+/** A batch-written concept picked at random for this tradition -- see
+ * app/db/concept_pool_models.py. Written once ahead of time, not a live
+ * model call; hit and miss by nature, same as the batch itself. */
+export async function fetchRandomConcept(tradition: string): Promise<AdvisorDirection> {
+  return await json<AdvisorDirection>("/api/design/random", {
+    method: "POST",
+    body: JSON.stringify({ tradition }),
   });
 }
 
