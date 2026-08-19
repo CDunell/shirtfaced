@@ -18,6 +18,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
+from app.adapters.asset_store import FilesystemAssetStore
 from app.config import PROJECT_ROOT, Settings
 from app.db.scene_shot_models import SceneShotMaster
 from app.domain.errors import StudioError
@@ -101,8 +102,6 @@ def _take_for(shot: SceneShotMaster, stamp: str | None = None) -> motion_run.Rec
 def _extract_samples(video: Path, duration: float, target: Path) -> list[tuple[float, Path]]:
     if not shutil.which("ffmpeg"):
         raise RoughCutError("ffmpeg is not installed on the Studio host.")
-    # One frame per second is enough to locate a clean 1-3 second region without
-    # turning review into a frame-by-frame billable operation.
     sample_times: list[float] = []
     t = 0.0
     while t < max(duration, 0.1):
@@ -169,15 +168,9 @@ def _analyse_one(settings: Settings, shot: SceneShotMaster, take: motion_run.Rec
 
     with tempfile.TemporaryDirectory(prefix="shirtfaced-rough-cut-") as temp_name:
         frames = _extract_samples(video, duration, Path(temp_name))
-        master_path = PROJECT_ROOT / "var" / "assets" / shot.asset.storage_key
-        # FilesystemAssetStore may store beneath nested sha directories; if this
-        # direct location is unavailable, use the asset's absolute storage key
-        # when it already resolved there.
-        if not master_path.is_file():
-            candidate = Path(shot.asset.storage_key)
-            if candidate.is_file():
-                master_path = candidate
-        if not master_path.is_file():
+        store = FilesystemAssetStore(settings.assets_root_resolved)
+        master_path = store.path_for(shot.asset.storage_key)
+        if master_path is None:
             raise RoughCutError(f"{shot.scene_key}/{shot.name}: master pixels are unavailable for comparison.")
 
         content: list[dict[str, Any]] = [
