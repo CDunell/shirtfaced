@@ -1,9 +1,4 @@
-"""API for direct 9:16 scene shot masters.
-
-This is the simple production lane: upload vertical first frames, approve at most
-five for a scene, then animate those exact frames. No contact sheet and no panel
-extraction are involved.
-"""
+"""API for direct 9:16 scene shot masters."""
 
 from __future__ import annotations
 
@@ -18,6 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStoreError, FilesystemAssetStore
 from app.config import Settings, get_settings
+from app.db.models import Shot
 from app.db.scene_shot_models import SceneShotMaster
 from app.db.session import get_db_session
 from app.services import motion_run, scene_shot_library, visual_library
@@ -55,6 +51,8 @@ class ShotMasterOut(BaseModel):
 
 class SceneShotMastersOut(BaseModel):
     scene_key: str
+    title: str | None
+    description: str | None
     approved_count: int
     maximum_approved: int
     shot_masters: list[ShotMasterOut]
@@ -97,8 +95,11 @@ def _out(shot: SceneShotMaster) -> ShotMasterOut:
 
 def _scene_out(session: Session, scene_key: str) -> SceneShotMastersOut:
     shots = scene_shot_library.list_scene(session, scene_key)
+    canon = session.execute(select(Shot).where(Shot.external_id == scene_key)).scalars().first()
     return SceneShotMastersOut(
         scene_key=scene_key,
+        title=canon.title if canon else None,
+        description=canon.description if canon else None,
         approved_count=sum(one.status == "approved" for one in shots),
         maximum_approved=scene_shot_library.MAX_APPROVED_SHOT_MASTERS,
         shot_masters=[_out(one) for one in shots],
@@ -148,11 +149,32 @@ async def register_shot_master(
     return _out(shot)
 
 
+@router.post("/shot-masters/{shot_id}/replace")
+async def replace_shot_master(
+    shot_id: uuid.UUID,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    file: Annotated[UploadFile, File()],
+) -> ShotMasterOut:
+    data = await file.read(visual_library.MAX_ASSET_BYTES + 1)
+    try:
+        shot = scene_shot_library.by_id(session, shot_id)
+        scene_shot_library.replace(session, _store(settings), shot=shot, data=data)
+    except (scene_shot_library.DirectShotError, visual_library.AssetRejected) as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_409_CONFLICT, str(error)) from error
+    except AssetStoreError as error:
+        session.rollback()
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+    session.commit()
+    session.refresh(shot)
+    return _out(shot)
+
+
 @router.post("/shot-masters/{shot_id}/motion-prompt")
 def update_motion_prompt(
     shot_id: uuid.UUID, body: MotionPromptIn, session: SessionDependency
 ) -> ShotMasterOut:
-    """Save a per-master Veo prompt override. Blank restores repo fallback."""
     try:
         shot = scene_shot_library.by_id(session, shot_id)
         scene_shot_library.set_motion_prompt(shot, body.prompt)
@@ -165,9 +187,7 @@ def update_motion_prompt(
 
 
 @router.post("/shot-masters/{shot_id}/approve")
-def approve_shot_master(
-    shot_id: uuid.UUID, session: SessionDependency
-) -> SceneShotMastersOut:
+def approve_shot_master(shot_id: uuid.UUID, session: SessionDependency) -> SceneShotMastersOut:
     try:
         shot = scene_shot_library.by_id(session, shot_id)
         scene_shot_library.approve(session, shot)
@@ -179,9 +199,7 @@ def approve_shot_master(
 
 
 @router.post("/shot-masters/{shot_id}/reject")
-def reject_shot_master(
-    shot_id: uuid.UUID, session: SessionDependency
-) -> SceneShotMastersOut:
+def reject_shot_master(shot_id: uuid.UUID, session: SessionDependency) -> SceneShotMastersOut:
     try:
         shot = scene_shot_library.by_id(session, shot_id)
         scene_shot_library.reject(session, shot, note="Rejected in Scenes")
@@ -193,9 +211,7 @@ def reject_shot_master(
 
 
 @router.post("/shot-masters/{shot_id}/animate", summary="Animate this exact approved first frame")
-def animate_shot_master(
-    shot_id: uuid.UUID, session: SessionDependency
-) -> TakeOut:
+def animate_shot_master(shot_id: uuid.UUID, session: SessionDependency) -> TakeOut:
     try:
         shot = scene_shot_library.by_id(session, shot_id)
         if shot.status != "approved":
