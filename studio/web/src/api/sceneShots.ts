@@ -54,10 +54,21 @@ export interface RoughCutShot {
   rationale: string;
 }
 
+export interface RoughCutAudio {
+  asset_id: string;
+  filename: string;
+  mime_type: string;
+  duration_seconds: number | null;
+  in_seconds: number;
+  gain_db: number;
+}
+
 export interface RoughCutState {
   scene_key: string;
   shots: RoughCutShot[];
+  audio: RoughCutAudio | null;
   output_exists: boolean;
+  final_exists: boolean;
 }
 
 async function failure(response: Response): Promise<ApiError> {
@@ -163,8 +174,33 @@ export function updateRoughCutShot(
   return send<RoughCutState>(`/api/scenes/${sceneKey}/rough-cut/shots/${shotId}`, "POST", patch);
 }
 
+export function uploadRoughCutAudio(sceneKey: string, file: File): Promise<RoughCutState> {
+  const body = new FormData();
+  body.append("file", file);
+  return upload<RoughCutState>(`/api/scenes/${sceneKey}/rough-cut/audio`, body);
+}
+
+export function updateRoughCutAudio(
+  sceneKey: string,
+  patch: Partial<Pick<RoughCutAudio, "in_seconds" | "gain_db">>,
+): Promise<RoughCutState> {
+  return send<RoughCutState>(`/api/scenes/${sceneKey}/rough-cut/audio-settings`, "POST", patch);
+}
+
+export function renderRoughCutFinal(sceneKey: string): Promise<RoughCutState> {
+  return send<RoughCutState>(`/api/scenes/${sceneKey}/rough-cut/final`, "POST");
+}
+
 export function roughCutSource(sceneKey: string): string {
   return `/api/scenes/${sceneKey}/rough-cut/video`;
+}
+
+export function roughCutAudioSource(sceneKey: string): string {
+  return `/api/scenes/${sceneKey}/rough-cut/audio`;
+}
+
+export function roughCutFinalSource(sceneKey: string): string {
+  return `/api/scenes/${sceneKey}/rough-cut/final`;
 }
 
 export function sceneShotPreview(assetId: string): string {
