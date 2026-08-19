@@ -4,6 +4,7 @@ import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
 import { Input } from "baseui/input";
 import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
 import { Tag, KIND as TAG_KIND } from "baseui/tag";
+import { Textarea } from "baseui/textarea";
 import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError } from "../api/client";
@@ -15,6 +16,7 @@ import {
   fetchShotMasterScenes,
   registerSceneShotMaster,
   rejectSceneShotMaster,
+  saveSceneShotMotionPrompt,
   sceneShotPreview,
   sceneShotTakeSource,
   type SceneShotMaster,
@@ -42,6 +44,7 @@ export function SceneShotsBench(): React.JSX.Element {
   const [note, setNote] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [takes, setTakes] = useState<Record<string, SceneShotTake[]>>({});
+  const [promptDrafts, setPromptDrafts] = useState<Record<string, string>>({});
   const filesRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async (key: string) => {
@@ -51,6 +54,9 @@ export function SceneShotsBench(): React.JSX.Element {
     ]);
     setSceneKeys(keys);
     setScene(current);
+    setPromptDrafts(
+      Object.fromEntries(current.shot_masters.map((shot) => [shot.id, shot.motion_prompt ?? ""])),
+    );
     const found: Record<string, SceneShotTake[]> = {};
     await Promise.all(
       current.shot_masters.map(async (shot) => {
@@ -121,7 +127,7 @@ export function SceneShotsBench(): React.JSX.Element {
   });
   const grid = css({
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
     gap: "12px",
     marginTop: "12px",
   });
@@ -134,6 +140,9 @@ export function SceneShotsBench(): React.JSX.Element {
   const renderShot = (shot: SceneShotMaster) => {
     const latest = takes[shot.id]?.[0] ?? null;
     const canApprove = shot.status !== "approved" && approved < maximum;
+    const prompt = promptDrafts[shot.id] ?? shot.motion_prompt ?? "";
+    const promptChanged = prompt !== (shot.motion_prompt ?? "");
+    const promptMissing = !prompt.trim();
     return (
       <article key={shot.id} className={card}>
         <button
@@ -161,6 +170,69 @@ export function SceneShotsBench(): React.JSX.Element {
             {shot.asset.width}×{shot.asset.height} · {shot.asset.sha256.slice(0, 12)}
           </span>
 
+          <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" })}>
+            <strong className={css({ fontSize: "12px" })}>Veo motion prompt</strong>
+            <Tag closeable={false} kind={promptMissing ? TAG_KIND.negative : TAG_KIND.neutral}>
+              {shot.motion_prompt_source}
+            </Tag>
+          </div>
+          <Textarea
+            value={prompt}
+            onChange={(event) => {
+              const value = event.currentTarget.value;
+              setPromptDrafts((current) => ({ ...current, [shot.id]: value }));
+            }}
+            placeholder="Describe only the motion this exact first frame should perform."
+            overrides={{
+              Input: {
+                style: {
+                  minHeight: "220px",
+                  fontFamily: "monospace",
+                  fontSize: "12px",
+                  lineHeight: "18px",
+                },
+              },
+            }}
+          />
+          <div className={controls}>
+            <Button
+              size={SIZE.compact}
+              kind={BUTTON_KIND.secondary}
+              disabled={!promptChanged || promptMissing}
+              isLoading={busy === `prompt-${shot.id}`}
+              onClick={() => {
+                void act(`prompt-${shot.id}`, async () => {
+                  await saveSceneShotMotionPrompt(shot.id, prompt);
+                  return `${shot.name}: Veo motion prompt saved.`;
+                });
+              }}
+            >
+              Save prompt
+            </Button>
+            {shot.motion_prompt_source === "override" ? (
+              <Button
+                size={SIZE.compact}
+                kind={BUTTON_KIND.tertiary}
+                isLoading={busy === `reset-prompt-${shot.id}`}
+                onClick={() => {
+                  void act(`reset-prompt-${shot.id}`, async () => {
+                    await saveSceneShotMotionPrompt(shot.id, null);
+                    return `${shot.name}: restored configured Veo prompt.`;
+                  });
+                }}
+              >
+                Reset to configured
+              </Button>
+            ) : null}
+          </div>
+          <ParagraphXSmall margin={0}>
+            {shot.motion_prompt_source === "override"
+              ? "Saved override. Animate and every redo use this text until reset."
+              : shot.motion_prompt_source === "configured"
+                ? "Loaded from the shot/scene prompt in the world configuration. Edit and save to override it."
+                : "No motion prompt. Save one before animating."}
+          </ParagraphXSmall>
+
           {latest ? (
             <video
               key={latest.stamp}
@@ -176,6 +248,7 @@ export function SceneShotsBench(): React.JSX.Element {
             {shot.status === "approved" ? (
               <Button
                 size={SIZE.compact}
+                disabled={promptMissing || promptChanged}
                 isLoading={busy === `animate-${shot.id}`}
                 onClick={() => {
                   void act(`animate-${shot.id}`, async () => {
@@ -184,7 +257,7 @@ export function SceneShotsBench(): React.JSX.Element {
                   });
                 }}
               >
-                Animate
+                {latest ? "Redo Veo" : "Animate"}
               </Button>
             ) : (
               <Button
@@ -260,8 +333,9 @@ export function SceneShotsBench(): React.JSX.Element {
       </div>
 
       <ParagraphSmall>
-        A scene now owns a small set of native vertical first frames. Register as many candidates as needed,
-        approve at most five, then animate those exact frames. There is no 3×3 contact sheet and no panel extraction in this lane.
+        A scene owns a small set of native vertical first frames. Register as many candidates as needed,
+        approve at most five, edit the Veo motion prompt under each master, then animate or redo that exact frame.
+        There is no 3×3 contact sheet and no panel extraction in this lane.
       </ParagraphSmall>
 
       <SectionTitle>Shot masters</SectionTitle>
