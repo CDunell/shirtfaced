@@ -14,7 +14,8 @@ export function RoughCutBench(): React.JSX.Element {
   useEffect(() => {
     void fetchShotMasterScenes().then((keys) => {
       setSceneKeys(keys);
-      if (!keys.includes(sceneKey) && keys.length) setSceneKey(keys[0]);
+      const first = keys[0];
+      if (!keys.includes(sceneKey) && first) setSceneKey(first);
     });
   }, [sceneKey]);
 
