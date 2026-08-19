@@ -22,6 +22,39 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Social change detection needs the previous push commit.
+          fetch-depth: 2
+
+      - name: Detect Social asset changes
+        id: social
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Manual deploy: Social assets will be rebuilt."
+            exit 0
+          fi
+
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "No usable previous commit: Social assets will be rebuilt."
+            exit 0
+          fi
+
+          if git diff --quiet "$before" "$GITHUB_SHA" -- \
+            scripts/prepare-social-brand-sources.mjs \
+            scripts/build-social-assets.mjs \
+            DEV/logo-lockup.svg \
+            DEV/shirtfaced.svg \
+            DEV/smiley.svg; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Social sources unchanged: skipping generation, apt and rasterisation."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Social sources changed: rebuilding Social assets."
+          fi
 
       - name: Set up deploy key
         run: |
@@ -67,7 +100,8 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             studio/worlds/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/worlds/
 
-      - name: Build Social assets
+      - name: Generate Social SVG assets
+        if: steps.social.outputs.changed == 'true'
         run: |
           node scripts/prepare-social-brand-sources.mjs
           node scripts/build-social-assets.mjs
@@ -88,8 +122,19 @@ jobs:
             }
           done
 
-          sudo apt-get update -qq
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq librsvg2-bin
+      - name: Install Social SVG rasterizer
+        if: steps.social.outputs.changed == 'true'
+        run: |
+          if command -v rsvg-convert >/dev/null 2>&1; then
+            echo "rsvg-convert already installed."
+            exit 0
+          fi
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y librsvg2-bin
+
+      - name: Rasterize Social assets
+        if: steps.social.outputs.changed == 'true'
+        run: |
           for file in public/social-assets/v3/*.svg; do
             png="${file%.svg}.png"
             rsvg-convert "$file" --format=png --output="$png"
@@ -104,6 +149,7 @@ jobs:
           }
 
       - name: Sync Social assets into Studio
+        if: steps.social.outputs.changed == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'mkdir -p /home/ubuntu/shirtfaced-studio/public/social-assets'
