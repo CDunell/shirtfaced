@@ -503,9 +503,27 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
     # confirmed against real Grok output, not a guess. The corpus's ink-count
     # measurement is still real and still shown in the structured
     # recommendations; it just doesn't belong as a generation constraint.
+    #
+    # Both guardrails below came from generating real test images and looking
+    # at them, not from guessing:
+    # - Without a style anchor, a dense scene concept (a diner at night)
+    #   rendered as an atmospheric painterly poster bleeding past the
+    #   garment edges -- not something a screen-print production run could
+    #   reproduce. "Flat vector illustration style" was cut along with the
+    #   ink-count cap by mistake; only the cap was the actual problem.
+    # - A concept that describes an abstract quality of the lettering
+    #   ("confidence carried entirely by the type") rather than its concrete
+    #   form got read as the literal words to print -- "CONFIDENCE CARRED
+    #   ENTIRELY BY THE TYPE", misspelling included. The instruction below
+    #   is the general guard; concepts written that way should still be
+    #   fixed at the source when found.
     return (
         f"T-shirt graphic design, {tradition_label} style.{idea_line} "
         f"Scale: {scale_prose}. Placement: {placement_prose}. "
         f"{polarity_prose} {archetype_prose} "
-        "Screen-print-ready illustration, suitable for garment printing."
+        "Flat vector illustration or clean halftone screen-print texture -- not a "
+        "photorealistic or painterly scene, and not extending past the garment itself. "
+        "Invent an appropriate short brand name or wordmark if the concept calls for "
+        "lettering; do not render this description's own wording as the printed text, "
+        "and do not depict any real trademarked logo or brand name."
     )
