@@ -520,6 +520,15 @@ export async function fetchRandomConcept(tradition: string): Promise<AdvisorDire
   });
 }
 
+/** Takes one batch-written concept out of rotation. The only pruning tool
+ * for the pool that doesn't require database access. */
+export async function retireConcept(conceptId: string): Promise<void> {
+  await json<{ concept_id: string; active: boolean }>(
+    `/api/design/concept-pool/${encodeURIComponent(conceptId)}/retire`,
+    { method: "POST" },
+  );
+}
+
 /** Everything that leaves the building with one attempt: the words, the product
  * definition, the prompt and the evidence images. Composed on the server so the
  * text a person takes and the record of what they took cannot differ. */

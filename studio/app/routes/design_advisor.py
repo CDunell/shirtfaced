@@ -12,6 +12,7 @@ every recommendation is a marked default until the corpus is measured.
 
 from __future__ import annotations
 
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -125,3 +126,34 @@ def random_design(payload: RandomRequest, session: SessionDependency) -> Directi
         generation_prompt=render_generation_prompt(direction, entry.concept_text),
         concept_id=str(entry.id),
     )
+
+
+class RetireResponse(BaseModel):
+    concept_id: str
+    active: bool
+
+
+@router.post(
+    "/concept-pool/{concept_id}/retire",
+    response_model=RetireResponse,
+    summary="Take a bad batch-written concept out of rotation",
+)
+def retire_concept(concept_id: str, session: SessionDependency) -> RetireResponse:
+    """Set one pool entry to inactive so ``/random`` stops serving it.
+
+    The only pruning tool available for this pool that doesn't require
+    database access -- see ``app/db/concept_pool_models.py``'s ``active``
+    column, which was worthless without a button in front of it.
+    """
+    try:
+        parsed_id = uuid.UUID(concept_id)
+    except ValueError as error:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Not a valid concept id.") from error
+
+    entry = session.get(DesignConceptPoolEntry, parsed_id)
+    if entry is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No concept with that id.")
+
+    entry.active = False
+    session.commit()
+    return RetireResponse(concept_id=concept_id, active=False)

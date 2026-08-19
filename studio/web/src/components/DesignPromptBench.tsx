@@ -8,7 +8,7 @@ import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 import { useStyletron } from "baseui";
 
 import { ApiError } from "../api/client";
-import { fetchAdvice, fetchRandomConcept, type AdvisorDirection } from "../api/concepts";
+import { fetchAdvice, fetchRandomConcept, retireConcept, type AdvisorDirection } from "../api/concepts";
 import { CopyButton, PageTitle } from "./chrome";
 
 const TRADITIONS = [
@@ -57,11 +57,13 @@ export function DesignPromptBench(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const [direction, setDirection] = useState<AdvisorDirection | null>(null);
   const [error, setError] = useState("");
+  const [retired, setRetired] = useState(false);
 
   async function generate(): Promise<void> {
     if (!idea.trim()) return;
     setBusy(true);
     setError("");
+    setRetired(false);
     try {
       const result = await fetchAdvice(idea, hasGraphic, tradition.id);
       setDirection(result);
@@ -75,6 +77,7 @@ export function DesignPromptBench(): React.JSX.Element {
   async function surpriseMe(): Promise<void> {
     setBusy(true);
     setError("");
+    setRetired(false);
     try {
       const result = await fetchRandomConcept(tradition.id);
       setDirection(result);
@@ -87,6 +90,19 @@ export function DesignPromptBench(): React.JSX.Element {
       } else {
         setError(err instanceof Error ? err.message : "Something went wrong.");
       }
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function retireThis(): Promise<void> {
+    if (!direction?.concept_id) return;
+    setBusy(true);
+    try {
+      await retireConcept(direction.concept_id);
+      setRetired(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Couldn't retire that one.");
     } finally {
       setBusy(false);
     }
@@ -177,7 +193,19 @@ export function DesignPromptBench(): React.JSX.Element {
           >
             {direction.generation_prompt}
           </div>
-          <CopyButton text={direction.generation_prompt} label="Copy prompt" />
+          <div className={css({ display: "flex", gap: "12px", alignItems: "center", marginTop: "8px" })}>
+            <CopyButton text={direction.generation_prompt} label="Copy prompt" />
+            {direction.concept_id && !retired ? (
+              <Button size={SIZE.compact} kind="tertiary" isLoading={busy} onClick={() => void retireThis()}>
+                Retire this one
+              </Button>
+            ) : null}
+            {retired ? (
+              <ParagraphXSmall color="mono600" margin={0}>
+                Retired — won't come up again from "Surprise me".
+              </ParagraphXSmall>
+            ) : null}
+          </div>
         </div>
       ) : null}
     </div>
