@@ -19,7 +19,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db_session
-from app.services.design_advisor import advise, measurement_rows
+from app.services.design_advisor import advise, measurement_rows, render_generation_prompt
 
 router = APIRouter(prefix="/api/design", tags=["design"])
 
@@ -40,7 +40,7 @@ class RecommendationView(BaseModel):
 
 
 class DirectionResponse(BaseModel):
-    """``DesignDirection.to_dict()``'s own shape, verbatim."""
+    """``DesignDirection.to_dict()``'s own shape, plus a paste-ready prompt."""
 
     input: str
     intent: str
@@ -48,6 +48,7 @@ class DirectionResponse(BaseModel):
     recommendations: list[RecommendationView]
     alternatives: list[str]
     not_decided: list[str]
+    generation_prompt: str
 
 
 @router.post("/advise", response_model=DirectionResponse, summary="Recommend presentation")
@@ -72,4 +73,7 @@ def advise_design(payload: AdviseRequest, session: SessionDependency) -> Directi
         tradition=payload.tradition,
         rows=measurement_rows(session),
     )
-    return DirectionResponse(**direction.to_dict())
+    return DirectionResponse(
+        **direction.to_dict(),
+        generation_prompt=render_generation_prompt(direction, payload.phrase),
+    )

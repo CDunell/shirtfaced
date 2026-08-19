@@ -333,3 +333,89 @@ def advise(
         "Whether this duplicates something already in the range.",
     ]
     return direction
+
+
+_ARCHETYPE_PROSE = {
+    "typographic hero": "Bold lettering carries the whole design — no supporting image.",
+    "image-led hero": "One dominant illustrated or photographic image carries the design, "
+    "with no competing text element.",
+    "image-and-title lockup": "Bold vintage-style lettering combined with a small icon or "
+    "emblem, locked together as one unit — not text floating separately from artwork.",
+    "emblem or badge": "A self-contained circular or shield-shaped badge/crest, with "
+    "lettering following the emblem's own curve or border, not sitting outside it.",
+    "poster or editorial": "A fully illustrated scene treated like a vintage print or poster, "
+    "with the title integrated into the composition rather than added as a separate line.",
+    "symbolic icon system": "A small set of simple, repeated iconographic marks rather than "
+    "one large image.",
+    "collage or controlled frame": "Multiple smaller elements arranged within one contained "
+    "frame or border, not a single hero image.",
+    "character or object portrait": "A single subject rendered in a formal portrait "
+    "treatment, centred and dignified regardless of how absurd the subject is.",
+    "all-over or jumbo field": "The graphic covers most of the garment's surface rather than "
+    "sitting in one contained area.",
+}
+
+
+def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> str:
+    """Turn a DesignDirection into prose ready to paste into an image generator.
+
+    ``advise()`` answers "what should this design measure" for a human reading
+    a brief. Nobody pastes "print coverage: 4%" into ChatGPT, Nano Banana or
+    Grok and gets a t-shirt graphic back — they need the same decisions
+    written as a visual description. This is that translation, and only that:
+    it still decides nothing ``advise()`` didn't already decide from the
+    corpus. Wording, not judgement.
+    """
+    by_field = {r.field_name: r.value for r in direction.recommendations}
+    if "Placement" not in by_field:
+        # advise() bails out before adding any measured field once the corpus
+        # pool for this request is empty -- "Graphic archetype" is the only
+        # recommendation that survives that, and it is a default, not
+        # evidence. Match advise()'s own refusal rather than filling the gap
+        # with this function's private guesses.
+        return (
+            "The corpus has not been measured for this request, so there is nothing "
+            "evidence-backed to build a prompt from. Run: python -m app.cli design-data --refresh"
+        )
+
+    archetype_key = by_field.get("Graphic archetype", "")
+    archetype_prose = _ARCHETYPE_PROSE.get(
+        archetype_key, "One dominant graphic element, not several competing ideas."
+    )
+
+    ink_value = by_field.get("Ink colours", "")
+    ink_count = ink_value.split(" — ")[0].strip() or "a small number of"
+
+    placement = by_field.get("Placement", "upper")
+    placement_prose = {
+        "upper": "small, tight chest-placement graphic — upper chest only, not a big "
+        "front-hero print",
+        "centre": "centred mid-chest graphic at a self-contained, conversational scale",
+        "lower": "smaller graphic sitting lower on the torso, closer to the hem",
+    }.get(placement, "a compact chest-scale graphic")
+
+    scale_value = by_field.get("Scale role", "")
+    if "S1" in scale_value or "S2" in scale_value:
+        scale_prose = "roughly 3-4 inches wide"
+    elif "S3" in scale_value:
+        scale_prose = "a dominant, large-scale graphic covering most of the torso"
+    else:
+        scale_prose = "an oversized graphic that runs close to the garment's seams"
+
+    polarity = by_field.get("Value polarity", "light on dark")
+    polarity_prose = (
+        "Light-coloured ink on a black garment."
+        if polarity == "light on dark"
+        else "Dark ink on a light or white garment."
+    )
+
+    tradition_label = direction.tradition.replace("-", " ")
+    phrase_line = f' "{phrase.strip()}" text.' if phrase.strip() else ""
+
+    return (
+        f"T-shirt graphic design, {tradition_label} style,{phrase_line} "
+        f"{placement_prose.capitalize()} ({scale_prose}). "
+        f"Screen-print aesthetic, exactly {ink_count} flat ink colors, no gradients or "
+        f"photographic shading. {polarity_prose} {archetype_prose} "
+        "Flat vector illustration style, ready for screen printing."
+    )
