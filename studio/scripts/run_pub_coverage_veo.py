@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Animate one approved coverage frame with minimal Veo motion.
+"""Animate one approved scene observation with bounded Veo motion.
 
-The supplied crop is already the camera composition. Veo is not asked to reveal
-new geography or perform a major reframing; it only animates the established shot.
+The supplied first frame is already the camera composition. A direct shot master
+is preferred when the scene owns one with this shot name; older scenes continue
+to resolve their approved coverage frame. Veo is never asked to invent a new
+camera composition before it starts moving.
 """
 
 from __future__ import annotations
@@ -28,27 +30,34 @@ from app.services.veo_prompt import build_motion_prompt
 
 
 def resolve_seed(scene_key: str, shot: str):
-    """The approved coverage frame for this shot, or a refusal.
-
-    Phase E: a Veo run names a shot in a scene, never a file. Everything a path
-    could get wrong -- an unapproved frame, one cut from a superseded master, a
-    lookalike sitting in the same directory -- is checked before any spend.
-    """
+    """Resolve the exact approved first frame, preferring a direct shot master."""
     from app.adapters.asset_store import FilesystemAssetStore
     from app.db.session import get_session_factory
     from app.services.coverage_library import CoverageRejected, resolve_veo_seed
     from app.services.reference_resolution import ReferenceUnavailable
+    from app.services.scene_shot_library import (
+        DirectShotNotFound,
+        DirectShotUnavailable,
+        resolve as resolve_direct_shot,
+    )
 
     store = FilesystemAssetStore(get_settings().assets_root_resolved)
     try:
         with get_session_factory()() as session:
-            return resolve_veo_seed(session, store, scene_key=scene_key, name=shot)
-    except (CoverageRejected, ReferenceUnavailable) as error:
+            try:
+                resolved = resolve_direct_shot(session, store, scene_key=scene_key, name=shot)
+                return resolved, "direct_shot_master"
+            except DirectShotNotFound:
+                resolved = resolve_veo_seed(session, store, scene_key=scene_key, name=shot)
+                return resolved, "legacy_coverage"
+            except DirectShotUnavailable:
+                raise
+    except (CoverageRejected, ReferenceUnavailable, DirectShotUnavailable) as error:
         raise SystemExit(f"{error} No provider call made.") from error
 
 
 def scene_lineage(seed: Path, scene_key: str) -> dict:
-    """Refuse anything that is not coverage of this scene's approved master."""
+    """Legacy explicit-file verification."""
     from app.adapters.asset_store import FilesystemAssetStore
     from app.config import get_settings
     from app.db.session import get_session_factory
@@ -67,18 +76,7 @@ DEV_RESOLUTION = "720p"
 
 
 def motion_prompt(scene_key: str, shot: str) -> str:
-    """Compile reusable motion law around direction owned by the world.
-
-    Motion direction remains scene configuration and still lives beside the
-    coverage prompt it belongs to:
-
-        worlds/<world>/shots/<SCENE>.veo-motion.txt          the scene's own
-        worlds/<world>/shots/<SCENE>.<shot>.veo-motion.txt   one shot's override
-
-    The file describes this scene/shot. ``build_motion_prompt`` supplies the
-    generic temporal, camera, crowd and first-frame contracts that every Veo
-    take needs. A new scene therefore still needs configuration, not runner code.
-    """
+    """Compile reusable motion law around direction owned by the world."""
     worlds = get_settings().worlds_root_resolved
     for candidate in (f"{scene_key}.{shot}.veo-motion.txt", f"{scene_key}.veo-motion.txt"):
         for shots in sorted(worlds.glob("*/shots")):
@@ -113,12 +111,13 @@ def main() -> None:
                 f"seed SHA mismatch: expected {args.expected_sha256}, got {actual_sha}"
             )
         lineage = scene_lineage(seed, args.scene)
+        lineage["first_frame_source"] = "legacy_explicit_file"
         seed_path = str(seed)
         source_format = "PNG" if seed.suffix.lower() == ".png" else "JPEG"
         with Image.open(BytesIO(data)) as image:
             source_dimensions = list(image.size)
     else:
-        resolved = resolve_seed(args.scene, args.shot)
+        resolved, source_kind = resolve_seed(args.scene, args.shot)
         data = resolved.data
         seed_path = None
         actual_sha = resolved.sha256
@@ -126,9 +125,10 @@ def main() -> None:
         source_format = "PNG" if resolved.mime_type == "image/png" else "JPEG"
         lineage = {
             "scene": args.scene,
-            "coverage_shot": args.shot,
-            "coverage_frame_asset_id": str(resolved.asset_id),
-            "coverage_frame_sha256": resolved.sha256,
+            "shot": args.shot,
+            "first_frame_source": source_kind,
+            "first_frame_asset_id": str(resolved.asset_id),
+            "first_frame_sha256": resolved.sha256,
         }
 
     width, height = source_dimensions
@@ -164,7 +164,7 @@ def main() -> None:
     manifest = {
         **lineage,
         "shot": args.shot,
-        "experiment": "approved-panel-extraction-to-bounded-motion-veo",
+        "experiment": "approved-first-frame-to-bounded-motion-veo",
         "generated_at": stamp,
         "model": result.model,
         "aspect_ratio": aspect_ratio,
@@ -177,7 +177,7 @@ def main() -> None:
         "prompt_contract": "bounded_motion_state_v1",
         "audio": "strip_in_post",
         "raw_video_sha256": hashlib.sha256(result.data).hexdigest(),
-        "manual_gate": "inspect identity geography contact motion arc and usable seconds",
+        "manual_gate": "inspect identity continuity motion realism and usable seconds",
     }
     silent = out / "video-1.mp4"
     if shutil.which("ffmpeg") and shutil.which("ffprobe"):
