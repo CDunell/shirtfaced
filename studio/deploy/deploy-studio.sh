@@ -104,27 +104,40 @@ required_social_assets=(
   dark-reel-9x16.png
   adaptive-reel-badge-9x16.png
 )
+social_assets_present=true
 for asset in "${required_social_assets[@]}"; do
   if [ ! -s "$SOCIAL_ROOT/$asset" ]; then
     echo "Missing rasterized Social render asset: $SOCIAL_ROOT/$asset" >&2
-    exit 1
+    social_assets_present=false
+    break
   fi
 done
+if [ "$social_assets_present" = false ]; then
+  # Rasterized assets aren't on this box (never built, or the "skip when
+  # unchanged" build step skipped a from-scratch build). Don't fail the whole
+  # Studio deploy over a SocialBench-only asset -- ship it referencing the
+  # SVG sources, which is exactly how it ran before this versioned-PNG path
+  # existed. Fix the build step so it stops skipping when the output is
+  # actually absent.
+  echo "Skipping the versioned-PNG rewrite; SocialBench keeps its SVG references." >&2
+fi
 
 say "Building the interface"
 if [ -d web ]; then
-  SOCIAL_ASSET_VERSION=$(date +%s)
-  sed -i -E \
-    "s#(/social-assets/v3/[^\"'\x60]+)\.svg#\1.png?v=${SOCIAL_ASSET_VERSION}#g" \
-    web/src/components/SocialBench.tsx
+  if [ "$social_assets_present" = true ]; then
+    SOCIAL_ASSET_VERSION=$(date +%s)
+    sed -i -E \
+      "s#(/social-assets/v3/[^\"'\x60]+)\.svg#\1.png?v=${SOCIAL_ASSET_VERSION}#g" \
+      web/src/components/SocialBench.tsx
 
-  if grep -E -q "/social-assets/v3/[^\"'\x60]+\.svg" web/src/components/SocialBench.tsx; then
-    echo "SocialBench still contains a Social SVG runtime reference before build." >&2
-    exit 1
-  fi
-  if ! grep -E -q "/social-assets/v3/.*\.png\?v=" web/src/components/SocialBench.tsx; then
-    echo "SocialBench contains no versioned Social PNG runtime references before build." >&2
-    exit 1
+    if grep -E -q "/social-assets/v3/[^\"'\x60]+\.svg" web/src/components/SocialBench.tsx; then
+      echo "SocialBench still contains a Social SVG runtime reference before build." >&2
+      exit 1
+    fi
+    if ! grep -E -q "/social-assets/v3/.*\.png\?v=" web/src/components/SocialBench.tsx; then
+      echo "SocialBench contains no versioned Social PNG runtime references before build." >&2
+      exit 1
+    fi
   fi
 
   ( cd web && npm install --silent && npm run build --silent )
