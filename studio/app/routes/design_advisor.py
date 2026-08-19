@@ -115,8 +115,19 @@ def random_design(payload: RandomRequest, session: SessionDependency) -> Directi
             f"No batch-generated concepts for tradition '{payload.tradition}' yet.",
         )
 
+    # entry.concept_text is an English description of a scene/graphic --
+    # "A vintage skate-shop price tag, string and all, blown up to graphic
+    # scale..." -- not on-shirt copy. advise() buckets ink/coverage/scale by
+    # word count because that's a real proxy for print size when the phrase
+    # IS what gets printed (a typed idea in /advise might be). Passing a
+    # 25-to-35-word description as that phrase put every single pool concept
+    # in the same "7+ words" bucket regardless of tradition, so within one
+    # tradition every random pick returned the same fixed ink/coverage/scale
+    # numbers -- only the concept text ever changed. Advise on the graphic
+    # alone (no phrase) so the numbers reflect an actual graphic-led design
+    # in this tradition, not a description miscounted as a slogan.
     direction = advise(
-        phrase=entry.concept_text,
+        phrase="",
         has_graphic=True,
         tradition=payload.tradition,
         rows=measurement_rows(session),
