@@ -1,5 +1,5 @@
 import userEvent from "@testing-library/user-event";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
@@ -12,15 +12,23 @@ afterEach(() => {
 
 const noop = (): void => undefined;
 
-/** Every destination lives behind the hamburger now, at every width. */
-async function openMenu(): Promise<void> {
-  await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+/**
+ * The desktop sidebar (Phase 1 of docs/ADMIN_STUDIO_UI_OVERHAUL_PLAN.md) renders
+ * every destination unconditionally -- no "Open menu" click needed to reach them,
+ * unlike the hamburger-at-every-width header this replaced. The mobile drawer is
+ * a separate, conditionally-rendered <aside> that only exists once opened; the
+ * always-present one (found first, since it renders before any drawer could)
+ * is the desktop sidebar these tests exercise.
+ */
+function sidebar(): HTMLElement {
+  const aside = document.querySelector("aside");
+  if (!aside) throw new Error("The sidebar is not on the page.");
+  return aside;
 }
 
 /** The shell opens on Work, so a dashboard assertion has to go there first. */
 async function showDashboard(): Promise<void> {
-  await openMenu();
-  await userEvent.click(screen.getByRole("button", { name: "Dashboard" }));
+  await userEvent.click(within(sidebar()).getByRole("button", { name: "Dashboard" }));
 }
 
 describe("App", () => {
@@ -29,9 +37,8 @@ describe("App", () => {
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
 
-    // The wordmark is admin's, with the product name swapped. It is lowercase and
-    // split across two elements, so the whole banner is what gets read.
-    expect(screen.getByRole("banner")).toHaveTextContent("shirtfaced / studio");
+    // The wordmark is admin's, with the product name swapped.
+    expect(sidebar()).toHaveTextContent("shirtfaced / studio");
     // Work is the default view. It is the one screen that answers "what should I
     // be doing" without requiring you to know which screen owns what, which is
     // the plan's governing rule. It used to open on Prompts, which is world work.
@@ -43,36 +50,33 @@ describe("App", () => {
     });
   });
 
-  it("groups the destinations by pipeline rather than listing ten in a row", async () => {
+  it("groups the destinations by pipeline rather than listing ten in a row", () => {
     // The 14 August audit's largest structural finding was two pipelines
     // interleaved in one interface, and that it is the first thing a person
     // hits. Nothing has moved -- but which is which is now stated.
     stubApi();
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
-    await openMenu();
 
-    const banner = screen.getByRole("banner");
-    expect(banner).toHaveTextContent("Product");
-    expect(banner).toHaveTextContent("World");
+    const nav = sidebar();
+    expect(nav).toHaveTextContent("Product");
+    expect(nav).toHaveTextContent("World");
     // Product destinations lead, in the order the work happens.
-    const labels = Array.from(banner.querySelectorAll("button")).map((b) => b.textContent);
+    const labels = Array.from(nav.querySelectorAll("button")).map((b) => b.textContent);
     expect(labels.indexOf("Work")).toBeLessThan(labels.indexOf("Prompts"));
     expect(labels.indexOf("Designs")).toBeLessThan(labels.indexOf("Social"));
     // Work leads the product group: the other destinations are where its rows send you.
     expect(labels.indexOf("Work")).toBeLessThan(labels.indexOf("Evidence"));
   });
 
-  it("no longer offers Compose or Score as destinations", async () => {
+  it("no longer offers Compose or Score as destinations", () => {
     // Phase 5. They were three screens that each knew part of one journey.
     // The capabilities did not go anywhere -- they fold into Designs.
     stubApi();
 
     renderWithBase(<App themeName="light" onToggleTheme={noop} />);
-    await openMenu();
 
-    const banner = screen.getByRole("banner");
-    const labels = Array.from(banner.querySelectorAll("button")).map((b) => b.textContent);
+    const labels = Array.from(sidebar().querySelectorAll("button")).map((b) => b.textContent);
     expect(labels).not.toContain("Compose");
     expect(labels).not.toContain("Score");
     expect(labels).toContain("Designs");
@@ -121,8 +125,7 @@ describe("App", () => {
     const onToggleTheme = vi.fn();
 
     renderWithBase(<App themeName="light" onToggleTheme={onToggleTheme} />);
-    await openMenu();
-    await userEvent.click(screen.getByRole("button", { name: "Dark theme" }));
+    await userEvent.click(within(sidebar()).getByRole("button", { name: "Dark theme" }));
 
     expect(onToggleTheme).toHaveBeenCalledOnce();
   });

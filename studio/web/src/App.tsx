@@ -1,18 +1,14 @@
 /**
  * Application shell.
  *
- * Eleven destinations in two pipelines. They used to sit in one row across the
- * header on anything wider than 760px, with the hamburger reserved for phones —
- * which meant the widest screen got the most cramped nav, three groups and a
- * theme toggle competing for the same strip beside the wordmark.
- *
- * So the hamburger is the nav at every width. The header holds the wordmark and
- * one button; the panel underneath holds the destinations, grouped, with the
- * pipeline blurb that never fitted in the row. A person aiming at one
- * destination reads a list instead of scanning a strip.
+ * Thirteen destinations in two pipelines, rendered through the shared Sidebar
+ * (Phase 1 of docs/ADMIN_STUDIO_UI_OVERHAUL_PLAN.md) -- previously a
+ * hamburger-at-every-width header held them; that panel and its icons moved
+ * into Sidebar.tsx, which Admin's own sidebar now mirrors the shape of.
  */
 import { useState } from "react";
-import { cx, useSyncDarkClass } from "./components/ui";
+import { useSyncDarkClass } from "./components/ui";
+import { Sidebar } from "./components/Sidebar";
 import { WorkBench } from "./components/WorkBench";
 import { DesignsBench } from "./components/DesignsBench";
 import { DesignPromptBench } from "./components/DesignPromptBench";
@@ -111,34 +107,6 @@ const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
   { id: "social", label: "Social", pipeline: "world" },
   { id: "email", label: "Email", pipeline: "world" },
 ];
-const ADMIN_URL = "https://admin.shirtfaced.wtf";
-const iconBase = {
-  viewBox: "0 0 24 24",
-  fill: "none",
-  stroke: "currentColor",
-  strokeWidth: 2,
-  strokeLinecap: "round" as const,
-  strokeLinejoin: "round" as const,
-  width: 24,
-  height: 24,
-  "aria-hidden": true,
-};
-const IconMenu = () => (
-  <svg {...iconBase}>
-    <path d="M3.5 7h17M3.5 12h17M3.5 17h17" />
-  </svg>
-);
-const IconClose = () => (
-  <svg {...iconBase}>
-    <path d="M6 6l12 12M18 6L6 18" />
-  </svg>
-);
-const navItemClass = (active: boolean) =>
-  cx(
-    "press appearance-none cursor-pointer rounded-[14px] px-3 py-2 font-sans text-[13px] font-semibold tracking-wide uppercase no-underline",
-    active ? "bg-ink text-paper" : "bg-transparent text-ink",
-  );
-
 export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   // Mirrors themeName onto <html class="dark"> for Tailwind's dark: variant.
   // Base Web components keep taking their theme from BaseProvider in
@@ -150,67 +118,18 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   // What Work sent us to, so Designs can open straight onto it. Cleared once
   // consumed, so navigating away and back does not silently re-open it.
   const [focus, setFocus] = useState<{ conceptId: string; attemptId: string | null } | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const pick = (id: View) => {
-    setView(id);
-    setMenuOpen(false);
-  };
   return (
-    <div className="min-h-screen bg-paper dark:bg-ink">
-      <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper dark:border-paper/10 dark:bg-ink">
-        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-          <span className="wordmark text-[22px] text-ink dark:text-paper">shirtfaced / studio</span>
-          <button
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            onClick={() => {
-              setMenuOpen((x) => !x);
-            }}
-            className="grid h-11 w-11 place-items-center border-0 bg-transparent text-ink dark:text-paper"
-          >
-            {menuOpen ? <IconClose /> : <IconMenu />}
-          </button>
-        </div>
-        {menuOpen ? (
-          <nav className="mx-auto grid max-w-5xl grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-x-6 gap-y-1 border-t border-ink/10 px-4 pt-3 pb-4 dark:border-paper/10">
-            {PIPELINES.map((pipeline) => (
-              <div key={pipeline.id} className="flex flex-col gap-1">
-                <span className="pt-2 text-[10px] font-bold tracking-[0.12em] text-ink/50 uppercase dark:text-paper/50">
-                  {pipeline.label} — {pipeline.blurb}
-                </span>
-                {VIEWS.filter((v) => v.pipeline === pipeline.id).map((v) => (
-                  <button
-                    key={v.id}
-                    onClick={() => {
-                      pick(v.id);
-                    }}
-                    className={navItemClass(view === v.id)}
-                  >
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            ))}
-            <div className="flex flex-col gap-1">
-              <span className="pt-2 text-[10px] font-bold tracking-[0.12em] text-ink/50 uppercase dark:text-paper/50">
-                Elsewhere
-              </span>
-              <a href={ADMIN_URL} className={navItemClass(false)}>
-                Admin ↗
-              </a>
-              <button
-                onClick={() => {
-                  onToggleTheme();
-                  setMenuOpen(false);
-                }}
-                className={navItemClass(false)}
-              >
-                {themeName === "light" ? "Dark theme" : "Light theme"}
-              </button>
-            </div>
-          </nav>
-        ) : null}
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-9">
+    <div className="min-h-screen bg-paper sm:flex dark:bg-ink">
+      <Sidebar
+        pipelines={PIPELINES}
+        views={VIEWS}
+        currentView={view}
+        onPick={setView}
+        themeName={themeName}
+        onToggleTheme={onToggleTheme}
+      />
+      <main className="min-w-0 flex-1 px-4 py-9">
+        <div className="mx-auto max-w-5xl">
         {view === "design-prompt" ? (
           <DesignPromptBench />
         ) : view === "design-gallery" ? (
@@ -256,6 +175,7 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
             <ServiceStatus />
           </>
         )}
+        </div>
       </main>
     </div>
   );
