@@ -199,28 +199,58 @@ rather than letting it surface mid-build.
   slipped through typecheck and the build clean, only the live click-and-inspect
   check caught it. Added `useSyncDarkClass` to `ui.tsx` and wired it into `App.tsx`;
   re-verified both directions of the toggle work.
-- Base Web (`baseui`, `styletron-*`) is **still installed and still required** — 23 of
-  25 component files still import it directly, coexisting with the new Tailwind shell
-  without conflict (`BaseProvider`/`StyletronProvider` in `main.tsx` still wrap
-  everything). Nothing gets uninstalled until every consumer is migrated.
+- At this point in the session Base Web was still installed and required — 23 of 25
+  component files still imported it directly. See below: by the end of the same
+  session, all 26 were converted and the dependency removed entirely.
 
-**Remaining Phase 0 work — one file at a time, each independently verifiable:**
-`AttemptPanel.tsx`, `BriefPanel.tsx`, `CanonProposals.tsx`, `CastBench.tsx`,
-`ComposeBench.tsx`, `DecisionPanel.tsx`, `DesignBench.tsx`, `DesignGalleryBench.tsx`,
-`DesignPromptBench.tsx`, `DesignsBench.tsx`, `EmailBench.tsx`, `GenerationPanel.tsx`,
-`LocationsBench.tsx`, `PromptWorkbench.tsx`, `ReviewPanel.tsx`, `RoughCutBench.tsx`,
-`RoughCutPanel.tsx`, `SceneShotsBench.tsx`, `SelectionPanel.tsx`, `ServiceStatus.tsx`,
-`ShotStatusTag.tsx`, `SocialBench.tsx`, `VintageEvidenceBench.tsx`,
-`VintageResearchBench.tsx`, `WorkBench.tsx`, `WorldPage.tsx` (26 files — some larger
-than expected, e.g. `AttemptPanel.tsx` at 1025 lines and `SocialBench.tsx` at 885).
-Final cleanup step once all are done: drop `baseui`/`styletron-*` from
-`package.json`, delete `theme.ts`/`tokens.ts`, remove `BaseProvider`/
-`StyletronProvider` from `main.tsx`, and lift the React-18 pin now that Base Web
-18.2's `defaultProps` reliance (ADR-011) no longer applies.
+## Phase 0 — DONE, 20 August 2026 (same night)
+
+All 26 remaining component files converted (parallel background agents, each briefed
+with the exact conversion spec and pointed at `ServiceStatus.tsx`/`chrome.tsx` as
+real worked examples, not prose alone). Zero files in `studio/web/src` import from
+`"baseui"` or call `useStyletron` any more.
+
+**Bugs the migration itself surfaced, fixed as they came up rather than shipped:**
+- `ui.tsx` was missing three real capabilities baseui had: `Button.isLoading`
+  (spinner + disabled during a request), `Input`/`Textarea` `error` (red border),
+  `Checkbox` `disabled`. Added centrally so every in-flight agent inherited the fix
+  automatically instead of each hand-rolling a workaround.
+- Three test files broke for real reasons, not just needing a migration touch-up:
+  `CastBench.test.tsx` (a native `<select>`'s `<option>` text is always in the DOM,
+  unlike Base Web's portal-rendered dropdown, so a `getByText` query started
+  matching two elements), `PromptWorkbench.test.tsx` and
+  `VintageResearchBench.test.tsx` (both used a click-to-open/click-option
+  interaction pattern that only ever worked around Base Web's own Select — rewritten
+  to `userEvent.selectOptions`, which also exposed a real async-loading race in
+  `PromptWorkbench` that the old workaround had been silently masking).
+- One process incident worth recording: running many parallel agents against one
+  shared (non-isolated) working tree let one agent's own `git stash`/pull sequence
+  transiently disturb others' in-progress edits, and separately pulled in unrelated
+  content (`CLAUDE.md`, `docs/AGENCY_ARM.md`) plus a stale, unrelated stash conflict
+  in two backend Python files from the concurrently-pushing cloud session mentioned
+  in `[[shirtfaced-parallel-claude-sessions]]`. Diagnosed and resolved cleanly (the
+  conflict was old, superseded WIP — resolved to the current, self-consistent code
+  and left the original stash entry untouched and recoverable). Nothing was lost, but
+  the next multi-agent pass touching this repo should use worktree isolation per
+  agent rather than a shared tree.
+- Final cleanup done same session: `baseui`/`styletron-*` dropped from
+  `package.json` (129 packages removed), `tokens.ts` deleted, `theme.ts`/`main.tsx`/
+  `test/render.tsx` stripped to plain localStorage + rendering with no provider
+  tree. React 18 pin deliberately left in place — no longer load-bearing now that
+  Base Web's `defaultProps` reliance (ADR-011) is gone, but bumping to 19 is its own
+  separately-verified change, not bundled into this cleanup.
+
+**Verified, not just typechecked:** `tsc --noEmit` clean, full suite (144 tests)
+passing across multiple consecutive runs, production build succeeds. Bundle size
+854KB → 457KB (components converted) → 305KB (dependency removed) — a 64% drop,
+concrete proof Base Web is genuinely gone, not just unused-but-still-shipped.
+
+**Exit test — met:** every primitive Studio renders through now comes from the same
+Tailwind component layer Admin uses, not a themed instance of a different library.
 
 ---
 
-## Phase 0 — Design system alignment (foundation; blocks everything visual below)
+## Phase 0 — original plan text (kept for record; see "DONE" above for what shipped)
 
 - Rebuild Studio's ~25 `components/*.tsx` off Base Web onto hand-built Tailwind
   components matching Admin's actual patterns (`admin/src/components/ui.tsx` and
