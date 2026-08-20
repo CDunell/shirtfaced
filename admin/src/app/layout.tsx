@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Anton, Space_Grotesk } from "next/font/google";
 import "./globals.css";
-import { Nav } from "@/components/Nav";
+import { Sidebar } from "@/components/Sidebar";
 import { currentAdmin } from "@/lib/auth";
 
 const anton = Anton({
@@ -30,8 +30,12 @@ export default async function RootLayout({
   return (
     <html lang="en-AU" className={`${anton.variable} ${spaceGrotesk.variable}`}>
       <body className="min-h-screen bg-paper text-ink">
-        <Nav adminEmail={admin} studioUrl={process.env.STUDIO_URL ?? "#"} />
-        <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6">{children}</main>
+        <div className="sm:flex">
+          <Sidebar adminEmail={admin} studioUrl={process.env.STUDIO_URL ?? "#"} />
+          <main className="min-w-0 flex-1 px-4 py-8 sm:px-6">
+            <div className="mx-auto max-w-5xl">{children}</div>
+          </main>
+        </div>
       </body>
     </html>
   );
