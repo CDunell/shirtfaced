@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listProducts } from "@/db/queries";
+import { listLowStock, LOW_STOCK_THRESHOLD } from "@/db/store-queries";
 import { formatCents } from "@/lib/money";
 import { Button, Card } from "@/components/ui";
 import { DeleteProductButton } from "@/components/DeleteProductButton";
@@ -7,7 +8,7 @@ import { DeleteProductButton } from "@/components/DeleteProductButton";
 export const dynamic = "force-dynamic";
 
 export default async function ProductsPage() {
-  const products = await listProducts();
+  const [products, lowStock] = await Promise.all([listProducts(), listLowStock()]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -17,6 +18,26 @@ export default async function ProductsPage() {
           <Button type="button">+ New product</Button>
         </Link>
       </div>
+
+      {lowStock.length > 0 && (
+        <div className="rounded-[var(--radius-card)] border border-coral/40 bg-coral/10 p-5">
+          <p className="mb-2 text-[13px] font-bold uppercase tracking-wide text-ink">
+            Low stock — {lowStock.length} at {String(LOW_STOCK_THRESHOLD)} units or fewer
+          </p>
+          <div className="flex flex-col gap-1">
+            {lowStock.map((row) => (
+              <Link
+                key={`${row.productId}-${row.colourName}-${row.size}`}
+                href={`/products/${row.productId}`}
+                className="text-[13px] text-ink/70 hover:text-ink hover:underline"
+              >
+                {row.productName} — {row.colourName} / {row.size}:{" "}
+                <span className="font-semibold">{row.quantity} left</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {products.length === 0 ? (
         <Card>
