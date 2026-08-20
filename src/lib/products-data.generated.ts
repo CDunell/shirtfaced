@@ -72,7 +72,7 @@ export const products: Product[] = [
       "XXL"
     ],
     "blurb": "Take the risk. Obviously.",
-    "description": "Eight-ball back print on 240gsm washed black. Dropped shoulder, wide body, vintage screen texture. Ships with no advice whatsoever."
+    "description": "Eight-ball back print on 207gsm garment-dyed washed black. Dropped shoulder, relaxed body, vintage screen texture. Ships with no advice whatsoever."
   },
   {
     "slug": "send-it-club-tee",
@@ -141,7 +141,7 @@ export const products: Product[] = [
       "XXL"
     ],
     "blurb": "Summer's whole personality.",
-    "description": "230gsm mid-weight cotton with a full back print in washed blue ink. Regular fit, ribbed neck, built for long evenings and worse ideas."
+    "description": "207gsm ring-spun cotton with a full back print in washed blue ink. Relaxed fit, ribbed neck, built for long evenings and worse ideas."
   },
   {
     "slug": "midnight-service-tee",
