@@ -52,6 +52,19 @@ export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={cx(fieldClass, props.className)} />;
 }
 
+export function Checkbox(props: InputHTMLAttributes<HTMLInputElement>) {
+  return (
+    <input
+      type="checkbox"
+      {...props}
+      className={cx(
+        "h-[18px] w-[18px] rounded-[6px] border border-ink/25 accent-ink",
+        props.className,
+      )}
+    />
+  );
+}
+
 export function Field({
   label,
   htmlFor,

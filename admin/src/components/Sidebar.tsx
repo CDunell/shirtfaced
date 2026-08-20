@@ -9,6 +9,7 @@ import { IconClose, IconMenu } from "./Icons";
 const LINKS = [
   { href: "/products", label: "Products" },
   { href: "/customers", label: "Customers" },
+  { href: "/discounts", label: "Discounts" },
   { href: "/content", label: "Content" },
 ];
 
