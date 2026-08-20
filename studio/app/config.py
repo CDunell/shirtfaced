@@ -128,6 +128,32 @@ class Settings(BaseSettings):
     app_port: int = Field(default=8000, ge=1, le=65535)
     debug: bool = False
 
+    # Studio has no login of its own -- it verifies the same signed session
+    # cookie admin issues (see app/session_auth.py). Disabled by default so
+    # local dev stays login-free, same convention as every other _enabled
+    # flag in this file; production sets REQUIRE_SESSION_AUTH=true.
+    require_session_auth: bool = False
+    session_secret: SecretStr | None = None
+    # Where an unauthenticated request gets sent. Studio has no login page of
+    # its own -- Admin's login/actions.ts already handles an absolute `next`
+    # URL on the shared cookie domain and redirects back here on success.
+    admin_login_url: str = "https://admin.shirtfaced.wtf/login"
+
+    @field_validator("session_secret")
+    @classmethod
+    def _require_secret_when_auth_is_on(
+        cls, value: SecretStr | None, info: object
+    ) -> SecretStr | None:
+        # Pydantic v2 field_validator gets a ValidationInfo; read the sibling
+        # field defensively since validators can't rely on full-model access.
+        data = getattr(info, "data", {})
+        if data.get("require_session_auth") and value is None:
+            raise ValueError(
+                "SESSION_SECRET is required when REQUIRE_SESSION_AUTH=true -- "
+                "fail closed at startup, not open at request time."
+            )
+        return value
+
     @field_validator("database_url")
     @classmethod
     def _require_psycopg_driver(cls, value: str) -> str:

@@ -7,9 +7,11 @@ with ``alembic upgrade head``.
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from starlette.responses import JSONResponse, RedirectResponse
 from starlette.staticfiles import StaticFiles
 
 from app import __version__
@@ -39,6 +41,7 @@ from app.routes import (
     visual_library,
 )
 from app.routes import range as design_range
+from app.session_auth import SESSION_COOKIE, verify_session_token
 from app.web import mount_interface
 
 logger = logging.getLogger(__name__)
@@ -61,6 +64,34 @@ def create_app() -> FastAPI:
         version=__version__,
         debug=settings.debug,
     )
+
+    if settings.require_session_auth:
+        secret = settings.session_secret
+        assert secret is not None  # enforced by config.py's validator at startup
+
+        @application.middleware("http")
+        async def require_session(
+            request: Request, call_next: Callable[[Request], Awaitable[Response]]
+        ) -> Response:
+            # /health must stay reachable with no session: a supervisor or
+            # uptime check has no cookie and shouldn't need one just to
+            # confirm the process is alive.
+            if request.url.path == "/health":
+                return await call_next(request)
+
+            token = request.cookies.get(SESSION_COOKIE)
+            if verify_session_token(token, secret.get_secret_value()) is None:
+                next_url = str(request.url)
+                login_url = f"{settings.admin_login_url}?next={next_url}"
+                accept = request.headers.get("accept", "")
+                if "application/json" in accept:
+                    return JSONResponse(
+                        {"detail": "Sign in required.", "login_url": login_url},
+                        status_code=401,
+                    )
+                return RedirectResponse(login_url, status_code=302)
+
+            return await call_next(request)
 
     application.include_router(health.router)
     application.include_router(api.router)
