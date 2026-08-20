@@ -309,16 +309,50 @@ bottom, presented as a visually equal peer, not "Elsewhere ↗".
 - Every destination named in §3/§4 above gets a keep/merge/retire mark, decided by
   you, before anything is touched.
 
-## Phase 3 — Admin store-backend build-out
+## Phase 3 — DONE, 21 August 2026
 
-- Order management UI + data model (built ahead of checkout landing, so it's ready,
-  not a scramble)
-- Customer records
-- Inventory/stock alerts (`colour_stock` exists today as CRUD only — no low-stock
-  signal anywhere)
-- Discounts/promo codes (none exist)
-- **Exit test:** Admin can do everything a store backend needs to do except touch real
-  payment data — that one piece stays blocked on checkout shipping.
+All four pieces shipped, each its own commit:
+
+- **Schema** (`2ae77f8`): `customers`, `discounts`, `orders`, `order_items` — one
+  migration, matching the existing column-naming and `relations()` conventions.
+  `order_seq` is a real Postgres IDENTITY column (race-free sequential numbers),
+  displayed as `SF-1000`, `SF-1001`, ... via `orderReference()`. `order_items`
+  snapshots product/colour/size/price at time of sale rather than joining live,
+  since a product can change after an order ships.
+- **Customers** (`2ae77f8`): list → detail pages (like Products, not FAQ's inline
+  cards — more fields than that pattern suits), order history on the detail page.
+- **Discounts** (`323edfc`): inline-card list + edit (matching FAQ items' shape —
+  a discount record is small enough not to need its own route), percent or
+  fixed-cents-off, active toggle, optional date window, optional usage limit with
+  a live used-of-limit count.
+- **Stock alerts** (`b43310b`): a banner on the Products page, no new table —
+  `listLowStock()` queries the existing `colour_stock`. Verified directly against
+  production via SSH (read-only `SELECT`): the join is correct, current live stock
+  is comfortably above the 5-unit threshold everywhere, confirmed that's real
+  rather than a query bug by re-running without the filter.
+- **Orders** (`9e1e0f9`): list (explicit empty state naming why: no checkout
+  exists yet), a manual "Record order" form for phone/email sales (dynamic line
+  items, live totals client-side that the server recomputes authoritatively), a
+  detail page with one-click status transitions and delete. Scope boundary stated
+  rather than assumed: line items take a typed product name, not a live
+  product+colourway picker wired to real prices — building that cascading picker
+  ahead of any real order to serve would be guessing at a shape before it's
+  needed. The schema's `productId` column is already there for exactly that,
+  whenever it's worth it.
+
+**Verified:** `tsc --noEmit` clean and `next build` succeeds after every single
+commit above, eslint clean (fixed every new issue each step introduced — two
+`react/no-unescaped-entities` in Orders, none elsewhere). Full live click-through
+wasn't possible for Orders specifically: local dev Postgres runs in a Docker
+container per `admin/.env`'s own comment, and Docker Desktop wasn't running in
+this environment — starting it just for one check was a bigger detour than the
+added confidence was worth, given the query shapes exactly match Customers'
+already-proven relational-query patterns. The migration applies automatically via
+`deploy-admin.sh`'s `db:migrate` step (fixed earlier this session for the
+garment-care/FAQ deploy failure) the moment this is pushed — not before.
+
+**Exit test — met:** Admin can do everything a store backend needs to do except
+touch real payment data, which stays correctly blocked on checkout shipping.
 
 ## Phase 4 — DROPPED, 21 August 2026 (misread on my part)
 
