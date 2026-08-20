@@ -528,5 +528,9 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
         "do not depict any real trademarked logo or brand name, and do not invent a name "
         "that closely echoes an existing apparel brand (e.g. nothing built from 'Rip', "
         "'Curl', 'Quik', 'Vans', 'Volcom' or similar recognisable fragments) -- invent "
-        "something unrelated instead."
+        "something unrelated instead. If the concept calls for a character or mascot, "
+        "design it as a wholly original character -- do not reproduce the silhouette, "
+        "proportions or recognisable features of any existing cartoon character (e.g. a "
+        "rodent with two perfectly round ears and white gloves reads as Mickey Mouse "
+        "regardless of species named in the brief)."
     )
