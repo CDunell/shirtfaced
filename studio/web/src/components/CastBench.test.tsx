@@ -106,7 +106,10 @@ describe("CastBench", () => {
     await waitFor(() => {
       expect(screen.getByText(/1 members · 3 references/i)).toBeInTheDocument();
     });
-    expect(screen.getByText("expression bridge")).toBeInTheDocument();
+    // The role also appears as a native <option> in the row's "change role" select,
+    // which -- unlike Base Web's custom-rendered dropdown -- always has its option
+    // text present in the DOM even closed. Scope to the status Tag's <span>.
+    expect(screen.getByText("expression bridge", { selector: "span" })).toBeInTheDocument();
     // The state a filesystem could not hold: arrived, not yet decided on.
     expect(screen.getByText("pending")).toBeInTheDocument();
   });
@@ -160,8 +163,12 @@ describe("CastBench", () => {
     const input = document.querySelector('input[type="file"]');
     if (!(input instanceof HTMLInputElement)) throw new Error("no file input rendered");
     await userEvent.upload(input, file);
-    await userEvent.click(screen.getByText("Role"));
-    await userEvent.click(await screen.findByText("shouting"));
+    // The role picker is a native <select> now (was Base Web's own click-to-open
+    // listbox, which "shouting" would only exist to click once opened) --
+    // userEvent.selectOptions is the native-select equivalent of that interaction.
+    const roleSelect = document.querySelector("select");
+    if (!(roleSelect instanceof HTMLSelectElement)) throw new Error("no role select rendered");
+    await userEvent.selectOptions(roleSelect, "shouting");
     await userEvent.click(screen.getByRole("button", { name: "Add reference" }));
 
     await waitFor(() => {

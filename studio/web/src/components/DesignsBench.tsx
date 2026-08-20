@@ -14,13 +14,6 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Card, StyledBody } from "baseui/card";
-import { FormControl } from "baseui/form-control";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError } from "../api/client";
 import {
@@ -41,7 +34,7 @@ import { BriefPanel } from "./BriefPanel";
 import { ComposeBench } from "./ComposeBench";
 import { DesignBench } from "./DesignBench";
 import { Disclosure, PageTitle, SectionTitle, StatusChip } from "./chrome";
-import { CREAM, INK, LIME, PAPER } from "../tokens";
+import { Button, Card, cx, FormControl, Input, Notification, ParagraphSmall, ParagraphXSmall } from "./ui";
 
 function describe(cause: unknown): string {
   if (cause instanceof ApiError) return cause.message;
@@ -57,6 +50,8 @@ const STATUS_FILTERS: { id: string; label: string }[] = [
   { id: "held", label: "Held" },
   { id: "retired", label: "Retired" },
 ];
+
+const metaLineClass = "text-[12px] font-semibold tracking-wide uppercase text-ink/50";
 
 function number3(value: number): string {
   return `#${String(value).padStart(3, "0")}`;
@@ -74,7 +69,6 @@ export function DesignsBench({
   focus,
   onFocusConsumed,
 }: DesignsBenchProps = {}): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [queue, setQueue] = useState<DesignAttemptView[]>([]);
   const [nextUp, setNextUp] = useState<ConceptView | null>(null);
   const [concepts, setConcepts] = useState<ConceptView[]>([]);
@@ -170,51 +164,27 @@ export function DesignsBench({
     const artwork = attempt.assets.find((asset) => asset.kind === "artwork") ?? attempt.assets[0];
     if (!artwork) return null;
     return (
-      <div
-        className={css({
-          background: "#101010",
-          borderRadius: "12px",
-          padding: "12px",
-          marginBottom: "10px",
-          display: "flex",
-          justifyContent: "center",
-        })}
-      >
+      <div className="mb-2.5 flex justify-center rounded-xl bg-[#101010] p-3">
         <img
           src={assetUrl(artwork.id)}
           alt={`attempt ${String(attempt.attempt_number)}`}
-          className={css({ maxWidth: "100%", maxHeight: "200px" })}
+          className="max-h-[200px] max-w-full"
         />
       </div>
     );
   };
 
-  const metaLine = css({
-    fontSize: "12px",
-    fontWeight: 600,
-    letterSpacing: "0.04em",
-    textTransform: "uppercase",
-    color: theme.colors.contentTertiary,
-  });
-
   return (
     <>
       <PageTitle meta={`${String(concepts.length)} concepts`}>Designs</PageTitle>
-      <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
+      <ParagraphSmall>
         The concept library as a working queue. The numbers are permanent, the statuses are real,
         and &ldquo;next&rdquo; is a query rather than a memory.
       </ParagraphSmall>
 
-      {error ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
 
-      <div className={css({ maxWidth: "280px", marginBottom: theme.sizing.scale600 })}>
+      <div className="mb-6 max-w-[280px]">
         <FormControl label="Deciding as">
           <Input
             value={decider}
@@ -228,61 +198,50 @@ export function DesignsBench({
 
       <SectionTitle count={queue.length}>Review</SectionTitle>
       {queue.length === 0 ? (
-        <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
-          Nothing awaits a decision.
-        </ParagraphSmall>
+        <ParagraphSmall>Nothing awaits a decision.</ParagraphSmall>
       ) : (
-        <div
-          className={css({
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: "12px",
-            marginBottom: theme.sizing.scale700,
-          })}
-        >
+        <div className="mb-7 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
           {queue.map((attempt) => (
             <Card key={attempt.id}>
-              <StyledBody>
-                {preview(attempt)}
-                <span className={metaLine}>
-                  attempt {attempt.attempt_number} · {attempt.method.replace(/_/g, " ")}
-                </span>
-                {/* No Approve here. Approval needs the scorecard answered and
-                    the queue has nowhere to answer it, so the queue's job is
-                    to get you to the attempt. Rejecting and asking for a
-                    variation need no rubric and stay. */}
-                <div className={css({ display: "flex", gap: "6px", marginTop: "10px" })}>
-                  <Button
-                    size={SIZE.mini}
-                    disabled={busy}
-                    onClick={() => {
-                      void openAttempt(attempt);
-                    }}
-                  >
-                    Judge it
-                  </Button>
-                  <Button
-                    size={SIZE.mini}
-                    kind={BUTTON_KIND.secondary}
-                    disabled={busy}
-                    onClick={() => {
-                      void onDecide(attempt, "rejected");
-                    }}
-                  >
-                    Reject
-                  </Button>
-                  <Button
-                    size={SIZE.mini}
-                    kind={BUTTON_KIND.tertiary}
-                    disabled={busy}
-                    onClick={() => {
-                      void onDecide(attempt, "variation_requested");
-                    }}
-                  >
-                    Variation
-                  </Button>
-                </div>
-              </StyledBody>
+              {preview(attempt)}
+              <span className={metaLineClass}>
+                attempt {attempt.attempt_number} · {attempt.method.replace(/_/g, " ")}
+              </span>
+              {/* No Approve here. Approval needs the scorecard answered and
+                  the queue has nowhere to answer it, so the queue's job is
+                  to get you to the attempt. Rejecting and asking for a
+                  variation need no rubric and stay. */}
+              <div className="mt-2.5 flex gap-1.5">
+                <Button
+                  size="compact"
+                  disabled={busy}
+                  onClick={() => {
+                    void openAttempt(attempt);
+                  }}
+                >
+                  Judge it
+                </Button>
+                <Button
+                  size="compact"
+                  variant="secondary"
+                  disabled={busy}
+                  onClick={() => {
+                    void onDecide(attempt, "rejected");
+                  }}
+                >
+                  Reject
+                </Button>
+                <Button
+                  size="compact"
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    void onDecide(attempt, "variation_requested");
+                  }}
+                >
+                  Variation
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
@@ -291,74 +250,25 @@ export function DesignsBench({
       {nextUp ? (
         // The page's one accent moment: ink surface, lime eyebrow, display
         // type. What to do next is the thing this bench exists to answer.
-        <section
-          className={css({
-            // Ink on paper in both themes: this is a brand statement, not a
-            // theme surface. In dark mode the theme's "inverse" turns light
-            // grey and the lime eyebrow dies on it; a hairline keeps the ink
-            // card separate from an ink page instead.
-            backgroundColor: INK,
-            color: PAPER,
-            border: `1px solid color-mix(in srgb, ${PAPER} 14%, transparent)`,
-            borderRadius: "20px",
-            paddingTop: "24px",
-            paddingBottom: "24px",
-            paddingLeft: "24px",
-            paddingRight: "24px",
-            marginTop: theme.sizing.scale600,
-            marginBottom: theme.sizing.scale800,
-          })}
-        >
-          <span
-            className={css({
-              display: "block",
-              fontSize: "11px",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: LIME,
-              marginBottom: "10px",
-            })}
-          >
+        // Ink on paper in both themes: this is a brand statement, not a
+        // theme surface, so it stays hard-coded to bg-ink/text-paper rather
+        // than following dark mode's inverse -- a hairline keeps the ink
+        // card separate from an ink page instead.
+        <section className="mt-6 mb-8 rounded-[20px] border border-paper/[0.14] bg-ink px-6 py-6 text-paper">
+          <span className="mb-2.5 block text-[11px] font-bold tracking-[0.12em] text-lime uppercase">
             Next up
           </span>
-          <h2
-            className={`display ${css({
-              fontSize: "clamp(26px, 5vw, 36px)",
-              margin: "0 0 10px",
-              color: "inherit",
-            })}`}
-          >
+          <h2 className="display mb-2.5 text-[clamp(26px,5vw,36px)] text-inherit">
             {number3(nextUp.external_number)} {nextUp.title}
           </h2>
-          <p
-            className={css({
-              margin: "0 0 14px",
-              fontSize: "15px",
-              lineHeight: 1.55,
-              opacity: 0.75,
-              maxWidth: "640px",
-            })}
-          >
+          <p className="mb-3.5 max-w-[640px] text-[15px] leading-[1.55] opacity-75">
             {nextUp.concept_text}
           </p>
-          <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+          <div className="flex flex-wrap gap-1.5">
             {nextUp.garments.map((garment) => (
               <span
                 key={garment}
-                className={css({
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase",
-                  borderRadius: "8px",
-                  paddingTop: "3px",
-                  paddingBottom: "3px",
-                  paddingLeft: "8px",
-                  paddingRight: "8px",
-                  backgroundColor: "rgba(242, 240, 237, 0.14)",
-                  color: "inherit",
-                })}
+                className="rounded-lg bg-paper/[0.14] px-2 py-[3px] text-[11px] font-bold tracking-wide uppercase"
               >
                 {garment}
               </span>
@@ -367,16 +277,9 @@ export function DesignsBench({
         </section>
       ) : null}
 
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          flexWrap: "wrap",
-        })}
-      >
+      <div className="flex flex-wrap items-center gap-3">
         <SectionTitle count={concepts.length}>Backlog</SectionTitle>
-        <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
+        <div className="flex flex-wrap gap-1">
           {STATUS_FILTERS.map((item) => (
             <button
               key={item.id}
@@ -386,28 +289,12 @@ export function DesignsBench({
                 setFilter(item.id);
                 setSelected(null);
               }}
-              className={`press ${css({
-                appearance: "none",
-                border: "none",
-                cursor: "pointer",
-                fontFamily: "inherit",
-                fontSize: "12px",
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
-                borderRadius: "999px",
-                paddingTop: "6px",
-                paddingBottom: "6px",
-                paddingLeft: "12px",
-                paddingRight: "12px",
-                backgroundColor: filter === item.id ? theme.colors.contentPrimary : "transparent",
-                color:
-                  filter === item.id
-                    ? theme.colors.backgroundPrimary
-                    : theme.colors.contentSecondary,
-                ":hover":
-                  filter === item.id ? {} : { backgroundColor: theme.colors.backgroundSecondary },
-              })}`}
+              className={cx(
+                "press appearance-none rounded-full border-none px-3 py-1.5 font-sans text-[12px] font-bold tracking-wide uppercase",
+                filter === item.id
+                  ? "bg-ink text-paper"
+                  : "bg-transparent text-ink/70 hover:bg-paper-2",
+              )}
             >
               {item.label}
             </button>
@@ -415,26 +302,10 @@ export function DesignsBench({
         </div>
       </div>
 
-      <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: "minmax(280px, 1fr) minmax(320px, 1.2fr)",
-          gap: "16px",
-          alignItems: "start",
-          // One column on a phone: the two-column minimums add to ~600px and
-          // push the detail card off the right edge of the screen.
-          "@media screen and (max-width: 760px)": { gridTemplateColumns: "1fr" },
-        })}
-      >
-        <div
-          className={css({
-            maxHeight: "540px",
-            overflowY: "auto",
-            backgroundColor: theme.colors.backgroundPrimary,
-            border: `1px solid ${theme.colors.backgroundSecondary}`,
-            borderRadius: "16px",
-          })}
-        >
+      {/* One column on a phone: the two-column minimums add to ~600px and
+          push the detail card off the right edge of the screen. */}
+      <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(280px,1fr)_minmax(320px,1.2fr)]">
+        <div className="max-h-[540px] overflow-y-auto rounded-2xl border border-paper-2 bg-paper">
           {concepts.map((concept) => (
             <button
               key={concept.id}
@@ -442,52 +313,17 @@ export function DesignsBench({
               onClick={() => {
                 void open(concept.id);
               }}
-              className={css({
-                display: "flex",
-                width: "100%",
-                alignItems: "center",
-                gap: "10px",
-                appearance: "none",
-                border: "none",
-                borderBottom: `1px solid ${theme.colors.backgroundSecondary}`,
-                cursor: "pointer",
-                fontFamily: "inherit",
-                textAlign: "left",
-                paddingTop: "10px",
-                paddingBottom: "10px",
-                paddingLeft: "14px",
-                paddingRight: "14px",
-                backgroundColor:
-                  selected?.id === concept.id ? theme.colors.backgroundSecondary : "transparent",
-                boxShadow:
-                  selected?.id === concept.id
-                    ? `inset 3px 0 0 ${theme.colors.contentPrimary}`
-                    : "none",
-                ":hover": { backgroundColor: theme.colors.backgroundSecondary },
-              })}
+              className={cx(
+                "flex w-full items-center gap-2.5 border-0 border-b border-paper-2 px-3.5 py-2.5 text-left font-sans hover:bg-paper-2",
+                selected?.id === concept.id
+                  ? "bg-paper-2 shadow-[inset_3px_0_0_var(--color-ink)]"
+                  : "bg-transparent",
+              )}
             >
-              <span
-                className={css({
-                  fontVariantNumeric: "tabular-nums",
-                  color: theme.colors.contentTertiary,
-                  fontSize: "12px",
-                  fontWeight: 600,
-                })}
-              >
+              <span className="text-[12px] font-semibold tabular-nums text-ink/50">
                 {number3(concept.external_number)}
               </span>
-              <span
-                className={css({
-                  flex: "1 1 auto",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  letterSpacing: "0.01em",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  color: theme.colors.contentPrimary,
-                })}
-              >
+              <span className="flex-1 truncate text-[13px] font-bold tracking-wide text-ink">
                 {concept.title}
               </span>
               {/* Numbering is per-library, so #001 alone is ambiguous once a
@@ -497,7 +333,7 @@ export function DesignsBench({
                 <StatusChip status={concept.library.replace(/_/g, " ")} />
               ) : null}
               {concept.attempt_count > 0 ? (
-                <span className={css({ fontSize: "11px", color: theme.colors.contentTertiary })}>
+                <span className="text-[11px] text-ink/50">
                   {concept.attempt_count} {concept.attempt_count === 1 ? "attempt" : "attempts"}
                 </span>
               ) : null}
@@ -509,152 +345,102 @@ export function DesignsBench({
 
         {/* Detail first on a phone: tapping a row should surface the lineage
             where the eye already is, not below a 540px list. */}
-        <div className={css({ "@media screen and (max-width: 760px)": { order: -1 } })}>
+        <div className="order-first md:order-none">
           {selected ? (
             <Card>
-              <StyledBody>
-                <span className={metaLine}>
-                  {number3(selected.external_number)} · {selected.round_label} · {selected.slug}
-                </span>
-                <h2
-                  className={`display ${css({
-                    fontSize: "clamp(22px, 4vw, 30px)",
-                    margin: "6px 0 10px",
-                    color: theme.colors.contentPrimary,
-                  })}`}
-                >
-                  {selected.title}
-                </h2>
-                {/* The owner's words, verbatim. The pipeline never edits them. */}
-                <ParagraphSmall marginTop={0}>{selected.concept_text}</ParagraphSmall>
+              <span className={metaLineClass}>
+                {number3(selected.external_number)} · {selected.round_label} · {selected.slug}
+              </span>
+              <h2 className="display mt-1.5 mb-2.5 text-[clamp(22px,4vw,30px)] text-ink">
+                {selected.title}
+              </h2>
+              {/* The owner's words, verbatim. The pipeline never edits them. */}
+              <ParagraphSmall>{selected.concept_text}</ParagraphSmall>
 
-                <div
-                  className={css({
-                    display: "flex",
-                    gap: "6px",
-                    flexWrap: "wrap",
-                    marginBottom: theme.sizing.scale500,
-                  })}
-                >
-                  <StatusChip status={selected.status} />
-                  {selected.retirement ? (
-                    <StatusChip status={`${selected.retirement} retirement`} />
-                  ) : null}
-                  {selected.garments.map((garment) => (
-                    <StatusChip key={garment} status={garment} />
-                  ))}
-                  {selected.approved_versions > 0 ? (
-                    <StatusChip status={`v${String(selected.approved_versions)} approved`} />
-                  ) : null}
-                </div>
-
-                {selected.salvage ? (
-                  <div
-                    className={css({
-                      backgroundColor: CREAM,
-                      color: "#0d0d0d",
-                      borderRadius: "12px",
-                      paddingTop: "12px",
-                      paddingBottom: "12px",
-                      paddingLeft: "14px",
-                      paddingRight: "14px",
-                      fontSize: "13px",
-                      lineHeight: 1.5,
-                      marginBottom: theme.sizing.scale500,
-                    })}
-                  >
-                    Held, not retired: {selected.salvage}
-                  </div>
+              <div className="mb-5 flex flex-wrap gap-1.5">
+                <StatusChip status={selected.status} />
+                {selected.retirement ? (
+                  <StatusChip status={`${selected.retirement} retirement`} />
                 ) : null}
+                {selected.garments.map((garment) => (
+                  <StatusChip key={garment} status={garment} />
+                ))}
+                {selected.approved_versions > 0 ? (
+                  <StatusChip status={`v${String(selected.approved_versions)} approved`} />
+                ) : null}
+              </div>
 
-                {/* The brief comes before the attempts, because the
-                    constitution decides what a product is before any artwork
-                    exists -- and because an attempt cannot be opened without
-                    it, so a reader who scrolls past it hits a refusal. */}
-                <BriefPanel
-                  conceptId={selected.id}
-                  conceptText={selected.concept_text}
-                  onChanged={async () => {
-                    await refresh();
-                    await open(selected.id);
-                  }}
-                />
+              {selected.salvage ? (
+                <div className="mb-5 rounded-xl bg-cream px-3.5 py-3 text-[13px] leading-normal text-ink">
+                  Held, not retired: {selected.salvage}
+                </div>
+              ) : null}
 
-                {selected.attempts.length === 0 ? (
-                  <ParagraphSmall color={theme.colors.contentSecondary}>
-                    Never attempted.
-                  </ParagraphSmall>
-                ) : (
-                  selected.attempts.map((attempt) => (
-                    <div
-                      key={attempt.id}
-                      className={css({
-                        borderTop: `1px solid ${theme.colors.backgroundSecondary}`,
-                        paddingTop: "12px",
-                        marginTop: "12px",
-                      })}
-                    >
-                      {preview(attempt)}
-                      <div
-                        className={css({
-                          display: "flex",
-                          gap: "6px",
-                          flexWrap: "wrap",
-                          alignItems: "center",
-                        })}
-                      >
-                        <StatusChip status={attempt.state} />
-                        <span className={metaLine}>
-                          attempt {attempt.attempt_number} · {attempt.method.replace(/_/g, " ")}
-                        </span>
-                        {attempt.approved_version !== null ? (
-                          <StatusChip status={`v${String(attempt.approved_version)} approved`} />
-                        ) : null}
-                      </div>
-                      {attempt.decision ? (
-                        <ParagraphXSmall marginTop="6px" color={theme.colors.contentSecondary}>
-                          {attempt.decision.decision.replace(/_/g, " ")} by {attempt.decision.actor}
-                          {attempt.decision.reason ? ` — ${attempt.decision.reason}` : ""}
-                          {attempt.decision.instruction ? ` — ${attempt.decision.instruction}` : ""}
-                        </ParagraphXSmall>
-                      ) : null}
-                      <div className={css({ marginTop: "8px" })}>
-                        <Button
-                          size={SIZE.mini}
-                          kind={
-                            openAttemptId === attempt.id
-                              ? BUTTON_KIND.primary
-                              : BUTTON_KIND.secondary
-                          }
-                          onClick={() => {
-                            setOpenAttemptId(openAttemptId === attempt.id ? null : attempt.id);
-                          }}
-                        >
-                          {openAttemptId === attempt.id ? "Close" : "Open this attempt"}
-                        </Button>
-                      </div>
-                      {openAttemptId === attempt.id ? (
-                        <div className={css({ marginTop: "12px" })}>
-                          <AttemptPanel
-                            concept={selected}
-                            attempt={attempt}
-                            actor={decider}
-                            onChanged={async () => {
-                              await refresh();
-                              await open(selected.id);
-                            }}
-                          />
-                        </div>
+              {/* The brief comes before the attempts, because the
+                  constitution decides what a product is before any artwork
+                  exists -- and because an attempt cannot be opened without
+                  it, so a reader who scrolls past it hits a refusal. */}
+              <BriefPanel
+                conceptId={selected.id}
+                conceptText={selected.concept_text}
+                onChanged={async () => {
+                  await refresh();
+                  await open(selected.id);
+                }}
+              />
+
+              {selected.attempts.length === 0 ? (
+                <ParagraphSmall>Never attempted.</ParagraphSmall>
+              ) : (
+                selected.attempts.map((attempt) => (
+                  <div key={attempt.id} className="mt-3 border-t border-paper-2 pt-3">
+                    {preview(attempt)}
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <StatusChip status={attempt.state} />
+                      <span className={metaLineClass}>
+                        attempt {attempt.attempt_number} · {attempt.method.replace(/_/g, " ")}
+                      </span>
+                      {attempt.approved_version !== null ? (
+                        <StatusChip status={`v${String(attempt.approved_version)} approved`} />
                       ) : null}
                     </div>
-                  ))
-                )}
-              </StyledBody>
+                    {attempt.decision ? (
+                      <ParagraphXSmall className="mt-1.5">
+                        {attempt.decision.decision.replace(/_/g, " ")} by {attempt.decision.actor}
+                        {attempt.decision.reason ? ` — ${attempt.decision.reason}` : ""}
+                        {attempt.decision.instruction ? ` — ${attempt.decision.instruction}` : ""}
+                      </ParagraphXSmall>
+                    ) : null}
+                    <div className="mt-2">
+                      <Button
+                        size="compact"
+                        variant={openAttemptId === attempt.id ? "primary" : "secondary"}
+                        onClick={() => {
+                          setOpenAttemptId(openAttemptId === attempt.id ? null : attempt.id);
+                        }}
+                      >
+                        {openAttemptId === attempt.id ? "Close" : "Open this attempt"}
+                      </Button>
+                    </div>
+                    {openAttemptId === attempt.id ? (
+                      <div className="mt-3">
+                        <AttemptPanel
+                          concept={selected}
+                          attempt={attempt}
+                          actor={decider}
+                          onChanged={async () => {
+                            await refresh();
+                            await open(selected.id);
+                          }}
+                        />
+                      </div>
+                    ) : null}
+                  </div>
+                ))
+              )}
             </Card>
           ) : (
-            <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
-              Select a concept to see its lineage.
-            </ParagraphSmall>
+            <ParagraphSmall>Select a concept to see its lineage.</ParagraphSmall>
           )}
         </div>
       </div>

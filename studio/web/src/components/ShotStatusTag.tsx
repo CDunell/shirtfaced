@@ -5,7 +5,7 @@
  * words.
  */
 
-import { Tag, HIERARCHY, KIND, type TagKind } from "baseui/tag";
+import { Tag, type TagKind } from "./ui";
 
 import type { ShotStatus } from "../api/client";
 
@@ -18,11 +18,11 @@ const LABELS: Record<ShotStatus, string> = {
 };
 
 const KINDS: Record<ShotStatus, TagKind> = {
-  planned: KIND.neutral,
-  in_progress: KIND.accent,
-  approved: KIND.positive,
-  rejected: KIND.negative,
-  abandoned: KIND.warning,
+  planned: "neutral",
+  in_progress: "accent",
+  approved: "positive",
+  rejected: "negative",
+  abandoned: "warning",
 };
 
 export function statusLabel(status: ShotStatus): string {
@@ -30,9 +30,5 @@ export function statusLabel(status: ShotStatus): string {
 }
 
 export function ShotStatusTag({ status }: { status: ShotStatus }): React.JSX.Element {
-  return (
-    <Tag closeable={false} kind={KINDS[status]} hierarchy={HIERARCHY.secondary}>
-      {LABELS[status]}
-    </Tag>
-  );
+  return <Tag kind={KINDS[status]}>{LABELS[status]}</Tag>;
 }

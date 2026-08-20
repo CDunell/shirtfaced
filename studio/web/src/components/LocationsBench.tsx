@@ -11,14 +11,16 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Checkbox } from "baseui/checkbox";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { LabelSmall, ParagraphXSmall } from "baseui/typography";
+import {
+  Button,
+  Checkbox,
+  Input,
+  LabelSmall,
+  Notification,
+  ParagraphXSmall,
+  Select,
+  Tag,
+} from "./ui";
 
 import { PageTitle, SectionTitle } from "./chrome";
 import { ApiError } from "../api/client";
@@ -44,8 +46,9 @@ function slugify(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+const cardClass = "flex flex-col gap-2 rounded-[10px] border border-ink/10 bg-paper-2 p-2.5";
+
 export function LocationsBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [locations, setLocations] = useState<ScoutLocation[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -56,7 +59,7 @@ export function LocationsBench(): React.JSX.Element {
 
   const [newName, setNewName] = useState("");
   const [childOf, setChildOf] = useState(false);
-  const [plateRole, setPlateRole] = useState<Value>([]);
+  const [plateRole, setPlateRole] = useState<string>("");
   const [promoteOnUpload, setPromoteOnUpload] = useState(false);
   const plateInput = useRef<HTMLInputElement>(null);
 
@@ -120,31 +123,20 @@ export function LocationsBench(): React.JSX.Element {
 
   const onAddPlate = useCallback(() => {
     const file = plateInput.current?.files?.[0];
-    const role = plateRole[0]?.id;
-    if (!file || !location || typeof role !== "string") return;
+    if (!file || !location || !plateRole) return;
 
     void act(async () => {
       const added = await addPlate(location.slug, file, {
-        role,
+        role: plateRole,
         promote: promoteOnUpload,
       });
       if (plateInput.current) plateInput.current.value = "";
       if (added.is_base_master) return `Added and promoted: scenes here are built into it.`;
       return added.blocking.length > 0
-        ? `Added as ${label(role)}. Not a base master: ${added.blocking.join("; ")}.`
-        : `Added as ${label(role)}. It can be promoted whenever you want.`;
+        ? `Added as ${label(plateRole)}. Not a base master: ${added.blocking.join("; ")}.`
+        : `Added as ${label(plateRole)}. It can be promoted whenever you want.`;
     });
   }, [act, location, plateRole, promoteOnUpload]);
-
-  const card = css({
-    border: `1px solid ${theme.colors.borderOpaque}`,
-    borderRadius: "10px",
-    padding: "10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    background: theme.colors.backgroundSecondary,
-  });
 
   const total = locations.reduce((sum, one) => sum + one.assets.length, 0);
 
@@ -160,71 +152,48 @@ export function LocationsBench(): React.JSX.Element {
         into. A sub-location falls back to its parent&apos;s plate.
       </ParagraphXSmall>
 
-      {error ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
-      {note ? (
-        <Notification
-          kind={NOTIFICATION_KIND.positive}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {note}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
+      {note ? <Notification kind="positive">{note}</Notification> : null}
 
-      <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap", margin: "12px 0" })}>
+      <div className="my-3 flex flex-wrap gap-1.5">
         {locations.map((one) => (
           <Button
             key={one.slug}
-            size={SIZE.compact}
-            kind={one.slug === selected ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+            size="compact"
+            variant={one.slug === selected ? "primary" : "secondary"}
             onClick={() => {
               setSelected(one.slug);
               setNote(null);
             }}
           >
             {one.parent_slug ? `↳ ${one.display_name}` : one.display_name}
-            <span className={css({ opacity: 0.6, marginLeft: "6px" })}>
-              {String(one.assets.length)}
-            </span>
+            <span className="ml-1.5 opacity-60">{String(one.assets.length)}</span>
           </Button>
         ))}
       </div>
 
-      <div
-        className={css({
-          display: "flex",
-          gap: "8px",
-          alignItems: "center",
-          flexWrap: "wrap",
-          marginBottom: "24px",
-        })}
-      >
+      <div className="mb-6 flex flex-wrap items-center gap-2">
         <Input
           value={newName}
           onChange={(event) => {
             setNewName(event.currentTarget.value);
           }}
           placeholder="Add a place — its name"
-          overrides={{ Root: { style: { width: "300px" } } }}
+          className="w-[300px]"
         />
         <Checkbox
           checked={childOf}
-          disabled={!location}
-          onChange={(event) => {
-            setChildOf(event.currentTarget.checked);
+          onChange={(checked) => {
+            if (!location) return;
+            setChildOf(checked);
           }}
+          {...(!location ? { className: "pointer-events-none opacity-40" } : {})}
         >
           {location ? `Inside ${location.display_name}` : "Inside the selected place"}
         </Checkbox>
         <Button
-          size={SIZE.compact}
-          kind={BUTTON_KIND.secondary}
+          size="compact"
+          variant="secondary"
           disabled={busy || slugify(newName) === ""}
           onClick={onCreate}
         >
@@ -235,69 +204,34 @@ export function LocationsBench(): React.JSX.Element {
       {location ? (
         <>
           <SectionTitle>{`${location.display_name} — plates`}</SectionTitle>
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-              gap: "12px",
-              marginBottom: "24px",
-            })}
-          >
+          <div className="mb-6 grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-3">
             {location.assets.map((plate) => (
-              <div key={plate.id} className={card}>
+              <div key={plate.id} className={cardClass}>
                 <img
                   src={previewSource(plate.asset)}
                   alt={`${location.display_name}, ${label(plate.role)}`}
-                  className={css({
-                    width: "100%",
-                    height: "150px",
-                    objectFit: "contain",
-                    background: theme.colors.backgroundTertiary,
-                    borderRadius: "6px",
-                  })}
+                  className="h-[150px] w-full rounded-[6px] bg-paper-2 object-contain"
                 />
-                <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-                  <Tag
-                    closeable={false}
-                    kind={plate.is_base_master ? TAG_KIND.accent : TAG_KIND.neutral}
-                    overrides={{ Text: { style: { maxWidth: "none" } } }}
-                  >
-                    {label(plate.role)}
-                  </Tag>
-                  {plate.is_base_master ? (
-                    <Tag closeable={false} kind={TAG_KIND.positive}>
-                      base master
-                    </Tag>
-                  ) : null}
-                  {plate.meets_wide_preference ? (
-                    <Tag closeable={false} kind={TAG_KIND.neutral}>
-                      2.39:1+
-                    </Tag>
-                  ) : null}
+                <div className="flex flex-wrap gap-1">
+                  <Tag kind={plate.is_base_master ? "accent" : "neutral"}>{label(plate.role)}</Tag>
+                  {plate.is_base_master ? <Tag kind="positive">base master</Tag> : null}
+                  {plate.meets_wide_preference ? <Tag kind="neutral">2.39:1+</Tag> : null}
                 </div>
-                <ParagraphXSmall className={css({ margin: 0 })}>
+                <ParagraphXSmall>
                   {`${String(plate.asset.width)}×${String(plate.asset.height)} · ${plate.ratio.toFixed(2)}:1 · ${String(
                     plate.lateral_room_px,
                   )}px of lateral room`}
                 </ParagraphXSmall>
-                <LabelSmall
-                  className={css({
-                    fontFamily: "monospace",
-                    fontSize: "11px",
-                    color: theme.colors.contentTertiary,
-                  })}
-                >
+                <LabelSmall className="font-mono text-[11px] text-ink/50">
                   {plate.asset.sha256.slice(0, 12)}
                 </LabelSmall>
                 {plate.blocking.length > 0 ? (
-                  <ParagraphXSmall
-                    className={css({ margin: 0, color: theme.colors.contentSecondary })}
-                  >
+                  <ParagraphXSmall className="text-ink/70">
                     {`Cannot be the base master: ${plate.blocking.join("; ")}.`}
                   </ParagraphXSmall>
                 ) : plate.is_base_master ? null : (
                   <Button
-                    size={SIZE.mini}
+                    size="compact"
                     disabled={busy}
                     onClick={() =>
                       void act(async () => {
@@ -317,32 +251,25 @@ export function LocationsBench(): React.JSX.Element {
           ) : null}
 
           <SectionTitle>Add a plate</SectionTitle>
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "10px",
-              alignItems: "center",
-            })}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] items-center gap-2.5">
             <input ref={plateInput} type="file" accept="image/png,image/jpeg,image/webp" />
             <Select
-              options={roles.map((role) => ({ id: role, label: label(role) }))}
+              options={roles.map((role) => ({ value: role, label: label(role) }))}
               value={plateRole}
-              onChange={(params) => {
-                setPlateRole(params.value);
+              onChange={(value) => {
+                setPlateRole(value);
               }}
               placeholder="Class"
             />
             <Checkbox
               checked={promoteOnUpload}
-              onChange={(event) => {
-                setPromoteOnUpload(event.currentTarget.checked);
+              onChange={(checked) => {
+                setPromoteOnUpload(checked);
               }}
             >
               Make it the stage
             </Checkbox>
-            <Button disabled={busy || plateRole.length === 0} onClick={onAddPlate}>
+            <Button disabled={busy || plateRole === ""} onClick={onAddPlate}>
               Add plate
             </Button>
           </div>

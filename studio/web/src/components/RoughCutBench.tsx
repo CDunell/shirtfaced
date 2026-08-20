@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { useStyletron } from "baseui";
+import { Button } from "./ui";
 
 import { fetchShotMasterScenes } from "../api/sceneShots";
 import { RoughCutPanel } from "./RoughCutPanel";
 import { SectionTitle } from "./chrome";
 
 export function RoughCutBench(): React.JSX.Element {
-  const [css] = useStyletron();
   const [sceneKeys, setSceneKeys] = useState<string[]>([]);
   const [sceneKey, setSceneKey] = useState("W01-P28");
 
@@ -20,16 +18,16 @@ export function RoughCutBench(): React.JSX.Element {
   }, [sceneKey]);
 
   return (
-    <div className={css({ marginTop: "34px", paddingTop: "24px", borderTop: "1px solid currentColor" })}>
+    <div className="mt-[34px] border-t border-current pt-6">
       {sceneKeys.length > 1 ? (
-        <div className={css({ marginBottom: "10px" })}>
+        <div className="mb-2.5">
           <SectionTitle>Post scene</SectionTitle>
-          <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap" })}>
+          <div className="flex flex-wrap gap-2">
             {sceneKeys.map((key) => (
               <Button
                 key={key}
-                size={SIZE.compact}
-                kind={key === sceneKey ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                size="compact"
+                variant={key === sceneKey ? "primary" : "secondary"}
                 onClick={() => setSceneKey(key)}
               >
                 {key}

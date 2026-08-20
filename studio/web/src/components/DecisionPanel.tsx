@@ -8,13 +8,18 @@
  */
 
 import { useCallback, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Checkbox } from "baseui/checkbox";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Tag, HIERARCHY, KIND as TAG_KIND } from "baseui/tag";
-import { Textarea } from "baseui/textarea";
-import { LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+
+import {
+  Button,
+  Checkbox,
+  LabelSmall,
+  Notification,
+  ParagraphSmall,
+  ParagraphXSmall,
+  Tag,
+  Textarea,
+  type TagKind,
+} from "./ui";
 
 import {
   ApiError,
@@ -42,50 +47,27 @@ const SYNC_LABELS: Record<SyncState, string> = {
 };
 
 function SyncTag({ label, state }: { label: string; state: SyncState }): React.JSX.Element {
-  return (
-    <Tag
-      closeable={false}
-      kind={
-        state === "succeeded"
-          ? TAG_KIND.positive
-          : state === "failed"
-            ? TAG_KIND.negative
-            : TAG_KIND.neutral
-      }
-      hierarchy={HIERARCHY.secondary}
-    >
-      {`${label}: ${SYNC_LABELS[state]}`}
-    </Tag>
-  );
+  const kind: TagKind =
+    state === "succeeded" ? "positive" : state === "failed" ? "negative" : "neutral";
+  return <Tag kind={kind}>{`${label}: ${SYNC_LABELS[state]}`}</Tag>;
 }
 
 function DecidedSummary({ decision }: { decision: DecisionSummary }): React.JSX.Element {
-  const [css, theme] = useStyletron();
-
   return (
-    <div className={css({ marginTop: theme.sizing.scale500 })}>
-      <div className={css({ display: "flex", flexWrap: "wrap", gap: theme.sizing.scale200 })}>
-        <Tag closeable={false} kind={TAG_KIND.primary} hierarchy={HIERARCHY.primary}>
-          {DECISION_LABELS[decision.decision]}
-        </Tag>
+    <div className="mt-5">
+      <div className="flex flex-wrap gap-2">
+        <Tag kind="accent">{DECISION_LABELS[decision.decision]}</Tag>
         <SyncTag label="Documents" state={decision.markdown_sync} />
         <SyncTag label="Git" state={decision.git_sync} />
       </div>
 
-      {decision.reason && (
-        <ParagraphSmall marginBottom={0}>Reason: {decision.reason}</ParagraphSmall>
-      )}
-      {decision.note && <ParagraphSmall marginBottom={0}>Note: {decision.note}</ParagraphSmall>}
-      {decision.instruction && (
-        <ParagraphSmall marginBottom={0}>Instruction: {decision.instruction}</ParagraphSmall>
-      )}
+      {decision.reason && <ParagraphSmall>Reason: {decision.reason}</ParagraphSmall>}
+      {decision.note && <ParagraphSmall>Note: {decision.note}</ParagraphSmall>}
+      {decision.instruction && <ParagraphSmall>Instruction: {decision.instruction}</ParagraphSmall>}
 
       {decision.reconciliation_required && (
-        <div className={css({ marginTop: theme.sizing.scale400 })}>
-          <Notification
-            kind={NOTIFICATION_KIND.warning}
-            overrides={{ Body: { style: { width: "auto" } } }}
-          >
+        <div className="mt-4">
+          <Notification kind="warning">
             The decision is recorded and final, but something downstream did not follow:{" "}
             {decision.reconciliation_detail ?? "see the audit log"}. Fix that, then re-run the step.
             Nothing has been rolled back.
@@ -102,7 +84,6 @@ export interface DecisionPanelProps {
 }
 
 export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [pending, setPending] = useState<Pending>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,19 +119,18 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
 
   if (attempt.state !== "awaiting_decision") {
     return (
-      <ParagraphXSmall color={theme.colors.contentTertiary}>
+      <ParagraphXSmall className="text-ink/50">
         This attempt is {attempt.state.replace(/_/g, " ")} and cannot be decided.
       </ParagraphXSmall>
     );
   }
 
   const confirm = (
-    <div className={css({ display: "flex", gap: theme.sizing.scale300, flexWrap: "wrap" })}>
+    <div className="flex flex-wrap gap-3">
       <Button
-        size={SIZE.compact}
-        kind={BUTTON_KIND.primary}
+        size="compact"
+        variant="primary"
         disabled={busy}
-        isLoading={busy}
         onClick={() => {
           if (pending === "approve") {
             run(() => approveAttempt(attempt.id, { promote_to_reference: promote, note }));
@@ -164,8 +144,8 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
         Confirm — this is final
       </Button>
       <Button
-        size={SIZE.compact}
-        kind={BUTTON_KIND.tertiary}
+        size="compact"
+        variant="ghost"
         disabled={busy}
         onClick={() => {
           setPending(null);
@@ -178,13 +158,13 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
   );
 
   return (
-    <div className={css({ marginTop: theme.sizing.scale600 })}>
-      <LabelSmall marginBottom={theme.sizing.scale300}>Your decision</LabelSmall>
+    <div className="mt-6">
+      <LabelSmall className="mb-3">Your decision</LabelSmall>
 
       {pending === null && (
-        <div className={css({ display: "flex", gap: theme.sizing.scale300, flexWrap: "wrap" })}>
+        <div className="flex flex-wrap gap-3">
           <Button
-            size={SIZE.compact}
+            size="compact"
             onClick={() => {
               setPending("approve");
             }}
@@ -192,8 +172,8 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
             Approve
           </Button>
           <Button
-            size={SIZE.compact}
-            kind={BUTTON_KIND.secondary}
+            size="compact"
+            variant="secondary"
             onClick={() => {
               setPending("reject");
             }}
@@ -201,8 +181,8 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
             Reject
           </Button>
           <Button
-            size={SIZE.compact}
-            kind={BUTTON_KIND.tertiary}
+            size="compact"
+            variant="ghost"
             onClick={() => {
               setPending("variation");
             }}
@@ -213,7 +193,7 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
       )}
 
       {pending === "approve" && (
-        <div className={css({ display: "grid", gap: theme.sizing.scale400 })}>
+        <div className="grid gap-4">
           <Textarea
             value={note}
             onChange={(event) => {
@@ -224,8 +204,8 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
           />
           <Checkbox
             checked={promote}
-            onChange={(event) => {
-              setPromote(event.currentTarget.checked);
+            onChange={(checked) => {
+              setPromote(checked);
             }}
           >
             Promote to reference
@@ -235,7 +215,7 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
       )}
 
       {pending === "reject" && (
-        <div className={css({ display: "grid", gap: theme.sizing.scale400 })}>
+        <div className="grid gap-4">
           <Textarea
             value={reason}
             onChange={(event) => {
@@ -243,9 +223,9 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
             }}
             placeholder="Why is this wrong? This becomes the rejected-drift record."
             aria-label="Rejection reason"
-            error={reason.trim().length === 0}
+            aria-invalid={reason.trim().length === 0}
           />
-          <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentTertiary}>
+          <ParagraphXSmall className="text-ink/50">
             A reason is required. It is recorded verbatim and reaches the planner.
           </ParagraphXSmall>
           {reason.trim().length > 0 && confirm}
@@ -253,7 +233,7 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
       )}
 
       {pending === "variation" && (
-        <div className={css({ display: "grid", gap: theme.sizing.scale400 })}>
+        <div className="grid gap-4">
           <Textarea
             value={instruction}
             onChange={(event) => {
@@ -261,9 +241,9 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
             }}
             placeholder="What should change in the next take?"
             aria-label="Variation instruction"
-            error={instruction.trim().length === 0}
+            aria-invalid={instruction.trim().length === 0}
           />
-          <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentTertiary}>
+          <ParagraphXSmall className="text-ink/50">
             Records the request only. No image is generated until you continue the world.
           </ParagraphXSmall>
           {instruction.trim().length > 0 && confirm}
@@ -271,8 +251,8 @@ export function DecisionPanel({ attempt, onDecided }: DecisionPanelProps): React
       )}
 
       {error && (
-        <div className={css({ marginTop: theme.sizing.scale400 })}>
-          <Notification kind={NOTIFICATION_KIND.negative}>{error}</Notification>
+        <div className="mt-4">
+          <Notification kind="negative">{error}</Notification>
         </div>
       )}
     </div>

@@ -16,14 +16,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Checkbox } from "baseui/checkbox";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { LabelSmall, ParagraphXSmall } from "baseui/typography";
+import { Button, Checkbox, Input, LabelSmall, Notification, ParagraphXSmall, Select, Tag } from "./ui";
 
 import { PageTitle, SectionTitle } from "./chrome";
 import { ApiError } from "../api/client";
@@ -53,8 +46,9 @@ function bytes(size: number): string {
     : `${(size / 1024 / 1024).toFixed(1)} MB`;
 }
 
+const cardClass = "flex flex-col gap-2 rounded-[10px] border border-ink/10 bg-paper-2 p-2.5";
+
 export function CastBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [members, setMembers] = useState<CastMember[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
@@ -64,7 +58,7 @@ export function CastBench(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
 
   const [newName, setNewName] = useState("");
-  const [uploadRole, setUploadRole] = useState<Value>([]);
+  const [uploadRole, setUploadRole] = useState("");
   const [uploadPrimary, setUploadPrimary] = useState(false);
   const [uploadApprove, setUploadApprove] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -132,31 +126,20 @@ export function CastBench(): React.JSX.Element {
 
   const onUpload = useCallback(() => {
     const file = fileInput.current?.files?.[0];
-    const role = uploadRole[0]?.id;
-    if (!file || !member || typeof role !== "string") return;
+    if (!file || !member || !uploadRole) return;
 
     void act(async () => {
       const added: CastAsset = await uploadCastAsset(member.slug, file, {
-        role,
+        role: uploadRole,
         isPrimary: uploadPrimary,
         approve: uploadApprove,
       });
       if (fileInput.current) fileInput.current.value = "";
       return added.duplicate_of
-        ? `Those exact bytes were already held. Filed as ${roleLabel(role)} rather than stored twice.`
-        : `Added as ${roleLabel(role)}. ${uploadApprove ? "Approved." : "Pending approval."}`;
+        ? `Those exact bytes were already held. Filed as ${roleLabel(uploadRole)} rather than stored twice.`
+        : `Added as ${roleLabel(uploadRole)}. ${uploadApprove ? "Approved." : "Pending approval."}`;
     });
   }, [act, member, uploadApprove, uploadPrimary, uploadRole]);
-
-  const card = css({
-    border: `1px solid ${theme.colors.borderOpaque}`,
-    borderRadius: "10px",
-    padding: "10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    background: theme.colors.backgroundSecondary,
-  });
 
   const total = members.reduce((sum, one) => sum + one.assets.length, 0);
 
@@ -174,58 +157,27 @@ export function CastBench(): React.JSX.Element {
         as many as the work needs.
       </ParagraphXSmall>
 
-      {error ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
-      {note ? (
-        <Notification
-          kind={NOTIFICATION_KIND.positive}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {note}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
+      {note ? <Notification kind="positive">{note}</Notification> : null}
 
-      <div
-        className={css({
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "6px",
-          margin: "12px 0 18px",
-        })}
-      >
+      <div className="mt-3 mb-[18px] flex flex-wrap gap-1.5">
         {members.map((one) => (
           <Button
             key={one.slug}
-            size={SIZE.compact}
-            kind={one.slug === selected ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+            size="compact"
+            variant={one.slug === selected ? "primary" : "secondary"}
             onClick={() => {
               setSelected(one.slug);
               setNote(null);
             }}
           >
             {one.display_name}
-            <span className={css({ opacity: 0.6, marginLeft: "6px" })}>
-              {String(one.assets.length)}
-            </span>
+            <span className="ml-1.5 opacity-60">{String(one.assets.length)}</span>
           </Button>
         ))}
       </div>
 
-      <div
-        className={css({
-          display: "flex",
-          gap: "8px",
-          alignItems: "center",
-          flexWrap: "wrap",
-          marginBottom: "24px",
-        })}
-      >
+      <div className="mb-6 flex flex-wrap items-center gap-2">
         <Input
           value={newName}
           onChange={(event) => {
@@ -235,11 +187,11 @@ export function CastBench(): React.JSX.Element {
             if (event.key === "Enter") onCreate();
           }}
           placeholder="Add a cast member — their name"
-          overrides={{ Root: { style: { width: "320px" } } }}
+          className="w-[320px]"
         />
         <Button
-          size={SIZE.compact}
-          kind={BUTTON_KIND.secondary}
+          size="compact"
+          variant="secondary"
           disabled={busy || slugify(newName) === ""}
           onClick={onCreate}
         >
@@ -250,74 +202,42 @@ export function CastBench(): React.JSX.Element {
       {member ? (
         <>
           <SectionTitle>{`${member.display_name} — references`}</SectionTitle>
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-              gap: "12px",
-              marginBottom: "24px",
-            })}
-          >
+          <div className="mb-6 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
             {member.assets.map((link) => (
-              <div key={link.link_id} className={card}>
+              <div key={link.link_id} className={cardClass}>
                 <img
                   src={assetSource(link.asset)}
                   alt={`${member.display_name}, ${roleLabel(link.role)}`}
-                  className={css({
-                    width: "100%",
-                    height: "220px",
-                    objectFit: "contain",
-                    background: theme.colors.backgroundTertiary,
-                    borderRadius: "6px",
-                  })}
+                  className="h-[220px] w-full rounded-[6px] bg-paper-2 object-contain"
                 />
-                <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
+                <div className="flex flex-wrap gap-1">
+                  <Tag kind={link.is_primary ? "accent" : "neutral"}>{roleLabel(link.role)}</Tag>
                   <Tag
-                    closeable={false}
-                    kind={link.is_primary ? TAG_KIND.accent : TAG_KIND.neutral}
-                    // The default width truncates "head shoulders neutral" to
-                    // "head shoulders n…", which is the one thing the chip is for.
-                    overrides={{ Text: { style: { maxWidth: "none" } } }}
-                  >
-                    {roleLabel(link.role)}
-                  </Tag>
-                  <Tag
-                    closeable={false}
                     kind={
                       link.asset.status === "approved"
-                        ? TAG_KIND.positive
+                        ? "positive"
                         : link.asset.status === "pending"
-                          ? TAG_KIND.warning
-                          : TAG_KIND.negative
+                          ? "warning"
+                          : "negative"
                     }
                   >
                     {link.asset.status}
                   </Tag>
-                  {link.is_primary ? (
-                    <Tag closeable={false} kind={TAG_KIND.accent}>
-                      primary
-                    </Tag>
-                  ) : null}
+                  {link.is_primary ? <Tag kind="accent">primary</Tag> : null}
                 </div>
-                <LabelSmall
-                  className={css({
-                    fontFamily: "monospace",
-                    fontSize: "11px",
-                    color: theme.colors.contentTertiary,
-                  })}
-                >
+                <LabelSmall className="font-mono text-[11px] text-ink/50">
                   {link.asset.sha256.slice(0, 16)}
                 </LabelSmall>
-                <ParagraphXSmall className={css({ margin: 0 })}>
+                <ParagraphXSmall className="m-0">
                   {`${String(link.asset.width)}×${String(link.asset.height)} · ${bytes(
                     link.asset.byte_size,
                   )} · rights ${link.asset.rights_status}`}
                 </ParagraphXSmall>
-                <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+                <div className="flex flex-wrap gap-1.5">
                   {link.asset.status === "approved" ? (
                     <Button
-                      size={SIZE.mini}
-                      kind={BUTTON_KIND.tertiary}
+                      size="compact"
+                      variant="ghost"
                       disabled={busy}
                       onClick={() =>
                         void act(async () => {
@@ -330,7 +250,7 @@ export function CastBench(): React.JSX.Element {
                     </Button>
                   ) : (
                     <Button
-                      size={SIZE.mini}
+                      size="compact"
                       disabled={busy}
                       onClick={() =>
                         void act(async () => {
@@ -344,8 +264,8 @@ export function CastBench(): React.JSX.Element {
                   )}
                   {link.is_primary ? null : (
                     <Button
-                      size={SIZE.mini}
-                      kind={BUTTON_KIND.tertiary}
+                      size="compact"
+                      variant="ghost"
                       disabled={busy}
                       onClick={() =>
                         void act(async () => {
@@ -358,8 +278,8 @@ export function CastBench(): React.JSX.Element {
                     </Button>
                   )}
                   <Button
-                    size={SIZE.mini}
-                    kind={BUTTON_KIND.tertiary}
+                    size="compact"
+                    variant="ghost"
                     disabled={busy}
                     onClick={() =>
                       void act(async () => {
@@ -376,40 +296,21 @@ export function CastBench(): React.JSX.Element {
           </div>
 
           <SectionTitle>Add a reference</SectionTitle>
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: "10px",
-              alignItems: "center",
-            })}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] items-center gap-2.5">
             <input ref={fileInput} type="file" accept="image/png,image/jpeg,image/webp" />
             <Select
-              options={roles.map((role) => ({ id: role, label: roleLabel(role) }))}
+              options={roles.map((role) => ({ value: role, label: roleLabel(role) }))}
               value={uploadRole}
-              onChange={(params) => {
-                setUploadRole(params.value);
-              }}
+              onChange={setUploadRole}
               placeholder="Role"
             />
-            <Checkbox
-              checked={uploadPrimary}
-              onChange={(event) => {
-                setUploadPrimary(event.currentTarget.checked);
-              }}
-            >
+            <Checkbox checked={uploadPrimary} onChange={setUploadPrimary}>
               Primary for this role
             </Checkbox>
-            <Checkbox
-              checked={uploadApprove}
-              onChange={(event) => {
-                setUploadApprove(event.currentTarget.checked);
-              }}
-            >
+            <Checkbox checked={uploadApprove} onChange={setUploadApprove}>
               Approve on upload
             </Checkbox>
-            <Button disabled={busy || uploadRole.length === 0} onClick={onUpload}>
+            <Button disabled={busy || !uploadRole} onClick={onUpload}>
               Add reference
             </Button>
           </div>

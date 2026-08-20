@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import { Button, Notification, ParagraphSmall, ParagraphXSmall, Tag, type TagKind } from "./ui";
 
 import { ApiError } from "../api/client";
 import {
@@ -29,14 +25,19 @@ function displayName(name: string): string {
     .join(" ");
 }
 
-function decisionKind(decision: RoughCutShot["decision"]) {
-  if (decision === "keep") return TAG_KIND.positive;
-  if (decision === "reject") return TAG_KIND.negative;
-  return TAG_KIND.warning;
+function decisionKind(decision: RoughCutShot["decision"]): TagKind {
+  if (decision === "keep") return "positive";
+  if (decision === "reject") return "negative";
+  return "warning";
 }
 
+const panelClass = "rounded-[14px] border border-ink/10 bg-paper-2 p-3.5";
+const rowClass =
+  "grid grid-cols-[minmax(140px,1fr)_auto_auto_minmax(220px,2fr)] items-center gap-2.5 border-t border-ink/10 py-2.5 max-[820px]:grid-cols-1";
+const numberInputClass =
+  "w-[82px] rounded-[7px] border border-ink/15 bg-white px-2 py-[7px] text-ink";
+
 export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [state, setState] = useState<RoughCutState | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -83,50 +84,26 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
     );
   }, [run, sceneKey]);
 
-  const panel = css({
-    border: `1px solid ${theme.colors.borderOpaque}`,
-    borderRadius: "14px",
-    padding: "14px",
-    backgroundColor: theme.colors.backgroundSecondary,
-  });
-  const row = css({
-    display: "grid",
-    gridTemplateColumns: "minmax(140px, 1fr) auto auto minmax(220px, 2fr)",
-    gap: "10px",
-    alignItems: "center",
-    padding: "10px 0",
-    borderTop: `1px solid ${theme.colors.borderOpaque}`,
-    "@media screen and (max-width: 820px)": { gridTemplateColumns: "1fr" },
-  });
-  const numberInput = css({
-    width: "82px",
-    padding: "7px 8px",
-    borderRadius: "7px",
-    border: `1px solid ${theme.colors.borderOpaque}`,
-    backgroundColor: theme.colors.inputFill,
-    color: theme.colors.contentPrimary,
-  });
-
   return (
-    <section className={css({ marginTop: "22px" })}>
-      <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "8px" })}>
+    <section className="mt-[22px]">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <div>
           <strong>AI rough cut</strong>
-          <ParagraphXSmall margin={0}>
+          <ParagraphXSmall>
             Scores the latest Veo take for each approved shot, picks a clean 1–3 second window, strips generated audio and assembles one 9:16 MP4.
           </ParagraphXSmall>
         </div>
-        <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap" })}>
+        <div className="flex flex-wrap gap-2">
           <Button
-            size={SIZE.compact}
-            kind={BUTTON_KIND.secondary}
+            size="compact"
+            variant="secondary"
             isLoading={busy === "analyse"}
             onClick={() => void run("analyse", () => analyseRoughCut(sceneKey), "AI analysis complete. Review the selections below.")}
           >
             {state?.shots.length ? "Re-analyse takes" : "Analyse takes"}
           </Button>
           <Button
-            size={SIZE.compact}
+            size="compact"
             disabled={!state?.shots.some((shot) => shot.decision === "keep")}
             isLoading={busy === "render"}
             onClick={() => void run("render", () => renderRoughCut(sceneKey), "Rough cut built.")}
@@ -136,31 +113,23 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
         </div>
       </div>
 
-      {error ? (
-        <Notification kind={NOTIFICATION_KIND.negative} overrides={{ Body: { style: { width: "auto" } } }}>
-          {error}
-        </Notification>
-      ) : null}
-      {note ? (
-        <Notification kind={NOTIFICATION_KIND.positive} overrides={{ Body: { style: { width: "auto" } } }}>
-          {note}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
+      {note ? <Notification kind="positive">{note}</Notification> : null}
 
       {state?.shots.length ? (
-        <div className={panel}>
+        <div className={panelClass}>
           {state.shots.map((shot) => (
-            <div key={shot.shot_id} className={row}>
+            <div key={shot.shot_id} className={rowClass}>
               <div>
                 <strong>{displayName(shot.shot_name)}</strong>
-                <ParagraphXSmall margin={0}>Take {shot.take_stamp}</ParagraphXSmall>
+                <ParagraphXSmall>Take {shot.take_stamp}</ParagraphXSmall>
               </div>
-              <Tag closeable={false} kind={decisionKind(shot.decision)}>{shot.decision}</Tag>
-              <div className={css({ display: "flex", gap: "6px", alignItems: "center", flexWrap: "wrap" })}>
+              <Tag kind={decisionKind(shot.decision)}>{shot.decision}</Tag>
+              <div className="flex flex-wrap items-center gap-1.5">
                 <label>
-                  <span className={css({ fontSize: "11px", display: "block" })}>In</span>
+                  <span className="block text-[11px]">In</span>
                   <input
-                    className={numberInput}
+                    className={numberInputClass}
                     type="number"
                     min="0"
                     step="0.1"
@@ -172,9 +141,9 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
                   />
                 </label>
                 <label>
-                  <span className={css({ fontSize: "11px", display: "block" })}>Out</span>
+                  <span className="block text-[11px]">Out</span>
                   <input
-                    className={numberInput}
+                    className={numberInputClass}
                     type="number"
                     min="0"
                     step="0.1"
@@ -187,16 +156,16 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
                 </label>
               </div>
               <div>
-                <ParagraphXSmall margin={0}>{shot.rationale}</ParagraphXSmall>
-                <ParagraphXSmall margin={0}>
+                <ParagraphXSmall>{shot.rationale}</ParagraphXSmall>
+                <ParagraphXSmall>
                   Identity {shot.identity_score}/5 · clean anatomy {shot.deformation_score}/5 · continuity {shot.continuity_score}/5 · world {shot.world_score}/5 · energy {shot.energy_score}/5
                 </ParagraphXSmall>
-                <div className={css({ display: "flex", gap: "5px", marginTop: "6px", flexWrap: "wrap" })}>
+                <div className="mt-1.5 flex flex-wrap gap-[5px]">
                   {(["keep", "maybe", "reject"] as const).map((decision) => (
                     <Button
                       key={decision}
-                      size={SIZE.mini}
-                      kind={shot.decision === decision ? BUTTON_KIND.primary : BUTTON_KIND.tertiary}
+                      size="compact"
+                      variant={shot.decision === decision ? "primary" : "ghost"}
                       isLoading={busy === `edit-${shot.shot_id}`}
                       onClick={() => void patch(shot, { decision })}
                     >
@@ -213,31 +182,31 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
       )}
 
       {state?.output_exists ? (
-        <div className={css({ marginTop: "14px", maxWidth: "420px" })}>
+        <div className="mt-3.5 max-w-[420px]">
           <video
             key={videoVersion}
             src={`${roughCutSource(sceneKey)}?v=${String(videoVersion)}`}
             controls
             playsInline
             preload="metadata"
-            className={css({ width: "100%", borderRadius: "12px", background: "#000" })}
+            className="w-full rounded-xl bg-black"
           />
-          <ParagraphXSmall marginTop="4px">Silent rough cut.</ParagraphXSmall>
+          <ParagraphXSmall className="mt-1">Silent rough cut.</ParagraphXSmall>
         </div>
       ) : null}
 
       {state?.output_exists ? (
-        <div className={css({ marginTop: "20px" })}>
+        <div className="mt-5">
           <strong>Audio</strong>
-          <ParagraphXSmall marginTop="2px">
+          <ParagraphXSmall className="mt-0.5">
             Use one rights-owned music bed. Veo audio stays removed.
           </ParagraphXSmall>
-          <div className={panel}>
-            <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" })}>
+          <div className={panelClass}>
+            <div className="flex flex-wrap items-center gap-2">
               <input ref={audioRef} type="file" accept="audio/*,.mp3,.wav,.flac,.m4a,.aif,.aiff,.ogg" />
               <Button
-                size={SIZE.compact}
-                kind={BUTTON_KIND.secondary}
+                size="compact"
+                variant="secondary"
                 isLoading={busy === "audio-upload"}
                 onClick={() => {
                   const file = audioRef.current?.files?.[0];
@@ -256,8 +225,8 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
             </div>
 
             {state.audio ? (
-              <div className={css({ marginTop: "12px" })}>
-                <ParagraphSmall marginTop={0} marginBottom="6px">
+              <div className="mt-3">
+                <ParagraphSmall className="mb-1.5">
                   <strong>{state.audio.filename}</strong>
                   {state.audio.duration_seconds ? ` · ${state.audio.duration_seconds.toFixed(1)}s` : ""}
                 </ParagraphSmall>
@@ -265,13 +234,13 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
                   src={`${roughCutAudioSource(sceneKey)}?asset=${encodeURIComponent(state.audio.asset_id)}`}
                   controls
                   preload="metadata"
-                  className={css({ width: "100%", maxWidth: "520px" })}
+                  className="w-full max-w-[520px]"
                 />
-                <div className={css({ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "end", marginTop: "10px" })}>
+                <div className="mt-2.5 flex flex-wrap items-end gap-3">
                   <label>
-                    <span className={css({ fontSize: "11px", display: "block" })}>Track in-point (sec)</span>
+                    <span className="block text-[11px]">Track in-point (sec)</span>
                     <input
-                      className={numberInput}
+                      className={numberInputClass}
                       type="number"
                       min="0"
                       step="0.1"
@@ -288,9 +257,9 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
                     />
                   </label>
                   <label>
-                    <span className={css({ fontSize: "11px", display: "block" })}>Music gain (dB)</span>
+                    <span className="block text-[11px]">Music gain (dB)</span>
                     <input
-                      className={numberInput}
+                      className={numberInputClass}
                       type="number"
                       min="-30"
                       max="6"
@@ -308,7 +277,7 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
                     />
                   </label>
                   <Button
-                    size={SIZE.compact}
+                    size="compact"
                     isLoading={busy === "final"}
                     onClick={() => void run(
                       "final",
@@ -321,14 +290,14 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
                 </div>
               </div>
             ) : (
-              <ParagraphXSmall marginBottom={0}>Upload the track once, then choose where in the song this 10-second edit starts.</ParagraphXSmall>
+              <ParagraphXSmall>Upload the track once, then choose where in the song this 10-second edit starts.</ParagraphXSmall>
             )}
           </div>
         </div>
       ) : null}
 
       {state?.final_exists ? (
-        <div className={css({ marginTop: "16px", maxWidth: "420px" })}>
+        <div className="mt-4 max-w-[420px]">
           <strong>Final</strong>
           <video
             key={finalVersion}
@@ -336,7 +305,7 @@ export function RoughCutPanel({ sceneKey }: { sceneKey: string }): React.JSX.Ele
             controls
             playsInline
             preload="metadata"
-            className={css({ width: "100%", borderRadius: "12px", background: "#000", marginTop: "8px" })}
+            className="mt-2 w-full rounded-xl bg-black"
           />
         </div>
       ) : null}

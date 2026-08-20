@@ -45,11 +45,18 @@ export type ButtonSize = "default" | "compact";
 export function Button({
   variant = "primary",
   size = "default",
+  isLoading = false,
+  disabled,
+  children,
   className,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
   size?: ButtonSize;
+  /** Shows an inline spinner and disables the button -- the baseui equivalent
+   * every bench relied on for "can't double-submit" affordance during a
+   * request, not just the `disabled` state alone. */
+  isLoading?: boolean;
 }): React.JSX.Element {
   const base =
     "press inline-flex items-center justify-center gap-2 rounded-[var(--radius-btn)] font-semibold tracking-wide uppercase disabled:opacity-40 disabled:pointer-events-none";
@@ -63,8 +70,23 @@ export function Button({
     ghost: "bg-transparent text-ink border border-ink/15 hover:bg-paper-2",
     danger: "bg-coral text-ink hover:opacity-90",
   };
+  const spinnerColor =
+    variant === "primary" || variant === "danger" ? "border-paper/30 border-t-paper" : "border-ink/30 border-t-ink";
   return (
-    <button className={cx(base, sizes[size], variants[variant], className)} {...props} />
+    <button
+      className={cx(base, sizes[size], variants[variant], className)}
+      disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
+      {...props}
+    >
+      {isLoading ? (
+        <span
+          aria-hidden="true"
+          className={cx("h-3.5 w-3.5 animate-spin rounded-full border-2", spinnerColor)}
+        />
+      ) : null}
+      {children}
+    </button>
   );
 }
 
@@ -86,15 +108,34 @@ export function Label(props: LabelHTMLAttributes<HTMLLabelElement>): React.JSX.E
 
 const fieldClass =
   "w-full rounded-[var(--radius-input)] border border-ink/15 bg-white px-4 py-2.5 text-[15px] text-ink outline-none focus:border-ink/40 disabled:opacity-50";
+const fieldErrorClass = "border-coral focus:border-coral";
 
-export function Input(props: InputHTMLAttributes<HTMLInputElement>): React.JSX.Element {
-  return <input {...props} className={cx(fieldClass, props.className)} />;
+export function Input({
+  error,
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { error?: boolean }): React.JSX.Element {
+  return (
+    <input
+      {...props}
+      aria-invalid={error || undefined}
+      className={cx(fieldClass, error && fieldErrorClass, className)}
+    />
+  );
 }
 
-export function Textarea(
-  props: TextareaHTMLAttributes<HTMLTextAreaElement>,
-): React.JSX.Element {
-  return <textarea {...props} className={cx(fieldClass, "resize-y", props.className)} />;
+export function Textarea({
+  error,
+  className,
+  ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & { error?: boolean }): React.JSX.Element {
+  return (
+    <textarea
+      {...props}
+      aria-invalid={error || undefined}
+      className={cx(fieldClass, "resize-y", error && fieldErrorClass, className)}
+    />
+  );
 }
 
 export interface SelectOption {
@@ -142,23 +183,32 @@ export function Select({
 export function Checkbox({
   checked,
   onChange,
+  disabled,
   children,
   className,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
+  disabled?: boolean;
   children?: ReactNode;
   className?: string;
 }): React.JSX.Element {
   return (
-    <label className={cx("inline-flex cursor-pointer items-center gap-2 text-[14px] text-ink", className)}>
+    <label
+      className={cx(
+        "inline-flex items-center gap-2 text-[14px] text-ink",
+        disabled ? "cursor-not-allowed opacity-40" : "cursor-pointer",
+        className,
+      )}
+    >
       <input
         type="checkbox"
         checked={checked}
+        disabled={disabled}
         onChange={(event) => {
           onChange(event.target.checked);
         }}
-        className="h-[18px] w-[18px] rounded-[6px] border border-ink/25 accent-ink"
+        className="h-[18px] w-[18px] rounded-[6px] border border-ink/25 accent-ink disabled:cursor-not-allowed"
       />
       {children}
     </label>
@@ -189,14 +239,17 @@ export function FormControl({
 // ---------------------------------------------------------------------------
 
 export function Card({
+  title,
   children,
   className,
 }: {
+  title?: ReactNode;
   children: ReactNode;
   className?: string;
 }): React.JSX.Element {
   return (
     <div className={cx("rounded-[var(--radius-card)] border border-ink/10 bg-white/60 p-5 dark:bg-white/5", className)}>
+      {title ? <h3 className="mb-3 text-[15px] font-bold text-ink dark:text-paper">{title}</h3> : null}
       {children}
     </div>
   );

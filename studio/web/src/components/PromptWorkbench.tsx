@@ -14,13 +14,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Card, StyledBody } from "baseui/card";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { LabelSmall, ParagraphXSmall } from "baseui/typography";
+
+import { Button, Card, LabelSmall, Notification, ParagraphXSmall, Select, Tag } from "./ui";
 
 import { CopyButton, PageTitle } from "./chrome";
 
@@ -58,7 +53,6 @@ function shotLabel(shot: Shot): string {
  * test, and the answer stops being available the moment there are two variations.
  */
 function UploadTheResult({ promptId }: { promptId: string }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [state, setState] = useState<"idle" | "working" | "done" | "failed">("idle");
   const [message, setMessage] = useState<string | null>(null);
   const inputId = `upload-for-${promptId}`;
@@ -85,10 +79,10 @@ function UploadTheResult({ promptId }: { promptId: string }): React.JSX.Element 
   );
 
   return (
-    <div className={css({ marginTop: theme.sizing.scale600 })}>
+    <div className="mt-6">
       <Button
-        size={SIZE.compact}
-        kind={BUTTON_KIND.secondary}
+        size="compact"
+        variant="secondary"
         disabled={state === "working"}
         onClick={() => document.getElementById(inputId)?.click()}
       >
@@ -103,9 +97,9 @@ function UploadTheResult({ promptId }: { promptId: string }): React.JSX.Element 
         type="file"
         accept="image/png,image/jpeg,image/webp"
         onChange={onFile}
-        className={css({ display: "none" })}
+        className="hidden"
       />
-      <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
+      <ParagraphXSmall className="text-ink/50">
         {state === "done"
           ? "It is in the print bench, tagged with this prompt."
           : (message ?? "Goes to the print bench, remembering it came from this prompt.")}
@@ -116,19 +110,9 @@ function UploadTheResult({ promptId }: { promptId: string }): React.JSX.Element 
 
 /** A prompt with a copy button. Selecting by hand on a phone is miserable. */
 function PromptBlock({ title, text }: { title: string; text: string }): React.JSX.Element {
-  const [css, theme] = useStyletron();
-
   return (
-    <div className={css({ marginTop: theme.sizing.scale700 })}>
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: theme.sizing.scale400,
-          marginBottom: theme.sizing.scale300,
-        })}
-      >
+    <div className="mt-7">
+      <div className="mb-3 flex items-center justify-between gap-4">
         <LabelSmall>{title}</LabelSmall>
         <CopyButton text={text} label={title} />
       </div>
@@ -136,31 +120,17 @@ function PromptBlock({ title, text }: { title: string; text: string }): React.JS
         readOnly
         value={text}
         rows={14}
-        className={css({
-          width: "100%",
-          boxSizing: "border-box",
-          padding: theme.sizing.scale500,
-          borderRadius: theme.borders.radius300,
-          border: `1px solid ${theme.colors.borderOpaque}`,
-          backgroundColor: theme.colors.backgroundSecondary,
-          color: theme.colors.contentPrimary,
-          fontFamily: theme.typography.MonoParagraphSmall.fontFamily,
-          fontSize: "13px",
-          lineHeight: "1.5",
-          resize: "vertical",
-        })}
+        className="w-full resize-y rounded-[var(--radius-input)] border border-ink/10 bg-paper-2 p-5 font-mono text-[13px] leading-[1.5] text-ink outline-none"
       />
     </div>
   );
 }
 
 export function PromptWorkbench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
-
   const [worlds, setWorlds] = useState<WorldSummary[]>([]);
-  const [world, setWorld] = useState<Value>([]);
+  const [world, setWorld] = useState<string>("");
   const [shots, setShots] = useState<Shot[]>([]);
-  const [shot, setShot] = useState<Value>([]);
+  const [shot, setShot] = useState<string>("");
   // Tagged with the scene it belongs to, so choosing another scene shows nothing
   // rather than the previous one's prompts, without an effect reaching in to clear
   // anything.
@@ -172,8 +142,8 @@ export function PromptWorkbench(): React.JSX.Element {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const slug = world[0]?.id ? String(world[0].id) : null;
-  const named = shot[0]?.id ? String(shot[0].id) : undefined;
+  const slug = world || null;
+  const named = shot || undefined;
   // A named scene shows only its own prompts. With none named, whatever was last
   // written is what there is to show.
   const variations = !named || history.shot === named ? history.items : [];
@@ -184,7 +154,7 @@ export function PromptWorkbench(): React.JSX.Element {
       .then((found) => {
         setWorlds(found);
         const only = found.length === 1 ? found[0] : undefined;
-        if (only) setWorld([{ id: only.slug, label: only.name }]);
+        if (only) setWorld(only.slug);
       })
       .catch((cause: unknown) => {
         if (!controller.signal.aborted) setError(describe(cause));
@@ -256,125 +226,92 @@ export function PromptWorkbench(): React.JSX.Element {
   }, [slug, named]);
 
   return (
-    <div className={css({ maxWidth: "760px", margin: "0 auto" })}>
+    <div className="mx-auto max-w-[760px]">
       <PageTitle>Prompts</PageTitle>
-      <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+      <ParagraphXSmall className="text-ink/50">
         Writes the prompt the canon implies. Generates no image and locks nothing. Every prompt
         written is kept, so a variation sits beside the one it varies from.
       </ParagraphXSmall>
 
       {error && (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
+        <Notification kind="negative" className="mt-4">
           {error}
         </Notification>
       )}
 
-      <Card>
-        <StyledBody>
-          <LabelSmall marginBottom={theme.sizing.scale300}>World</LabelSmall>
+      <Card className="mt-6">
+        <LabelSmall className="mb-3 block">World</LabelSmall>
+        <Select
+          options={worlds.map((item) => ({ value: item.slug, label: item.name }))}
+          value={world}
+          placeholder="Choose a world"
+          onChange={(value) => {
+            // Reset here rather than in an effect: changing world invalidates the
+            // scene and anything already written for it.
+            setWorld(value);
+            setShots([]);
+            setShot("");
+            setHistory({ shot: "", items: [] });
+          }}
+        />
+
+        <div className="mt-6">
+          <LabelSmall className="mb-3 block">Scene</LabelSmall>
           <Select
-            options={worlds.map((item) => ({ id: item.slug, label: item.name }))}
-            value={world}
-            placeholder="Choose a world"
-            clearable={false}
-            onChange={({ value }) => {
-              // Reset here rather than in an effect: changing world invalidates the
-              // scene and anything already written for it.
-              setWorld(value);
-              setShots([]);
-              setShot([]);
-              setHistory({ shot: "", items: [] });
+            options={shots
+              .filter((item) => !item.disabled)
+              .map((item) => ({ value: item.external_id, label: shotLabel(item) }))}
+            value={shot}
+            placeholder="Next planned shot"
+            disabled={!slug}
+            onChange={(value) => {
+              setShot(value);
             }}
           />
+          <ParagraphXSmall className="text-ink/50">
+            Leave empty for the next planned shot. Choosing one shows what has already been
+            written for it; writing again adds a variation.
+          </ParagraphXSmall>
+        </div>
 
-          <div className={css({ marginTop: theme.sizing.scale600 })}>
-            <LabelSmall marginBottom={theme.sizing.scale300}>Scene</LabelSmall>
-            <Select
-              options={shots.map((item) => ({
-                id: item.external_id,
-                label: shotLabel(item),
-                disabled: item.disabled,
-              }))}
-              value={shot}
-              placeholder="Next planned shot"
-              disabled={!slug}
-              onChange={({ value }) => {
-                setShot(value);
-              }}
-            />
-            <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
-              Leave empty for the next planned shot. Choosing one shows what has already been
-              written for it; writing again adds a variation.
-            </ParagraphXSmall>
-          </div>
-
-          <Button
-            onClick={generate}
-            disabled={!slug || busy}
-            isLoading={busy}
-            overrides={{ Root: { style: { width: "100%", marginTop: theme.sizing.scale700 } } }}
-          >
-            Write prompts
-          </Button>
-        </StyledBody>
+        <Button onClick={generate} disabled={!slug} isLoading={busy} className="mt-7 w-full">
+          Write prompts
+        </Button>
       </Card>
 
       {loadingHistory && (
-        <ParagraphXSmall color={theme.colors.contentTertiary}>
-          Looking up what exists…
-        </ParagraphXSmall>
+        <ParagraphXSmall className="mt-6 text-ink/50">Looking up what exists…</ParagraphXSmall>
       )}
 
       {!loadingHistory && named && variations.length === 0 && (
-        <ParagraphXSmall color={theme.colors.contentTertiary}>
+        <ParagraphXSmall className="mt-6 text-ink/50">
           Nothing has been written for this scene yet.
         </ParagraphXSmall>
       )}
 
       {variations.map((item) => (
-        <Card
-          key={`${item.shot.external_id}-${String(item.variation)}`}
-          overrides={{ Root: { style: { marginTop: theme.sizing.scale600 } } }}
-        >
-          <StyledBody>
-            <div
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                gap: theme.sizing.scale300,
-                flexWrap: "wrap",
-              })}
-            >
-              <LabelSmall>
-                {item.shot.external_id} — {item.shot.title}
-              </LabelSmall>
-              <Tag closeable={false} kind={TAG_KIND.accent}>
-                {item.variation === 1 ? "original" : `variation ${String(item.variation)}`}
-              </Tag>
-              <Tag closeable={false} kind={TAG_KIND.neutral}>
-                {STATUS_LABEL[item.shot.status] ?? item.shot.status}
-              </Tag>
-              {!item.live && (
-                <Tag closeable={false} kind={TAG_KIND.warning}>
-                  fake — nothing billed
-                </Tag>
-              )}
-            </div>
-            <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
-              {item.shot.hero_product} · {item.shot.camera_position} · written {writtenAt(item)}
-            </ParagraphXSmall>
+        <Card key={`${item.shot.external_id}-${String(item.variation)}`} className="mt-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <LabelSmall>
+              {item.shot.external_id} — {item.shot.title}
+            </LabelSmall>
+            <Tag kind="accent">
+              {item.variation === 1 ? "original" : `variation ${String(item.variation)}`}
+            </Tag>
+            <Tag kind="neutral">{STATUS_LABEL[item.shot.status] ?? item.shot.status}</Tag>
+            {!item.live && <Tag kind="warning">fake — nothing billed</Tag>}
+          </div>
+          <ParagraphXSmall className="text-ink/50">
+            {item.shot.hero_product} · {item.shot.camera_position} · written {writtenAt(item)}
+          </ParagraphXSmall>
 
-            <PromptBlock title="Image prompt" text={item.image_prompt} />
-            <PromptBlock
-              title="Video prompt — upload the frame, paste this"
-              text={item.video_prompt}
-            />
+          <PromptBlock title="Image prompt" text={item.image_prompt} />
+          <PromptBlock
+            title="Video prompt — upload the frame, paste this"
+            text={item.video_prompt}
+          />
 
-            {item.id && <UploadTheResult promptId={item.id} />}
-          </StyledBody>
+          {item.id && <UploadTheResult promptId={item.id} />}
         </Card>
       ))}
     </div>

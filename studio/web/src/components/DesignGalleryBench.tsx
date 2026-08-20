@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import { Select } from "baseui/select";
-import { Button, SIZE, KIND } from "baseui/button";
-import { ParagraphSmall, ParagraphXSmall, LabelXSmall } from "baseui/typography";
-import { useStyletron } from "baseui";
+import { Button, cx, LabelXSmall, ParagraphSmall, ParagraphXSmall, Select } from "./ui";
 
 import {
   fetchGenerations,
@@ -35,14 +32,13 @@ function useIsDesktop(): boolean {
   return isDesktop;
 }
 
-const STATUS_OPTIONS: { id: GenerationStatus | ""; label: string }[] = [
-  { id: "", label: "All statuses" },
-  { id: "kept", label: "Kept" },
-  { id: "dropped", label: "Dropped" },
+const STATUS_OPTIONS: { value: GenerationStatus | ""; label: string }[] = [
+  { value: "", label: "All statuses" },
+  { value: "kept", label: "Kept" },
+  { value: "dropped", label: "Dropped" },
 ];
 
 export function DesignGalleryBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const isDesktop = useIsDesktop();
   const pageSize = isDesktop ? DESKTOP_PAGE_SIZE : MOBILE_PAGE_SIZE;
   const [page, setPage] = useState(1);
@@ -100,62 +96,45 @@ export function DesignGalleryBench(): React.JSX.Element {
   return (
     <div>
       <PageTitle>Gallery</PageTitle>
-      <ParagraphSmall marginTop={0} color="mono600">
+      <ParagraphSmall className="mt-0 text-ink/60">
         Every batch-pool concept that's actually been rendered and looked at — the image and
         the exact prompt that produced it, kept whether or not the concept made the cut.
         Reference material, not a live feed.
       </ParagraphSmall>
 
-      <div
-        className={css({
-          display: "flex",
-          gap: "16px",
-          alignItems: "center",
-          marginTop: "12px",
-          marginBottom: "20px",
-          flexWrap: "wrap",
-        })}
-      >
-        <div className={css({ minWidth: "200px" })}>
+      <div className="mt-3 mb-5 flex flex-wrap items-center gap-4">
+        <div className="min-w-[200px]">
           <Select
-            options={[{ id: "", label: "All traditions" }, ...traditions.map((t) => ({ id: t, label: t }))]}
-            value={[{ id: tradition, label: tradition || "All traditions" }]}
-            onChange={({ value }) => {
-              const picked = value[0];
-              setTradition(picked ? String(picked.id) : "");
+            options={[
+              { value: "", label: "All traditions" },
+              ...traditions.map((t) => ({ value: t, label: t })),
+            ]}
+            value={tradition}
+            onChange={(value) => {
+              setTradition(value);
             }}
-            clearable={false}
-            searchable
-            size={SIZE.compact}
+            placeholder="All traditions"
           />
         </div>
-        <div className={css({ minWidth: "160px" })}>
+        <div className="min-w-[160px]">
           <Select
             options={STATUS_OPTIONS}
-            value={[STATUS_OPTIONS.find((o) => o.id === statusFilter) ?? STATUS_OPTIONS[0]!]}
-            onChange={({ value }) => {
-              const picked = value[0];
-              setStatusFilter((picked ? String(picked.id) : "") as GenerationStatus | "");
+            value={statusFilter}
+            onChange={(value) => {
+              setStatusFilter(value as GenerationStatus | "");
             }}
-            clearable={false}
-            size={SIZE.compact}
           />
         </div>
-        <ParagraphXSmall color="mono600" margin={0}>
+        <ParagraphXSmall className="m-0 text-ink/60">
           {total} render{total === 1 ? "" : "s"}
         </ParagraphXSmall>
       </div>
 
-      {error ? <ParagraphSmall color="negative">{error}</ParagraphSmall> : null}
+      {error ? <ParagraphSmall className="text-coral">{error}</ParagraphSmall> : null}
 
       <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-          gap: "14px",
-          opacity: busy ? 0.5 : 1,
-          transition: "opacity 120ms",
-        })}
+        className="grid gap-3.5 transition-opacity duration-[120ms]"
+        style={{ gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", opacity: busy ? 0.5 : 1 }}
       >
         {items.map((item, index) => (
           <button
@@ -163,34 +142,24 @@ export function DesignGalleryBench(): React.JSX.Element {
             onClick={() => {
               setLightboxIndex(index);
             }}
-            className={css({
-              appearance: "none",
-              border: `1px solid ${item.status === "dropped" ? theme.colors.negative400 : "transparent"}`,
-              borderRadius: "6px",
-              padding: 0,
-              overflow: "hidden",
-              cursor: "pointer",
-              background: theme.colors.backgroundSecondary,
-              textAlign: "left",
-              display: "flex",
-              flexDirection: "column",
-            })}
+            className={cx(
+              "flex appearance-none flex-col overflow-hidden rounded-[6px] border bg-paper-2 p-0 text-left cursor-pointer",
+              item.status === "dropped" ? "border-coral" : "border-transparent",
+            )}
           >
             <img
               src={generationImageUrl(item.id, "thumb")}
               alt={`${item.tradition} concept render`}
               loading="lazy"
-              className={css({ width: "100%", aspectRatio: "1 / 1", objectFit: "cover", display: "block" })}
+              className="block aspect-square w-full object-cover"
             />
-            <div className={css({ padding: "8px 10px" })}>
-              <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px" })}>
-                <LabelXSmall color="mono600" $style={{ textTransform: "uppercase", letterSpacing: "0.04em" }}>
+            <div className="px-2.5 py-2">
+              <div className="flex items-center justify-between gap-1.5">
+                <LabelXSmall className="text-ink/60 uppercase tracking-[0.04em]">
                   {item.tradition}
                 </LabelXSmall>
                 {item.status === "dropped" ? (
-                  <LabelXSmall color="negative" $style={{ textTransform: "uppercase", fontSize: "10px" }}>
-                    dropped
-                  </LabelXSmall>
+                  <LabelXSmall className="text-[10px] text-coral uppercase">dropped</LabelXSmall>
                 ) : null}
               </div>
             </div>
@@ -199,23 +168,15 @@ export function DesignGalleryBench(): React.JSX.Element {
       </div>
 
       {!busy && items.length === 0 ? (
-        <ParagraphSmall color="mono600" marginTop="24px">
+        <ParagraphSmall className="mt-6 text-ink/60">
           Nothing matches those filters yet.
         </ParagraphSmall>
       ) : null}
 
-      <div
-        className={css({
-          display: "flex",
-          gap: "12px",
-          alignItems: "center",
-          justifyContent: "center",
-          marginTop: "28px",
-        })}
-      >
+      <div className="mt-7 flex items-center justify-center gap-3">
         <Button
-          size={SIZE.compact}
-          kind={KIND.tertiary}
+          size="compact"
+          variant="ghost"
           disabled={page <= 1}
           onClick={() => {
             setPage((p) => Math.max(1, p - 1));
@@ -223,12 +184,12 @@ export function DesignGalleryBench(): React.JSX.Element {
         >
           Previous
         </Button>
-        <ParagraphXSmall color="mono600" margin={0}>
+        <ParagraphXSmall className="m-0 text-ink/60">
           Page {page} of {totalPages}
         </ParagraphXSmall>
         <Button
-          size={SIZE.compact}
-          kind={KIND.tertiary}
+          size="compact"
+          variant="ghost"
           disabled={page >= totalPages}
           onClick={() => {
             setPage((p) => Math.min(totalPages, p + 1));
@@ -245,97 +206,42 @@ export function DesignGalleryBench(): React.JSX.Element {
           onClick={() => {
             setLightboxIndex(null);
           }}
-          className={css({
-            position: "fixed",
-            inset: 0,
-            zIndex: 100,
-            background: "rgba(0, 0, 0, 0.82)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "24px",
-          })}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/[0.82] p-6"
         >
           <div
             onClick={(e) => {
               e.stopPropagation();
             }}
-            className={css({
-              display: "flex",
-              flexDirection: "column",
-              gap: "16px",
-              maxWidth: "1000px",
-              width: "100%",
-              maxHeight: "92vh",
-            })}
+            className="flex max-h-[92vh] w-full max-w-[1000px] flex-col gap-4"
           >
-            <div className={css({ display: "flex", gap: "20px", flexWrap: "wrap", overflow: "auto" })}>
+            <div className="flex flex-wrap gap-5 overflow-auto">
               <img
                 src={generationImageUrl(active.id, "full")}
                 alt={`${active.tradition} concept render, full size`}
-                className={css({
-                  maxWidth: "min(480px, 100%)",
-                  maxHeight: "72vh",
-                  objectFit: "contain",
-                  borderRadius: "6px",
-                  flexShrink: 0,
-                })}
+                className="max-h-[72vh] max-w-[min(480px,100%)] shrink-0 rounded-[6px] object-contain"
               />
-              <div className={css({ display: "flex", flexDirection: "column", gap: "10px", minWidth: "260px", flex: 1 })}>
-                <div className={css({ display: "flex", gap: "8px", alignItems: "center" })}>
-                  <LabelXSmall
-                    color="backgroundPrimary"
-                    $style={{
-                      background: theme.colors.contentPrimary,
-                      padding: "3px 8px",
-                      borderRadius: "3px",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.04em",
-                    }}
-                  >
+              <div className="flex min-w-[260px] flex-1 flex-col gap-2.5">
+                <div className="flex items-center gap-2">
+                  <LabelXSmall className="rounded-[3px] bg-ink px-2 py-[3px] text-paper uppercase tracking-[0.04em]">
                     {active.tradition}
                   </LabelXSmall>
                   {active.status === "dropped" ? (
-                    <LabelXSmall color="negative" $style={{ textTransform: "uppercase" }}>
-                      dropped
-                    </LabelXSmall>
+                    <LabelXSmall className="text-coral uppercase">dropped</LabelXSmall>
                   ) : null}
-                  <ParagraphXSmall color="mono600" margin={0}>
-                    {active.batch}
-                  </ParagraphXSmall>
+                  <ParagraphXSmall className="m-0 text-ink/60">{active.batch}</ParagraphXSmall>
                 </div>
-                <ParagraphSmall margin={0}>{active.concept_text}</ParagraphSmall>
+                <ParagraphSmall className="m-0">{active.concept_text}</ParagraphSmall>
                 {active.drop_reason ? (
-                  <ParagraphXSmall
-                    color="negative"
-                    margin={0}
-                    $style={{
-                      background: "rgba(220, 60, 40, 0.1)",
-                      padding: "8px 10px",
-                      borderRadius: "4px",
-                    }}
-                  >
+                  <ParagraphXSmall className="m-0 rounded-[4px] bg-coral/10 px-2.5 py-2 text-coral">
                     {active.drop_reason}
                   </ParagraphXSmall>
                 ) : null}
-                <div
-                  className={css({
-                    fontFamily: "monospace",
-                    fontSize: "12px",
-                    lineHeight: "1.5",
-                    whiteSpace: "pre-wrap",
-                    background: theme.colors.backgroundSecondary,
-                    borderRadius: "4px",
-                    padding: "10px",
-                    maxHeight: "220px",
-                    overflow: "auto",
-                  })}
-                >
+                <div className="max-h-[220px] overflow-auto rounded-[4px] bg-paper-2 p-2.5 font-mono text-[12px] leading-[1.5] whitespace-pre-wrap">
                   {active.prompt}
                 </div>
-                <div className={css({ display: "flex", gap: "10px" })}>
+                <div className="flex gap-2.5">
                   <CopyButton text={active.prompt} label="Copy prompt" />
-                  <Button size={SIZE.compact} kind={KIND.tertiary} onClick={() => setLightboxIndex(null)}>
+                  <Button size="compact" variant="ghost" onClick={() => setLightboxIndex(null)}>
                     Close
                   </Button>
                 </div>

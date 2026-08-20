@@ -20,12 +20,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { FormControl } from "baseui/form-control";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import { Button, cx, FormControl, Input, Notification, ParagraphSmall, ParagraphXSmall } from "./ui";
 
 import { ApiError } from "../api/client";
 import {
@@ -37,7 +32,6 @@ import {
   type BriefView,
 } from "../api/concepts";
 import { SectionTitle } from "./chrome";
-import { CORAL, INK, LIME, PAPER } from "../tokens";
 
 function describe(cause: unknown): string {
   if (cause instanceof ApiError) return cause.message;
@@ -105,6 +99,18 @@ const PRODUCT_FIELDS: { key: ProductField; label: string; placeholder: string }[
   { key: "target_release", label: "Target release", placeholder: "drop or capsule" },
 ];
 
+/** The pill-style choice buttons for role / graphic archetype / layout archetype.
+ * Active state fills with the accent colour (ink by default, coral for layout);
+ * inactive stays a quiet neutral chip. */
+function chipClass(active: boolean, accent: "ink" | "coral" = "ink"): string {
+  return cx(
+    "appearance-none cursor-pointer rounded-full border-none px-[13px] py-[7px] font-sans text-[12px] font-bold disabled:cursor-default disabled:opacity-60",
+    active ? (accent === "coral" ? "bg-coral text-paper" : "bg-ink text-paper") : "bg-paper-2 text-ink/70",
+  );
+}
+
+const panelClass = "mb-4 rounded-[var(--radius-input)] border border-paper-2 p-4";
+
 export interface BriefPanelProps {
   conceptId: string;
   conceptText: string;
@@ -116,7 +122,6 @@ export function BriefPanel({
   conceptText,
   onChanged,
 }: BriefPanelProps): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [brief, setBrief] = useState<BriefView | null>(null);
   const [advice, setAdvice] = useState<AdvisorDirection | null>(null);
   const [busy, setBusy] = useState(false);
@@ -183,69 +188,35 @@ export function BriefPanel({
     [brief, conceptId, advice, onChanged],
   );
 
-  const chip = (active: boolean, accent?: string) =>
-    css({
-      appearance: "none",
-      border: "none",
-      cursor: "pointer",
-      fontFamily: "inherit",
-      fontSize: "12px",
-      fontWeight: 700,
-      borderRadius: "999px",
-      padding: "7px 13px",
-      backgroundColor: active
-        ? (accent ?? theme.colors.contentPrimary)
-        : theme.colors.backgroundSecondary,
-      color: active ? theme.colors.backgroundPrimary : theme.colors.contentSecondary,
-      ":disabled": { cursor: "default", opacity: 0.6 },
-    });
-
-  const panel = css({
-    border: `1px solid ${theme.colors.backgroundSecondary}`,
-    borderRadius: "16px",
-    padding: "16px",
-    marginBottom: "16px",
-  });
-
   if (!brief) {
-    return (
-      <ParagraphSmall color={theme.colors.contentSecondary}>Loading the brief…</ParagraphSmall>
-    );
+    return <ParagraphSmall className="text-ink/70">Loading the brief…</ParagraphSmall>;
   }
 
   return (
     <div data-testid="brief-panel">
       <section
-        className={css({
-          backgroundColor: brief.ready_for_artwork ? theme.colors.backgroundSecondary : INK,
-          color: brief.ready_for_artwork ? theme.colors.contentPrimary : PAPER,
-          borderRadius: "16px",
-          padding: "16px 18px",
-          marginBottom: "16px",
-        })}
+        className={cx(
+          "mb-4 rounded-[var(--radius-input)] px-[18px] py-4",
+          brief.ready_for_artwork ? "bg-paper-2 text-ink" : "bg-ink text-paper",
+        )}
       >
         <span
-          className={css({
-            display: "block",
-            fontSize: "11px",
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: brief.ready_for_artwork ? theme.colors.contentTertiary : LIME,
-            marginBottom: "6px",
-          })}
+          className={cx(
+            "mb-1.5 block text-[11px] font-bold tracking-[0.12em] uppercase",
+            brief.ready_for_artwork ? "text-ink/50" : "text-lime",
+          )}
         >
           {brief.ready_for_artwork ? "The product is defined" : "Before any artwork"}
         </span>
-        <p className={css({ margin: 0, fontSize: "15px", lineHeight: 1.5 })}>{brief.next_action}</p>
+        <p className="m-0 text-[15px] leading-[1.5]">{brief.next_action}</p>
         {/* The button the sentence has been asking for. createAttempt existed
             with no call site anywhere — the same defect the 14 August audit
             found in uploadAsset — so a briefed concept said "start an attempt"
             and offered no way to start one. */}
         {brief.ready_for_artwork ? (
-          <div className={css({ marginTop: "12px" })}>
+          <div className="mt-3">
             <Button
-              size={SIZE.compact}
+              size="compact"
               disabled={busy}
               onClick={() => {
                 setBusy(true);
@@ -266,41 +237,27 @@ export function BriefPanel({
         ) : null}
       </section>
 
-      {error ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
 
       {advice ? (
-        <div className={panel} data-testid="advisor">
+        <div className={panelClass} data-testid="advisor">
           <SectionTitle>What the corpus says</SectionTitle>
-          <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+          <ParagraphXSmall className="mt-0 text-ink/50">
             Measured from the design corpus, offered as register rather than direction. Going
             against it is recorded, not prevented.
           </ParagraphXSmall>
           {advice.recommendations.map((item) => (
-            <div
-              key={item.field}
-              className={css({
-                borderTop: `1px solid ${theme.colors.backgroundSecondary}`,
-                paddingTop: "8px",
-                marginTop: "8px",
-              })}
-            >
-              <ParagraphSmall marginTop={0} marginBottom="2px">
+            <div key={item.field} className="mt-2 border-t border-paper-2 pt-2">
+              <ParagraphSmall className="mt-0 mb-0.5">
                 <strong>{item.field.replace(/_/g, " ")}</strong> — {item.value.replace(/_/g, " ")}
               </ParagraphSmall>
-              <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentTertiary}>
+              <ParagraphXSmall className="mt-0 mb-0 text-ink/50">
                 {item.evidence} · {item.confidence}
               </ParagraphXSmall>
             </div>
           ))}
           {advice.not_decided.length > 0 ? (
-            <ParagraphXSmall color={theme.colors.contentTertiary}>
+            <ParagraphXSmall className="text-ink/50">
               It will not say: {advice.not_decided.join(", ")}.
             </ParagraphXSmall>
           ) : null}
@@ -308,12 +265,12 @@ export function BriefPanel({
       ) : null}
 
       {/* Step 2 — the role in the range. Gates an attempt. */}
-      <div className={panel}>
+      <div className={panelClass}>
         <SectionTitle>Role in the range</SectionTitle>
-        <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+        <ParagraphXSmall className="mt-0 text-ink/50">
           Constitution §4. A collection must not consist entirely of hero or expression products.
         </ParagraphXSmall>
-        <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+        <div className="flex flex-wrap gap-1.5">
           {COLLECTION_ROLES.map((role) => (
             <button
               key={role.id}
@@ -325,7 +282,7 @@ export function BriefPanel({
               onClick={() => {
                 patch({ collection_role: role.id });
               }}
-              className={chip(brief.collection_role === role.id)}
+              className={chipClass(brief.collection_role === role.id)}
             >
               {role.label}
             </button>
@@ -334,12 +291,12 @@ export function BriefPanel({
       </div>
 
       {/* Step 4 — the dominant graphic archetype. Gates an attempt. */}
-      <div className={panel}>
+      <div className={panelClass}>
         <SectionTitle>Graphic archetype</SectionTitle>
-        <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+        <ParagraphXSmall className="mt-0 text-ink/50">
           Constitution §8. One dominant archetype and one dominant proposition.
         </ParagraphXSmall>
-        <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+        <div className="flex flex-wrap gap-1.5">
           {GRAPHIC_ARCHETYPES.map((item) => (
             <button
               key={item.id}
@@ -350,7 +307,7 @@ export function BriefPanel({
               onClick={() => {
                 patch({ graphic_archetype: item.id });
               }}
-              className={chip(brief.graphic_archetype === item.id)}
+              className={chipClass(brief.graphic_archetype === item.id)}
             >
               {item.label}
             </button>
@@ -361,12 +318,12 @@ export function BriefPanel({
       {/* Step 3, partly — the layout archetype. Not gated: §6 allows a
           documented departure, so refusing to proceed without one would be
           stricter than the constitution. */}
-      <div className={panel}>
+      <div className={panelClass}>
         <SectionTitle>Layout archetype</SectionTitle>
-        <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+        <ParagraphXSmall className="mt-0 text-ink/50">
           Constitution §6. Departure from the library requires a written reason.
         </ParagraphXSmall>
-        <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+        <div className="flex flex-wrap gap-1.5">
           {LAYOUT_ARCHETYPES.map((item) => (
             <button
               key={item.id}
@@ -377,7 +334,7 @@ export function BriefPanel({
               onClick={() => {
                 patch({ layout_archetype: item.id });
               }}
-              className={chip(brief.layout_archetype === item.id, CORAL)}
+              className={chipClass(brief.layout_archetype === item.id, "coral")}
             >
               {item.label}
             </button>
@@ -386,19 +343,13 @@ export function BriefPanel({
       </div>
 
       {/* Step 1 — define the product. §3's required fields. */}
-      <div className={panel}>
+      <div className={panelClass}>
         <SectionTitle>The product</SectionTitle>
-        <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+        <ParagraphXSmall className="mt-0 text-ink/50">
           Constitution §3. Artwork created without a defined blank is exploratory only and cannot
           receive production approval.
         </ParagraphXSmall>
-        <div
-          className={css({
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-            gap: "10px",
-          })}
-        >
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5">
           {PRODUCT_FIELDS.map((field) => (
             <FormControl key={field.key} label={field.label}>
               <Input
@@ -415,9 +366,10 @@ export function BriefPanel({
           ))}
         </div>
         <Button
-          size={SIZE.compact}
-          kind={BUTTON_KIND.secondary}
+          size="compact"
+          variant="secondary"
           disabled={busy}
+          className="mt-3"
           onClick={() => {
             patch({});
           }}

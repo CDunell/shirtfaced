@@ -7,12 +7,7 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, SIZE } from "baseui/button";
-import { Card, StyledBody } from "baseui/card";
-import { Spinner } from "baseui/spinner";
-import { Tag, HIERARCHY, KIND } from "baseui/tag";
-import { MonoLabelSmall, ParagraphSmall } from "baseui/typography";
+import { Button, Card, MonoLabelSmall, ParagraphSmall, Spinner, Tag } from "./ui";
 
 import { ApiError, fetchHealth, type HealthResponse } from "../api/client";
 
@@ -22,7 +17,6 @@ type Status =
   | { state: "unreachable"; message: string };
 
 export function ServiceStatus(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [status, setStatus] = useState<Status>({ state: "loading" });
 
   // Resolves the status without touching state synchronously, so it is safe to call
@@ -60,47 +54,32 @@ export function ServiceStatus(): React.JSX.Element {
 
   return (
     <Card title="Studio service">
-      <StyledBody>
-        <div
-          className={css({
-            display: "flex",
-            alignItems: "center",
-            gap: theme.sizing.scale600,
-            marginBottom: theme.sizing.scale600,
-          })}
-        >
-          {status.state === "loading" && <Spinner $size={theme.sizing.scale800} />}
+      <div className="mb-4 flex items-center gap-4">
+        {status.state === "loading" && <Spinner />}
 
-          {status.state === "live" && (
-            <>
-              <Tag closeable={false} kind={KIND.positive} hierarchy={HIERARCHY.primary}>
-                Live
-              </Tag>
-              <MonoLabelSmall>version {status.health.version}</MonoLabelSmall>
-            </>
-          )}
+        {status.state === "live" && (
+          <>
+            <Tag kind="positive">Live</Tag>
+            <MonoLabelSmall>version {status.health.version}</MonoLabelSmall>
+          </>
+        )}
 
-          {status.state === "unreachable" && (
-            <Tag closeable={false} kind={KIND.negative} hierarchy={HIERARCHY.primary}>
-              Unreachable
-            </Tag>
-          )}
-        </div>
+        {status.state === "unreachable" && <Tag kind="negative">Unreachable</Tag>}
+      </div>
 
-        <ParagraphSmall marginTop={0}>
-          {status.state === "loading" && "Checking the Studio service…"}
-          {status.state === "live" &&
-            "The application process is running. This check does not yet confirm that " +
-              "PostgreSQL is reachable or that the world files load."}
-          {status.state === "unreachable" && status.message}
-        </ParagraphSmall>
+      <ParagraphSmall>
+        {status.state === "loading" && "Checking the Studio service…"}
+        {status.state === "live" &&
+          "The application process is running. This check does not yet confirm that " +
+            "PostgreSQL is reachable or that the world files load."}
+        {status.state === "unreachable" && status.message}
+      </ParagraphSmall>
 
-        <div className={css({ marginTop: theme.sizing.scale600 })}>
-          <Button size={SIZE.compact} onClick={recheck} disabled={status.state === "loading"}>
-            Check again
-          </Button>
-        </div>
-      </StyledBody>
+      <div className="mt-4">
+        <Button size="compact" onClick={recheck} disabled={status.state === "loading"}>
+          Check again
+        </Button>
+      </div>
     </Card>
   );
 }

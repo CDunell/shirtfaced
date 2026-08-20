@@ -15,14 +15,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { LabelSmall, ParagraphXSmall } from "baseui/typography";
 
+import { Button, Input, Notification, Select, Tag, LabelSmall, ParagraphXSmall, type SelectOption } from "./ui";
 import { PageTitle } from "./chrome";
 
 import { ApiError, fetchEvidence, type EvidenceManifest, type EvidenceRecord } from "../api/client";
@@ -33,7 +27,7 @@ const THUMBS = 4;
 /** Rows rendered at once. The archive runs to thousands; the screen does not. */
 const PAGE = 60;
 
-function options(records: EvidenceRecord[], key: keyof EvidenceRecord): Value {
+function options(records: EvidenceRecord[], key: keyof EvidenceRecord): SelectOption[] {
   const counts = new Map<string, number>();
   for (const record of records) {
     const value = String(record[key] ?? "").trim();
@@ -41,19 +35,18 @@ function options(records: EvidenceRecord[], key: keyof EvidenceRecord): Value {
   }
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-    .map(([id, n]) => ({ id, label: `${id} (${String(n)})` }));
+    .map(([id, n]) => ({ value: id, label: `${id} (${String(n)})` }));
 }
 
 export function VintageEvidenceBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [records, setRecords] = useState<EvidenceRecord[]>([]);
   const [manifest, setManifest] = useState<EvidenceManifest>({});
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [brand, setBrand] = useState<Value>([]);
-  const [era, setEra] = useState<Value>([]);
-  const [tradition, setTradition] = useState<Value>([]);
+  const [brand, setBrand] = useState<string>("");
+  const [era, setEra] = useState<string>("");
+  const [tradition, setTradition] = useState<string>("");
   const [shown, setShown] = useState(PAGE);
 
   useEffect(() => {
@@ -80,9 +73,9 @@ export function VintageEvidenceBench(): React.JSX.Element {
 
   const matched = useMemo(() => {
     const q = query.trim().toLowerCase();
-    const b = brand[0]?.id;
-    const e = era[0]?.id;
-    const t = tradition[0]?.id;
+    const b = brand;
+    const e = era;
+    const t = tradition;
     return records.filter((r) => {
       if (b && r.brand !== b) return false;
       if (e && r.era_claim !== e) return false;
@@ -97,15 +90,6 @@ export function VintageEvidenceBench(): React.JSX.Element {
       return hay.toLowerCase().includes(q);
     });
   }, [records, query, brand, era, tradition]);
-
-  const card = css({
-    border: `1px solid ${theme.colors.borderOpaque}`,
-    borderRadius: "10px",
-    padding: "10px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "6px",
-  });
 
   return (
     <>
@@ -122,23 +106,9 @@ export function VintageEvidenceBench(): React.JSX.Element {
         Sold surf, skate and street references with retained listing photography.
       </ParagraphXSmall>
 
-      {error ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
 
-      <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-          gap: "8px",
-          margin: "12px 0",
-        })}
-      >
+      <div className="my-3 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2">
         <Input
           value={query}
           onChange={(event) => {
@@ -146,13 +116,12 @@ export function VintageEvidenceBench(): React.JSX.Element {
             setShown(PAGE);
           }}
           placeholder="Search titles"
-          clearable
         />
         <Select
           options={brands}
           value={brand}
-          onChange={(params) => {
-            setBrand(params.value);
+          onChange={(value) => {
+            setBrand(value);
             setShown(PAGE);
           }}
           placeholder="All brands"
@@ -160,8 +129,8 @@ export function VintageEvidenceBench(): React.JSX.Element {
         <Select
           options={eras}
           value={era}
-          onChange={(params) => {
-            setEra(params.value);
+          onChange={(value) => {
+            setEra(value);
             setShown(PAGE);
           }}
           placeholder="All eras"
@@ -169,8 +138,8 @@ export function VintageEvidenceBench(): React.JSX.Element {
         <Select
           options={traditions}
           value={tradition}
-          onChange={(params) => {
-            setTradition(params.value);
+          onChange={(value) => {
+            setTradition(value);
             setShown(PAGE);
           }}
           placeholder="All traditions"
@@ -181,60 +150,34 @@ export function VintageEvidenceBench(): React.JSX.Element {
         {matched.length} matching {matched.length === 1 ? "listing" : "listings"}
       </LabelSmall>
 
-      <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-          gap: "10px",
-          marginTop: "10px",
-        })}
-      >
+      <div className="mt-2.5 grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-2.5">
         {matched.slice(0, shown).map((record) => (
-          <article key={record.listing_id} className={card}>
-            <div className={css({ display: "flex", gap: "4px", overflowX: "auto" })}>
+          <article
+            key={record.listing_id}
+            className="flex flex-col gap-1.5 rounded-[10px] border border-ink/10 p-2.5"
+          >
+            <div className="flex gap-1 overflow-x-auto">
               {record.images.slice(0, THUMBS).map((src) => (
                 <img
                   key={src}
                   src={src}
                   alt=""
                   loading="lazy"
-                  className={css({
-                    width: "70px",
-                    height: "70px",
-                    objectFit: "contain",
-                    background: theme.colors.backgroundSecondary,
-                    borderRadius: "6px",
-                  })}
+                  className="h-[70px] w-[70px] rounded-[6px] bg-paper-2 object-contain"
                 />
               ))}
             </div>
             <LabelSmall>{record.brand || "—"}</LabelSmall>
-            <ParagraphXSmall
-              overrides={{ Block: { style: { margin: 0, wordBreak: "break-word" } } }}
-            >
+            <ParagraphXSmall className="m-0 break-words">
               {record.title || "Untitled"}
             </ParagraphXSmall>
-            <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-              {record.era_claim ? (
-                <Tag closeable={false} kind={TAG_KIND.accent}>
-                  {record.era_claim}
-                </Tag>
-              ) : null}
-              {record.tradition ? (
-                <Tag closeable={false} kind={TAG_KIND.neutral}>
-                  {record.tradition}
-                </Tag>
-              ) : null}
-              <Tag closeable={false} kind={TAG_KIND.neutral}>
-                {record.images.length} images
-              </Tag>
+            <div className="flex flex-wrap gap-1">
+              {record.era_claim ? <Tag kind="accent">{record.era_claim}</Tag> : null}
+              {record.tradition ? <Tag kind="neutral">{record.tradition}</Tag> : null}
+              <Tag kind="neutral">{record.images.length} images</Tag>
             </div>
             {record.source_url ? (
-              <a
-                href={record.source_url}
-                rel="noreferrer"
-                className={css({ fontSize: "12px", color: theme.colors.contentPrimary })}
-              >
+              <a href={record.source_url} rel="noreferrer" className="text-xs text-ink">
                 {record.marketplace === "archive" ? "Source" : "eBay"} ↗
               </a>
             ) : null}
@@ -244,12 +187,12 @@ export function VintageEvidenceBench(): React.JSX.Element {
 
       {shown < matched.length ? (
         <Button
-          kind={BUTTON_KIND.secondary}
-          size={SIZE.compact}
+          variant="secondary"
+          size="compact"
           onClick={() => {
             setShown((n) => n + PAGE);
           }}
-          overrides={{ BaseButton: { style: { marginTop: "14px" } } }}
+          className="mt-3.5"
         >
           Show more ({matched.length - shown} remaining)
         </Button>

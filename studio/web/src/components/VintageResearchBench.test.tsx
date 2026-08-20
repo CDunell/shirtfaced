@@ -208,8 +208,13 @@ describe("VintageResearchBench", () => {
     await waitFor(() => {
       expect(screen.getByRole("button", { name: "Add to that concept" })).toBeInTheDocument();
     });
-    await userEvent.click(screen.getByText("…or add to an existing one"));
-    await userEvent.click(await screen.findByText(/#7 Ibis/));
+    // The existing-concept picker is a native <select> now -- select the option by
+    // its own element rather than the old click-to-open/click-option Base Web path.
+    const existingConceptSelect = screen.getByText("…or add to an existing one").closest("select");
+    if (!(existingConceptSelect instanceof HTMLSelectElement)) {
+      throw new Error("The existing-concept select is not on the page.");
+    }
+    await userEvent.selectOptions(existingConceptSelect, await screen.findByText(/#7 Ibis/));
     await userEvent.click(screen.getByRole("button", { name: "Add to that concept" }));
 
     await waitFor(() => {

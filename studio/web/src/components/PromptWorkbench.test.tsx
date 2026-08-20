@@ -1,13 +1,13 @@
 /**
  * Choosing a scene shows what has already been written for it.
  *
- * The reason this is tested rather than clicked through: the browser tooling cannot
- * drive Base Web's Select in a way React accepts, so the one path that matters most
- * here — pick a scene, see its history — would otherwise go unverified.
+ * The scene picker is a native <select> (migrated off Base Web's own Select,
+ * which needed the click-through workaround this comment used to describe) --
+ * userEvent.selectOptions drives it directly now.
  */
 
 import { describe, expect, it, vi, beforeEach } from "vitest";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { PromptWorkbench } from "./PromptWorkbench";
@@ -38,11 +38,13 @@ beforeEach(() => {
 async function chooseTheScene(): Promise<void> {
   const user = userEvent.setup();
   // The world is chosen for you when there is only one, so the scene select is the
-  // second combobox on the page.
+  // second combobox on the page. Its real options populate from an async fetch
+  // triggered by the world selection, so wait for the target option to actually
+  // exist before selecting it -- otherwise this races that fetch under load.
   const [, scene] = screen.getAllByRole("combobox");
-  if (!scene) throw new Error("The scene select is not on the page.");
-  await user.click(scene);
-  await user.click(await screen.findByText(/W01-015/));
+  if (!(scene instanceof HTMLSelectElement)) throw new Error("The scene select is not on the page.");
+  await within(scene).findByRole("option", { name: /W01-015/ });
+  await user.selectOptions(scene, "W01-015");
 }
 
 describe("PromptWorkbench", () => {

@@ -7,12 +7,17 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Card, StyledBody } from "baseui/card";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Tag, HIERARCHY, KIND as TAG_KIND, type TagKind } from "baseui/tag";
-import { LabelSmall, MonoLabelXSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import {
+  Button,
+  Card,
+  LabelSmall,
+  MonoLabelXSmall,
+  Notification,
+  ParagraphSmall,
+  ParagraphXSmall,
+  Tag,
+  type TagKind,
+} from "./ui";
 
 import { DecisionPanel } from "./DecisionPanel";
 import { ReviewPanel } from "./ReviewPanel";
@@ -41,15 +46,15 @@ const STATE_LABELS: Record<AttemptState, string> = {
 };
 
 const STATE_KINDS: Record<AttemptState, TagKind> = {
-  planned: TAG_KIND.neutral,
-  prompt_ready: TAG_KIND.neutral,
-  generating: TAG_KIND.accent,
-  generated: TAG_KIND.positive,
-  reviewing: TAG_KIND.accent,
-  awaiting_decision: TAG_KIND.warning,
-  approved: TAG_KIND.positive,
-  rejected: TAG_KIND.negative,
-  failed: TAG_KIND.negative,
+  planned: "neutral",
+  prompt_ready: "neutral",
+  generating: "accent",
+  generated: "positive",
+  reviewing: "accent",
+  awaiting_decision: "warning",
+  approved: "positive",
+  rejected: "negative",
+  failed: "negative",
 };
 
 function AttemptCard({
@@ -59,7 +64,6 @@ function AttemptCard({
   attempt: Attempt;
   onReviewed: () => void;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [reviewing, setReviewing] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
@@ -79,32 +83,14 @@ function AttemptCard({
   }, [attempt.id, onReviewed]);
 
   return (
-    <div
-      className={css({
-        borderTopWidth: "1px",
-        borderTopStyle: "solid",
-        borderTopColor: theme.colors.borderOpaque,
-        paddingTop: theme.sizing.scale600,
-        marginTop: theme.sizing.scale600,
-      })}
-    >
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: theme.sizing.scale400,
-          flexWrap: "wrap",
-          marginBottom: theme.sizing.scale400,
-        })}
-      >
+    <div className="mt-6 border-t border-ink/10 pt-6">
+      <div className="mb-4 flex flex-wrap items-center gap-4">
         <LabelSmall>
           Attempt {attempt.attempt_number} — {attempt.shot.external_id}
         </LabelSmall>
-        <Tag closeable={false} kind={STATE_KINDS[attempt.state]} hierarchy={HIERARCHY.secondary}>
-          {STATE_LABELS[attempt.state]}
-        </Tag>
+        <Tag kind={STATE_KINDS[attempt.state]}>{STATE_LABELS[attempt.state]}</Tag>
         {!attempt.approved && attempt.state === "generated" && (
-          <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentTertiary}>
+          <ParagraphXSmall className="text-ink/50">
             Not approved — approval arrives with human decisions.
           </ParagraphXSmall>
         )}
@@ -118,31 +104,18 @@ function AttemptCard({
           <img
             src={attempt.thumbnail_url ?? attempt.image_url}
             alt={`Generated image for ${attempt.shot.external_id}, ${attempt.shot.title}`}
-            className={css({
-              maxWidth: "100%",
-              height: "auto",
-              display: "block",
-              borderRadius: theme.borders.radius300,
-            })}
+            className="block h-auto max-w-full rounded-[var(--radius-img)]"
           />
         </a>
       ) : (
         attempt.failure_message && (
-          <Notification kind={NOTIFICATION_KIND.negative}>
+          <Notification kind="negative">
             {attempt.failure_code}: {attempt.failure_message}
           </Notification>
         )
       )}
 
-      <dl
-        className={css({
-          display: "grid",
-          gridTemplateColumns: "auto 1fr",
-          gap: `${theme.sizing.scale100} ${theme.sizing.scale500}`,
-          marginTop: theme.sizing.scale500,
-          marginBottom: 0,
-        })}
-      >
+      <dl className="mt-5 mb-0 grid grid-cols-[auto_1fr] gap-x-5 gap-y-1">
         {(
           [
             ["Hero product", attempt.hero_product],
@@ -154,10 +127,12 @@ function AttemptCard({
         )
           .filter(([, value]) => value)
           .map(([label, value]) => (
-            <div key={label} className={css({ display: "contents" })}>
-              <dt className={css({ ...theme.typography.LabelXSmall })}>{label}</dt>
-              <dd className={css({ margin: 0 })}>
-                <MonoLabelXSmall color={theme.colors.contentSecondary}>{value}</MonoLabelXSmall>
+            <div key={label} className="contents">
+              <dt className="text-[11px] font-semibold tracking-wide text-ink/60 uppercase">
+                {label}
+              </dt>
+              <dd className="m-0">
+                <MonoLabelXSmall className="text-ink/70">{value}</MonoLabelXSmall>
               </dd>
             </div>
           ))}
@@ -168,42 +143,28 @@ function AttemptCard({
       <DecisionPanel attempt={attempt} onDecided={onReviewed} />
 
       {attempt.image_url && (
-        <div className={css({ marginTop: theme.sizing.scale500 })}>
-          <Button
-            size={SIZE.mini}
-            kind={BUTTON_KIND.tertiary}
-            onClick={review}
-            disabled={reviewing}
-          >
+        <div className="mt-5">
+          <Button size="compact" variant="ghost" onClick={review} disabled={reviewing}>
             {reviewing ? "Reviewing…" : attempt.review ? "Review again" : "Review this image"}
           </Button>
-          <ParagraphXSmall marginBottom={0} color={theme.colors.contentTertiary}>
+          <ParagraphXSmall className="text-ink/50">
             Reviews the stored image. Never regenerates it.
           </ParagraphXSmall>
         </div>
       )}
 
       {reviewError && (
-        <div className={css({ marginTop: theme.sizing.scale400 })}>
-          <Notification kind={NOTIFICATION_KIND.negative}>{reviewError}</Notification>
+        <div className="mt-4">
+          <Notification kind="negative">{reviewError}</Notification>
         </div>
       )}
 
       {attempt.production_prompt && (
-        <details className={css({ marginTop: theme.sizing.scale500 })}>
-          <summary className={css({ ...theme.typography.LabelXSmall, cursor: "pointer" })}>
+        <details className="mt-5">
+          <summary className="cursor-pointer text-[11px] font-semibold tracking-wide text-ink/60 uppercase">
             Production prompt
           </summary>
-          <pre
-            className={css({
-              ...theme.typography.MonoParagraphXSmall,
-              backgroundColor: theme.colors.backgroundSecondary,
-              padding: theme.sizing.scale500,
-              borderRadius: theme.borders.radius300,
-              whiteSpace: "pre-wrap",
-              overflowX: "auto",
-            })}
-          >
+          <pre className="mt-2 overflow-x-auto rounded-[var(--radius-input)] bg-paper-2 p-5 font-mono text-[12px] leading-relaxed whitespace-pre-wrap text-ink/70">
             {attempt.production_prompt}
           </pre>
         </details>
@@ -219,7 +180,6 @@ export interface GenerationPanelProps {
 }
 
 export function GenerationPanel({ slug, onGenerated }: GenerationPanelProps): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [status, setStatus] = useState<Status>({ kind: "idle" });
   const [attempts, setAttempts] = useState<Attempt[]>([]);
   const [live, setLive] = useState<boolean | null>(null);
@@ -266,56 +226,45 @@ export function GenerationPanel({ slug, onGenerated }: GenerationPanelProps): Re
 
   return (
     <Card title="Continue World">
-      <StyledBody>
-        <ParagraphSmall marginTop={0}>
-          Generates exactly one image for the next shot, then waits for you. Nothing is approved
-          automatically.
-        </ParagraphSmall>
+      <ParagraphSmall>
+        Generates exactly one image for the next shot, then waits for you. Nothing is approved
+        automatically.
+      </ParagraphSmall>
 
-        <div className={css({ marginTop: theme.sizing.scale600 })}>
-          <Button
-            size={SIZE.compact}
-            kind={BUTTON_KIND.primary}
-            onClick={generate}
-            disabled={busy}
-            isLoading={busy}
-          >
-            {busy ? "Generating…" : "Continue World"}
-          </Button>
+      <div className="mt-6">
+        <Button size="compact" variant="primary" onClick={generate} disabled={busy}>
+          {busy ? "Generating…" : "Continue World"}
+        </Button>
+      </div>
+
+      {live === false && (
+        <div className="mt-6">
+          <Notification kind="info">
+            Generated locally by the deterministic image client. No OpenAI request was made and
+            nothing was billed. Set OPENAI_API_KEY and OPENAI_IMAGE_MODEL to use the real model.
+          </Notification>
         </div>
+      )}
 
-        {live === false && (
-          <div className={css({ marginTop: theme.sizing.scale600 })}>
-            <Notification
-              kind={NOTIFICATION_KIND.info}
-              overrides={{ Body: { style: { width: "auto" } } }}
-            >
-              Generated locally by the deterministic image client. No OpenAI request was made and
-              nothing was billed. Set OPENAI_API_KEY and OPENAI_IMAGE_MODEL to use the real model.
-            </Notification>
-          </div>
-        )}
+      {status.kind === "failed" && (
+        <div className="mt-6">
+          <Notification kind="negative">{status.message}</Notification>
+        </div>
+      )}
 
-        {status.kind === "failed" && (
-          <div className={css({ marginTop: theme.sizing.scale600 })}>
-            <Notification kind={NOTIFICATION_KIND.negative}>{status.message}</Notification>
-          </div>
-        )}
-
-        {attempts.length === 0 ? (
-          <ParagraphXSmall color={theme.colors.contentTertiary}>No attempts yet.</ParagraphXSmall>
-        ) : (
-          attempts.map((attempt) => (
-            <AttemptCard
-              key={attempt.id}
-              attempt={attempt}
-              onReviewed={() => {
-                void load();
-              }}
-            />
-          ))
-        )}
-      </StyledBody>
+      {attempts.length === 0 ? (
+        <ParagraphXSmall className="text-ink/50">No attempts yet.</ParagraphXSmall>
+      ) : (
+        attempts.map((attempt) => (
+          <AttemptCard
+            key={attempt.id}
+            attempt={attempt}
+            onReviewed={() => {
+              void load();
+            }}
+          />
+        ))
+      )}
     </Card>
   );
 }

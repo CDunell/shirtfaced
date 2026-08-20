@@ -16,15 +16,19 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Card, StyledBody } from "baseui/card";
-import { FormControl } from "baseui/form-control";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import {
+  Button,
+  Card,
+  cx,
+  FormControl,
+  Input,
+  LabelSmall,
+  Notification,
+  ParagraphSmall,
+  ParagraphXSmall,
+  Select,
+  Tag,
+} from "./ui";
 
 import { PageTitle, SectionTitle } from "./chrome";
 
@@ -91,8 +95,8 @@ const PLACEMENTS = [
 /** A brief with a seed the owner can see, change and come back to. */
 interface Draft {
   seed: number;
-  garment: Value;
-  placement: Value;
+  garment: string;
+  placement: string;
   primary: string;
   secondary: string;
   garmentColour: string;
@@ -100,8 +104,8 @@ interface Draft {
 
 const INITIAL: Draft = {
   seed: 1,
-  garment: [{ id: "garment_tee_crew_front", label: "garment_tee_crew_front" }],
-  placement: [{ id: "centre_chest", label: "centre_chest" }],
+  garment: "garment_tee_crew_front",
+  placement: "centre_chest",
   primary: "SHIRTFACED",
   secondary: "",
   garmentColour: "#101010",
@@ -110,8 +114,8 @@ const INITIAL: Draft = {
 function briefOf(draft: Draft) {
   return {
     seed: draft.seed,
-    garment_key: String(draft.garment[0]?.id ?? ""),
-    placement: String(draft.placement[0]?.id ?? "centre_chest"),
+    garment_key: draft.garment,
+    placement: draft.placement || "centre_chest",
     primary_text: draft.primary,
     secondary_text: draft.secondary,
     garment_colour: draft.garmentColour,
@@ -119,7 +123,6 @@ function briefOf(draft: Draft) {
 }
 
 export function ComposeBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [draft, setDraft] = useState<Draft>(INITIAL);
   const [options, setOptions] = useState<ComposedOption[] | null>(null);
   const [kept, setKept] = useState<StoredDesign[]>([]);
@@ -205,198 +208,162 @@ export function ComposeBench(): React.JSX.Element {
     }
   }, []);
 
-  const field = css({ flex: "1 1 180px", minWidth: "160px" });
-
   return (
     <>
       <PageTitle>Compose</PageTitle>
-      <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
+      <ParagraphSmall className="mt-0 text-ink/70">
         A garment, some words and a seed. The same four inputs always produce the same artwork, so a
         seed is worth writing down.
       </ParagraphSmall>
 
-      {error ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
 
-      <Card overrides={{ Root: { style: { marginBottom: theme.sizing.scale700 } } }}>
-        <StyledBody>
-          <div className={css({ display: "flex", flexWrap: "wrap", gap: "12px" })}>
-            <div className={field}>
-              <FormControl label="Garment">
-                <Select
-                  clearable={false}
-                  searchable
-                  options={GARMENTS.map((g) => ({ id: g, label: g.replace("garment_", "") }))}
-                  value={draft.garment}
-                  onChange={({ value }) => {
-                    setDraft((d) => ({ ...d, garment: value }));
-                  }}
-                />
-              </FormControl>
-            </div>
-            <div className={field}>
-              <FormControl label="Placement">
-                <Select
-                  clearable={false}
-                  searchable
-                  options={PLACEMENTS.map((p) => ({ id: p, label: p }))}
-                  value={draft.placement}
-                  onChange={({ value }) => {
-                    setDraft((d) => ({ ...d, placement: value }));
-                  }}
-                />
-              </FormControl>
-            </div>
-            <div className={field}>
-              <FormControl label="Seed" caption="Same seed, same design">
-                <Input
-                  type="number"
-                  min={0}
-                  value={String(draft.seed)}
-                  onChange={(event) => {
-                    setDraft((d) => ({
-                      ...d,
-                      seed: Math.max(0, Number(event.currentTarget.value)),
-                    }));
-                  }}
-                />
-              </FormControl>
-            </div>
+      <Card className="mb-7">
+        <div className="flex flex-wrap gap-3">
+          <div className="flex-[1_1_180px] min-w-[160px]">
+            <FormControl label="Garment">
+              <Select
+                options={GARMENTS.map((g) => ({ value: g, label: g.replace("garment_", "") }))}
+                value={draft.garment}
+                onChange={(value) => {
+                  setDraft((d) => ({ ...d, garment: value }));
+                }}
+              />
+            </FormControl>
           </div>
+          <div className="flex-[1_1_180px] min-w-[160px]">
+            <FormControl label="Placement">
+              <Select
+                options={PLACEMENTS.map((p) => ({ value: p, label: p }))}
+                value={draft.placement}
+                onChange={(value) => {
+                  setDraft((d) => ({ ...d, placement: value }));
+                }}
+              />
+            </FormControl>
+          </div>
+          <div className="flex-[1_1_180px] min-w-[160px]">
+            <FormControl label="Seed" caption="Same seed, same design">
+              <Input
+                type="number"
+                min={0}
+                value={String(draft.seed)}
+                onChange={(event) => {
+                  setDraft((d) => ({
+                    ...d,
+                    seed: Math.max(0, Number(event.currentTarget.value)),
+                  }));
+                }}
+              />
+            </FormControl>
+          </div>
+        </div>
 
-          <div className={css({ display: "flex", flexWrap: "wrap", gap: "12px" })}>
-            <div className={field}>
-              <FormControl label="Words" caption="Never edited by the engine">
-                <Input
-                  value={draft.primary}
-                  onChange={(event) => {
-                    setDraft((d) => ({ ...d, primary: event.currentTarget.value }));
-                  }}
-                />
-              </FormControl>
-            </div>
-            <div className={field}>
-              <FormControl label="Second line" caption="Optional">
-                <Input
-                  value={draft.secondary}
-                  onChange={(event) => {
-                    setDraft((d) => ({ ...d, secondary: event.currentTarget.value }));
-                  }}
-                />
-              </FormControl>
-            </div>
-            <div className={field}>
-              <FormControl label="Garment colour">
-                <Input
-                  value={draft.garmentColour}
-                  onChange={(event) => {
-                    setDraft((d) => ({ ...d, garmentColour: event.currentTarget.value }));
-                  }}
-                />
-              </FormControl>
-            </div>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <div className="flex-[1_1_180px] min-w-[160px]">
+            <FormControl label="Words" caption="Never edited by the engine">
+              <Input
+                value={draft.primary}
+                onChange={(event) => {
+                  setDraft((d) => ({ ...d, primary: event.currentTarget.value }));
+                }}
+              />
+            </FormControl>
           </div>
+          <div className="flex-[1_1_180px] min-w-[160px]">
+            <FormControl label="Second line" caption="Optional">
+              <Input
+                value={draft.secondary}
+                onChange={(event) => {
+                  setDraft((d) => ({ ...d, secondary: event.currentTarget.value }));
+                }}
+              />
+            </FormControl>
+          </div>
+          <div className="flex-[1_1_180px] min-w-[160px]">
+            <FormControl label="Garment colour">
+              <Input
+                value={draft.garmentColour}
+                onChange={(event) => {
+                  setDraft((d) => ({ ...d, garmentColour: event.currentTarget.value }));
+                }}
+              />
+            </FormControl>
+          </div>
+        </div>
 
-          <div className={css({ display: "flex", gap: "8px", alignItems: "center" })}>
-            <Button
-              size={SIZE.compact}
-              isLoading={busy}
-              onClick={() => {
-                void onCompose();
-              }}
-            >
-              Compose
-            </Button>
-            <Button
-              size={SIZE.compact}
-              kind={BUTTON_KIND.tertiary}
-              onClick={() => {
-                setDraft((d) => ({ ...d, seed: d.seed + 1 }));
-              }}
-            >
-              Next seed
-            </Button>
-          </div>
-        </StyledBody>
+        <div className="mt-3 flex items-center gap-2">
+          <Button
+            size="compact"
+            disabled={busy}
+            onClick={() => {
+              void onCompose();
+            }}
+          >
+            {busy ? "Composing…" : "Compose"}
+          </Button>
+          <Button
+            size="compact"
+            variant="ghost"
+            onClick={() => {
+              setDraft((d) => ({ ...d, seed: d.seed + 1 }));
+            }}
+          >
+            Next seed
+          </Button>
+        </div>
       </Card>
 
       {options && options.length === 0 ? (
-        <Notification kind={NOTIFICATION_KIND.warning}>
-          Nothing composed for this brief.
-        </Notification>
+        <Notification kind="warning">Nothing composed for this brief.</Notification>
       ) : null}
 
       {options && options.length > 0 ? (
-        <div
-          className={css({
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: "12px",
-            marginBottom: theme.sizing.scale900,
-          })}
-        >
+        <div className="mb-9 grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
           {options.map((option) => (
             <Card key={option.content_hash}>
-              <StyledBody>
-                <div
-                  className={css({
-                    background: draft.garmentColour,
-                    borderRadius: "6px",
-                    padding: "10px",
-                    marginBottom: "8px",
-                    display: "flex",
-                    justifyContent: "center",
-                  })}
-                  // The artwork is our own SVG from our own service, rendered so
-                  // it can be judged at a glance rather than described.
-                  dangerouslySetInnerHTML={{ __html: fitToCard(option.svg) }}
-                />
-                <LabelSmall>{option.grammar_name}</LabelSmall>
-                <ParagraphXSmall color={theme.colors.contentSecondary} marginTop={0}>
-                  {option.reads_as}
-                </ParagraphXSmall>
-                <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-                  <Tag closeable={false} kind={TAG_KIND.neutral}>
-                    {option.width_mm.toFixed(0)}×{option.height_mm.toFixed(0)}mm
-                  </Tag>
-                  <Tag closeable={false} kind={TAG_KIND.neutral}>
-                    {option.decisions === 0
-                      ? "never decided"
-                      : `${String(option.approvals)}/${String(option.decisions)} kept`}
-                  </Tag>
-                </div>
-                <ParagraphXSmall color={theme.colors.contentSecondary}>
-                  {option.rationale}
-                </ParagraphXSmall>
-                <Button
-                  size={SIZE.mini}
-                  kind={BUTTON_KIND.secondary}
-                  disabled={busy}
-                  onClick={() => {
-                    void onKeep(option.grammar_key);
-                  }}
-                >
-                  Keep
-                </Button>
-              </StyledBody>
+              <div
+                className="mb-2 flex justify-center rounded-[6px] p-2.5"
+                style={{ background: draft.garmentColour }}
+                // The artwork is our own SVG from our own service, rendered so
+                // it can be judged at a glance rather than described.
+                dangerouslySetInnerHTML={{ __html: fitToCard(option.svg) }}
+              />
+              <LabelSmall>{option.grammar_name}</LabelSmall>
+              <ParagraphXSmall className="mt-0 text-ink/70">{option.reads_as}</ParagraphXSmall>
+              <div className="flex flex-wrap gap-1">
+                <Tag kind="neutral">
+                  {option.width_mm.toFixed(0)}×{option.height_mm.toFixed(0)}mm
+                </Tag>
+                <Tag kind="neutral">
+                  {option.decisions === 0
+                    ? "never decided"
+                    : `${String(option.approvals)}/${String(option.decisions)} kept`}
+                </Tag>
+              </div>
+              <ParagraphXSmall className="text-ink/70">{option.rationale}</ParagraphXSmall>
+              <Button
+                size="compact"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => {
+                  void onKeep(option.grammar_key);
+                }}
+              >
+                Keep
+              </Button>
             </Card>
           ))}
         </div>
       ) : null}
 
       <SectionTitle>Kept</SectionTitle>
-      <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
+      <ParagraphSmall className="mt-0 text-ink/70">
         A kept design is not an approved one. Nothing leaves <code>awaiting_decision</code> without
         a name against it.
       </ParagraphSmall>
 
-      <div className={css({ maxWidth: "280px", marginBottom: theme.sizing.scale600 })}>
+      <div className="mb-6 max-w-[280px]">
         <FormControl label="Deciding as">
           <Input
             value={decider}
@@ -409,101 +376,80 @@ export function ComposeBench(): React.JSX.Element {
       </div>
 
       {kept.length === 0 ? (
-        <ParagraphSmall color={theme.colors.contentSecondary}>Nothing kept yet.</ParagraphSmall>
+        <ParagraphSmall className="text-ink/70">Nothing kept yet.</ParagraphSmall>
       ) : (
-        <div
-          className={css({
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))",
-            gap: "12px",
-          })}
-        >
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(220px,1fr))] gap-3">
           {kept.map((design) => {
             const check = checks[design.id];
             return (
               <Card key={design.id}>
-                <StyledBody>
-                  <div
-                    className={css({
-                      background: "#101010",
-                      borderRadius: "6px",
-                      padding: "10px",
-                      marginBottom: "8px",
-                      display: "flex",
-                      justifyContent: "center",
-                    })}
-                    dangerouslySetInnerHTML={{ __html: fitToCard(design.svg) }}
-                  />
-                  <div className={css({ display: "flex", gap: "4px", flexWrap: "wrap" })}>
-                    <Tag
-                      closeable={false}
-                      kind={
-                        design.state === "approved"
-                          ? TAG_KIND.positive
-                          : design.state === "rejected"
-                            ? TAG_KIND.negative
-                            : TAG_KIND.warning
-                      }
-                    >
-                      {design.state.replace(/_/g, " ")}
-                    </Tag>
-                    <Tag closeable={false} kind={TAG_KIND.neutral}>
-                      seed {design.seed}
-                    </Tag>
-                  </div>
-                  <ParagraphXSmall color={theme.colors.contentSecondary} marginTop={0}>
-                    {design.garment_key.replace("garment_", "")} · {design.placement_key} ·{" "}
-                    {design.grammar_key}
-                  </ParagraphXSmall>
-
-                  {design.state === "awaiting_decision" ? (
-                    <div className={css({ display: "flex", gap: "6px" })}>
-                      <Button
-                        size={SIZE.mini}
-                        disabled={busy}
-                        onClick={() => {
-                          void onDecide(design, true);
-                        }}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        size={SIZE.mini}
-                        kind={BUTTON_KIND.secondary}
-                        disabled={busy}
-                        onClick={() => {
-                          void onDecide(design, false);
-                        }}
-                      >
-                        Reject
-                      </Button>
-                    </div>
-                  ) : (
-                    <ParagraphXSmall marginTop={0}>
-                      {design.state} by {design.decided_by}
-                    </ParagraphXSmall>
-                  )}
-
-                  <Button
-                    size={SIZE.mini}
-                    kind={BUTTON_KIND.tertiary}
-                    onClick={() => {
-                      void onVerify(design);
-                    }}
+                <div
+                  className="mb-2 flex justify-center rounded-[6px] bg-[#101010] p-2.5"
+                  dangerouslySetInnerHTML={{ __html: fitToCard(design.svg) }}
+                />
+                <div className="flex flex-wrap gap-1">
+                  <Tag
+                    kind={
+                      design.state === "approved"
+                        ? "positive"
+                        : design.state === "rejected"
+                          ? "negative"
+                          : "warning"
+                    }
                   >
-                    Rebuild from its brief
-                  </Button>
-                  {check ? (
-                    <ParagraphXSmall
-                      marginTop={0}
-                      color={check.reproducible ? theme.colors.positive : theme.colors.negative}
+                    {design.state.replace(/_/g, " ")}
+                  </Tag>
+                  <Tag kind="neutral">seed {design.seed}</Tag>
+                </div>
+                <ParagraphXSmall className="mt-0 text-ink/70">
+                  {design.garment_key.replace("garment_", "")} · {design.placement_key} ·{" "}
+                  {design.grammar_key}
+                </ParagraphXSmall>
+
+                {design.state === "awaiting_decision" ? (
+                  <div className="flex gap-1.5">
+                    <Button
+                      size="compact"
+                      disabled={busy}
+                      onClick={() => {
+                        void onDecide(design, true);
+                      }}
                     >
-                      {check.reproducible
-                        ? "Rebuilt byte for byte."
-                        : `Did not rebuild: ${check.reason ?? "bytes differ"}`}
-                    </ParagraphXSmall>
-                  ) : null}
-                </StyledBody>
+                      Approve
+                    </Button>
+                    <Button
+                      size="compact"
+                      variant="secondary"
+                      disabled={busy}
+                      onClick={() => {
+                        void onDecide(design, false);
+                      }}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                ) : (
+                  <ParagraphXSmall className="mt-0">
+                    {design.state} by {design.decided_by}
+                  </ParagraphXSmall>
+                )}
+
+                <Button
+                  size="compact"
+                  variant="ghost"
+                  onClick={() => {
+                    void onVerify(design);
+                  }}
+                >
+                  Rebuild from its brief
+                </Button>
+                {check ? (
+                  <ParagraphXSmall className={cx("mt-0", check.reproducible ? "text-lime" : "text-coral")}>
+                    {check.reproducible
+                      ? "Rebuilt byte for byte."
+                      : `Did not rebuild: ${check.reason ?? "bytes differ"}`}
+                  </ParagraphXSmall>
+                ) : null}
               </Card>
             );
           })}

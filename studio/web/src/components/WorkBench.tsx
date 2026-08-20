@@ -21,15 +21,11 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import { Button, cx, Notification, ParagraphSmall, ParagraphXSmall } from "./ui";
 
 import { ApiError } from "../api/client";
 import { fetchWork, type WorkItem, type WorkStage } from "../api/concepts";
 import { PageTitle, SectionTitle } from "./chrome";
-import { INK, LIME, PAPER } from "../tokens";
 
 function describe(cause: unknown): string {
   if (cause instanceof ApiError) return cause.message;
@@ -77,7 +73,6 @@ export interface WorkBenchProps {
 }
 
 export function WorkBench({ onOpen }: WorkBenchProps): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [items, setItems] = useState<WorkItem[]>([]);
   const [showSettled, setShowSettled] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,67 +103,28 @@ export function WorkBench({ onOpen }: WorkBenchProps): React.JSX.Element {
   return (
     <>
       <PageTitle meta={loaded ? `${String(items.length)} outstanding` : undefined}>Work</PageTitle>
-      <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
+      <ParagraphSmall className="mt-0 text-ink/70">
         Everything being made, most-blocked first. Each row says what to do next and the button goes
         straight there.
       </ParagraphSmall>
 
-      {error ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
 
       {/* The top of the list, said once and loudly. If only one thing gets
           read on this page, it should be the thing to do now. */}
       {first ? (
-        <section
-          className={css({
-            backgroundColor: INK,
-            color: PAPER,
-            borderRadius: "20px",
-            padding: "24px",
-            marginBottom: theme.sizing.scale700,
-          })}
-        >
-          <span
-            className={css({
-              display: "block",
-              fontSize: "11px",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: LIME,
-              marginBottom: "10px",
-            })}
-          >
+        <section className="mb-7 rounded-[20px] bg-ink p-6 text-paper">
+          <span className="mb-[10px] block text-[11px] font-bold tracking-[0.12em] text-lime uppercase">
             Start here
           </span>
-          <h2
-            className={`display ${css({
-              fontSize: "clamp(26px, 5vw, 36px)",
-              margin: "0 0 10px",
-              color: "inherit",
-            })}`}
-          >
+          <h2 className="display m-0 mb-[10px] text-[clamp(26px,5vw,36px)] text-inherit">
             {number3(first.external_number)} {first.title}
           </h2>
-          <p
-            className={css({
-              margin: "0 0 16px",
-              fontSize: "15px",
-              lineHeight: 1.55,
-              opacity: 0.8,
-              maxWidth: "640px",
-            })}
-          >
+          <p className="m-0 mb-4 max-w-[640px] text-[15px] leading-[1.55] opacity-80">
             {first.next_action}
           </p>
           <Button
-            size={SIZE.compact}
+            size="compact"
             onClick={() => {
               onOpen(first);
             }}
@@ -178,14 +134,7 @@ export function WorkBench({ onOpen }: WorkBenchProps): React.JSX.Element {
         </section>
       ) : null}
 
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: "12px",
-          flexWrap: "wrap",
-        })}
-      >
+      <div className="flex flex-wrap items-center gap-3">
         <SectionTitle count={items.length}>Outstanding</SectionTitle>
         <button
           type="button"
@@ -193,108 +142,52 @@ export function WorkBench({ onOpen }: WorkBenchProps): React.JSX.Element {
           onClick={() => {
             setShowSettled((previous) => !previous);
           }}
-          className={`press ${css({
-            appearance: "none",
-            border: "none",
-            cursor: "pointer",
-            fontFamily: "inherit",
-            fontSize: "12px",
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            borderRadius: "999px",
-            padding: "6px 12px",
-            backgroundColor: showSettled ? theme.colors.contentPrimary : "transparent",
-            color: showSettled ? theme.colors.backgroundPrimary : theme.colors.contentSecondary,
-            ":hover": showSettled ? {} : { backgroundColor: theme.colors.backgroundSecondary },
-          })}`}
+          className={cx(
+            "press appearance-none cursor-pointer rounded-full border-none px-3 py-1.5 font-sans text-[12px] font-bold tracking-[0.04em] uppercase",
+            showSettled ? "bg-ink text-paper" : "bg-transparent text-ink/70 hover:bg-paper-2",
+          )}
         >
           {showSettled ? "Hiding nothing" : "Show settled"}
         </button>
       </div>
 
       {loaded && items.length === 0 ? (
-        <ParagraphSmall color={theme.colors.contentSecondary}>
+        <ParagraphSmall className="text-ink/70">
           Nothing is outstanding. Every concept is either finished or not yet started.
         </ParagraphSmall>
       ) : null}
 
-      <div
-        className={css({
-          border: `1px solid ${theme.colors.backgroundSecondary}`,
-          borderRadius: "16px",
-          overflow: "hidden",
-        })}
-      >
+      <div className="overflow-hidden rounded-2xl border border-paper-2">
         {items.map((item, index) => (
           <div
             key={item.concept_id}
             data-testid="work-row"
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-              flexWrap: "wrap",
-              padding: "14px 16px",
-              borderTop: index === 0 ? "none" : `1px solid ${theme.colors.backgroundSecondary}`,
-            })}
+            className={cx(
+              "flex flex-wrap items-center gap-3.5 px-4 py-3.5",
+              index !== 0 && "border-t border-paper-2",
+            )}
           >
-            <span
-              className={css({
-                fontVariantNumeric: "tabular-nums",
-                fontSize: "12px",
-                fontWeight: 600,
-                color: theme.colors.contentTertiary,
-                minWidth: "42px",
-              })}
-            >
+            <span className="min-w-[42px] text-[12px] font-semibold text-ink/50 tabular-nums">
               {number3(item.external_number)}
             </span>
 
-            <div className={css({ flex: "1 1 320px", minWidth: "240px" })}>
-              <div
-                className={css({
-                  display: "flex",
-                  alignItems: "baseline",
-                  gap: "8px",
-                  flexWrap: "wrap",
-                })}
-              >
-                <span
-                  className={css({
-                    fontSize: "14px",
-                    fontWeight: 700,
-                    color: theme.colors.contentPrimary,
-                  })}
-                >
-                  {item.title}
-                </span>
-                <span
-                  className={css({
-                    fontSize: "11px",
-                    fontWeight: 700,
-                    letterSpacing: "0.06em",
-                    textTransform: "uppercase",
-                    color: theme.colors.contentTertiary,
-                  })}
-                >
+            <div className="min-w-[240px] flex-[1_1_320px]">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="text-[14px] font-bold text-ink">{item.title}</span>
+                <span className="text-[11px] font-bold tracking-[0.06em] text-ink/50 uppercase">
                   {stageOf(item.stage).label}
                   {item.percentage === null ? "" : ` · ${item.percentage.toFixed(0)}/100`}
                   {item.attempt_number === null ? "" : ` · attempt ${String(item.attempt_number)}`}
                 </span>
               </div>
-              <ParagraphXSmall
-                marginTop="2px"
-                marginBottom={0}
-                color={theme.colors.contentSecondary}
-              >
+              <ParagraphXSmall className="mt-0.5 mb-0 text-ink/70">
                 {item.next_action}
               </ParagraphXSmall>
             </div>
 
             <Button
-              size={SIZE.mini}
-              kind={index === 0 ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+              size="compact"
+              variant={index === 0 ? "primary" : "secondary"}
               onClick={() => {
                 onOpen(item);
               }}

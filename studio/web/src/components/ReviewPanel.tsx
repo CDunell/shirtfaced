@@ -5,10 +5,7 @@
  * because those are what the owner needs to look at.
  */
 
-import { useStyletron } from "baseui";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Tag, HIERARCHY, KIND as TAG_KIND, type TagKind } from "baseui/tag";
-import { LabelXSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import { LabelXSmall, Notification, ParagraphSmall, ParagraphXSmall, Tag, type TagKind } from "./ui";
 
 import type { GateName, GateResult, GateStatus, Review, ReviewRecommendation } from "../api/client";
 
@@ -20,10 +17,10 @@ const RECOMMENDATION_LABELS: Record<ReviewRecommendation, string> = {
 };
 
 const RECOMMENDATION_KINDS: Record<ReviewRecommendation, TagKind> = {
-  APPROVE_RECOMMENDED: TAG_KIND.positive,
-  APPROVE_WITH_NOTE_RECOMMENDED: TAG_KIND.warning,
-  REJECT_RECOMMENDED: TAG_KIND.negative,
-  REVIEW_UNCERTAIN: TAG_KIND.accent,
+  APPROVE_RECOMMENDED: "positive",
+  APPROVE_WITH_NOTE_RECOMMENDED: "warning",
+  REJECT_RECOMMENDED: "negative",
+  REVIEW_UNCERTAIN: "accent",
 };
 
 const GATE_LABELS: Record<GateName, string> = {
@@ -51,10 +48,10 @@ const GATE_ORDER: GateName[] = [
 ];
 
 const STATUS_KINDS: Record<GateStatus, TagKind> = {
-  PASS: TAG_KIND.positive,
-  FAIL: TAG_KIND.negative,
-  UNCERTAIN: TAG_KIND.warning,
-  NOT_APPLICABLE: TAG_KIND.neutral,
+  PASS: "positive",
+  FAIL: "negative",
+  UNCERTAIN: "warning",
+  NOT_APPLICABLE: "neutral",
 };
 
 const STATUS_LABELS: Record<GateStatus, string> = {
@@ -65,55 +62,23 @@ const STATUS_LABELS: Record<GateStatus, string> = {
 };
 
 function GateRow({ name, gate }: { name: GateName; gate: GateResult }): React.JSX.Element {
-  const [css, theme] = useStyletron();
-
   return (
-    <div
-      className={css({
-        display: "grid",
-        gap: theme.sizing.scale200,
-        paddingTop: theme.sizing.scale400,
-        paddingBottom: theme.sizing.scale400,
-        borderBottomWidth: "1px",
-        borderBottomStyle: "solid",
-        borderBottomColor: theme.colors.borderOpaque,
-      })}
-    >
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: theme.sizing.scale300,
-          flexWrap: "wrap",
-        })}
-      >
+    <div className="grid gap-2 border-b border-ink/10 py-4">
+      <div className="flex flex-wrap items-center gap-3">
         <LabelXSmall>{GATE_LABELS[name]}</LabelXSmall>
-        <Tag closeable={false} kind={STATUS_KINDS[gate.status]} hierarchy={HIERARCHY.secondary}>
-          {STATUS_LABELS[gate.status]}
-        </Tag>
-        {gate.material && gate.status === "FAIL" && (
-          <Tag closeable={false} kind={TAG_KIND.negative} hierarchy={HIERARCHY.primary}>
-            Material
-          </Tag>
-        )}
-        <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentTertiary}>
+        <Tag kind={STATUS_KINDS[gate.status]}>{STATUS_LABELS[gate.status]}</Tag>
+        {gate.material && gate.status === "FAIL" && <Tag kind="negative">Material</Tag>}
+        <ParagraphXSmall className="text-ink/50">
           confidence {gate.confidence.toFixed(2)}
         </ParagraphXSmall>
       </div>
 
-      <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentSecondary}>
-        {gate.evidence}
-      </ParagraphXSmall>
+      <ParagraphXSmall className="text-ink/70">{gate.evidence}</ParagraphXSmall>
 
       {gate.codes.length > 0 && (
-        <div className={css({ display: "flex", flexWrap: "wrap", gap: theme.sizing.scale100 })}>
+        <div className="flex flex-wrap gap-1">
           {gate.codes.map((code) => (
-            <Tag
-              key={code}
-              closeable={false}
-              kind={TAG_KIND.neutral}
-              hierarchy={HIERARCHY.secondary}
-            >
+            <Tag key={code} kind="neutral">
               {code}
             </Tag>
           ))}
@@ -124,8 +89,6 @@ function GateRow({ name, gate }: { name: GateName; gate: GateResult }): React.JS
 }
 
 export function ReviewPanel({ review }: { review: Review }): React.JSX.Element {
-  const [css, theme] = useStyletron();
-
   const attention = new Set<GateName>([...review.blocking_gates, ...review.uncertain_gates]);
   // Failed and uncertain gates first; the rest keep the contract's declared order.
   const ordered = [
@@ -142,81 +105,43 @@ export function ReviewPanel({ review }: { review: Review }): React.JSX.Element {
   ];
 
   return (
-    <div className={css({ marginTop: theme.sizing.scale600 })}>
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: theme.sizing.scale300,
-          flexWrap: "wrap",
-        })}
-      >
-        <Tag
-          closeable={false}
-          kind={RECOMMENDATION_KINDS[review.recommendation]}
-          hierarchy={HIERARCHY.primary}
-        >
+    <div className="mt-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <Tag kind={RECOMMENDATION_KINDS[review.recommendation]}>
           {RECOMMENDATION_LABELS[review.recommendation]}
         </Tag>
-        <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentTertiary}>
-          This is advice. You decide.
-        </ParagraphXSmall>
+        <ParagraphXSmall className="text-ink/50">This is advice. You decide.</ParagraphXSmall>
       </div>
 
-      <ParagraphSmall marginBottom={0}>{review.strongest_success}</ParagraphSmall>
+      <ParagraphSmall>{review.strongest_success}</ParagraphSmall>
 
       {review.material_drift && (
-        <div className={css({ marginTop: theme.sizing.scale400 })}>
-          <Notification
-            kind={NOTIFICATION_KIND.warning}
-            overrides={{ Body: { style: { width: "auto" } } }}
-          >
-            {review.material_drift}
-          </Notification>
+        <div className="mt-4">
+          <Notification kind="warning">{review.material_drift}</Notification>
         </div>
       )}
 
-      <div
-        className={css({
-          display: "flex",
-          flexWrap: "wrap",
-          gap: theme.sizing.scale200,
-          marginTop: theme.sizing.scale500,
-        })}
-      >
+      <div className="mt-5 flex flex-wrap gap-2">
         {scores.map(([label, score]) => (
-          <Tag
-            key={label}
-            closeable={false}
-            kind={TAG_KIND.neutral}
-            hierarchy={HIERARCHY.secondary}
-          >
+          <Tag key={label} kind="neutral">
             {`${label} ${String(score)}/5`}
           </Tag>
         ))}
-        <Tag
-          closeable={false}
-          kind={review.branding_compliant ? TAG_KIND.positive : TAG_KIND.negative}
-          hierarchy={HIERARCHY.secondary}
-        >
+        <Tag kind={review.branding_compliant ? "positive" : "negative"}>
           {review.branding_compliant ? "Branding compliant" : "Branding breach"}
         </Tag>
-        <Tag
-          closeable={false}
-          kind={review.vehicle_compliant ? TAG_KIND.positive : TAG_KIND.negative}
-          hierarchy={HIERARCHY.secondary}
-        >
+        <Tag kind={review.vehicle_compliant ? "positive" : "negative"}>
           {review.vehicle_compliant ? "Vehicle compliant" : "Vehicle breach"}
         </Tag>
       </div>
 
-      <details open={attention.size > 0} className={css({ marginTop: theme.sizing.scale500 })}>
-        <summary className={css({ ...theme.typography.LabelXSmall, cursor: "pointer" })}>
+      <details open={attention.size > 0} className="mt-5">
+        <summary className="cursor-pointer text-[11px] font-semibold tracking-wide uppercase text-ink/60">
           {attention.size > 0
             ? `${String(attention.size)} gate${attention.size === 1 ? "" : "s"} need attention`
             : "All nine gates"}
         </summary>
-        <div className={css({ marginTop: theme.sizing.scale300 })}>
+        <div className="mt-3">
           {ordered.map((name) => (
             <GateRow key={name} name={name} gate={review.gates[name]} />
           ))}
@@ -224,7 +149,7 @@ export function ReviewPanel({ review }: { review: Review }): React.JSX.Element {
       </details>
 
       {review.next_hero_product && (
-        <ParagraphXSmall color={theme.colors.contentTertiary}>
+        <ParagraphXSmall className="text-ink/50">
           Suggested next: {review.next_hero_product}
           {review.next_camera ? ` — ${review.next_camera}` : ""}
         </ParagraphXSmall>

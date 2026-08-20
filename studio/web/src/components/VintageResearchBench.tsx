@@ -13,14 +13,19 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { Textarea } from "baseui/textarea";
-import { LabelSmall, ParagraphXSmall } from "baseui/typography";
+
+import {
+  Button,
+  Input,
+  LabelSmall,
+  Notification,
+  ParagraphXSmall,
+  Select,
+  Tag,
+  Textarea,
+  type SelectOption,
+  type TagKind,
+} from "./ui";
 
 import { CopyButton, PasteButton, PageTitle } from "./chrome";
 
@@ -44,11 +49,13 @@ import {
   type ResearchRun,
 } from "../api/client";
 
-function statusKind(status: string | undefined): (typeof TAG_KIND)[keyof typeof TAG_KIND] {
-  if (status === "approved") return TAG_KIND.positive;
-  if (status === "rejected") return TAG_KIND.negative;
-  return TAG_KIND.neutral;
+function statusKind(status: string | undefined): TagKind {
+  if (status === "approved") return "positive";
+  if (status === "rejected") return "negative";
+  return "neutral";
 }
+
+const card = "mb-3 rounded-[10px] border border-ink/10 p-3";
 
 /** Where a research concept landed, and what to do about it.
  *
@@ -56,16 +63,9 @@ function statusKind(status: string | undefined): (typeof TAG_KIND)[keyof typeof 
  * numbered concept now exists and carries the server's own next-action
  * sentence, so the reader is not left to go and find out. */
 function Landed({ result }: { result: PipelineResult | undefined }): React.JSX.Element | null {
-  const [, theme] = useStyletron();
   if (!result) return null;
   return (
-    <ParagraphXSmall
-      overrides={{
-        Block: {
-          style: { margin: 0, flexBasis: "100%", color: theme.colors.contentSecondary },
-        },
-      }}
-    >
+    <ParagraphXSmall className="m-0 basis-full text-ink/70">
       {result.concept_created ? "Created " : "Added to "}#{String(result.design_concept_number)}{" "}
       {result.design_concept_title}, attempt {String(result.attempt_number)}. {result.next_action}
     </ParagraphXSmall>
@@ -73,7 +73,6 @@ function Landed({ result }: { result: PipelineResult | undefined }): React.JSX.E
 }
 
 export function VintageResearchBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [runs, setRuns] = useState<ResearchRun[]>([]);
   const [run, setRun] = useState<ResearchRun | null>(null);
   const [targets, setTargets] = useState<DesignConceptTarget[]>([]);
@@ -84,12 +83,12 @@ export function VintageResearchBench(): React.JSX.Element {
   // exact equality, so a typed "90s" or "1990" returns nothing and says nothing
   // about why. The options carry their counts for the same reason the Evidence
   // bench does: the filter can state what it will return before it is chosen.
-  const [era, setEra] = useState<Value>([]);
-  const [tradition, setTradition] = useState<Value>([]);
+  const [era, setEra] = useState("");
+  const [tradition, setTradition] = useState("");
   const [records, setRecords] = useState<EvidenceRecord[]>([]);
   const [imageLimit, setImageLimit] = useState("16");
   const [drafts, setDrafts] = useState<Record<number, string>>({});
-  const [pipelineTarget, setPipelineTarget] = useState<Value>([]);
+  const [pipelineTarget, setPipelineTarget] = useState("");
   // Attempt number per concept, so the button reports what it created
   // rather than leaving a click with nothing to show for it.
   const [queued, setQueued] = useState<Record<number, number>>({});
@@ -125,7 +124,7 @@ export function VintageResearchBench(): React.JSX.Element {
   }, []);
 
   const optionsFor = useCallback(
-    (key: "era_claim" | "tradition"): Value => {
+    (key: "era_claim" | "tradition"): SelectOption[] => {
       const counts = new Map<string, number>();
       for (const record of records) {
         const value = (record[key] ?? "").trim();
@@ -133,7 +132,7 @@ export function VintageResearchBench(): React.JSX.Element {
       }
       return [...counts.entries()]
         .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-        .map(([id, n]) => ({ id, label: `${id} (${String(n)})` }));
+        .map(([id, n]) => ({ value: id, label: `${id} (${String(n)})` }));
     },
     [records],
   );
@@ -144,8 +143,8 @@ export function VintageResearchBench(): React.JSX.Element {
     const limit = Number.parseInt(imageLimit, 10);
     startResearchRun({
       query,
-      era: String(era[0]?.id ?? ""),
-      tradition: String(tradition[0]?.id ?? ""),
+      era,
+      tradition,
       image_limit: Number.isFinite(limit) ? limit : 16,
     })
       .then((created) => {
@@ -164,8 +163,8 @@ export function VintageResearchBench(): React.JSX.Element {
     const limit = Number.parseInt(imageLimit, 10);
     prepareManualRun({
       query,
-      era: String(era[0]?.id ?? ""),
-      tradition: String(tradition[0]?.id ?? ""),
+      era,
+      tradition,
       image_limit: Number.isFinite(limit) ? limit : 16,
     })
       .then((result) => {
@@ -181,8 +180,8 @@ export function VintageResearchBench(): React.JSX.Element {
     const limit = Number.parseInt(imageLimit, 10);
     downloadResearchBundle({
       query,
-      era: String(era[0]?.id ?? ""),
-      tradition: String(tradition[0]?.id ?? ""),
+      era,
+      tradition,
       image_limit: Number.isFinite(limit) ? limit : 16,
     })
       .then((blob) => {
@@ -258,10 +257,10 @@ export function VintageResearchBench(): React.JSX.Element {
    */
   const toPipeline = useCallback(
     (number: number, createNew: boolean) => {
-      const target = pipelineTarget[0]?.id;
+      const target = pipelineTarget;
       if (!run) return;
-      if (!createNew && target === undefined) return;
-      sendConceptToPipeline(run.id, number, createNew ? null : String(target))
+      if (!createNew && target === "") return;
+      sendConceptToPipeline(run.id, number, createNew ? null : target)
         .then((result) => {
           setError(null);
           setQueued((previous) => ({ ...previous, [number]: result.attempt_number }));
@@ -274,13 +273,6 @@ export function VintageResearchBench(): React.JSX.Element {
     [run, pipelineTarget],
   );
 
-  const card = css({
-    border: `1px solid ${theme.colors.borderOpaque}`,
-    borderRadius: "10px",
-    padding: "12px",
-    marginBottom: "12px",
-  });
-
   return (
     <>
       <PageTitle meta={run?.id ? `Run ${run.id.slice(0, 8)}` : `${String(runs.length)} runs`}>
@@ -290,23 +282,9 @@ export function VintageResearchBench(): React.JSX.Element {
         Two passes over the selected evidence: ten concepts, then the same ten in depth.
       </ParagraphXSmall>
 
-      {error && !prepared ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
+      {error && !prepared ? <Notification kind="negative">{error}</Notification> : null}
 
-      <div
-        className={css({
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-          gap: "8px",
-          margin: "12px 0",
-        })}
-      >
+      <div className="my-3 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-2">
         <Input
           value={query}
           onChange={(event) => {
@@ -317,23 +295,21 @@ export function VintageResearchBench(): React.JSX.Element {
         <Select
           options={optionsFor("era_claim")}
           value={era}
-          onChange={(params) => {
-            setEra(params.value);
+          onChange={(value) => {
+            setEra(value);
           }}
           placeholder="All eras"
         />
         <Select
           options={optionsFor("tradition")}
           value={tradition}
-          onChange={(params) => {
-            setTradition(params.value);
+          onChange={(value) => {
+            setTradition(value);
           }}
           placeholder="All traditions"
         />
         <div>
-          <LabelSmall overrides={{ Block: { style: { marginBottom: "4px", marginTop: 0 } } }}>
-            Images per run
-          </LabelSmall>
+          <LabelSmall className="mb-1 block">Images per run</LabelSmall>
           <Input
             value={imageLimit}
             type="number"
@@ -346,11 +322,11 @@ export function VintageResearchBench(): React.JSX.Element {
         </div>
       </div>
 
-      <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap" })}>
-        <Button onClick={prepare} kind={BUTTON_KIND.primary}>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={prepare} variant="primary">
           Prepare manual run — no API cost
         </Button>
-        <Button onClick={start} disabled={busy} isLoading={busy} kind={BUTTON_KIND.secondary}>
+        <Button onClick={start} disabled={busy} variant="secondary">
           {busy ? "Running both passes — this takes a while" : "Run both passes (billed)"}
         </Button>
       </div>
@@ -358,15 +334,7 @@ export function VintageResearchBench(): React.JSX.Element {
       {prepared ? (
         <div className={card}>
           <LabelSmall>Run these yourself, then paste the result back</LabelSmall>
-          <ol
-            className={css({
-              margin: "8px 0 12px",
-              paddingLeft: "20px",
-              fontSize: "13px",
-              lineHeight: "1.6",
-              color: theme.colors.contentSecondary,
-            })}
-          >
+          <ol className="mt-2 mb-3 pl-5 text-[13px] leading-[1.6] text-ink/70">
             <li>
               Download the zip — every image, both prompts and a manifest. Or save the thumbnails
               one at a time by right-click or long-press.
@@ -382,65 +350,33 @@ export function VintageResearchBench(): React.JSX.Element {
             Right-click or long-press to save — they deliberately do not open in a new tab, because
             a blocked one loses everything prepared here.
           </ParagraphXSmall>
-          <Button
-            size={SIZE.compact}
-            onClick={downloadBundle}
-            overrides={{ BaseButton: { style: { marginBottom: "10px" } } }}
-          >
+          <Button size="compact" onClick={downloadBundle} className="mb-2.5">
             Download zip — images + prompts
           </Button>
-          <div className={css({ display: "flex", gap: "6px", overflowX: "auto", margin: "8px 0" })}>
+          <div className="my-2 flex gap-1.5 overflow-x-auto">
             {prepared.evidence_images.map((image) => (
               <img
                 key={image.image_url}
                 src={image.image_url}
                 alt={image.filename}
                 title={image.filename}
-                className={css({
-                  width: "150px",
-                  height: "150px",
-                  objectFit: "contain",
-                  background: theme.colors.backgroundSecondary,
-                  borderRadius: "6px",
-                })}
+                className="h-[150px] w-[150px] rounded-[6px] bg-paper-2 object-contain"
               />
             ))}
           </div>
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "4px",
-            })}
-          >
+          <div className="mb-1 flex items-center justify-between">
             <LabelSmall>Pass 1</LabelSmall>
             <CopyButton text={prepared.pass1_prompt} label="pass 1 prompt" />
           </div>
           <Textarea value={prepared.pass1_prompt} rows={6} readOnly />
-          <div className={css({ marginTop: "10px" })}>
-            <div
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "4px",
-              })}
-            >
+          <div className="mt-2.5">
+            <div className="mb-1 flex items-center justify-between">
               <LabelSmall>Pass 2</LabelSmall>
               <CopyButton text={prepared.pass2_prompt} label="pass 2 prompt" />
             </div>
             <Textarea value={prepared.pass2_prompt} rows={3} readOnly />
           </div>
-          <div
-            className={css({
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginTop: "12px",
-              marginBottom: "4px",
-            })}
-          >
+          <div className="mt-3 mb-1 flex items-center justify-between">
             <LabelSmall>Paste the concepts JSON</LabelSmall>
             <PasteButton onPaste={setPasted} label="Paste JSON" />
           </div>
@@ -452,33 +388,22 @@ export function VintageResearchBench(): React.JSX.Element {
               setPasted(event.currentTarget.value);
             }}
           />
-          <Button
-            size={SIZE.compact}
-            onClick={importPasted}
-            overrides={{ BaseButton: { style: { marginTop: "8px" } } }}
-          >
+          <Button size="compact" onClick={importPasted} className="mt-2">
             Import concepts
           </Button>
-          {error ? (
-            <Notification
-              kind={NOTIFICATION_KIND.negative}
-              overrides={{ Body: { style: { width: "auto", marginTop: "10px" } } }}
-            >
-              {error}
-            </Notification>
-          ) : null}
+          {error ? <Notification kind="negative" className="mt-2.5">{error}</Notification> : null}
         </div>
       ) : null}
 
       {runs.length > 0 ? (
-        <div className={css({ margin: "14px 0" })}>
+        <div className="my-3.5">
           <LabelSmall>Previous runs</LabelSmall>
-          <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "6px" })}>
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
             {runs.slice(0, 12).map((previous) => (
               <Button
                 key={previous.id}
-                size={SIZE.mini}
-                kind={run?.id === previous.id ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                size="compact"
+                variant={run?.id === previous.id ? "primary" : "secondary"}
                 onClick={() => {
                   setRun(previous);
                 }}
@@ -491,7 +416,7 @@ export function VintageResearchBench(): React.JSX.Element {
       ) : null}
 
       {run?.evidence_images && run.evidence_images.length > 0 ? (
-        <div className={css({ display: "flex", gap: "6px", overflowX: "auto", margin: "12px 0" })}>
+        <div className="my-3 flex gap-1.5 overflow-x-auto">
           {run.evidence_images.map((image) => (
             <img
               key={image.image_url}
@@ -499,13 +424,7 @@ export function VintageResearchBench(): React.JSX.Element {
               alt={image.filename}
               title={image.filename}
               loading="lazy"
-              className={css({
-                width: "84px",
-                height: "84px",
-                objectFit: "contain",
-                background: theme.colors.backgroundSecondary,
-                borderRadius: "6px",
-              })}
+              className="h-[84px] w-[84px] rounded-[6px] bg-paper-2 object-contain"
             />
           ))}
         </div>
@@ -520,30 +439,14 @@ export function VintageResearchBench(): React.JSX.Element {
           "";
         return (
           <article key={concept.concept_number} className={card}>
-            <div
-              className={css({
-                display: "flex",
-                gap: "8px",
-                alignItems: "center",
-                flexWrap: "wrap",
-              })}
-            >
+            <div className="flex flex-wrap items-center gap-2">
               <LabelSmall>
                 {String(concept.concept_number)}. {concept.title}
               </LabelSmall>
-              <Tag closeable={false} kind={statusKind(concept.status)}>
-                {concept.status ?? "pending"}
-              </Tag>
+              <Tag kind={statusKind(concept.status)}>{concept.status ?? "pending"}</Tag>
             </div>
             <ParagraphXSmall>{concept.idea}</ParagraphXSmall>
-            <div
-              className={css({
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                marginBottom: "4px",
-              })}
-            >
+            <div className="mb-1 flex items-center justify-between">
               <LabelSmall>Generation prompt</LabelSmall>
               <CopyButton text={prompt} label={`prompt ${String(concept.concept_number)}`} />
             </div>
@@ -555,11 +458,9 @@ export function VintageResearchBench(): React.JSX.Element {
                 setDrafts((previous) => ({ ...previous, [concept.concept_number]: next }));
               }}
             />
-            <div
-              className={css({ display: "flex", gap: "6px", flexWrap: "wrap", marginTop: "8px" })}
-            >
+            <div className="mt-2 flex flex-wrap gap-1.5">
               <Button
-                size={SIZE.compact}
+                size="compact"
                 onClick={() => {
                   applyConcept(concept.concept_number, { status: "approved" });
                 }}
@@ -567,8 +468,8 @@ export function VintageResearchBench(): React.JSX.Element {
                 Approve
               </Button>
               <Button
-                size={SIZE.compact}
-                kind={BUTTON_KIND.secondary}
+                size="compact"
+                variant="secondary"
                 onClick={() => {
                   applyConcept(concept.concept_number, { status: "rejected" });
                 }}
@@ -576,8 +477,8 @@ export function VintageResearchBench(): React.JSX.Element {
                 Reject
               </Button>
               <Button
-                size={SIZE.compact}
-                kind={BUTTON_KIND.tertiary}
+                size="compact"
+                variant="ghost"
                 onClick={() => {
                   applyConcept(concept.concept_number, { prompt });
                 }}
@@ -586,13 +487,11 @@ export function VintageResearchBench(): React.JSX.Element {
               </Button>
             </div>
             {concept.status === "approved" ? (
-              <div
-                className={css({ display: "flex", gap: "6px", marginTop: "8px", flexWrap: "wrap" })}
-              >
+              <div className="mt-2 flex flex-wrap gap-1.5">
                 {/* The primary path, and the one that was missing: a
                     researched concept becomes a numbered concept of its own. */}
                 <Button
-                  size={SIZE.compact}
+                  size="compact"
                   onClick={() => {
                     toPipeline(concept.concept_number, true);
                   }}
@@ -600,16 +499,15 @@ export function VintageResearchBench(): React.JSX.Element {
                   Create a design concept
                 </Button>
                 {targets.length > 0 ? (
-                  <div className={css({ minWidth: "220px" })}>
+                  <div className="min-w-[220px]">
                     <Select
-                      size={SIZE.compact}
                       options={targets.map((t) => ({
-                        id: t.id,
+                        value: t.id,
                         label: `#${String(t.number)} ${t.title}`,
                       }))}
                       value={pipelineTarget}
-                      onChange={(params) => {
-                        setPipelineTarget(params.value);
+                      onChange={(value) => {
+                        setPipelineTarget(value);
                       }}
                       placeholder="…or add to an existing one"
                     />
@@ -617,9 +515,9 @@ export function VintageResearchBench(): React.JSX.Element {
                 ) : null}
                 {targets.length > 0 ? (
                   <Button
-                    size={SIZE.compact}
-                    kind={BUTTON_KIND.secondary}
-                    disabled={pipelineTarget.length === 0}
+                    size="compact"
+                    variant="secondary"
+                    disabled={pipelineTarget === ""}
                     onClick={() => {
                       toPipeline(concept.concept_number, false);
                     }}
@@ -628,24 +526,12 @@ export function VintageResearchBench(): React.JSX.Element {
                   </Button>
                 ) : null}
                 <Landed result={landed[concept.concept_number]} />
-                <ParagraphXSmall
-                  overrides={{
-                    Block: {
-                      style: {
-                        margin: 0,
-                        flexBasis: "100%",
-                        color: theme.colors.contentTertiary,
-                      },
-                    },
-                  }}
-                >
+                <ParagraphXSmall className="m-0 basis-full text-ink/50">
                   Opens a design attempt against that concept. No image is generated — make it
                   wherever you make images, then upload it to the attempt.
                 </ParagraphXSmall>
                 {queued[concept.concept_number] !== undefined ? (
-                  <Tag closeable={false} kind={TAG_KIND.positive}>
-                    Attempt {String(queued[concept.concept_number])} created
-                  </Tag>
+                  <Tag kind="positive">Attempt {String(queued[concept.concept_number])} created</Tag>
                 ) : null}
               </div>
             ) : null}

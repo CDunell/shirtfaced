@@ -24,14 +24,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { FormControl } from "baseui/form-control";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Textarea } from "baseui/textarea";
-import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
 
 import { ApiError } from "../api/client";
 import {
@@ -61,7 +53,7 @@ import {
   type Zone,
 } from "../api/concepts";
 import { SectionTitle } from "./chrome";
-import { CORAL, INK, LIME, PAPER } from "../tokens";
+import { Button, cx, FormControl, Input, Notification, ParagraphSmall, ParagraphXSmall, Select, Textarea } from "./ui";
 
 function describe(cause: unknown): string {
   if (cause instanceof ApiError) return cause.message;
@@ -73,6 +65,10 @@ const RESULTS: { id: ReviewResult; label: string }[] = [
   { id: "fail", label: "Fail" },
   { id: "not_tested", label: "Not answered" },
 ];
+
+const metaLine = "block text-[12px] font-semibold tracking-wide uppercase text-ink/50";
+
+const panel = "mb-4 rounded-2xl border border-paper-2 p-4";
 
 export interface AttemptPanelProps {
   concept: ConceptDetailView;
@@ -88,7 +84,6 @@ export function AttemptPanel({
   actor,
   onChanged,
 }: AttemptPanelProps): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [rubric, setRubric] = useState<Rubric | null>(null);
   const [review, setReview] = useState<ReviewView | null>(null);
   const [garments, setGarments] = useState<Record<string, Zone[]>>({});
@@ -103,8 +98,8 @@ export function AttemptPanel({
 
   // The print spec, decided at approval because a raster carries no
   // millimetres. Nothing here is guessed from the file.
-  const [garment, setGarment] = useState<Value>([]);
-  const [zone, setZone] = useState<Value>([]);
+  const [garment, setGarment] = useState<string>("");
+  const [zone, setZone] = useState<string>("");
   const [printWidth, setPrintWidth] = useState("");
 
   const load = useCallback(async () => {
@@ -251,80 +246,29 @@ export function AttemptPanel({
   const evaluation = review?.evaluation;
   const sentence = review?.next_action ?? "";
 
-  const metaLine = css({
-    fontSize: "12px",
-    fontWeight: 600,
-    letterSpacing: "0.04em",
-    textTransform: "uppercase",
-    color: theme.colors.contentTertiary,
-  });
-
-  const panel = css({
-    border: `1px solid ${theme.colors.backgroundSecondary}`,
-    borderRadius: "16px",
-    padding: "16px",
-    marginBottom: "16px",
-  });
-
   return (
     <div data-testid="attempt-panel">
       {/* The next action, first and unmissable. A person who has never used
           the tool should be able to read this and act without being told
           which screen they are on. */}
-      <section
-        className={css({
-          backgroundColor: INK,
-          color: PAPER,
-          borderRadius: "16px",
-          padding: "16px 18px",
-          marginBottom: "16px",
-        })}
-      >
-        <span
-          className={css({
-            display: "block",
-            fontSize: "11px",
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: LIME,
-            marginBottom: "6px",
-          })}
-        >
+      <section className="mb-4 rounded-2xl bg-ink px-[18px] py-4 text-paper">
+        <span className="mb-1.5 block text-[11px] font-bold tracking-[0.12em] text-lime uppercase">
           Do this next
         </span>
-        <p className={css({ margin: 0, fontSize: "15px", lineHeight: 1.5 })}>
-          {sentence || "Loading the attempt…"}
-        </p>
+        <p className="m-0 text-[15px] leading-[1.5]">{sentence || "Loading the attempt…"}</p>
       </section>
 
-      {error ? (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
 
       {/* --- The brief, to take to a paid interface -------------------- */}
       <div className={panel}>
         <SectionTitle>Brief</SectionTitle>
-        <pre
-          className={css({
-            whiteSpace: "pre-wrap",
-            fontFamily: "inherit",
-            fontSize: "13px",
-            lineHeight: 1.55,
-            margin: "0 0 10px",
-            color: theme.colors.contentPrimary,
-          })}
-        >
+        <pre className="mt-0 mb-2.5 font-inherit text-[13px] leading-[1.55] whitespace-pre-wrap text-ink">
           {brief?.text ?? "Composing the brief…"}
         </pre>
         {brief && brief.evidence_images.length > 0 ? (
           <>
-            <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+            <ParagraphXSmall className="mt-0 text-ink/50">
               {brief.evidence_images.length} evidence image
               {brief.evidence_images.length === 1 ? "" : "s"} travel with this brief. Attach them
               alongside it — they are what the era is read from.
@@ -332,14 +276,7 @@ export function AttemptPanel({
             {/* Shown, not just counted. A count says evidence exists; the
                 images say whether it is the right evidence, which is the only
                 question worth asking of a reference. */}
-            <div
-              className={css({
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(88px, 1fr))",
-                gap: "8px",
-                marginBottom: "10px",
-              })}
-            >
+            <div className="mb-2.5 grid grid-cols-[repeat(auto-fill,minmax(88px,1fr))] gap-2">
               {brief.evidence_images.map((image) => (
                 <a
                   key={image.url}
@@ -347,13 +284,7 @@ export function AttemptPanel({
                   target="_blank"
                   rel="noreferrer"
                   title={`${image.filename} — listing ${image.listing_id}`}
-                  className={css({
-                    display: "block",
-                    aspectRatio: "1 / 1",
-                    borderRadius: "8px",
-                    overflow: "hidden",
-                    backgroundColor: theme.colors.backgroundSecondary,
-                  })}
+                  className="block aspect-square overflow-hidden rounded-lg bg-paper-2"
                 >
                   {/* Eager on purpose. `loading="lazy"` left all eight at
                       naturalWidth 0 when checked, and the panel is opened
@@ -364,7 +295,7 @@ export function AttemptPanel({
                   <img
                     src={image.url}
                     alt={`evidence ${image.filename} from listing ${image.listing_id}`}
-                    className={css({ width: "100%", height: "100%", objectFit: "cover" })}
+                    className="h-full w-full object-cover"
                   />
                 </a>
               ))}
@@ -372,14 +303,14 @@ export function AttemptPanel({
           </>
         ) : null}
         {attempt.method === "image_generation" ? (
-          <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+          <ParagraphXSmall className="mt-0 text-ink/50">
             This attempt carries a researched prompt. Copy the brief, paste it into a paid
             interface, and bring the image back below.
           </ParagraphXSmall>
         ) : null}
         <Button
-          size={SIZE.compact}
-          kind={BUTTON_KIND.secondary}
+          size="compact"
+          variant="secondary"
           disabled={!brief}
           onClick={() => {
             if (!brief) return;
@@ -407,30 +338,18 @@ export function AttemptPanel({
       <div className={panel}>
         <SectionTitle>Artwork</SectionTitle>
         {attempt.state === "failed" ? (
-          <Notification
-            kind={NOTIFICATION_KIND.warning}
-            overrides={{ Body: { style: { width: "auto" } } }}
-          >
+          <Notification kind="warning">
             This attempt was abandoned and cannot take artwork.
             {attempt.failure_message ? ` ${attempt.failure_message}` : ""}
           </Notification>
         ) : null}
 
         {artwork ? (
-          <div
-            className={css({
-              background: "#101010",
-              borderRadius: "12px",
-              padding: "12px",
-              marginBottom: "10px",
-              display: "flex",
-              justifyContent: "center",
-            })}
-          >
+          <div className="mb-2.5 flex justify-center rounded-xl bg-[#101010] p-3">
             <img
               src={assetUrl(artwork.id)}
               alt={`attempt ${String(attempt.attempt_number)} artwork`}
-              className={css({ maxWidth: "100%", maxHeight: "260px" })}
+              className="max-h-[260px] max-w-full"
             />
           </div>
         ) : null}
@@ -451,16 +370,12 @@ export function AttemptPanel({
               if (file) onFile(file);
             }}
             onClick={() => fileInput.current?.click()}
-            className={css({
-              border: `2px dashed ${dragging ? LIME : theme.colors.backgroundSecondary}`,
-              borderRadius: "12px",
-              padding: "22px",
-              textAlign: "center",
-              cursor: "pointer",
-              backgroundColor: dragging ? theme.colors.backgroundSecondary : "transparent",
-            })}
+            className={cx(
+              "cursor-pointer rounded-xl border-2 border-dashed p-[22px] text-center",
+              dragging ? "border-lime bg-paper-2" : "border-paper-2 bg-transparent",
+            )}
           >
-            <ParagraphSmall marginTop={0} marginBottom={0}>
+            <ParagraphSmall className="mt-0 mb-0">
               {busy === "upload"
                 ? "Storing the artwork…"
                 : artwork
@@ -472,16 +387,14 @@ export function AttemptPanel({
                 control that caused it -- so a refused upload read as the
                 message changing back and nothing else happening. */}
             {uploadError ? (
-              <ParagraphXSmall marginBottom={0} color={CORAL}>
-                {uploadError}
-              </ParagraphXSmall>
+              <ParagraphXSmall className="mb-0 text-coral">{uploadError}</ParagraphXSmall>
             ) : null}
             <input
               ref={fileInput}
               type="file"
               accept="image/*,.svg"
               aria-label="Attach artwork to this attempt"
-              className={css({ display: "none" })}
+              className="hidden"
               onChange={(event) => {
                 const file = event.currentTarget.files?.[0];
                 if (file) onFile(file);
@@ -492,10 +405,10 @@ export function AttemptPanel({
         )}
 
         {artwork && !settled ? (
-          <div className={css({ marginTop: "10px" })}>
+          <div className="mt-2.5">
             <Button
-              size={SIZE.compact}
-              kind={BUTTON_KIND.secondary}
+              size="compact"
+              variant="secondary"
               disabled={busy !== null}
               onClick={() => {
                 void run("measure", () => measureAttempt(attempt.id));
@@ -503,7 +416,7 @@ export function AttemptPanel({
             >
               {busy === "measure" ? "Measuring…" : "Measure this artwork"}
             </Button>
-            <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
+            <ParagraphXSmall className="mb-0 text-ink/50">
               Measurement fills only what nobody has answered, and never overwrites a person&rsquo;s
               answer. It is the start of a review, not a verdict.
             </ParagraphXSmall>
@@ -511,7 +424,7 @@ export function AttemptPanel({
         ) : null}
 
         {review && Object.keys(review.measurements).length > 0 ? (
-          <ParagraphXSmall color={theme.colors.contentSecondary}>
+          <ParagraphXSmall className="text-ink/70">
             Measured: {summarise(review.measurements)}
           </ParagraphXSmall>
         ) : null}
@@ -527,20 +440,9 @@ export function AttemptPanel({
             const gates = rubric.gates.filter((gate) => gate.group === group.id);
             const categories = rubric.categories.filter((item) => item.group === group.id);
             return (
-              <div key={group.id} className={css({ marginTop: "18px" })}>
-                <h3
-                  className={css({
-                    fontSize: "15px",
-                    fontWeight: 700,
-                    margin: "0 0 2px",
-                    color: theme.colors.contentPrimary,
-                  })}
-                >
-                  {group.label}
-                </h3>
-                <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
-                  {group.blurb}
-                </ParagraphXSmall>
+              <div key={group.id} className="mt-[18px]">
+                <h3 className="mt-0 mb-0.5 text-[15px] font-bold text-ink">{group.label}</h3>
+                <ParagraphXSmall className="mt-0 text-ink/50">{group.blurb}</ParagraphXSmall>
 
                 {gates.map((gate) => {
                   const answered = review.gates.find((item) => item.id === gate.id);
@@ -549,23 +451,10 @@ export function AttemptPanel({
                   // their evidence and never offered as a choice.
                   if (review.derived_gates.includes(gate.id)) {
                     return (
-                      <div
-                        key={gate.id}
-                        className={css({
-                          borderTop: `1px solid ${theme.colors.backgroundSecondary}`,
-                          paddingTop: "10px",
-                          marginTop: "10px",
-                        })}
-                      >
-                        <ParagraphSmall marginTop={0} marginBottom="2px">
-                          {gate.question}
-                        </ParagraphSmall>
-                        <ParagraphXSmall marginTop={0} marginBottom={0}>
-                          <strong
-                            className={css({
-                              color: result === "pass" ? theme.colors.contentPrimary : CORAL,
-                            })}
-                          >
+                      <div key={gate.id} className="mt-2.5 border-t border-paper-2 pt-2.5">
+                        <ParagraphSmall className="mt-0 mb-0.5">{gate.question}</ParagraphSmall>
+                        <ParagraphXSmall className="mt-0 mb-0">
+                          <strong className={result === "pass" ? "text-ink" : "text-coral"}>
                             {result === "pass" ? "Pass" : "Fail"}
                           </strong>{" "}
                           — from the brief: {answered?.evidence ?? "not recorded"}
@@ -574,18 +463,9 @@ export function AttemptPanel({
                     );
                   }
                   return (
-                    <div
-                      key={gate.id}
-                      className={css({
-                        borderTop: `1px solid ${theme.colors.backgroundSecondary}`,
-                        paddingTop: "10px",
-                        marginTop: "10px",
-                      })}
-                    >
-                      <ParagraphSmall marginTop={0} marginBottom="6px">
-                        {gate.question}
-                      </ParagraphSmall>
-                      <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+                    <div key={gate.id} className="mt-2.5 border-t border-paper-2 pt-2.5">
+                      <ParagraphSmall className="mt-0 mb-1.5">{gate.question}</ParagraphSmall>
+                      <div className="flex flex-wrap gap-1.5">
                         {RESULTS.map((option) => (
                           <button
                             key={option.id}
@@ -596,19 +476,14 @@ export function AttemptPanel({
                             onClick={() => {
                               answerGate(gate.id, option.id);
                             }}
-                            className={chip(
-                              css,
-                              theme,
-                              result === option.id,
-                              option.id === "fail" ? CORAL : undefined,
-                            )}
+                            className={chip(result === option.id, option.id === "fail")}
                           >
                             {option.label}
                           </button>
                         ))}
                       </div>
                       {answered?.evidence ? (
-                        <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
+                        <ParagraphXSmall className="mb-0 text-ink/50">
                           {answered.evidence}
                         </ParagraphXSmall>
                       ) : null}
@@ -619,22 +494,15 @@ export function AttemptPanel({
                 {categories.map((category) => {
                   const rating = ratingOf(category.id);
                   return (
-                    <div
-                      key={category.id}
-                      className={css({
-                        borderTop: `1px solid ${theme.colors.backgroundSecondary}`,
-                        paddingTop: "10px",
-                        marginTop: "10px",
-                      })}
-                    >
-                      <ParagraphSmall marginTop={0} marginBottom="2px">
+                    <div key={category.id} className="mt-2.5 border-t border-paper-2 pt-2.5">
+                      <ParagraphSmall className="mt-0 mb-0.5">
                         <strong>{category.label}</strong> — {category.prompt}
                       </ParagraphSmall>
-                      <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+                      <ParagraphXSmall className="mt-0 text-ink/50">
                         {category.maximum} points. Release needs at least {category.ratingFloor}
                         /5.
                       </ParagraphXSmall>
-                      <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+                      <div className="flex flex-wrap gap-1.5">
                         {[0, 1, 2, 3, 4, 5].map((value) => (
                           <button
                             key={value}
@@ -648,12 +516,7 @@ export function AttemptPanel({
                             onClick={() => {
                               rateCategory(category.id, value);
                             }}
-                            className={chip(
-                              css,
-                              theme,
-                              rating === value,
-                              value < category.ratingFloor ? CORAL : undefined,
-                            )}
+                            className={chip(rating === value, value < category.ratingFloor)}
                           >
                             {value}
                           </button>
@@ -691,10 +554,10 @@ export function AttemptPanel({
           {attempt.state === "planned" ||
           attempt.state === "generating" ||
           attempt.state === "generated" ? (
-            <div className={css({ marginBottom: "10px" })}>
+            <div className="mb-2.5">
               <Button
-                size={SIZE.compact}
-                kind={BUTTON_KIND.tertiary}
+                size="compact"
+                variant="ghost"
                 disabled={busy !== null}
                 onClick={() => {
                   const reason = note.trim();
@@ -710,7 +573,7 @@ export function AttemptPanel({
               >
                 Abandon this attempt
               </Button>
-              <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
+              <ParagraphXSmall className="mb-0 text-ink/50">
                 For a row that should not have been made — the wrong concept, a prompt that belongs
                 to another idea. Put the reason in the box above; the row is kept.
               </ParagraphXSmall>
@@ -719,7 +582,7 @@ export function AttemptPanel({
 
           {attempt.state === "generated" ? (
             <Button
-              size={SIZE.compact}
+              size="compact"
               disabled={busy !== null}
               onClick={() => {
                 void run("submit", () => submitAttempt(attempt.id));
@@ -731,9 +594,9 @@ export function AttemptPanel({
 
           {attempt.state === "awaiting_decision" ? (
             <>
-              <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
+              <div className="flex flex-wrap gap-1.5">
                 <Button
-                  size={SIZE.compact}
+                  size="compact"
                   disabled={busy !== null || !evaluation?.eligibleForDesignApproval}
                   title={
                     evaluation?.eligibleForDesignApproval
@@ -747,8 +610,8 @@ export function AttemptPanel({
                   Approve
                 </Button>
                 <Button
-                  size={SIZE.compact}
-                  kind={BUTTON_KIND.secondary}
+                  size="compact"
+                  variant="secondary"
                   disabled={busy !== null}
                   onClick={() => {
                     void run("decide", () => decide(attempt.id, "rejected", actor, note));
@@ -757,8 +620,8 @@ export function AttemptPanel({
                   Reject
                 </Button>
                 <Button
-                  size={SIZE.compact}
-                  kind={BUTTON_KIND.tertiary}
+                  size="compact"
+                  variant="ghost"
                   disabled={busy !== null}
                   onClick={() => {
                     void run("decide", () =>
@@ -770,7 +633,7 @@ export function AttemptPanel({
                 </Button>
               </div>
               {!evaluation?.eligibleForDesignApproval && evaluation ? (
-                <ParagraphXSmall color={theme.colors.contentTertiary} marginBottom={0}>
+                <ParagraphXSmall className="mb-0 text-ink/50">
                   Approve is unavailable until the scorecard supports it. Reject and variation are
                   always available — refusing something needs no rubric.
                 </ParagraphXSmall>
@@ -784,46 +647,40 @@ export function AttemptPanel({
       {attempt.state === "approved" && !version ? (
         <div className={panel}>
           <SectionTitle>Record the approved version</SectionTitle>
-          <ParagraphXSmall color={theme.colors.contentTertiary} marginTop={0}>
+          <ParagraphXSmall className="mt-0 text-ink/50">
             Print needs all three. Artwork made in a paid interface comes back as pixels, and pixels
             have no physical size — so the print width is a decision recorded here, frozen with the
             approval.
           </ParagraphXSmall>
           {Object.keys(garments).length === 0 ? (
-            <Notification kind={NOTIFICATION_KIND.warning}>
+            <Notification kind="warning">
               No garment files are present, so there are no zones to choose. Add a garment SVG to
               assets/garments.
             </Notification>
           ) : null}
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-              gap: "10px",
-            })}
-          >
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5">
             <FormControl label="Garment">
               <Select
-                options={Object.keys(garments).map((key) => ({ id: key, label: key }))}
+                options={Object.keys(garments).map((key) => ({ value: key, label: key }))}
                 value={garment}
                 placeholder="Choose a garment"
-                onChange={(params) => {
-                  setGarment(params.value);
-                  setZone([]);
+                onChange={(value) => {
+                  setGarment(value);
+                  setZone("");
                 }}
               />
             </FormControl>
             <FormControl label="Print zone">
               <Select
-                options={(garments[String(garment[0]?.id ?? "")] ?? []).map((item) => ({
-                  id: item.key,
+                options={(garments[garment] ?? []).map((item) => ({
+                  value: item.key,
                   label: `${item.key} — ${String(item.width_mm)}×${String(item.height_mm)}mm`,
                 }))}
                 value={zone}
-                placeholder={garment.length ? "Choose a zone" : "Choose a garment first"}
-                disabled={garment.length === 0}
-                onChange={(params) => {
-                  setZone(params.value);
+                placeholder={garment ? "Choose a zone" : "Choose a garment first"}
+                disabled={garment === ""}
+                onChange={(value) => {
+                  setZone(value);
                 }}
               />
             </FormControl>
@@ -839,19 +696,19 @@ export function AttemptPanel({
             </FormControl>
           </div>
           <Button
-            size={SIZE.compact}
+            size="compact"
             disabled={
               busy !== null ||
-              garment.length === 0 ||
-              zone.length === 0 ||
+              garment === "" ||
+              zone === "" ||
               !printWidth ||
               Number(printWidth) <= 0
             }
             onClick={() => {
               void run("approve", () =>
                 approveDesignWithSpec(attempt.id, actor || "owner", {
-                  garment_key: String(garment[0]?.id ?? ""),
-                  zone_key: String(zone[0]?.id ?? ""),
+                  garment_key: garment,
+                  zone_key: zone,
                   print_width_mm: Number(printWidth),
                 }),
               );
@@ -868,20 +725,11 @@ export function AttemptPanel({
           <span className={metaLine}>
             v{version.version} · approved by {version.approved_by}
           </span>
-          <div
-            className={css({
-              background: theme.colors.backgroundSecondary,
-              borderRadius: "12px",
-              padding: "12px",
-              marginTop: "10px",
-              display: "flex",
-              justifyContent: "center",
-            })}
-          >
+          <div className="mt-2.5 flex justify-center rounded-xl bg-paper-2 p-3">
             <img
               src={printedVersionUrl(version.id)}
               alt={`version ${String(version.version)} printed on the garment`}
-              className={css({ maxWidth: "100%", maxHeight: "420px" })}
+              className="max-h-[420px] max-w-full"
             />
           </div>
         </div>
@@ -896,44 +744,18 @@ function Verdict({
 }: {
   evaluation: NonNullable<ReviewView["evaluation"]>;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   return (
-    <div
-      className={css({
-        borderRadius: "12px",
-        padding: "12px 14px",
-        backgroundColor: theme.colors.backgroundSecondary,
-        marginBottom: "10px",
-      })}
-    >
-      <span
-        className={css({
-          fontSize: "22px",
-          fontWeight: 700,
-          color: theme.colors.contentPrimary,
-        })}
-      >
-        {evaluation.percentage.toFixed(0)}/100
-      </span>{" "}
-      <span className={css({ fontSize: "13px", color: theme.colors.contentSecondary })}>
-        {evaluation.bandLabel}
-      </span>
+    <div className="mb-2.5 rounded-xl bg-paper-2 px-3.5 py-3">
+      <span className="text-[22px] font-bold text-ink">{evaluation.percentage.toFixed(0)}/100</span>{" "}
+      <span className="text-[13px] text-ink/70">{evaluation.bandLabel}</span>
       {evaluation.blockers.length > 0 ? (
-        <ul
-          className={css({
-            margin: "8px 0 0",
-            paddingLeft: "18px",
-            fontSize: "13px",
-            lineHeight: 1.5,
-            color: theme.colors.contentSecondary,
-          })}
-        >
+        <ul className="mt-2 mb-0 pl-[18px] text-[13px] leading-[1.5] text-ink/70">
           {evaluation.blockers.map((blocker) => (
             <li key={blocker}>{blocker}</li>
           ))}
         </ul>
       ) : (
-        <ParagraphXSmall marginBottom={0}>
+        <ParagraphXSmall className="mb-0">
           Every gate answered, every floor met. This design can be approved.
         </ParagraphXSmall>
       )}
@@ -1002,24 +824,11 @@ function summarise(measurements: Record<string, unknown>): string {
   return parts.length ? parts.join(", ") : "nothing the image could answer";
 }
 
-type Css = ReturnType<typeof useStyletron>[0];
-type Theme = ReturnType<typeof useStyletron>[1];
-
-function chip(css: Css, theme: Theme, active: boolean, accent?: string): string {
-  return css({
-    appearance: "none",
-    border: "none",
-    cursor: "pointer",
-    fontFamily: "inherit",
-    fontSize: "12px",
-    fontWeight: 700,
-    letterSpacing: "0.03em",
-    borderRadius: "999px",
-    padding: "6px 12px",
-    backgroundColor: active
-      ? (accent ?? theme.colors.contentPrimary)
-      : theme.colors.backgroundSecondary,
-    color: active ? theme.colors.backgroundPrimary : theme.colors.contentSecondary,
-    ":disabled": { cursor: "default", opacity: 0.6 },
-  });
+/** A pill-shaped answer chip. `accent` marks the coral (fail / below-floor)
+ * reading when active; the default active reading is ink. */
+function chip(active: boolean, accent = false): string {
+  return cx(
+    "press appearance-none rounded-full border-none px-3 py-1.5 font-sans text-[12px] font-bold tracking-[0.03em] cursor-pointer disabled:cursor-default disabled:opacity-60",
+    active ? (accent ? "bg-coral text-paper" : "bg-ink text-paper") : "bg-paper-2 text-ink/70",
+  );
 }

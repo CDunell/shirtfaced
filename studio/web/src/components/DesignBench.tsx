@@ -16,13 +16,19 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, SIZE } from "baseui/button";
-import { Card, StyledBody } from "baseui/card";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { ProgressBar } from "baseui/progress-bar";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+
+import {
+  Button,
+  Card,
+  HeadingSmall,
+  LabelSmall,
+  Notification,
+  ParagraphSmall,
+  ParagraphXSmall,
+  ProgressBar,
+  Tag,
+  type TagKind,
+} from "./ui";
 
 import { ApiError, getDesignThresholds, scoreDesign, type DesignScore } from "../api/client";
 
@@ -32,7 +38,6 @@ function describe(cause: unknown): string {
 }
 
 export function DesignBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [result, setResult] = useState<DesignScore | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -76,21 +81,16 @@ export function DesignBench(): React.JSX.Element {
   const failedGates = result?.hardGates.filter((gate) => gate.result === "fail").length ?? 0;
   const untestedGates =
     result?.hardGates.filter((gate) => gate.result === "not_tested").length ?? 0;
+  const totalCategories = categoryCount ?? Math.max(assessed, 1);
 
-  const statusTag = (status: string) =>
-    status === "pass"
-      ? TAG_KIND.positive
-      : status === "fail"
-        ? TAG_KIND.negative
-        : TAG_KIND.warning;
+  const statusTag = (status: string): TagKind =>
+    status === "pass" ? "positive" : status === "fail" ? "negative" : "warning";
 
   return (
-    <div className={css({ display: "flex", flexDirection: "column", gap: "16px" })}>
+    <div className="flex flex-col gap-4">
       <div>
-        <HeadingSmall marginTop={0} marginBottom="4px">
-          Design review
-        </HeadingSmall>
-        <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
+        <HeadingSmall className="mb-1">Design review</HeadingSmall>
+        <ParagraphSmall className="text-ink/70">
           Measured against DESIGN_REVIEW_SCORECARD.md. Thresholds come from{" "}
           {result ? "the mined corpus" : "the design corpus"}, so “too many inks” means more than
           real production work uses.
@@ -98,182 +98,116 @@ export function DesignBench(): React.JSX.Element {
       </div>
 
       <Card>
-        <StyledBody>
-          <div
-            className={css({
-              display: "flex",
-              gap: "12px",
-              alignItems: "center",
-              flexWrap: "wrap",
-            })}
-          >
-            <input
-              ref={fileInput}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className={css({ display: "none" })}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                if (file) void onFile(file);
-                event.target.value = "";
-              }}
-            />
-            <Button size={SIZE.compact} isLoading={busy} onClick={() => fileInput.current?.click()}>
-              {result ? "Score another design" : "Choose a design image"}
-            </Button>
-            <ParagraphXSmall color={theme.colors.contentSecondary} margin={0}>
-              JPEG, PNG or WebP. Worn or flat.
-            </ParagraphXSmall>
-          </div>
-        </StyledBody>
+        <div className="flex flex-wrap items-center gap-3">
+          <input
+            ref={fileInput}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void onFile(file);
+              event.target.value = "";
+            }}
+          />
+          <Button size="compact" disabled={busy} onClick={() => fileInput.current?.click()}>
+            {result ? "Score another design" : "Choose a design image"}
+          </Button>
+          <ParagraphXSmall className="text-ink/70">
+            JPEG, PNG or WebP. Worn or flat.
+          </ParagraphXSmall>
+        </div>
       </Card>
 
-      {error && (
-        <Notification
-          kind={NOTIFICATION_KIND.negative}
-          overrides={{ Body: { style: { width: "auto" } } }}
-        >
-          {error}
-        </Notification>
-      )}
+      {error && <Notification kind="negative">{error}</Notification>}
 
       {result && (
         <>
-          <Notification
-            kind={NOTIFICATION_KIND.warning}
-            overrides={{ Body: { style: { width: "auto" } } }}
-          >
+          <Notification kind="warning">
             {`${String(untestedGates)} gate(s) need a human, ${String(failedGates)} failed measurement. A design is never approved from one image -- see admin for the full review.`}
           </Notification>
 
-          <div
-            className={css({
-              display: "flex",
-              gap: "16px",
-              flexWrap: "wrap",
-              alignItems: "flex-start",
-            })}
-          >
+          <div className="flex flex-wrap items-start gap-4">
             {preview && (
               <img
                 src={preview}
                 alt={result.designName}
-                className={css({
-                  width: "220px",
-                  borderRadius: "12px",
-                  border: `1px solid ${theme.colors.borderOpaque}`,
-                })}
+                className="w-[220px] rounded-xl border border-ink/10"
               />
             )}
 
-            <Card overrides={{ Root: { style: { flex: "1 1 320px" } } }}>
-              <StyledBody>
-                {/* No total or band shown here -- scoring and status are
-                    decided by workflow.ts's evaluateReview, from the full set
-                    of gates and categories a human review fills in. Showing a
-                    partial score here would read as a verdict it has not
-                    earned. */}
-                <LabelSmall marginBottom="4px">
-                  {categoryCount !== null
-                    ? `${String(assessed)} of ${String(categoryCount)} categories assessed`
-                    : `${String(assessed)} categories assessed`}
-                </LabelSmall>
-                <ProgressBar
-                  value={assessed}
-                  maxValue={categoryCount ?? Math.max(assessed, 1)}
-                  overrides={{
-                    BarProgress: { style: { backgroundColor: theme.colors.contentPrimary } },
-                  }}
-                />
-                <ParagraphXSmall color={theme.colors.contentSecondary} marginBottom="12px">
-                  Measurement rates what it can see. The remaining categories need a person, the
-                  brief, or the rest of the range.
-                </ParagraphXSmall>
+            <Card className="flex-1 basis-80">
+              {/* No total or band shown here -- scoring and status are
+                  decided by workflow.ts's evaluateReview, from the full set
+                  of gates and categories a human review fills in. Showing a
+                  partial score here would read as a verdict it has not
+                  earned. */}
+              <LabelSmall className="mb-1">
+                {categoryCount !== null
+                  ? `${String(assessed)} of ${String(categoryCount)} categories assessed`
+                  : `${String(assessed)} categories assessed`}
+              </LabelSmall>
+              <ProgressBar value={(assessed / totalCategories) * 100} />
+              <ParagraphXSmall className="mb-3 text-ink/70">
+                Measurement rates what it can see. The remaining categories need a person, the
+                brief, or the rest of the range.
+              </ParagraphXSmall>
 
-                <LabelSmall marginBottom="4px">Measured</LabelSmall>
-                <ParagraphXSmall margin={0} color={theme.colors.contentSecondary}>
-                  {coverage !== null
-                    ? `Print coverage ${(coverage * 100).toFixed(1)}%`
-                    : "No print detected"}
-                  {typeof measurements.ink_colours === "number" &&
-                    ` · ${String(measurements.ink_colours)} ink colours`}
-                  {measurements.light_on_dark !== undefined &&
-                    ` · ${measurements.light_on_dark ? "light on dark" : "dark on light"}`}
-                </ParagraphXSmall>
-                <ParagraphXSmall margin={0} color={theme.colors.contentSecondary}>
-                  Thumbnail {measurements.thumbnail_survives ? "pass" : "fail"} · Blur{" "}
-                  {measurements.blur_survives ? "pass" : "fail"} · Greyscale{" "}
-                  {measurements.greyscale_survives ? "pass" : "fail"}
-                </ParagraphXSmall>
-              </StyledBody>
+              <LabelSmall className="mb-1">Measured</LabelSmall>
+              <ParagraphXSmall className="text-ink/70">
+                {coverage !== null
+                  ? `Print coverage ${(coverage * 100).toFixed(1)}%`
+                  : "No print detected"}
+                {typeof measurements.ink_colours === "number" &&
+                  ` · ${String(measurements.ink_colours)} ink colours`}
+                {measurements.light_on_dark !== undefined &&
+                  ` · ${measurements.light_on_dark ? "light on dark" : "dark on light"}`}
+              </ParagraphXSmall>
+              <ParagraphXSmall className="text-ink/70">
+                Thumbnail {measurements.thumbnail_survives ? "pass" : "fail"} · Blur{" "}
+                {measurements.blur_survives ? "pass" : "fail"} · Greyscale{" "}
+                {measurements.greyscale_survives ? "pass" : "fail"}
+              </ParagraphXSmall>
             </Card>
           </div>
 
           <Card>
-            <StyledBody>
-              <LabelSmall marginBottom="8px">Hard gates</LabelSmall>
-              <div className={css({ display: "flex", flexDirection: "column", gap: "6px" })}>
-                {result.hardGates.map((gate) => (
-                  <div
-                    key={gate.id}
-                    className={css({
-                      display: "flex",
-                      gap: "8px",
-                      alignItems: "baseline",
-                      flexWrap: "wrap",
-                    })}
-                  >
-                    <Tag
-                      closeable={false}
-                      kind={statusTag(gate.result)}
-                      overrides={{ Root: { style: { marginTop: 0, marginBottom: 0 } } }}
-                    >
-                      {gate.result === "not_tested" ? "needs a human" : gate.result}
-                    </Tag>
-                    <LabelSmall margin={0}>{gate.label}</LabelSmall>
-                    <ParagraphXSmall margin={0} color={theme.colors.contentSecondary}>
-                      {gate.evidence}
-                    </ParagraphXSmall>
-                  </div>
-                ))}
-              </div>
-            </StyledBody>
+            <LabelSmall className="mb-2">Hard gates</LabelSmall>
+            <div className="flex flex-col gap-1.5">
+              {result.hardGates.map((gate) => (
+                <div key={gate.id} className="flex flex-wrap items-baseline gap-2">
+                  <Tag kind={statusTag(gate.result)}>
+                    {gate.result === "not_tested" ? "needs a human" : gate.result}
+                  </Tag>
+                  <LabelSmall>{gate.label}</LabelSmall>
+                  <ParagraphXSmall className="text-ink/70">{gate.evidence}</ParagraphXSmall>
+                </div>
+              ))}
+            </div>
           </Card>
 
           <Card>
-            <StyledBody>
-              <LabelSmall marginBottom="8px">Weighted categories measured</LabelSmall>
-              {result.scoreCategories.length === 0 ? (
-                <ParagraphXSmall margin={0} color={theme.colors.contentSecondary}>
-                  Nothing in this image supported a category rating.
-                </ParagraphXSmall>
-              ) : (
-                result.scoreCategories.map((category) => {
-                  const belowFloor =
-                    category.minimumRequired !== undefined &&
-                    category.score < category.minimumRequired;
-                  return (
-                    <div
-                      key={category.id}
-                      className={css({
-                        display: "flex",
-                        gap: "8px",
-                        alignItems: "baseline",
-                        marginBottom: "4px",
-                      })}
-                    >
-                      <ParagraphXSmall margin={0} className={css({ minWidth: "190px" })}>
-                        {category.label}
-                      </ParagraphXSmall>
-                      <ParagraphXSmall margin={0} color={theme.colors.contentPrimary}>
-                        {category.score.toFixed(1)}/{category.maximum}
-                        {belowFloor && ` — below floor of ${String(category.minimumRequired)}`}
-                      </ParagraphXSmall>
-                    </div>
-                  );
-                })
-              )}
-            </StyledBody>
+            <LabelSmall className="mb-2">Weighted categories measured</LabelSmall>
+            {result.scoreCategories.length === 0 ? (
+              <ParagraphXSmall className="text-ink/70">
+                Nothing in this image supported a category rating.
+              </ParagraphXSmall>
+            ) : (
+              result.scoreCategories.map((category) => {
+                const belowFloor =
+                  category.minimumRequired !== undefined &&
+                  category.score < category.minimumRequired;
+                return (
+                  <div key={category.id} className="mb-1 flex items-baseline gap-2">
+                    <ParagraphXSmall className="min-w-[190px]">{category.label}</ParagraphXSmall>
+                    <ParagraphXSmall className="text-ink">
+                      {category.score.toFixed(1)}/{category.maximum}
+                      {belowFloor && ` — below floor of ${String(category.minimumRequired)}`}
+                    </ParagraphXSmall>
+                  </div>
+                );
+              })
+            )}
           </Card>
         </>
       )}

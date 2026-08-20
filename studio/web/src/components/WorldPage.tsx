@@ -7,13 +7,8 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Card, StyledBody } from "baseui/card";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Spinner } from "baseui/spinner";
-import { Table } from "baseui/table-semantic";
-import { Tag, HIERARCHY, KIND as TAG_KIND } from "baseui/tag";
-import { HeadingSmall, LabelSmall, MonoLabelXSmall, ParagraphSmall } from "baseui/typography";
+
+import { Card, HeadingSmall, LabelSmall, MonoLabelXSmall, Notification, ParagraphSmall, Spinner, Table, Tag } from "./ui";
 
 import { ApiError, fetchWorld, fetchWorlds, type Shot, type WorldDetail } from "../api/client";
 import { CanonProposals } from "./CanonProposals";
@@ -36,12 +31,10 @@ function DocumentHash({
   label: string;
   digest: string | null;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
-
   return (
-    <div className={css({ display: "flex", gap: theme.sizing.scale400, alignItems: "baseline" })}>
+    <div className="flex items-baseline gap-4">
       <LabelSmall>{label}</LabelSmall>
-      <MonoLabelXSmall color={theme.colors.contentSecondary}>
+      <MonoLabelXSmall className="text-ink/70">
         {digest ? `${digest.slice(0, 12)}…` : "not recorded"}
       </MonoLabelXSmall>
     </div>
@@ -49,7 +42,6 @@ function DocumentHash({
 }
 
 function CountsRow({ world }: { world: WorldDetail }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const { counts } = world;
 
   const entries: [string, number][] = [
@@ -61,19 +53,12 @@ function CountsRow({ world }: { world: WorldDetail }): React.JSX.Element {
   ];
 
   return (
-    <div className={css({ display: "flex", flexWrap: "wrap", gap: theme.sizing.scale300 })}>
-      <Tag closeable={false} kind={TAG_KIND.primary} hierarchy={HIERARCHY.primary}>
-        {`${String(counts.total)} shots`}
-      </Tag>
+    <div className="flex flex-wrap gap-3">
+      <Tag kind="accent">{`${String(counts.total)} shots`}</Tag>
       {entries
         .filter(([, total]) => total > 0)
         .map(([label, total]) => (
-          <Tag
-            key={label}
-            closeable={false}
-            kind={TAG_KIND.neutral}
-            hierarchy={HIERARCHY.secondary}
-          >
+          <Tag key={label} kind="neutral">
             {`${label}: ${String(total)}`}
           </Tag>
         ))}
@@ -82,6 +67,10 @@ function CountsRow({ world }: { world: WorldDetail }): React.JSX.Element {
 }
 
 function Shotlist({ shots }: { shots: Shot[] }): React.JSX.Element {
+  if (shots.length === 0) {
+    return <Notification kind="info">This world has no shots. Import it to load SHOTLIST.md.</Notification>;
+  }
+
   const rows = shots.map((shot) => [
     shot.external_id,
     shot.title,
@@ -90,17 +79,10 @@ function Shotlist({ shots }: { shots: Shot[] }): React.JSX.Element {
     <ShotStatusTag key={shot.id} status={shot.status} />,
   ]);
 
-  return (
-    <Table
-      columns={["ID", "Scene", "Hero product", "Camera", "Status"]}
-      data={rows}
-      emptyMessage="This world has no shots. Import it to load SHOTLIST.md."
-    />
-  );
+  return <Table columns={["ID", "Scene", "Hero product", "Camera", "Status"]} rows={rows} />;
 }
 
 export function WorldPage(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [state, setState] = useState<State>({ kind: "loading" });
 
   const load = useCallback(async (signal?: AbortSignal): Promise<void> => {
@@ -132,16 +114,16 @@ export function WorldPage(): React.JSX.Element {
   }, [load]);
 
   if (state.kind === "loading") {
-    return <Spinner $size={theme.sizing.scale900} />;
+    return <Spinner />;
   }
 
   if (state.kind === "failed") {
-    return <Notification kind={NOTIFICATION_KIND.negative}>{state.message}</Notification>;
+    return <Notification kind="negative">{state.message}</Notification>;
   }
 
   if (state.kind === "empty") {
     return (
-      <Notification kind={NOTIFICATION_KIND.warning}>
+      <Notification kind="warning">
         No worlds have been imported yet. Run: python -m app.cli import-world world-01
       </Notification>
     );
@@ -151,34 +133,16 @@ export function WorldPage(): React.JSX.Element {
 
   return (
     <>
-      <div
-        className={css({
-          display: "flex",
-          alignItems: "center",
-          gap: theme.sizing.scale500,
-          flexWrap: "wrap",
-        })}
-      >
-        <HeadingSmall marginTop={0} marginBottom={0}>
-          {world.name}
-        </HeadingSmall>
-        <Tag closeable={false} kind={TAG_KIND.positive} hierarchy={HIERARCHY.secondary}>
-          {world.status === "active" ? "Active" : "Archived"}
-        </Tag>
+      <div className="flex flex-wrap items-center gap-5">
+        <HeadingSmall className="m-0">{world.name}</HeadingSmall>
+        <Tag kind="positive">{world.status === "active" ? "Active" : "Archived"}</Tag>
       </div>
 
-      <div className={css({ marginTop: theme.sizing.scale600 })}>
+      <div className="mt-6">
         <CountsRow world={world} />
       </div>
 
-      <div
-        className={css({
-          display: "grid",
-          gap: theme.sizing.scale700,
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-          marginTop: theme.sizing.scale700,
-        })}
-      >
+      <div className="mt-7 grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-7">
         <SelectionPanel slug={world.slug} />
 
         <GenerationPanel slug={world.slug} onGenerated={() => void load()} />
@@ -186,24 +150,22 @@ export function WorldPage(): React.JSX.Element {
         <CanonProposals slug={world.slug} />
 
         <Card title="Loaded canon">
-          <StyledBody>
-            <div className={css({ display: "grid", gap: theme.sizing.scale200 })}>
-              <DocumentHash label="WORLD.md" digest={world.world_document_hash} />
-              <DocumentHash label="CONTINUITY.md" digest={world.continuity_document_hash} />
-              <DocumentHash label="SHOTLIST.md" digest={world.shotlist_document_hash} />
-            </div>
-            <ParagraphSmall marginBottom={0} color={theme.colors.contentSecondary}>
-              These hashes identify the exact document versions this state was built from. Editing a
-              file and re-importing changes them.
-            </ParagraphSmall>
-          </StyledBody>
+          <div className="grid gap-2">
+            <DocumentHash label="WORLD.md" digest={world.world_document_hash} />
+            <DocumentHash label="CONTINUITY.md" digest={world.continuity_document_hash} />
+            <DocumentHash label="SHOTLIST.md" digest={world.shotlist_document_hash} />
+          </div>
+          <ParagraphSmall className="mb-0 text-ink/70">
+            These hashes identify the exact document versions this state was built from. Editing a
+            file and re-importing changes them.
+          </ParagraphSmall>
         </Card>
       </div>
 
-      <div className={css({ marginTop: theme.sizing.scale800 })}>
-        <HeadingSmall marginBottom={theme.sizing.scale500}>Shotlist</HeadingSmall>
+      <div className="mt-8">
+        <HeadingSmall className="mb-5">Shotlist</HeadingSmall>
         <Shotlist shots={world.shots} />
-        <ParagraphSmall color={theme.colors.contentSecondary}>
+        <ParagraphSmall className="text-ink/70">
           Read-only. Statuses shown are{" "}
           {[...new Set(world.shots.map((shot) => statusLabel(shot.status)))].join(", ")}.
         </ParagraphSmall>

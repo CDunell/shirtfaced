@@ -2,15 +2,19 @@
 /** Social Studio: create → review → queue → live. */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Card, StyledBody } from "baseui/card";
-import { Checkbox } from "baseui/checkbox";
-import { FormControl } from "baseui/form-control";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { HeadingSmall, LabelSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import {
+  Button,
+  Card,
+  Checkbox,
+  FormControl,
+  HeadingSmall,
+  LabelSmall,
+  Notification,
+  ParagraphSmall,
+  ParagraphXSmall,
+  Select,
+  Tag,
+} from "./ui";
 
 import { PageTitle } from "./chrome";
 
@@ -75,16 +79,16 @@ const OUTPUTS: OutputSpec[] = [
 ];
 
 const THEME_OPTIONS = [
-  { id: "auto", label: "Auto — choose from image" },
-  { id: "light", label: "Light — ink marks" },
-  { id: "dark", label: "Dark — paper marks" },
-  { id: "adaptive", label: "Adaptive — backed mark" },
+  { value: "auto", label: "Auto — choose from image" },
+  { value: "light", label: "Light — ink marks" },
+  { value: "dark", label: "Dark — paper marks" },
+  { value: "adaptive", label: "Adaptive — backed mark" },
 ];
 
 const BRANDING_OPTIONS = [
-  { id: "clean", label: "Clean — no overlay" },
-  { id: "fingerprint", label: "Fingerprint — minimal mark" },
-  { id: "identity", label: "Identity — stronger Shirtfaced layer" },
+  { value: "clean", label: "Clean — no overlay" },
+  { value: "fingerprint", label: "Fingerprint — minimal mark" },
+  { value: "identity", label: "Identity — stronger Shirtfaced layer" },
 ];
 
 function describe(cause: unknown): string {
@@ -181,23 +185,16 @@ function localDate(value: string | null): string {
 
 function reviewTag(state: string): React.JSX.Element {
   return (
-    <Tag closeable={false} kind={state === "approved" ? TAG_KIND.positive : TAG_KIND.neutral}>
-      {state.replace("_", " ")}
-    </Tag>
+    <Tag kind={state === "approved" ? "positive" : "neutral"}>{state.replace("_", " ")}</Tag>
   );
 }
 
 export function SocialBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [view, setView] = useState<SocialView>("create");
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [photoValue, setPhotoValue] = useState<Value>([]);
-  const [themeValue, setThemeValue] = useState<Value>([
-    { id: "auto", label: "Auto — choose from image" },
-  ]);
-  const [brandingValue, setBrandingValue] = useState<Value>([
-    { id: "fingerprint", label: "Fingerprint — minimal mark" },
-  ]);
+  const [photoValue, setPhotoValue] = useState<string>("");
+  const [themeValue, setThemeValue] = useState<string>("auto");
+  const [brandingValue, setBrandingValue] = useState<string>("fingerprint");
   const [selectedOutputs, setSelectedOutputs] = useState<Set<OutputKey>>(
     new Set(OUTPUTS.map((item) => item.key)),
   );
@@ -213,7 +210,7 @@ export function SocialBench(): React.JSX.Element {
   const uploadInput = useRef<HTMLInputElement | null>(null);
 
   const photo = useMemo(
-    () => photos.find((item) => item.id === String(photoValue[0]?.id ?? "")) ?? null,
+    () => photos.find((item) => item.id === photoValue) ?? null,
     [photos, photoValue],
   );
 
@@ -241,7 +238,7 @@ export function SocialBench(): React.JSX.Element {
       void refreshPhotos()
         .then((found) => {
           const first = found[0];
-          if (first) setPhotoValue([{ id: first.id, label: first.label }]);
+          if (first) setPhotoValue(first.id);
         })
         .catch((cause: unknown) => setError(describe(cause)));
       void refreshPublishing().catch((cause: unknown) => setError(describe(cause)));
@@ -256,9 +253,9 @@ export function SocialBench(): React.JSX.Element {
     setSavedId(null);
     try {
       const source = await loadCanvasImage(photo.url);
-      const requested = String(themeValue[0]?.id ?? "auto") as SocialTheme;
+      const requested = (themeValue || "auto") as SocialTheme;
       const chosenTheme: ResolvedTheme = requested === "auto" ? analyseTheme(source) : requested;
-      const branding = String(brandingValue[0]?.id ?? "fingerprint") as Branding;
+      const branding = (brandingValue || "fingerprint") as Branding;
       const made: ExportedFile[] = [];
       for (const spec of OUTPUTS.filter((item) => selectedOutputs.has(item.key))) {
         const canvas = document.createElement("canvas");
@@ -290,7 +287,7 @@ export function SocialBench(): React.JSX.Element {
     setBusy(true);
     setError(null);
     try {
-      const branding = String(brandingValue[0]?.id ?? "fingerprint");
+      const branding = brandingValue || "fingerprint";
       const saved = await saveSocialPost({
         sourcePhotoId: photo.id,
         theme: resolvedTheme,
@@ -333,8 +330,8 @@ export function SocialBench(): React.JSX.Element {
   const nav = (id: SocialView, label: string) => (
     <Button
       key={id}
-      size={SIZE.compact}
-      kind={view === id ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+      size="compact"
+      variant={view === id ? "primary" : "secondary"}
       onClick={() => setView(id)}
     >
       {label}
@@ -344,122 +341,84 @@ export function SocialBench(): React.JSX.Element {
   return (
     <>
       <PageTitle>Social Studio</PageTitle>
-      <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "18px" })}>
+      <div className="mb-[18px] flex flex-wrap gap-2">
         {nav("create", "Create")}
         {nav("approval", `Approval ${String(approval.length)}`)}
         {nav("queue", `Queue ${String(queue.length)}`)}
         {nav("live", `Live ${String(live.length)}`)}
       </div>
-      {error ? <Notification kind={NOTIFICATION_KIND.negative}>{error}</Notification> : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
 
       {view === "create" ? (
         <>
-          <ParagraphSmall color={theme.colors.contentSecondary} marginTop={0}>
+          <ParagraphSmall className="mt-0 text-ink/70">
             Pick the asset. Pick the outputs. GO makes the package; Save for review freezes the
             exact files.
           </ParagraphSmall>
-          <div
-            className={css({
-              display: "grid",
-              gridTemplateColumns: "minmax(280px, 1.2fr) minmax(260px, .8fr)",
-              gap: "16px",
-              alignItems: "start",
-              "@media screen and (max-width: 760px)": { gridTemplateColumns: "1fr" },
-            })}
-          >
+          <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-[minmax(280px,1.2fr)_minmax(260px,.8fr)]">
             <Card>
-              <StyledBody>
-                <FormControl label="Source asset">
-                  <Select
-                    clearable={false}
-                    searchable
-                    options={photos.map((item) => ({ id: item.id, label: item.label }))}
-                    value={photoValue}
-                    onChange={({ value }) => {
-                      setPhotoValue(value);
-                      setSavedId(null);
-                    }}
-                  />
-                </FormControl>
-                <Button
-                  size={SIZE.compact}
-                  kind={BUTTON_KIND.secondary}
-                  disabled={busy}
-                  onClick={() => uploadInput.current?.click()}
-                >
-                  Upload photo
-                </Button>
-                <input
-                  ref={uploadInput}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  hidden
-                  onChange={(event) => {
-                    const file = event.currentTarget.files?.[0];
-                    if (file)
-                      void act(async () => {
-                        const uploaded = await uploadPhoto(file);
-                        await refreshPhotos();
-                        setPhotoValue([{ id: uploaded.id, label: uploaded.label }]);
-                      });
-                    event.currentTarget.value = "";
+              <FormControl label="Source asset">
+                <Select
+                  options={photos.map((item) => ({ value: item.id, label: item.label }))}
+                  value={photoValue}
+                  onChange={(value) => {
+                    setPhotoValue(value);
+                    setSavedId(null);
                   }}
                 />
-                {photo ? (
-                  <img
-                    src={photo.url}
-                    alt="Selected source"
-                    className={css({
-                      width: "100%",
-                      aspectRatio: "4 / 5",
-                      objectFit: "cover",
-                      borderRadius: "16px",
-                      marginTop: "12px",
-                    })}
-                  />
-                ) : null}
-                {photo ? (
-                  <div
-                    className={css({
-                      display: "flex",
-                      gap: "6px",
-                      flexWrap: "wrap",
-                      marginTop: "8px",
-                    })}
-                  >
-                    <Tag closeable={false} kind={TAG_KIND.neutral}>
-                      {String(photo.width)}×{String(photo.height)}
-                    </Tag>
-                    <Tag closeable={false} kind={TAG_KIND.neutral}>
-                      {photo.uploaded ? "uploaded" : "world asset"}
-                    </Tag>
-                  </div>
-                ) : null}
-              </StyledBody>
+              </FormControl>
+              <Button
+                size="compact"
+                variant="secondary"
+                disabled={busy}
+                onClick={() => uploadInput.current?.click()}
+              >
+                Upload photo
+              </Button>
+              <input
+                ref={uploadInput}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  if (file)
+                    void act(async () => {
+                      const uploaded = await uploadPhoto(file);
+                      await refreshPhotos();
+                      setPhotoValue(uploaded.id);
+                    });
+                  event.currentTarget.value = "";
+                }}
+              />
+              {photo ? (
+                <img
+                  src={photo.url}
+                  alt="Selected source"
+                  className="mt-3 aspect-[4/5] w-full rounded-2xl object-cover"
+                />
+              ) : null}
+              {photo ? (
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <Tag kind="neutral">
+                    {String(photo.width)}×{String(photo.height)}
+                  </Tag>
+                  <Tag kind="neutral">{photo.uploaded ? "uploaded" : "world asset"}</Tag>
+                </div>
+              ) : null}
             </Card>
             <Card>
-              <StyledBody>
-                <FormControl label="Contrast treatment">
-                  <Select
-                    clearable={false}
-                    options={THEME_OPTIONS}
-                    value={themeValue}
-                    onChange={({ value }) => setThemeValue(value)}
-                  />
-                </FormControl>
-                <FormControl label="Branding">
-                  <Select
-                    clearable={false}
-                    options={BRANDING_OPTIONS}
-                    value={brandingValue}
-                    onChange={({ value }) => setBrandingValue(value)}
-                  />
-                </FormControl>
-                <LabelSmall>Outputs</LabelSmall>
-                <div className={css({ marginTop: "8px", marginBottom: "16px" })}>
-                  {OUTPUTS.map((spec) => (
+              <FormControl label="Contrast treatment">
+                <Select options={THEME_OPTIONS} value={themeValue} onChange={setThemeValue} />
+              </FormControl>
+              <FormControl label="Branding">
+                <Select options={BRANDING_OPTIONS} value={brandingValue} onChange={setBrandingValue} />
+              </FormControl>
+              <LabelSmall>Outputs</LabelSmall>
+              <div className="mt-2 mb-4">
+                {OUTPUTS.map((spec) => (
+                  <div key={spec.key}>
                     <Checkbox
-                      key={spec.key}
                       checked={selectedOutputs.has(spec.key)}
                       onChange={() =>
                         setSelectedOutputs((old) => {
@@ -472,95 +431,58 @@ export function SocialBench(): React.JSX.Element {
                     >
                       {spec.label}
                     </Checkbox>
-                  ))}
-                </div>
-                <FormControl
-                  label="Publishing caption"
-                  caption="Sent with the post. It is not burned into the image/video."
-                >
-                  <textarea
-                    value={caption}
-                    onChange={(event) => setCaption(event.target.value)}
-                    rows={4}
-                    className={css({
-                      width: "100%",
-                      boxSizing: "border-box",
-                      padding: "10px",
-                      font: "inherit",
-                      borderRadius: "8px",
-                      border: `1px solid ${theme.colors.borderOpaque}`,
-                      backgroundColor: theme.colors.backgroundPrimary,
-                      color: theme.colors.contentPrimary,
-                    })}
-                  />
-                </FormControl>
-                <Button
-                  disabled={!photo || selectedOutputs.size === 0}
-                  isLoading={busy}
-                  onClick={() => void go()}
-                  overrides={{
-                    BaseButton: { style: { width: "100%", minHeight: "52px", fontWeight: 700 } },
-                  }}
-                >
-                  GO
-                </Button>
-              </StyledBody>
+                  </div>
+                ))}
+              </div>
+              <FormControl
+                label="Publishing caption"
+                caption="Sent with the post. It is not burned into the image/video."
+              >
+                <textarea
+                  value={caption}
+                  onChange={(event) => setCaption(event.target.value)}
+                  rows={4}
+                  className="w-full rounded-lg border border-ink/15 bg-paper px-2.5 py-2.5 font-[inherit] text-ink"
+                />
+              </FormControl>
+              <Button
+                disabled={!photo || selectedOutputs.size === 0 || busy}
+                onClick={() => void go()}
+                className="w-full min-h-[52px] font-bold"
+              >
+                {busy ? "GO…" : "GO"}
+              </Button>
             </Card>
           </div>
           {exports.length > 0 ? (
-            <div className={css({ marginTop: "22px" })}>
-              <div
-                className={css({
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  gap: "10px",
-                  flexWrap: "wrap",
-                })}
-              >
+            <div className="mt-[22px]">
+              <div className="flex flex-wrap items-center justify-between gap-2.5">
                 <div>
-                  <HeadingSmall marginBottom={0}>Ready</HeadingSmall>
-                  <ParagraphXSmall marginTop={0}>
+                  <HeadingSmall className="mb-0">Ready</HeadingSmall>
+                  <ParagraphXSmall className="mt-0">
                     {resolvedTheme ? `Resolved ${resolvedTheme}.` : ""}
                   </ParagraphXSmall>
                 </div>
-                <Button
-                  disabled={Boolean(savedId)}
-                  isLoading={busy}
-                  onClick={() => void saveForReview()}
-                >
-                  {savedId ? "Saved for review" : "Save for review"}
+                <Button disabled={Boolean(savedId) || busy} onClick={() => void saveForReview()}>
+                  {savedId ? "Saved for review" : busy ? "Saving…" : "Save for review"}
                 </Button>
               </div>
-              <div
-                className={css({
-                  display: "grid",
-                  gridTemplateColumns: "repeat(auto-fill, minmax(210px, 1fr))",
-                  gap: "12px",
-                  marginTop: "10px",
-                })}
-              >
+              <div className="mt-2.5 grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-3">
                 {exports.map((item) => (
                   <Card key={item.key}>
-                    <StyledBody>
-                      <img
-                        src={item.url}
-                        alt={item.label}
-                        className={css({
-                          width: "100%",
-                          aspectRatio: `${String(item.width)} / ${String(item.height)}`,
-                          objectFit: "cover",
-                          borderRadius: "10px",
-                        })}
-                      />
-                      <LabelSmall>{item.label}</LabelSmall>
-                      <ParagraphXSmall>{item.filename}</ParagraphXSmall>
-                      <a href={item.url} download={item.filename}>
-                        <Button size={SIZE.mini} kind={BUTTON_KIND.secondary}>
-                          Download
-                        </Button>
-                      </a>
-                    </StyledBody>
+                    <img
+                      src={item.url}
+                      alt={item.label}
+                      className="w-full rounded-[10px] object-cover"
+                      style={{ aspectRatio: `${String(item.width)} / ${String(item.height)}` }}
+                    />
+                    <LabelSmall>{item.label}</LabelSmall>
+                    <ParagraphXSmall>{item.filename}</ParagraphXSmall>
+                    <a href={item.url} download={item.filename}>
+                      <Button size="compact" variant="secondary">
+                        Download
+                      </Button>
+                    </a>
                   </Card>
                 ))}
               </div>
@@ -570,130 +492,91 @@ export function SocialBench(): React.JSX.Element {
       ) : null}
 
       {view === "approval" ? (
-        <div className={css({ display: "grid", gap: "12px" })}>
+        <div className="grid gap-3">
           {approval.length === 0 ? (
             <ParagraphSmall>No packages waiting.</ParagraphSmall>
           ) : (
             approval.map((post) => (
               <Card key={post.id}>
-                <StyledBody>
-                  <div
-                    className={css({
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: "12px",
-                      flexWrap: "wrap",
-                      alignItems: "flex-start",
-                    })}
-                  >
-                    <div>
-                      <LabelSmall>{post.source_label}</LabelSmall>
-                      <ParagraphXSmall marginTop={0}>
-                        {post.theme} · {post.branding} · {post.state}
-                      </ParagraphXSmall>
-                    </div>
-                    <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
-                      {post.state === "review_required" ? (
-                        <>
-                          <Button
-                            size={SIZE.compact}
-                            disabled={busy}
-                            onClick={() => void act(() => approveSocialPost(post.id))}
-                          >
-                            Approve all
-                          </Button>
-                          <Button
-                            size={SIZE.compact}
-                            kind={BUTTON_KIND.secondary}
-                            disabled={busy}
-                            onClick={() => void act(() => rejectSocialPost(post.id))}
-                          >
-                            Reject all
-                          </Button>
-                        </>
-                      ) : (
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <LabelSmall>{post.source_label}</LabelSmall>
+                    <ParagraphXSmall className="mt-0">
+                      {post.theme} · {post.branding} · {post.state}
+                    </ParagraphXSmall>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {post.state === "review_required" ? (
+                      <>
                         <Button
-                          size={SIZE.compact}
+                          size="compact"
                           disabled={busy}
-                          onClick={() => void act(() => queueSocialPost(post.id))}
+                          onClick={() => void act(() => approveSocialPost(post.id))}
                         >
-                          Queue approved outputs
+                          Approve all
                         </Button>
-                      )}
-                    </div>
-                  </div>
-                  {post.caption ? (
-                    <div className={css({ marginTop: "8px" })}>
-                      <LabelSmall>Publishing caption</LabelSmall>
-                      <ParagraphSmall marginTop={0}>{post.caption}</ParagraphSmall>
-                    </div>
-                  ) : null}
-                  <div
-                    className={css({
-                      display: "grid",
-                      gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                      gap: "10px",
-                      marginTop: "12px",
-                    })}
-                  >
-                    {post.derivatives.map((item) => (
-                      <div
-                        key={item.id}
-                        className={css({
-                          border: `1px solid ${theme.colors.borderOpaque}`,
-                          borderRadius: "12px",
-                          padding: "8px",
-                        })}
-                      >
-                        <img
-                          src={item.url}
-                          alt={item.output_key}
-                          className={css({
-                            width: "100%",
-                            aspectRatio: `${String(item.width)} / ${String(item.height)}`,
-                            objectFit: "cover",
-                            borderRadius: "8px",
-                          })}
-                        />
-                        <div
-                          className={css({
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            gap: "6px",
-                            marginTop: "8px",
-                            flexWrap: "wrap",
-                          })}
+                        <Button
+                          size="compact"
+                          variant="secondary"
+                          disabled={busy}
+                          onClick={() => void act(() => rejectSocialPost(post.id))}
                         >
-                          <LabelSmall>{item.output_key}</LabelSmall>
-                          {reviewTag(item.review_state)}
-                        </div>
-                        <ParagraphXSmall marginTop={theme.sizing.scale100}>
-                          {item.filename}
-                        </ParagraphXSmall>
-                        {item.review_state === "review_required" ? (
-                          <div className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}>
-                            <Button
-                              size={SIZE.mini}
-                              disabled={busy}
-                              onClick={() => void act(() => approveSocialDerivative(item.id))}
-                            >
-                              Approve
-                            </Button>
-                            <Button
-                              size={SIZE.mini}
-                              kind={BUTTON_KIND.secondary}
-                              disabled={busy}
-                              onClick={() => void act(() => rejectSocialDerivative(item.id))}
-                            >
-                              Reject
-                            </Button>
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
+                          Reject all
+                        </Button>
+                      </>
+                    ) : (
+                      <Button
+                        size="compact"
+                        disabled={busy}
+                        onClick={() => void act(() => queueSocialPost(post.id))}
+                      >
+                        Queue approved outputs
+                      </Button>
+                    )}
                   </div>
-                </StyledBody>
+                </div>
+                {post.caption ? (
+                  <div className="mt-2">
+                    <LabelSmall>Publishing caption</LabelSmall>
+                    <ParagraphSmall className="mt-0">{post.caption}</ParagraphSmall>
+                  </div>
+                ) : null}
+                <div className="mt-3 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-2.5">
+                  {post.derivatives.map((item) => (
+                    <div key={item.id} className="rounded-xl border border-ink/10 p-2">
+                      <img
+                        src={item.url}
+                        alt={item.output_key}
+                        className="w-full rounded-lg object-cover"
+                        style={{ aspectRatio: `${String(item.width)} / ${String(item.height)}` }}
+                      />
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-1.5">
+                        <LabelSmall>{item.output_key}</LabelSmall>
+                        {reviewTag(item.review_state)}
+                      </div>
+                      <ParagraphXSmall className="mt-1">{item.filename}</ParagraphXSmall>
+                      {item.review_state === "review_required" ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          <Button
+                            size="compact"
+                            disabled={busy}
+                            onClick={() => void act(() => approveSocialDerivative(item.id))}
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            size="compact"
+                            variant="secondary"
+                            disabled={busy}
+                            onClick={() => void act(() => rejectSocialDerivative(item.id))}
+                          >
+                            Reject
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
               </Card>
             ))
           )}
@@ -701,139 +584,99 @@ export function SocialBench(): React.JSX.Element {
       ) : null}
 
       {view === "queue" ? (
-        <div className={css({ display: "grid", gap: "10px" })}>
+        <div className="grid gap-2.5">
           {queue.length === 0 ? (
             <ParagraphSmall>Queue is empty.</ParagraphSmall>
           ) : (
             queue.map((job) => (
               <Card key={job.id}>
-                <StyledBody>
-                  <div
-                    className={css({
-                      display: "grid",
-                      gridTemplateColumns: "96px 1fr",
-                      gap: "12px",
-                      "@media screen and (max-width: 520px)": { gridTemplateColumns: "72px 1fr" },
-                    })}
-                  >
-                    <img
-                      src={job.derivative_url}
-                      alt={job.output_key}
-                      className={css({
-                        width: "100%",
-                        aspectRatio: "4 / 5",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                      })}
-                    />
-                    <div>
-                      <LabelSmall>{job.source_label}</LabelSmall>
-                      <ParagraphXSmall marginTop={0}>
-                        {job.channel} · {job.output_key}
-                      </ParagraphXSmall>
+                <div className="grid grid-cols-[72px_1fr] gap-3 md:grid-cols-[96px_1fr]">
+                  <img
+                    src={job.derivative_url}
+                    alt={job.output_key}
+                    className="aspect-[4/5] w-full rounded-lg object-cover"
+                  />
+                  <div>
+                    <LabelSmall>{job.source_label}</LabelSmall>
+                    <ParagraphXSmall className="mt-0">
+                      {job.channel} · {job.output_key}
+                    </ParagraphXSmall>
+                    <ParagraphXSmall>
+                      {job.state} · {localDate(job.scheduled_at)} ·{" "}
+                      {job.locked ? "manual" : "recommended"}
+                    </ParagraphXSmall>
+                    {job.caption ? <ParagraphXSmall>{job.caption}</ParagraphXSmall> : null}
+                    {job.failure_reason ? (
                       <ParagraphXSmall>
-                        {job.state} · {localDate(job.scheduled_at)} ·{" "}
-                        {job.locked ? "manual" : "recommended"}
+                        Delivery: {job.failure_reason} · attempt {String(job.retry_count)}/
+                        {String(job.max_attempts)}
                       </ParagraphXSmall>
-                      {job.caption ? <ParagraphXSmall>{job.caption}</ParagraphXSmall> : null}
-                      {job.failure_reason ? (
-                        <ParagraphXSmall>
-                          Delivery: {job.failure_reason} · attempt {String(job.retry_count)}/
-                          {String(job.max_attempts)}
-                        </ParagraphXSmall>
-                      ) : null}
-                    </div>
+                    ) : null}
                   </div>
-                  <div
-                    className={css({
-                      display: "flex",
-                      gap: "6px",
-                      flexWrap: "wrap",
-                      marginTop: "10px",
-                    })}
+                </div>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  <form
+                    className="flex flex-wrap gap-1.5"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      const form = new FormData(event.currentTarget);
+                      const dateEntry = form.get("schedule-date");
+                      const timeEntry = form.get("schedule-time");
+                      const date = typeof dateEntry === "string" ? dateEntry : "";
+                      const time = typeof timeEntry === "string" ? timeEntry : "";
+                      if (!date || !time) return;
+                      void act(() =>
+                        scheduleSocialJob(job.id, new Date(`${date}T${time}`).toISOString()),
+                      );
+                    }}
                   >
-                    <form
-                      className={css({ display: "flex", gap: "6px", flexWrap: "wrap" })}
-                      onSubmit={(event) => {
-                        event.preventDefault();
-                        const form = new FormData(event.currentTarget);
-                        const dateEntry = form.get("schedule-date");
-                        const timeEntry = form.get("schedule-time");
-                        const date = typeof dateEntry === "string" ? dateEntry : "";
-                        const time = typeof timeEntry === "string" ? timeEntry : "";
-                        if (!date || !time) return;
-                        void act(() =>
-                          scheduleSocialJob(job.id, new Date(`${date}T${time}`).toISOString()),
-                        );
-                      }}
-                    >
-                      <input
-                        type="date"
-                        name="schedule-date"
-                        aria-label="Schedule date"
-                        required
-                        defaultValue={
-                          job.scheduled_at
-                            ? new Date(job.scheduled_at).toLocaleDateString("en-CA")
-                            : undefined
-                        }
-                        className={css({
-                          minHeight: "36px",
-                          padding: "0 8px",
-                          borderRadius: "8px",
-                          border: `1px solid ${theme.colors.borderOpaque}`,
-                          backgroundColor: theme.colors.backgroundPrimary,
-                          color: theme.colors.contentPrimary,
-                          font: "inherit",
-                        })}
-                      />
-                      <input
-                        type="time"
-                        name="schedule-time"
-                        aria-label="Schedule time"
-                        required
-                        step={300}
-                        defaultValue={
-                          job.scheduled_at
-                            ? new Date(job.scheduled_at).toTimeString().slice(0, 5)
-                            : undefined
-                        }
-                        className={css({
-                          minHeight: "36px",
-                          padding: "0 8px",
-                          borderRadius: "8px",
-                          border: `1px solid ${theme.colors.borderOpaque}`,
-                          backgroundColor: theme.colors.backgroundPrimary,
-                          color: theme.colors.contentPrimary,
-                          font: "inherit",
-                        })}
-                      />
-                      <Button size={SIZE.mini} type="submit" disabled={busy}>
-                        Set schedule
-                      </Button>
-                    </form>
-                    <Button
-                      size={SIZE.mini}
-                      onClick={() => void act(() => publishSocialJobNow(job.id))}
-                    >
-                      Publish now
+                    <input
+                      type="date"
+                      name="schedule-date"
+                      aria-label="Schedule date"
+                      required
+                      defaultValue={
+                        job.scheduled_at
+                          ? new Date(job.scheduled_at).toLocaleDateString("en-CA")
+                          : undefined
+                      }
+                      className="min-h-[36px] rounded-lg border border-ink/15 bg-paper px-2 font-[inherit] text-ink"
+                    />
+                    <input
+                      type="time"
+                      name="schedule-time"
+                      aria-label="Schedule time"
+                      required
+                      step={300}
+                      defaultValue={
+                        job.scheduled_at
+                          ? new Date(job.scheduled_at).toTimeString().slice(0, 5)
+                          : undefined
+                      }
+                      className="min-h-[36px] rounded-lg border border-ink/15 bg-paper px-2 font-[inherit] text-ink"
+                    />
+                    <Button size="compact" type="submit" disabled={busy}>
+                      Set schedule
                     </Button>
-                    <Button
-                      size={SIZE.mini}
-                      kind={BUTTON_KIND.secondary}
-                      onClick={() => void act(() => holdSocialJob(job.id))}
-                    >
-                      Hold
-                    </Button>
-                    <Button
-                      size={SIZE.mini}
-                      kind={BUTTON_KIND.secondary}
-                      onClick={() => void act(() => cancelSocialJob(job.id))}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                </StyledBody>
+                  </form>
+                  <Button size="compact" onClick={() => void act(() => publishSocialJobNow(job.id))}>
+                    Publish now
+                  </Button>
+                  <Button
+                    size="compact"
+                    variant="secondary"
+                    onClick={() => void act(() => holdSocialJob(job.id))}
+                  >
+                    Hold
+                  </Button>
+                  <Button
+                    size="compact"
+                    variant="secondary"
+                    onClick={() => void act(() => cancelSocialJob(job.id))}
+                  >
+                    Remove
+                  </Button>
+                </div>
               </Card>
             ))
           )}
@@ -841,40 +684,27 @@ export function SocialBench(): React.JSX.Element {
       ) : null}
 
       {view === "live" ? (
-        <div className={css({ display: "grid", gap: "10px" })}>
+        <div className="grid gap-2.5">
           {live.length === 0 ? (
             <ParagraphSmall>Nothing published yet.</ParagraphSmall>
           ) : (
             live.map((job) => (
               <Card key={job.id}>
-                <StyledBody>
-                  <div
-                    className={css({
-                      display: "grid",
-                      gridTemplateColumns: "96px 1fr",
-                      gap: "12px",
-                    })}
-                  >
-                    <img
-                      src={job.derivative_url}
-                      alt={job.output_key}
-                      className={css({
-                        width: "100%",
-                        aspectRatio: "4 / 5",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                      })}
-                    />
-                    <div>
-                      <LabelSmall>{job.source_label}</LabelSmall>
-                      <ParagraphXSmall marginTop={0}>
-                        {job.channel} · {job.output_key}
-                      </ParagraphXSmall>
-                      <ParagraphXSmall>{localDate(job.published_at)}</ParagraphXSmall>
-                      <ParagraphXSmall>{job.external_post_id}</ParagraphXSmall>
-                    </div>
+                <div className="grid grid-cols-[96px_1fr] gap-3">
+                  <img
+                    src={job.derivative_url}
+                    alt={job.output_key}
+                    className="aspect-[4/5] w-full rounded-lg object-cover"
+                  />
+                  <div>
+                    <LabelSmall>{job.source_label}</LabelSmall>
+                    <ParagraphXSmall className="mt-0">
+                      {job.channel} · {job.output_key}
+                    </ParagraphXSmall>
+                    <ParagraphXSmall>{localDate(job.published_at)}</ParagraphXSmall>
+                    <ParagraphXSmall>{job.external_post_id}</ParagraphXSmall>
                   </div>
-                </StyledBody>
+                </div>
               </Card>
             ))
           )}

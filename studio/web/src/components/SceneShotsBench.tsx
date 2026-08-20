@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Input } from "baseui/input";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Tag, KIND as TAG_KIND } from "baseui/tag";
-import { Textarea } from "baseui/textarea";
-import { ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+import { Button, Input, Notification, Tag, type TagKind, Textarea, ParagraphSmall, ParagraphXSmall } from "./ui";
 
 import { ApiError } from "../api/client";
 import {
@@ -42,14 +36,17 @@ function displayName(name: string): string {
     .join(" ");
 }
 
-function statusKind(status: string) {
-  if (status === "approved") return TAG_KIND.positive;
-  if (status === "rejected") return TAG_KIND.negative;
-  return TAG_KIND.neutral;
+function statusKind(status: string): TagKind {
+  if (status === "approved") return "positive";
+  if (status === "rejected") return "negative";
+  return "neutral";
 }
 
+const controls = "flex flex-wrap items-center gap-2";
+const panel = "rounded-[14px] border border-paper-2 bg-paper-2 p-3.5";
+const mono = "font-mono text-[11px] text-ink/50";
+
 export function SceneShotsBench(): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [sceneKeys, setSceneKeys] = useState<string[]>([]);
   const [sceneKey, setSceneKey] = useState("W01-P28");
   const [scene, setScene] = useState<SceneShotMasters | null>(null);
@@ -134,15 +131,6 @@ export function SceneShotsBench(): React.JSX.Element {
     [load, sceneKey, selectedShotId],
   );
 
-  const controls = css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" });
-  const panel = css({
-    border: `1px solid ${theme.colors.borderOpaque}`,
-    borderRadius: "14px",
-    backgroundColor: theme.colors.backgroundSecondary,
-    padding: "14px",
-  });
-  const mono = css({ fontFamily: "monospace", fontSize: "11px", color: theme.colors.contentTertiary });
-
   const initialSlug = cleanName(initialName);
   const newSlug = cleanName(newName);
   const initialDuplicate = shots.some((shot) => shot.name === initialSlug);
@@ -171,31 +159,21 @@ export function SceneShotsBench(): React.JSX.Element {
         {sceneKey}{scene?.title ? ` — ${scene.title}` : ""}
       </PageTitle>
       {scene?.description ? (
-        <ParagraphSmall className={css({ maxWidth: "760px", marginTop: "-4px" })}>
-          {scene.description}
-        </ParagraphSmall>
+        <ParagraphSmall className="-mt-1 max-w-[760px]">{scene.description}</ParagraphSmall>
       ) : null}
 
-      {error ? (
-        <Notification kind={NOTIFICATION_KIND.negative} overrides={{ Body: { style: { width: "auto" } } }}>
-          {error}
-        </Notification>
-      ) : null}
-      {note ? (
-        <Notification kind={NOTIFICATION_KIND.positive} overrides={{ Body: { style: { width: "auto" } } }}>
-          {note}
-        </Notification>
-      ) : null}
+      {error ? <Notification kind="negative">{error}</Notification> : null}
+      {note ? <Notification kind="positive">{note}</Notification> : null}
 
       {sceneKeys.length > 1 ? (
-        <div className={css({ marginTop: "18px" })}>
+        <div className="mt-[18px]">
           <SectionTitle>Scene</SectionTitle>
           <div className={controls}>
             {sceneKeys.map((key) => (
               <Button
                 key={key}
-                size={SIZE.compact}
-                kind={key === sceneKey ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                size="compact"
+                variant={key === sceneKey ? "primary" : "secondary"}
                 onClick={() => setSceneKey(key)}
               >
                 {key}
@@ -206,13 +184,13 @@ export function SceneShotsBench(): React.JSX.Element {
       ) : null}
 
       {shots.length === 0 ? (
-        <div className={css({ marginTop: "24px" })}>
+        <div className="mt-6">
           <SectionTitle>Add first shot master</SectionTitle>
           <div className={panel}>
             <ParagraphSmall>
               Choose the production Shot ID explicitly. The local filename is only a suggestion and is not the shot identity.
             </ParagraphSmall>
-            <div className={css({ display: "flex", flexDirection: "column", gap: "10px", maxWidth: "520px" })}>
+            <div className="flex max-w-[520px] flex-col gap-2.5">
               <input
                 ref={initialUploadRef}
                 type="file"
@@ -227,17 +205,15 @@ export function SceneShotsBench(): React.JSX.Element {
                 value={initialName}
                 onChange={(event) => setInitialName(event.currentTarget.value)}
                 placeholder="Shot ID, e.g. trio-wide"
-                size={SIZE.compact}
               />
-              <ParagraphXSmall margin={0}>
+              <ParagraphXSmall className="m-0">
                 Source: {initialFileName || "no file selected"} · Shot ID: <span className={mono}>{initialSlug || "—"}</span>
               </ParagraphXSmall>
-              {initialDuplicate ? <ParagraphXSmall margin={0}>That Shot ID already exists.</ParagraphXSmall> : null}
+              {initialDuplicate ? <ParagraphXSmall className="m-0">That Shot ID already exists.</ParagraphXSmall> : null}
               <div>
                 <Button
-                  size={SIZE.compact}
-                  disabled={!initialFileName || !initialSlug || initialDuplicate}
-                  isLoading={busy === "initial-upload"}
+                  size="compact"
+                  disabled={!initialFileName || !initialSlug || initialDuplicate || busy === "initial-upload"}
                   onClick={onInitialUpload}
                 >
                   Add master
@@ -248,14 +224,14 @@ export function SceneShotsBench(): React.JSX.Element {
         </div>
       ) : (
         <>
-          <div className={css({ marginTop: "24px" })}>
+          <div className="mt-6">
             <SectionTitle>Shot</SectionTitle>
             <div className={controls}>
               {shots.map((shot) => (
                 <Button
                   key={shot.id}
-                  size={SIZE.compact}
-                  kind={shot.id === selectedShotId ? BUTTON_KIND.primary : BUTTON_KIND.secondary}
+                  size="compact"
+                  variant={shot.id === selectedShotId ? "primary" : "secondary"}
                   onClick={() => setSelectedShotId(shot.id)}
                 >
                   {displayName(shot.name)} · {shot.status}
@@ -263,47 +239,44 @@ export function SceneShotsBench(): React.JSX.Element {
               ))}
             </div>
             {!selected ? (
-              <ParagraphXSmall className={css({ color: theme.colors.contentTertiary })}>
+              <ParagraphXSmall className="text-ink/50">
                 Select a shot to open its production workspace.
               </ParagraphXSmall>
             ) : null}
           </div>
 
           {selected ? (
-            <section className={css({ marginTop: "20px" })}>
-              <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap", marginBottom: "10px" })}>
+            <section className="mt-5">
+              <div className="mb-2.5 flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className={css({ margin: 0, fontSize: "22px" })}>{displayName(selected.name)}</h2>
+                  <h2 className="m-0 text-[22px]">{displayName(selected.name)}</h2>
                   <span className={mono}>
                     {selected.name} · {selected.asset.width}×{selected.asset.height} · {selected.asset.sha256.slice(0, 12)}
                   </span>
                 </div>
-                <Tag closeable={false} kind={statusKind(selected.status)}>
-                  {selected.status}
-                </Tag>
+                <Tag kind={statusKind(selected.status)}>{selected.status}</Tag>
               </div>
 
-              <div className={css({ display: "grid", gridTemplateColumns: "minmax(240px, 360px) minmax(0, 1fr)", gap: "18px", alignItems: "start", "@media screen and (max-width: 760px)": { gridTemplateColumns: "1fr" } })}>
+              <div className="grid grid-cols-[minmax(240px,360px)_minmax(0,1fr)] items-start gap-[18px] max-[760px]:grid-cols-1">
                 <div>
                   <button
                     type="button"
                     onClick={() => window.open(sceneShotPreview(selected.asset.id), "_blank")}
-                    className={css({ border: 0, padding: 0, background: "transparent", cursor: "zoom-in", width: "100%" })}
+                    className="w-full cursor-zoom-in border-0 bg-transparent p-0"
                   >
                     <img
                       src={sceneShotPreview(selected.asset.id)}
                       alt={`${selected.scene_key} ${selected.name}`}
-                      className={css({ width: "100%", aspectRatio: "9 / 16", objectFit: "cover", display: "block", borderRadius: "12px" })}
+                      className="block aspect-[9/16] w-full rounded-xl object-cover"
                     />
                   </button>
 
-                  <div className={css({ marginTop: "10px" })}>
+                  <div className="mt-2.5">
                     <div className={controls}>
                       {selected.status !== "approved" ? (
                         <Button
-                          size={SIZE.compact}
-                          disabled={approved >= maximum}
-                          isLoading={busy === `approve-${selected.id}`}
+                          size="compact"
+                          disabled={approved >= maximum || busy === `approve-${selected.id}`}
                           onClick={() => void act(`approve-${selected.id}`, async () => {
                             await approveSceneShotMaster(selected.id);
                             return `${selected.name} approved.`;
@@ -314,9 +287,9 @@ export function SceneShotsBench(): React.JSX.Element {
                       ) : null}
                       {selected.status !== "rejected" ? (
                         <Button
-                          size={SIZE.compact}
-                          kind={BUTTON_KIND.secondary}
-                          isLoading={busy === `reject-${selected.id}`}
+                          size="compact"
+                          variant="secondary"
+                          disabled={busy === `reject-${selected.id}`}
                           onClick={() => void act(`reject-${selected.id}`, async () => {
                             await rejectSceneShotMaster(selected.id);
                             return `${selected.name} rejected.`;
@@ -329,11 +302,11 @@ export function SceneShotsBench(): React.JSX.Element {
                   </div>
                 </div>
 
-                <div className={css({ display: "flex", flexDirection: "column", gap: "14px" })}>
+                <div className="flex flex-col gap-3.5">
                   <div className={panel}>
-                    <div className={css({ display: "flex", justifyContent: "space-between", gap: "8px", alignItems: "center", marginBottom: "8px" })}>
+                    <div className="mb-2 flex items-center justify-between gap-2">
                       <strong>Veo motion prompt</strong>
-                      <Tag closeable={false} kind={promptMissing ? TAG_KIND.negative : TAG_KIND.neutral}>
+                      <Tag kind={promptMissing ? "negative" : "neutral"}>
                         {selected.motion_prompt_source === "override" ? "edited" : selected.motion_prompt_source === "configured" ? "default" : "missing"}
                       </Tag>
                     </div>
@@ -341,14 +314,13 @@ export function SceneShotsBench(): React.JSX.Element {
                       value={promptDraft}
                       onChange={(event) => setPromptDraft(event.currentTarget.value)}
                       placeholder="Describe the motion this first frame should perform."
-                      overrides={{ Input: { style: { minHeight: "180px", fontFamily: "monospace", fontSize: "12px", lineHeight: "18px" } } }}
+                      className="min-h-[180px] font-mono text-[12px] leading-[18px]"
                     />
-                    <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", marginTop: "8px" })}>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Button
-                        size={SIZE.compact}
-                        kind={BUTTON_KIND.secondary}
-                        disabled={!promptChanged || promptMissing}
-                        isLoading={busy === `prompt-${selected.id}`}
+                        size="compact"
+                        variant="secondary"
+                        disabled={!promptChanged || promptMissing || busy === `prompt-${selected.id}`}
                         onClick={() => void act(`prompt-${selected.id}`, async () => {
                           await saveSceneShotMotionPrompt(selected.id, promptDraft);
                           return `${selected.name}: prompt saved.`;
@@ -358,9 +330,9 @@ export function SceneShotsBench(): React.JSX.Element {
                       </Button>
                       {selected.motion_prompt_source === "override" ? (
                         <Button
-                          size={SIZE.compact}
-                          kind={BUTTON_KIND.tertiary}
-                          isLoading={busy === `reset-${selected.id}`}
+                          size="compact"
+                          variant="ghost"
+                          disabled={busy === `reset-${selected.id}`}
                           onClick={() => void act(`reset-${selected.id}`, async () => {
                             await saveSceneShotMotionPrompt(selected.id, null);
                             return `${selected.name}: default prompt restored.`;
@@ -374,11 +346,10 @@ export function SceneShotsBench(): React.JSX.Element {
 
                   <div className={panel}>
                     <strong>Veo</strong>
-                    <div className={css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center", marginTop: "8px" })}>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <Button
-                        size={SIZE.compact}
-                        disabled={selected.status !== "approved" || promptMissing || promptChanged}
-                        isLoading={busy === `animate-${selected.id}`}
+                        size="compact"
+                        disabled={selected.status !== "approved" || promptMissing || promptChanged || busy === `animate-${selected.id}`}
                         onClick={() => void act(`animate-${selected.id}`, async () => {
                           await animateSceneShotMaster(selected.id);
                           return `${selected.name}: Veo take generated.`;
@@ -386,20 +357,20 @@ export function SceneShotsBench(): React.JSX.Element {
                       >
                         {latest ? "Redo Veo" : "Animate"}
                       </Button>
-                      {selected.status !== "approved" ? <ParagraphXSmall margin={0}>Approve this master before animation.</ParagraphXSmall> : null}
+                      {selected.status !== "approved" ? <ParagraphXSmall className="m-0">Approve this master before animation.</ParagraphXSmall> : null}
                     </div>
 
                     {latest ? (
-                      <div className={css({ marginTop: "12px" })}>
+                      <div className="mt-3">
                         <video
                           key={latest.stamp}
                           src={sceneShotTakeSource(selected.id, latest.stamp)}
                           controls
                           playsInline
                           preload="metadata"
-                          className={css({ width: "100%", borderRadius: "10px", background: "#000" })}
+                          className="w-full rounded-[10px] bg-black"
                         />
-                        <ParagraphXSmall marginBottom={0}>
+                        <ParagraphXSmall className="mb-0">
                           Latest take · {latest.duration_seconds ? `${latest.duration_seconds.toFixed(1)}s` : "duration pending"}
                           {(() => {
                             const selectedTakes = takes[selected.id];
@@ -421,9 +392,9 @@ export function SceneShotsBench(): React.JSX.Element {
                     <div className={controls}>
                       <input ref={replaceRef} type="file" accept="image/png,image/jpeg,image/webp" />
                       <Button
-                        size={SIZE.compact}
-                        kind={BUTTON_KIND.secondary}
-                        isLoading={busy === `replace-${selected.id}`}
+                        size="compact"
+                        variant="secondary"
+                        disabled={busy === `replace-${selected.id}`}
                         onClick={() => {
                           const file = replaceRef.current?.files?.[0];
                           if (!file) return;
@@ -436,14 +407,14 @@ export function SceneShotsBench(): React.JSX.Element {
                       >
                         Replace master
                       </Button>
-                      <Button size={SIZE.compact} kind={BUTTON_KIND.tertiary} onClick={() => setShowAdd((value) => !value)}>
+                      <Button size="compact" variant="ghost" onClick={() => setShowAdd((value) => !value)}>
                         {showAdd ? "Cancel add" : "Add another master"}
                       </Button>
                     </div>
 
                     {showAdd ? (
-                      <div className={css({ marginTop: "12px", display: "flex", flexDirection: "column", gap: "8px", maxWidth: "520px" })}>
-                        <ParagraphXSmall margin={0}>
+                      <div className="mt-3 flex max-w-[520px] flex-col gap-2">
+                        <ParagraphXSmall className="m-0">
                           Set the production Shot ID. The selected file name is only used to suggest a starting value.
                         </ParagraphXSmall>
                         <input
@@ -460,18 +431,16 @@ export function SceneShotsBench(): React.JSX.Element {
                           value={newName}
                           onChange={(event) => setNewName(event.currentTarget.value)}
                           placeholder="Shot ID, e.g. brock-pint"
-                          size={SIZE.compact}
                         />
-                        <ParagraphXSmall margin={0}>
+                        <ParagraphXSmall className="m-0">
                           Source: {newFileName || "no file selected"} · Shot ID: <span className={mono}>{newSlug || "—"}</span>
                         </ParagraphXSmall>
-                        {newDuplicate ? <ParagraphXSmall margin={0}>That Shot ID already exists. Use Replace master on that shot instead.</ParagraphXSmall> : null}
+                        {newDuplicate ? <ParagraphXSmall className="m-0">That Shot ID already exists. Use Replace master on that shot instead.</ParagraphXSmall> : null}
                         <div>
                           <Button
-                            size={SIZE.compact}
-                            kind={BUTTON_KIND.secondary}
-                            disabled={!newFileName || !newSlug || newDuplicate}
-                            isLoading={busy === "add-master"}
+                            size="compact"
+                            variant="secondary"
+                            disabled={!newFileName || !newSlug || newDuplicate || busy === "add-master"}
                             onClick={() => {
                               const file = addRef.current?.files?.[0];
                               const name = cleanName(newName);

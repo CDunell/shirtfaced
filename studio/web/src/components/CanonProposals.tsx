@@ -7,14 +7,20 @@
  */
 
 import { useCallback, useEffect, useState } from "react";
-import { useStyletron } from "baseui";
-import { Button, KIND as BUTTON_KIND, SIZE } from "baseui/button";
-import { Card, StyledBody } from "baseui/card";
-import { Notification, KIND as NOTIFICATION_KIND } from "baseui/notification";
-import { Select, type Value } from "baseui/select";
-import { Tag, HIERARCHY, KIND as TAG_KIND, type TagKind } from "baseui/tag";
-import { Textarea } from "baseui/textarea";
-import { LabelSmall, LabelXSmall, ParagraphSmall, ParagraphXSmall } from "baseui/typography";
+
+import {
+  Button,
+  Card,
+  LabelSmall,
+  LabelXSmall,
+  Notification,
+  ParagraphSmall,
+  ParagraphXSmall,
+  Select,
+  Tag,
+  Textarea,
+  type TagKind,
+} from "./ui";
 
 import {
   ApiError,
@@ -37,11 +43,11 @@ const CLASSIFICATION_LABELS: Record<ProposalClassification, string> = {
 };
 
 const CLASSIFICATION_KINDS: Record<ProposalClassification, TagKind> = {
-  already_covered: TAG_KIND.neutral,
-  genuine_addition: TAG_KIND.positive,
-  refinement: TAG_KIND.accent,
-  contradiction: TAG_KIND.negative,
-  too_specific: TAG_KIND.neutral,
+  already_covered: "neutral",
+  genuine_addition: "positive",
+  refinement: "accent",
+  contradiction: "negative",
+  too_specific: "neutral",
 };
 
 function messageFor(error: unknown, fallback: string): string {
@@ -55,18 +61,13 @@ function ProposalCard({
   proposal: CanonProposal;
   onChanged: () => void;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
-  const [target, setTarget] = useState<Value>(
-    proposal.target_heading
-      ? [{ id: proposal.target_heading, label: proposal.target_heading }]
-      : [],
-  );
+  const [target, setTarget] = useState<string>(proposal.target_heading ?? "");
   const [note, setNote] = useState("");
   const [diff, setDiff] = useState<ProposalDiff | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const chosen = typeof target[0]?.id === "string" ? target[0].id : null;
+  const chosen = target === "" ? null : target;
   const decided = proposal.status !== "pending";
 
   const act = useCallback(
@@ -88,69 +89,41 @@ function ProposalCard({
   );
 
   return (
-    <div
-      className={css({
-        borderTopWidth: "1px",
-        borderTopStyle: "solid",
-        borderTopColor: theme.colors.borderOpaque,
-        paddingTop: theme.sizing.scale600,
-        marginTop: theme.sizing.scale600,
-      })}
-    >
-      <div
-        className={css({
-          display: "flex",
-          gap: theme.sizing.scale300,
-          flexWrap: "wrap",
-          alignItems: "center",
-          marginBottom: theme.sizing.scale400,
-        })}
-      >
+    <div className="mt-6 border-t border-ink/10 pt-6">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         {proposal.classification && (
-          <Tag
-            closeable={false}
-            kind={CLASSIFICATION_KINDS[proposal.classification]}
-            hierarchy={HIERARCHY.secondary}
-          >
+          <Tag kind={CLASSIFICATION_KINDS[proposal.classification]}>
             {CLASSIFICATION_LABELS[proposal.classification]}
           </Tag>
         )}
-        <Tag
-          closeable={false}
-          kind={proposal.status === "applied" ? TAG_KIND.positive : TAG_KIND.neutral}
-          hierarchy={HIERARCHY.secondary}
-        >
+        <Tag kind={proposal.status === "applied" ? "positive" : "neutral"}>
           {proposal.status}
         </Tag>
         {proposal.classification && (
-          <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentTertiary}>
-            Advice. You decide.
-          </ParagraphXSmall>
+          <ParagraphXSmall className="text-ink/50">Advice. You decide.</ParagraphXSmall>
         )}
       </div>
 
-      <ParagraphSmall marginTop={0}>{proposal.proposed_text}</ParagraphSmall>
+      <ParagraphSmall>{proposal.proposed_text}</ParagraphSmall>
 
       {proposal.classification_reason && (
-        <ParagraphXSmall marginTop={0} color={theme.colors.contentSecondary}>
-          {proposal.classification_reason}
-        </ParagraphXSmall>
+        <ParagraphXSmall className="text-ink/70">{proposal.classification_reason}</ParagraphXSmall>
       )}
 
       {decided ? (
-        <ParagraphXSmall color={theme.colors.contentTertiary}>
+        <ParagraphXSmall className="text-ink/50">
           {proposal.status === "applied"
             ? `Applied under ${proposal.target_heading ?? "canon"}.`
             : "Declined. WORLD.md is untouched."}
           {proposal.human_note ? ` Note: ${proposal.human_note}` : ""}
         </ParagraphXSmall>
       ) : (
-        <div className={css({ display: "grid", gap: theme.sizing.scale400 })}>
+        <div className="grid gap-4">
           {!proposal.classification && (
             <div>
               <Button
-                size={SIZE.mini}
-                kind={BUTTON_KIND.tertiary}
+                size="compact"
+                variant="ghost"
                 disabled={busy}
                 onClick={() => {
                   act(() => classifyProposal(proposal.id), "The proposal could not be classified.");
@@ -162,22 +135,21 @@ function ProposalCard({
           )}
 
           <div>
-            <LabelXSmall>Section this rule would join</LabelXSmall>
+            <LabelXSmall className="block">Section this rule would join</LabelXSmall>
             <Select
               options={proposal.allowed_headings.map((heading) => ({
-                id: heading,
+                value: heading,
                 label: heading,
               }))}
               value={target}
-              onChange={(params) => {
-                setTarget(params.value);
+              onChange={(value) => {
+                setTarget(value);
                 setDiff(null);
               }}
               placeholder="Choose a section the planner reads"
               aria-label="Target section"
-              clearable={false}
             />
-            <ParagraphXSmall marginBottom={0} color={theme.colors.contentTertiary}>
+            <ParagraphXSmall className="text-ink/50">
               Only these sections reach the planning model. A rule anywhere else would never affect
               generation.
             </ParagraphXSmall>
@@ -186,8 +158,8 @@ function ProposalCard({
           {chosen && (
             <div>
               <Button
-                size={SIZE.mini}
-                kind={BUTTON_KIND.secondary}
+                size="compact"
+                variant="secondary"
                 disabled={busy}
                 onClick={() => {
                   setBusy(true);
@@ -208,17 +180,7 @@ function ProposalCard({
           )}
 
           {diff && (
-            <pre
-              className={css({
-                ...theme.typography.MonoParagraphXSmall,
-                backgroundColor: theme.colors.backgroundSecondary,
-                padding: theme.sizing.scale500,
-                borderRadius: theme.borders.radius300,
-                whiteSpace: "pre-wrap",
-                overflowX: "auto",
-                marginTop: 0,
-              })}
-            >
+            <pre className="overflow-x-auto rounded-[var(--radius-input)] bg-paper-2 p-5 font-mono text-[12px] leading-relaxed whitespace-pre-wrap text-ink/70">
               {diff.unified_diff}
             </pre>
           )}
@@ -232,9 +194,9 @@ function ProposalCard({
             aria-label="Decision note"
           />
 
-          <div className={css({ display: "flex", gap: theme.sizing.scale300, flexWrap: "wrap" })}>
+          <div className="flex flex-wrap gap-3">
             <Button
-              size={SIZE.compact}
+              size="compact"
               disabled={busy || !chosen || !diff}
               onClick={() => {
                 if (!chosen) return;
@@ -247,8 +209,8 @@ function ProposalCard({
               Apply this rule to canon
             </Button>
             <Button
-              size={SIZE.compact}
-              kind={BUTTON_KIND.secondary}
+              size="compact"
+              variant="secondary"
               disabled={busy}
               onClick={() => {
                 act(
@@ -262,7 +224,7 @@ function ProposalCard({
           </div>
 
           {!diff && chosen && (
-            <ParagraphXSmall marginTop={0} marginBottom={0} color={theme.colors.contentTertiary}>
+            <ParagraphXSmall className="text-ink/50">
               Read the diff before applying. You are approving the exact wording, not a summary of
               it.
             </ParagraphXSmall>
@@ -271,14 +233,14 @@ function ProposalCard({
       )}
 
       {proposal.failure_detail && (
-        <div className={css({ marginTop: theme.sizing.scale400 })}>
-          <Notification kind={NOTIFICATION_KIND.warning}>{proposal.failure_detail}</Notification>
+        <div className="mt-4">
+          <Notification kind="warning">{proposal.failure_detail}</Notification>
         </div>
       )}
 
       {error && (
-        <div className={css({ marginTop: theme.sizing.scale400 })}>
-          <Notification kind={NOTIFICATION_KIND.negative}>{error}</Notification>
+        <div className="mt-4">
+          <Notification kind="negative">{error}</Notification>
         </div>
       )}
     </div>
@@ -318,23 +280,21 @@ export function CanonProposals({ slug }: { slug: string }): React.JSX.Element | 
 
   return (
     <Card title="Proposed canon rules">
-      <StyledBody>
-        <LabelSmall>Nothing here has changed WORLD.md.</LabelSmall>
-        <ParagraphSmall marginBottom={0}>
-          A reviewer proposed these permanent rules. Each changes canon only when you approve its
-          exact diff.
-        </ParagraphSmall>
+      <LabelSmall>Nothing here has changed WORLD.md.</LabelSmall>
+      <ParagraphSmall>
+        A reviewer proposed these permanent rules. Each changes canon only when you approve its
+        exact diff.
+      </ParagraphSmall>
 
-        {proposals.map((proposal) => (
-          <ProposalCard
-            key={proposal.id}
-            proposal={proposal}
-            onChanged={() => {
-              void load();
-            }}
-          />
-        ))}
-      </StyledBody>
+      {proposals.map((proposal) => (
+        <ProposalCard
+          key={proposal.id}
+          proposal={proposal}
+          onChanged={() => {
+            void load();
+          }}
+        />
+      ))}
     </Card>
   );
 }
