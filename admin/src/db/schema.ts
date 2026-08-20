@@ -233,3 +233,35 @@ export const accountContent = pgTable("account_content", {
     .notNull()
     .defaultNow(),
 });
+
+export const garmentCareContent = pgTable("garment_care_content", {
+  id: singletonId(),
+  intro: text("intro").notNull(),
+  washingP1: text("washing_p1").notNull(),
+  dryingP1: text("drying_p1").notNull(),
+  printCareP1: text("print_care_p1").notNull(),
+  storageP1: text("storage_p1").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const faqContent = pgTable("faq_content", {
+  id: singletonId(),
+  intro: text("intro").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/* A real list, not a singleton — FAQ items vary in count, unlike every
+   other content page above. */
+export const faqItems = pgTable("faq_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

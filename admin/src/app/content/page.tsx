@@ -11,6 +11,8 @@ const PAGES = [
   { href: "/content/product", label: "Product page", note: "The four-item feature list shown on every product" },
   { href: "/content/account", label: "Account", note: "Intro and the three account benefits" },
   { href: "/content/more", label: "More", note: "Footer callout heading and subline" },
+  { href: "/content/garment-care", label: "Garment care", note: "Washing, drying, print care, storage" },
+  { href: "/content/faq", label: "FAQ", note: "Intro plus the question list" },
 ];
 
 export default function ContentIndexPage() {

@@ -6,9 +6,11 @@ export const metadata = { title: "More — shirtfaced" };
 
 const LINKS = [
   { href: "/about", label: "About", note: "Who's behind this" },
+  { href: "/faq", label: "FAQ", note: "The quick answers" },
   { href: "/size-guide", label: "Size guide", note: "Measurements, honestly" },
   { href: "/shipping", label: "Shipping", note: "Where and how fast" },
   { href: "/returns", label: "Returns", note: "No drama" },
+  { href: "/garment-care", label: "Garment care", note: "How to not wreck it" },
   { href: "/contact", label: "Contact", note: "Talk to a human" },
   { href: "/privacy", label: "Privacy", note: "What we collect" },
   { href: "/terms", label: "Terms", note: "The boring page" },

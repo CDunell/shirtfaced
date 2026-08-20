@@ -136,3 +136,45 @@ export const account = {
     }
   ]
 };
+
+export const garmentCare = {
+  "intro": "Two fabrics, same rule: treat the print like it matters, because it's the whole point.",
+  "washingP1": "Cold wash, inside out, similar colours only. The garment-dyed pieces (anything in Comfort Colors) will keep fading and softening on purpose — that's not a fault, that's the finish doing its job.",
+  "dryingP1": "Hang dry where you can. A dryer won't ruin it outright, but heat is what ages a print fastest, and you paid for the print.",
+  "printCareP1": "Don't iron directly on it, don't dry-clean it, and don't scrub a stain into the ink. Cold water, mild detergent, patience.",
+  "storageP1": "Fold it, don't hang it. Hanging a heavy cotton tee by the shoulders stretches the neckline over time — folding doesn't."
+};
+
+export const faq = {
+  "intro": "The questions that come up before the ones that come up after.",
+  "items": [
+    {
+      "question": "What are shirtfaced tees actually made from?",
+      "answer": "The main range is AS Colour 5026 — 220gsm combed cotton, regular structured fit. Washed and vintage-led releases use Comfort Colors 1717 — around 207gsm ring-spun cotton, garment-dyed, relaxed fit. Different garment, different job."
+    },
+    {
+      "question": "What size should I get?",
+      "answer": "Everything's cut boxy and slightly oversized. If you want it fitted, size down. Full measurements are on the size guide."
+    },
+    {
+      "question": "How long does shipping take?",
+      "answer": "See the shipping page for current rates and timeframes — they're accurate as of today, not a guess made months ago."
+    },
+    {
+      "question": "Do you ship outside Australia?",
+      "answer": "New Zealand, yes. Further than that, we're working on it — get in touch and we'll quote you properly rather than guess."
+    },
+    {
+      "question": "What's the returns policy?",
+      "answer": "See the returns page for the current window and process. Faulty or wrong item — send a photo, we replace it, no return needed."
+    },
+    {
+      "question": "How do I wash it without wrecking the print?",
+      "answer": "Cold wash, inside out, hang dry, don't iron the print. Full detail on the garment care page."
+    },
+    {
+      "question": "Do you do wholesale?",
+      "answer": "Email us with \"wholesale\" in the subject and we'll send a line sheet."
+    }
+  ]
+};

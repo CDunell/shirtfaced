@@ -214,3 +214,60 @@ export async function updateAccountAction(
   revalidatePath("/content/account");
   return { error: null, saved: true };
 }
+
+const garmentCareSchema = z.object({
+  intro: nonEmpty,
+  washingP1: nonEmpty,
+  dryingP1: nonEmpty,
+  printCareP1: nonEmpty,
+  storageP1: nonEmpty,
+});
+
+export async function updateGarmentCareAction(
+  _prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const result = parse(garmentCareSchema, formData);
+  if (!result.success) return { error: result.error.issues[0]?.message ?? "Invalid input." };
+  await queries.updateGarmentCareContent(result.data);
+  revalidatePath("/content/garment-care");
+  return { error: null, saved: true };
+}
+
+const faqIntroSchema = z.object({ intro: nonEmpty });
+
+export async function updateFaqIntroAction(
+  _prevState: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const result = parse(faqIntroSchema, formData);
+  if (!result.success) return { error: result.error.issues[0]?.message ?? "Invalid input." };
+  await queries.updateFaqContent(result.data);
+  revalidatePath("/content/faq");
+  return { error: null, saved: true };
+}
+
+const faqItemSchema = z.object({
+  question: nonEmpty,
+  answer: nonEmpty,
+  sortOrder: z.coerce.number().int(),
+});
+
+export async function addFaqItemAction(formData: FormData) {
+  const result = faqItemSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!result.success) return;
+  await queries.addFaqItem(result.data);
+  revalidatePath("/content/faq");
+}
+
+export async function updateFaqItemAction(id: string, formData: FormData) {
+  const result = faqItemSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!result.success) return;
+  await queries.updateFaqItem(id, result.data);
+  revalidatePath("/content/faq");
+}
+
+export async function deleteFaqItemAction(id: string) {
+  await queries.deleteFaqItem(id);
+  revalidatePath("/content/faq");
+}

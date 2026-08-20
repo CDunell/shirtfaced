@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db } from "./client";
 import {
   aboutContent,
@@ -10,6 +10,9 @@ import {
   moreContent,
   productPageContent,
   accountContent,
+  garmentCareContent,
+  faqContent,
+  faqItems,
 } from "./schema";
 
 export const getAboutContent = () =>
@@ -30,6 +33,14 @@ export const getProductPageContent = () =>
   db.query.productPageContent.findFirst({ where: eq(productPageContent.id, 1) });
 export const getAccountContent = () =>
   db.query.accountContent.findFirst({ where: eq(accountContent.id, 1) });
+export const getGarmentCareContent = () =>
+  db.query.garmentCareContent.findFirst({
+    where: eq(garmentCareContent.id, 1),
+  });
+export const getFaqContent = () =>
+  db.query.faqContent.findFirst({ where: eq(faqContent.id, 1) });
+export const listFaqItems = () =>
+  db.query.faqItems.findMany({ orderBy: asc(faqItems.sortOrder) });
 
 type WithoutId<T> = Omit<T, "id" | "updatedAt">;
 
@@ -112,4 +123,40 @@ export async function updateAccountContent(
     .update(accountContent)
     .set({ ...data, updatedAt: new Date() })
     .where(eq(accountContent.id, 1));
+}
+
+export async function updateGarmentCareContent(
+  data: WithoutId<typeof garmentCareContent.$inferInsert>,
+) {
+  await db
+    .update(garmentCareContent)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(garmentCareContent.id, 1));
+}
+
+export async function updateFaqContent(
+  data: WithoutId<typeof faqContent.$inferInsert>,
+) {
+  await db
+    .update(faqContent)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(faqContent.id, 1));
+}
+
+export async function addFaqItem(data: { question: string; answer: string; sortOrder: number }) {
+  await db.insert(faqItems).values(data);
+}
+
+export async function updateFaqItem(
+  id: string,
+  data: { question: string; answer: string; sortOrder: number },
+) {
+  await db
+    .update(faqItems)
+    .set({ ...data, updatedAt: new Date() })
+    .where(eq(faqItems.id, id));
+}
+
+export async function deleteFaqItem(id: string) {
+  await db.delete(faqItems).where(eq(faqItems.id, id));
 }

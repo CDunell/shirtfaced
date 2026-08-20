@@ -85,6 +85,11 @@ const [more] = await sql`SELECT * FROM more_content WHERE id = 1`;
 const [productPage] =
   await sql`SELECT * FROM product_page_content WHERE id = 1`;
 const [account] = await sql`SELECT * FROM account_content WHERE id = 1`;
+const [garmentCare] =
+  await sql`SELECT * FROM garment_care_content WHERE id = 1`;
+const [faq] = await sql`SELECT * FROM faq_content WHERE id = 1`;
+const faqItemRows =
+  await sql`SELECT * FROM faq_items ORDER BY sort_order ASC`;
 
 await sql.end();
 
@@ -176,6 +181,20 @@ const content = {
       { a: account.benefit2_a, b: account.benefit2_b },
       { a: account.benefit3_a, b: account.benefit3_b },
     ],
+  },
+  garmentCare: {
+    intro: garmentCare.intro,
+    washingP1: garmentCare.washing_p1,
+    dryingP1: garmentCare.drying_p1,
+    printCareP1: garmentCare.print_care_p1,
+    storageP1: garmentCare.storage_p1,
+  },
+  faq: {
+    intro: faq.intro,
+    items: faqItemRows.map((row) => ({
+      question: row.question,
+      answer: row.answer,
+    })),
   },
 };
 
