@@ -263,16 +263,45 @@ Tailwind component layer Admin uses, not a themed instance of a different librar
   are visually indistinguishable from the storefront's own, side by side — not just
   matching design tokens on paper.
 
-## Phase 1 — Sidebar shell, Admin | Studio pinned at the bottom (both apps)
+## Phase 1 — DONE, 20 August 2026 (same night)
 
-- Both apps move off their current top-header nav onto a shared sidebar shell.
-  Admin's `Products`/`Content` (or Phase 2's resolved list) and Studio's regrouped
-  destinations (Phase 4) become the sidebar's main items; `Admin` and `Studio` sit
-  as two pinned links at the sidebar's bottom edge, symmetric in both apps.
-- Studio's hamburger-nav-at-every-width pattern is retired in favour of this shared
-  shell — no more "Elsewhere" grouping.
-- **Exit test:** from either app, the other is one click away at the sidebar's
-  bottom, presented as an equal peer, not "Elsewhere ↗".
+Both apps moved off their top-header nav onto a shared sidebar shape — built twice
+(Admin's `Sidebar.tsx` in Next.js, Studio's `Sidebar.tsx` in Vite/React, no shared
+component library between the two codebases) but to one deliberately mirrored
+pattern: a persistent left sidebar on desktop, `Admin`/`Studio` pinned as a
+symmetric peer pair at the bottom (whichever app you're in shown active, the other
+linking out), collapsing to a top bar + slide-out drawer below the `sm` breakpoint.
+
+- **Admin:** `Products`/`Content` are the sidebar's main items — Phase 2 resolved
+  clean so nothing needed pruning first. Old `Nav.tsx` deleted.
+- **Studio:** all 13 destinations across the Product/World pipelines render in the
+  sidebar unconditionally on desktop — no click needed, unlike the hamburger it
+  replaced. Theme toggle moved to its own slot above the pinned Admin/Studio pair.
+  Pipeline grouping unchanged — that regroup is Phase 4's job, not this one's.
+- `App.test.tsx` needed a real rewrite, not a patch: every test was built around
+  "everything lives behind the hamburger, at every width," which stopped being true
+  the moment the sidebar started rendering its nav unconditionally on desktop.
+  `getByRole("banner")` also stopped matching anything once neither the mobile bar
+  nor the desktop `<aside>` carried that role. Replaced with a `sidebar()` helper
+  scoped to the actual element.
+- Two real lint issues surfaced and fixed: an unnecessary effect-based
+  close-on-navigate in Studio's sidebar (plain `useState`, not a router pathname —
+  no back/forward to catch, so `setState-in-effect` was correctly flagging dead
+  weight) and two test callbacks left `async` with nothing left to await.
+- The exact same `useEffect(() => setOpen(false), [pathname])` pattern in Admin's
+  new sidebar also trips `setState-in-effect` — checked against the original
+  `Nav.tsx` before any of this session's changes and confirmed it was already
+  there, unchanged. Left alone, consistent with Phase 0's rule: fix what you
+  introduce, don't scope-creep into unrelated pre-existing debt.
+
+**Verified live in both breakpoints, both apps:** desktop sidebar is a real 240px
+sticky flex column (not just styled to look like one) with every destination
+visible with zero interaction; mobile collapses to the top bar and the drawer opens
+correctly. `tsc --noEmit` clean, eslint clean, full suites passing (Admin: 9 tests;
+Studio: 144 tests across 3 consecutive runs), both production builds succeed.
+
+**Exit test — met:** from either app, the other is one click away at the sidebar's
+bottom, presented as a visually equal peer, not "Elsewhere ↗".
 
 ## Phase 2 — Nav + page audit, resolved with you
 
