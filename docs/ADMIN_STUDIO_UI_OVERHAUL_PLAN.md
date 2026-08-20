@@ -132,8 +132,9 @@ Specifically, correcting the three things I flagged as questions before checking
   with `[[shirtfaced-vintage-chain-stops-at-planned]]` (open at PLANNED stage, not
   dead). **Keep, no change.**
 - **`EmailBench` — real, working tooling (templates, DNS plan, test-send, marketing
-  consent), not a leftover.** Not stale — just filed under Studio's "World" pipeline
-  today. Fits naturally under your "marketing" framing. **Keep, regroup in Phase 4.**
+  consent), not a leftover.** Not stale. Stays under Studio's "World" pipeline —
+  Phase 4's regroup (originally planned around this) was dropped as a misread, see
+  below.
 - **Print/compositing leftovers — none found.** Grepped the whole `studio/web/src`
   tree for any reference to the old manual 4-corner placement flow the App.tsx
   comment says was removed 15 August. Nothing left pointing at it. **Nothing to clean
@@ -149,7 +150,7 @@ are considered stale or superseded.** Pruning is deferred to after the Phase 0/1
 refit rather than attempted now — noted, not forgotten.
 
 **Phase 2 status: closed.** Full destination list carries forward unpruned into
-Phase 0 and Phase 4.
+Phase 0.
 
 ---
 
@@ -277,7 +278,7 @@ linking out), collapsing to a top bar + slide-out drawer below the `sm` breakpoi
 - **Studio:** all 13 destinations across the Product/World pipelines render in the
   sidebar unconditionally on desktop — no click needed, unlike the hamburger it
   replaced. Theme toggle moved to its own slot above the pinned Admin/Studio pair.
-  Pipeline grouping unchanged — that regroup is Phase 4's job, not this one's.
+  Pipeline grouping unchanged — turns out it stays that way; see Phase 4, dropped.
 - `App.test.tsx` needed a real rewrite, not a patch: every test was built around
   "everything lives behind the hamburger, at every width," which stopped being true
   the moment the sidebar started rendering its nav unconditionally on desktop.
@@ -307,7 +308,6 @@ bottom, presented as a visually equal peer, not "Elsewhere ↗".
 
 - Every destination named in §3/§4 above gets a keep/merge/retire mark, decided by
   you, before anything is touched.
-- Feeds directly into Phase 4's regrouping.
 
 ## Phase 3 — Admin store-backend build-out
 
@@ -320,12 +320,16 @@ bottom, presented as a visually equal peer, not "Elsewhere ↗".
 - **Exit test:** Admin can do everything a store backend needs to do except touch real
   payment data — that one piece stays blocked on checkout shipping.
 
-## Phase 4 — Studio regrouping to "generation / socials / marketing"
+## Phase 4 — DROPPED, 21 August 2026 (misread on my part)
 
-- Re-group the 13 destinations under your stated frame instead of the current
-  Product/World pipeline split, using Phase 2's keep/merge/retire output.
-- **Exit test:** the nav groups match how you described Studio's job in one sentence,
-  not the pipeline language currently sitting in the code comments.
+Originally scoped as "regroup Studio's 13 destinations under generation/socials/
+marketing." That was a misreading of the original trigger: "studio =
+generation/socials/marketing" was describing what Studio covers *as a whole*,
+in contrast to Admin's job, not a spec to split Studio's own internal nav into
+three sections. Corrected directly by you: *"they all live in studio. I didn't
+say split them. I gave examples of what belongs."* Studio's Product/World
+pipeline grouping (Phase 1, unchanged) stands as the real internal IA — nothing
+further needed here.
 
 ---
 
