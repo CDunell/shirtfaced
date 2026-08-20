@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "tsx src/db/migrate-returns-policy.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "tsx --test src/**/*.test.ts",
