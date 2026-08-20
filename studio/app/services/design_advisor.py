@@ -525,5 +525,8 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
         "photorealistic or painterly scene, and not extending past the garment itself. "
         "Invent an appropriate short brand name or wordmark if the concept calls for "
         "lettering; do not render this description's own wording as the printed text, "
-        "and do not depict any real trademarked logo or brand name."
+        "do not depict any real trademarked logo or brand name, and do not invent a name "
+        "that closely echoes an existing apparel brand (e.g. nothing built from 'Rip', "
+        "'Curl', 'Quik', 'Vans', 'Volcom' or similar recognisable fragments) -- invent "
+        "something unrelated instead."
     )
