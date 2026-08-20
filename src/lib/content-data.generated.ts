@@ -8,7 +8,7 @@ export const about = {
   "intro": "shirtfaced makes graphic tees for people with questionable judgement and excellent taste. That's the entire brief.",
   "ideaP1": "Most graphic tees are either forgettable or trying far too hard. We wanted the ones you actually reach for — heavy cotton, cut wide, printed with something worth reading from across a room.",
   "ideaP2": "Every design starts as a joke someone refused to let go of. If it still lands a month later, it gets printed.",
-  "howMadeP1": "240gsm combed cotton, garment-dyed, boxy fit with a dropped shoulder. Designed in Australia and screen-printed by specialists wherever that gets it to you fastest — the design is ours, the press is whoever does it properly.",
+  "howMadeP1": "220gsm combed cotton, structured fit, dropped shoulder. Designed in Australia and screen-printed by specialists wherever that gets it to you fastest — the design is ours, the press is whoever does it properly.",
   "howMadeP2": "Prints are built to crack and fade the way a good tee should. It will look better in a year than it does in the bag.",
   "wontDoP1": "No countdown timers telling you four people are looking at this right now. No fake scarcity. No inventing an origin story we can't back up.",
   "whoP1": "A small Australian outfit that started in 2026 and has so far made exactly the decisions you'd expect from people who named a company this."
@@ -105,7 +105,7 @@ export const productPage = {
       "b": "built for adventures"
     },
     {
-      "a": "230gsm mid weight",
+      "a": "220gsm mid weight",
       "b": "holds its shape"
     },
     {
@@ -154,11 +154,15 @@ export const faq = {
     },
     {
       "question": "What size should I get?",
-      "answer": "Everything's cut boxy and slightly oversized. If you want it fitted, size down. Full measurements are on the size guide."
+      "answer": "Everything's cut boxy and slightly oversized. If you want it fitted, size down. Full measurements:",
+      "linkHref": "/size-guide",
+      "linkLabel": "size guide"
     },
     {
       "question": "How long does shipping take?",
-      "answer": "See the shipping page for current rates and timeframes — they're accurate as of today, not a guess made months ago."
+      "answer": "Rates and timeframes change, so we keep one accurate copy of it rather than duplicating it here:",
+      "linkHref": "/shipping",
+      "linkLabel": "shipping"
     },
     {
       "question": "Do you ship outside Australia?",
@@ -166,11 +170,15 @@ export const faq = {
     },
     {
       "question": "What's the returns policy?",
-      "answer": "See the returns page for the current window and process. Faulty or wrong item — send a photo, we replace it, no return needed."
+      "answer": "Faulty or wrong item — send a photo, we replace it, no return needed. For everything else, the window and process are on the",
+      "linkHref": "/returns",
+      "linkLabel": "returns page"
     },
     {
       "question": "How do I wash it without wrecking the print?",
-      "answer": "Cold wash, inside out, hang dry, don't iron the print. Full detail on the garment care page."
+      "answer": "Cold wash, inside out, hang dry, don't iron the print. Full detail:",
+      "linkHref": "/garment-care",
+      "linkLabel": "garment care"
     },
     {
       "question": "Do you do wholesale?",

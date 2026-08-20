@@ -1,0 +1,1110 @@
+{
+  "id": "570fdce7-336c-4af4-89a0-16d402f67165",
+  "prevId": "9023918a-6a84-40a2-ace3-96d6d7d8893c",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.about_content": {
+      "name": "about_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idea_p1": {
+          "name": "idea_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "idea_p2": {
+          "name": "idea_p2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "how_made_p1": {
+          "name": "how_made_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "how_made_p2": {
+          "name": "how_made_p2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wont_do_p1": {
+          "name": "wont_do_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "who_p1": {
+          "name": "who_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.account_content": {
+      "name": "account_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "benefit1_a": {
+          "name": "benefit1_a",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "benefit1_b": {
+          "name": "benefit1_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "benefit2_a": {
+          "name": "benefit2_a",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "benefit2_b": {
+          "name": "benefit2_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "benefit3_a": {
+          "name": "benefit3_a",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "benefit3_b": {
+          "name": "benefit3_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.colour_stock": {
+      "name": "colour_stock",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "colour_id": {
+          "name": "colour_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "name": "size",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {
+        "colour_stock_colour_size_idx": {
+          "name": "colour_stock_colour_size_idx",
+          "columns": [
+            {
+              "expression": "colour_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "size",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "colour_stock_colour_id_product_colours_id_fk": {
+          "name": "colour_stock_colour_id_product_colours_id_fk",
+          "tableFrom": "colour_stock",
+          "tableTo": "product_colours",
+          "columnsFrom": [
+            "colour_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.contact_content": {
+      "name": "contact_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wholesale_p1": {
+          "name": "wholesale_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "press_p1": {
+          "name": "press_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bottom_blurb": {
+          "name": "bottom_blurb",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.faq_content": {
+      "name": "faq_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.faq_items": {
+      "name": "faq_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "question": {
+          "name": "question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "answer": {
+          "name": "answer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "link_href": {
+          "name": "link_href",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "link_label": {
+          "name": "link_label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.garment_care_content": {
+      "name": "garment_care_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "washing_p1": {
+          "name": "washing_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "drying_p1": {
+          "name": "drying_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "print_care_p1": {
+          "name": "print_care_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "storage_p1": {
+          "name": "storage_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.home_content": {
+      "name": "home_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "trust1": {
+          "name": "trust1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "trust2": {
+          "name": "trust2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "trust3": {
+          "name": "trust3",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "promo_heading": {
+          "name": "promo_heading",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "promo_alt": {
+          "name": "promo_alt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "newsletter_heading": {
+          "name": "newsletter_heading",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.more_content": {
+      "name": "more_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "blurb_heading": {
+          "name": "blurb_heading",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "blurb_subline": {
+          "name": "blurb_subline",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.product_colours": {
+      "name": "product_colours",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "product_id": {
+          "name": "product_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "swatch": {
+          "name": "swatch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ink": {
+          "name": "ink",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "images": {
+          "name": "images",
+          "type": "text[]",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "product_colours_product_id_products_id_fk": {
+          "name": "product_colours_product_id_products_id_fk",
+          "tableFrom": "product_colours",
+          "tableTo": "products",
+          "columnsFrom": [
+            "product_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.product_page_content": {
+      "name": "product_page_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "feature1_a": {
+          "name": "feature1_a",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature1_b": {
+          "name": "feature1_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature2_a": {
+          "name": "feature2_a",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature2_b": {
+          "name": "feature2_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature3_a": {
+          "name": "feature3_a",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature3_b": {
+          "name": "feature3_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature4_a": {
+          "name": "feature4_a",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "feature4_b": {
+          "name": "feature4_b",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.products": {
+      "name": "products",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "slug": {
+          "name": "slug",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "art": {
+          "name": "art",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "price_cents": {
+          "name": "price_cents",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_new": {
+          "name": "is_new",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "blurb": {
+          "name": "blurb",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "products_slug_unique": {
+          "name": "products_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.returns_content": {
+      "name": "returns_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step1_title": {
+          "name": "step1_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step1_body": {
+          "name": "step1_body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step2_title": {
+          "name": "step2_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step2_body": {
+          "name": "step2_body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step3_title": {
+          "name": "step3_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step3_body": {
+          "name": "step3_body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step4_title": {
+          "name": "step4_title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "step4_body": {
+          "name": "step4_body",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exchanges_p1": {
+          "name": "exchanges_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "exchanges_p2": {
+          "name": "exchanges_p2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wrong_p1": {
+          "name": "wrong_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wrong_p2": {
+          "name": "wrong_p2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cant_take_p1": {
+          "name": "cant_take_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.shipping_content": {
+      "name": "shipping_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "standard_name": {
+          "name": "standard_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "standard_time": {
+          "name": "standard_time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "standard_price": {
+          "name": "standard_price",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "express_name": {
+          "name": "express_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "express_time": {
+          "name": "express_time",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "express_price": {
+          "name": "express_price",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "where_p1": {
+          "name": "where_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "where_p2": {
+          "name": "where_p2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tracking_p1": {
+          "name": "tracking_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "packaging_p1": {
+          "name": "packaging_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.size_guide_content": {
+      "name": "size_guide_content",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "default": 1
+        },
+        "intro": {
+          "name": "intro",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "measure_chest": {
+          "name": "measure_chest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "measure_length": {
+          "name": "measure_length",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "between_sizes_p1": {
+          "name": "between_sizes_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "between_sizes_p2": {
+          "name": "between_sizes_p2",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "care_p1": {
+          "name": "care_p1",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "s_chest": {
+          "name": "s_chest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "s_length": {
+          "name": "s_length",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "m_chest": {
+          "name": "m_chest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "m_length": {
+          "name": "m_length",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "l_chest": {
+          "name": "l_chest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "l_length": {
+          "name": "l_length",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "xl_chest": {
+          "name": "xl_chest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "xl_length": {
+          "name": "xl_length",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "xxl_chest": {
+          "name": "xxl_chest",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "xxl_length": {
+          "name": "xxl_length",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

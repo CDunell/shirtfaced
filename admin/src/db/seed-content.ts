@@ -29,7 +29,7 @@ const about = {
   ideaP2:
     "Every design starts as a joke someone refused to let go of. If it still lands a month later, it gets printed.",
   howMadeP1:
-    "240gsm combed cotton, garment-dyed, boxy fit with a dropped shoulder. Designed in Australia and screen-printed by specialists wherever that gets it to you fastest — the design is ours, the press is whoever does it properly.",
+    "220gsm combed cotton, structured fit, dropped shoulder. Designed in Australia and screen-printed by specialists wherever that gets it to you fastest — the design is ours, the press is whoever does it properly.",
   howMadeP2:
     "Prints are built to crack and fade the way a good tee should. It will look better in a year than it does in the bag.",
   wontDoP1:
@@ -138,7 +138,7 @@ const productPage = {
   id: 1,
   feature1A: "100% combed cotton",
   feature1B: "built for adventures",
-  feature2A: "230gsm mid weight",
+  feature2A: "220gsm mid weight",
   feature2B: "holds its shape",
   feature3A: "designed in australia",
   feature3B: "printed worldwide",
@@ -187,13 +187,17 @@ const faqItemRows = [
   {
     question: "What size should I get?",
     answer:
-      "Everything's cut boxy and slightly oversized. If you want it fitted, size down. Full measurements are on the size guide.",
+      "Everything's cut boxy and slightly oversized. If you want it fitted, size down. Full measurements:",
+    linkHref: "/size-guide",
+    linkLabel: "size guide",
     sortOrder: 1,
   },
   {
     question: "How long does shipping take?",
     answer:
-      "See the shipping page for current rates and timeframes — they're accurate as of today, not a guess made months ago.",
+      "Rates and timeframes change, so we keep one accurate copy of it rather than duplicating it here:",
+    linkHref: "/shipping",
+    linkLabel: "shipping",
     sortOrder: 2,
   },
   {
@@ -205,13 +209,16 @@ const faqItemRows = [
   {
     question: "What's the returns policy?",
     answer:
-      "See the returns page for the current window and process. Faulty or wrong item — send a photo, we replace it, no return needed.",
+      "Faulty or wrong item — send a photo, we replace it, no return needed. For everything else, the window and process are on the",
+    linkHref: "/returns",
+    linkLabel: "returns page",
     sortOrder: 4,
   },
   {
     question: "How do I wash it without wrecking the print?",
-    answer:
-      "Cold wash, inside out, hang dry, don't iron the print. Full detail on the garment care page.",
+    answer: "Cold wash, inside out, hang dry, don't iron the print. Full detail:",
+    linkHref: "/garment-care",
+    linkLabel: "garment care",
     sortOrder: 5,
   },
   {

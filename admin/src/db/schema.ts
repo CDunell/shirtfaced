@@ -260,6 +260,10 @@ export const faqItems = pgTable("faq_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   question: text("question").notNull(),
   answer: text("answer").notNull(),
+  /* Optional — most answers that point at another page (shipping, returns,
+     size guide, garment care) should link there rather than just say so. */
+  linkHref: text("link_href"),
+  linkLabel: text("link_label"),
   sortOrder: integer("sort_order").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()

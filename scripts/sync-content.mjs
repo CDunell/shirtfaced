@@ -194,6 +194,8 @@ const content = {
     items: faqItemRows.map((row) => ({
       question: row.question,
       answer: row.answer,
+      linkHref: row.link_href,
+      linkLabel: row.link_label,
     })),
   },
 };

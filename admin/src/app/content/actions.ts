@@ -247,11 +247,19 @@ export async function updateFaqIntroAction(
   return { error: null, saved: true };
 }
 
-const faqItemSchema = z.object({
-  question: nonEmpty,
-  answer: nonEmpty,
-  sortOrder: z.coerce.number().int(),
-});
+const emptyToNull = (v: unknown) => (typeof v === "string" && v.trim() === "" ? null : v);
+
+const faqItemSchema = z
+  .object({
+    question: nonEmpty,
+    answer: nonEmpty,
+    linkHref: z.preprocess(emptyToNull, z.string().trim().startsWith("/").nullable()),
+    linkLabel: z.preprocess(emptyToNull, z.string().trim().min(1).nullable()),
+    sortOrder: z.coerce.number().int(),
+  })
+  .refine((v) => (v.linkHref === null) === (v.linkLabel === null), {
+    message: "Link URL and link label must both be set, or both left blank.",
+  });
 
 export async function addFaqItemAction(formData: FormData) {
   const result = faqItemSchema.safeParse(Object.fromEntries(formData.entries()));

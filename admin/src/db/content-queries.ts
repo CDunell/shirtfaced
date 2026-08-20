@@ -143,14 +143,19 @@ export async function updateFaqContent(
     .where(eq(faqContent.id, 1));
 }
 
-export async function addFaqItem(data: { question: string; answer: string; sortOrder: number }) {
+type FaqItemInput = {
+  question: string;
+  answer: string;
+  linkHref: string | null;
+  linkLabel: string | null;
+  sortOrder: number;
+};
+
+export async function addFaqItem(data: FaqItemInput) {
   await db.insert(faqItems).values(data);
 }
 
-export async function updateFaqItem(
-  id: string,
-  data: { question: string; answer: string; sortOrder: number },
-) {
+export async function updateFaqItem(id: string, data: FaqItemInput) {
   await db
     .update(faqItems)
     .set({ ...data, updatedAt: new Date() })

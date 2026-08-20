@@ -1,12 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { IconChevronDown } from "@/components/Icons";
 
 export function FaqAccordion({
   items,
 }: {
-  items: { question: string; answer: string }[];
+  items: {
+    question: string;
+    answer: string;
+    linkHref?: string | null;
+    linkLabel?: string | null;
+  }[];
 }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
@@ -34,6 +40,17 @@ export function FaqAccordion({
             {open && (
               <p className="pb-5 pr-8 text-[15px] leading-relaxed text-ink/70">
                 {item.answer}
+                {item.linkHref && item.linkLabel && (
+                  <>
+                    {" "}
+                    <Link
+                      href={item.linkHref}
+                      className="font-semibold text-ink underline underline-offset-2"
+                    >
+                      {item.linkLabel}
+                    </Link>
+                  </>
+                )}
               </p>
             )}
           </li>

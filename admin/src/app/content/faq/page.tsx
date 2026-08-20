@@ -52,6 +52,28 @@ export default async function FaqContentPage() {
                   required
                 />
               </Field>
+              <div className="flex gap-3">
+                <Field
+                  label="Link URL (optional)"
+                  htmlFor={`lh-${item.id}`}
+                  hint="e.g. /shipping — leave both link fields blank for no link."
+                >
+                  <Input
+                    id={`lh-${item.id}`}
+                    name="linkHref"
+                    defaultValue={item.linkHref ?? ""}
+                    placeholder="/shipping"
+                  />
+                </Field>
+                <Field label="Link label (optional)" htmlFor={`ll-${item.id}`}>
+                  <Input
+                    id={`ll-${item.id}`}
+                    name="linkLabel"
+                    defaultValue={item.linkLabel ?? ""}
+                    placeholder="the shipping page"
+                  />
+                </Field>
+              </div>
               <Field label="Order" htmlFor={`o-${item.id}`} hint="Lower numbers show first.">
                 <Input
                   id={`o-${item.id}`}
@@ -83,6 +105,18 @@ export default async function FaqContentPage() {
             <Field label="Answer" htmlFor="new-answer">
               <Textarea id="new-answer" name="answer" rows={3} required />
             </Field>
+            <div className="flex gap-3">
+              <Field
+                label="Link URL (optional)"
+                htmlFor="new-linkHref"
+                hint="e.g. /shipping — leave both link fields blank for no link."
+              >
+                <Input id="new-linkHref" name="linkHref" placeholder="/shipping" />
+              </Field>
+              <Field label="Link label (optional)" htmlFor="new-linkLabel">
+                <Input id="new-linkLabel" name="linkLabel" placeholder="the shipping page" />
+              </Field>
+            </div>
             <Field label="Order" htmlFor="new-order" hint="Lower numbers show first.">
               <Input
                 id="new-order"
