@@ -279,3 +279,140 @@ export const faqItems = pgTable("faq_items", {
     .notNull()
     .defaultNow(),
 });
+
+/* ---------------------------------------------------------------------------
+   Store backend — customers, discounts, orders. Phase 3 of
+   docs/ADMIN_STUDIO_UI_OVERHAUL_PLAN.md. Built ahead of checkout landing, so
+   the data model and UI exist to receive real orders the moment that ships,
+   rather than a second scramble then. No FK from these tables back into
+   anything checkout-specific yet, because nothing checkout-specific exists.
+--------------------------------------------------------------------------- */
+
+export const customers = pgTable("customers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  name: text("name").notNull(),
+  phone: text("phone"),
+  addressLine1: text("address_line1"),
+  addressLine2: text("address_line2"),
+  suburb: text("suburb"),
+  state: text("state"),
+  postcode: text("postcode"),
+  country: text("country").notNull().default("AU"),
+  /* Staff-facing only, never shown to the customer. */
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const DISCOUNT_TYPES = ["percent", "fixed"] as const;
+export type DiscountType = (typeof DISCOUNT_TYPES)[number];
+
+export const discounts = pgTable("discounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  code: text("code").notNull().unique(),
+  type: text("type", { enum: DISCOUNT_TYPES }).notNull(),
+  /* percent: 0-100. fixed: cents off, same unit as priceCents elsewhere. */
+  value: integer("value").notNull(),
+  active: boolean("active").notNull().default(true),
+  startsAt: timestamp("starts_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  /* Null means unlimited. */
+  usageLimit: integer("usage_limit"),
+  timesUsed: integer("times_used").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const ORDER_STATUSES = ["pending", "paid", "fulfilled", "cancelled"] as const;
+export type OrderStatus = (typeof ORDER_STATUSES)[number];
+
+export const orders = pgTable("orders", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  /* A short, sequential, human-readable reference (displayed as SF-1000,
+     SF-1001, ...) — a Postgres serial rather than a stored string so it's
+     race-free under concurrent inserts and the "next number" is never a
+     query away from being wrong. */
+  orderSeq: integer("order_seq").notNull().generatedAlwaysAsIdentity(),
+  customerId: uuid("customer_id").references(() => customers.id, {
+    onDelete: "set null",
+  }),
+  status: text("status", { enum: ORDER_STATUSES }).notNull().default("pending"),
+  subtotalCents: integer("subtotal_cents").notNull(),
+  discountCents: integer("discount_cents").notNull().default(0),
+  shippingCents: integer("shipping_cents").notNull().default(0),
+  totalCents: integer("total_cents").notNull(),
+  discountId: uuid("discount_id").references(() => discounts.id, {
+    onDelete: "set null",
+  }),
+  /* Freeform for now — no structured address table exists yet anywhere in
+     this schema (customers doesn't get one until an order actually needs
+     it), and duplicating one here ahead of real checkout data would be
+     guessing at a shape rather than building it. */
+  shippingAddress: text("shipping_address"),
+  /* Staff-facing only, never shown to the customer. */
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const orderItems = pgTable("order_items", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  orderId: uuid("order_id")
+    .notNull()
+    .references(() => orders.id, { onDelete: "cascade" }),
+  /* Nullable and paired with a name/colour/size snapshot below: a product
+     can be edited or deleted after an order ships, and the order has to go
+     on describing what was actually sold, not what the catalogue says today. */
+  productId: uuid("product_id").references(() => products.id, {
+    onDelete: "set null",
+  }),
+  productName: text("product_name").notNull(),
+  colourName: text("colour_name"),
+  size: text("size"),
+  quantity: integer("quantity").notNull(),
+  unitPriceCents: integer("unit_price_cents").notNull(),
+});
+
+export const customersRelations = relations(customers, ({ many }) => ({
+  orders: many(orders),
+}));
+
+export const discountsRelations = relations(discounts, ({ many }) => ({
+  orders: many(orders),
+}));
+
+export const ordersRelations = relations(orders, ({ one, many }) => ({
+  customer: one(customers, {
+    fields: [orders.customerId],
+    references: [customers.id],
+  }),
+  discount: one(discounts, {
+    fields: [orders.discountId],
+    references: [discounts.id],
+  }),
+  items: many(orderItems),
+}));
+
+export const orderItemsRelations = relations(orderItems, ({ one }) => ({
+  order: one(orders, {
+    fields: [orderItems.orderId],
+    references: [orders.id],
+  }),
+  product: one(products, {
+    fields: [orderItems.productId],
+    references: [products.id],
+  }),
+}));
