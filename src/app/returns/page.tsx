@@ -1,56 +1,88 @@
 import { PageShell, Prose, Section } from "@/components/PageShell";
-import { returns } from "@/lib/content-data.generated";
 
 export const metadata = {
   title: "Returns — shirtfaced",
-  description: "30 days, unworn, no interrogation.",
+  description: "Change of mind? Yeah nah. If we fucked it up, we'll fix it.",
 };
-
-const STEPS: [string, string][] = [
-  [returns.step1Title, returns.step1Body],
-  [returns.step2Title, returns.step2Body],
-  [returns.step3Title, returns.step3Body],
-  [returns.step4Title, returns.step4Body],
-];
 
 export default function ReturnsPage() {
   return (
-    <PageShell title="returns" intro={returns.intro}>
+    <PageShell
+      title="returns & other regrettable decisions"
+      intro="You bought it. You picked the size. We made it. Everyone played their part."
+    >
       <div className="flex flex-col gap-8">
-        <Section heading="How it works">
-          <ol className="flex flex-col gap-4">
-            {STEPS.map(([a, b], i) => (
-              <li key={a} className="flex gap-4">
-                <span className="display grid h-9 w-9 shrink-0 place-items-center rounded-full bg-ink text-[16px] text-paper">
-                  {i + 1}
-                </span>
-                <span className="pt-1 text-[16px] leading-relaxed">
-                  <strong>{a}</strong>
-                  <br />
-                  <span className="text-ink/70">{b}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </Section>
-
-        <Section heading="Exchanges">
+        <Section heading="Changed your mind?">
           <Prose>
-            <p>{returns.exchangesP1}</p>
-            <p>{returns.exchangesP2}</p>
+            <p>Yeah nah.</p>
+            <p>
+              We don&apos;t accept returns or exchanges because you changed your mind,
+              ordered the wrong size, decided black isn&apos;t your colour, sobered up,
+              or your mate said something unhelpful.
+            </p>
+            <p>
+              Check the size guide before ordering. Measure a shirt you already own
+              if you&apos;re not sure. It&apos;s considerably less annoying than discovering
+              you&apos;re actually an XL through the postal system.
+            </p>
           </Prose>
         </Section>
 
-        <Section heading="If something's wrong with it">
+        <Section heading="Ordered the wrong size?">
           <Prose>
-            <p>{returns.wrongP1}</p>
-            <p>{returns.wrongP2}</p>
+            <p>That&apos;s yours now.</p>
+            <p>
+              We make and fulfil our gear in small runs, so we don&apos;t operate a
+              revolving door of size exchanges.
+            </p>
+            <p>Check twice. Order once.</p>
           </Prose>
         </Section>
 
-        <Section heading="What we can't take back">
+        <Section heading="We fucked it up?">
           <Prose>
-            <p>{returns.cantTakeP1}</p>
+            <p>Different story.</p>
+            <p>
+              If we send you the wrong item, wrong size, or there&apos;s a genuine
+              manufacturing or print fault, that&apos;s on us. Send us a photo and your
+              order details and we&apos;ll sort it.
+            </p>
+            <p>No interpretive dance required.</p>
+          </Prose>
+        </Section>
+
+        <Section heading="Your shirt has been through some shit">
+          <Prose>
+            <p>
+              Once it&apos;s been worn, washed, stained, stretched, shrunk in a dryer hot
+              enough to re-enter the atmosphere, attacked by a dog, left at a
+              festival, or otherwise subjected to your lifestyle choices, we can&apos;t
+              take it back for change of mind.
+            </p>
+            <p>Follow the care instructions. Or don&apos;t. We&apos;re a clothing company, not the police.</p>
+          </Prose>
+        </Section>
+
+        <Section heading="Australian Consumer Law">
+          <Prose>
+            <p>
+              None of the nonsense above takes away your rights under Australian
+              Consumer Law. If something has a genuine fault, isn&apos;t what we said it
+              was, or otherwise fails a consumer guarantee, you&apos;re entitled to the
+              remedies provided by Australian Consumer Law.
+            </p>
+            <p>We&apos;ll honour those rights. Obviously.</p>
+          </Prose>
+        </Section>
+
+        <Section heading="The short version">
+          <Prose>
+            <p><strong>Change of mind?</strong> No.</p>
+            <p><strong>Wrong size because you ordered the wrong size?</strong> No.</p>
+            <p><strong>Want to swap it for something else?</strong> No.</p>
+            <p><strong>We sent the wrong thing?</strong> We&apos;ll fix it.</p>
+            <p><strong>Genuine fault?</strong> We&apos;ll fix it.</p>
+            <p><strong>Destroyed it yourself?</strong> Nice one.</p>
           </Prose>
         </Section>
       </div>
