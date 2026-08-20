@@ -2,12 +2,14 @@
 
 import { useActionState, useId, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SIZES } from "@/db/schema";
+import { SIZES, type Size } from "@/db/schema";
 import type { FormState } from "@/app/orders/actions";
 import { Button, Card, Field, Input, Label, Select, Textarea } from "@/components/ui";
 import { formatCents } from "@/lib/money";
 
 type ItemState = {
+  /** "" means custom / not in the catalog -- productName etc are typed by hand. */
+  productId: string;
   productName: string;
   colourName: string;
   size: string;
@@ -16,7 +18,14 @@ type ItemState = {
 };
 
 function newItem(): ItemState {
-  return { productName: "", colourName: "", size: "", quantity: "1", unitPriceDollars: "0.00" };
+  return {
+    productId: "",
+    productName: "",
+    colourName: "",
+    size: "",
+    quantity: "1",
+    unitPriceDollars: "0.00",
+  };
 }
 
 export interface OrderFormCustomer {
@@ -30,14 +39,28 @@ export interface OrderFormDiscount {
   code: string;
 }
 
+export interface OrderFormProductColour {
+  name: string;
+  stock: { size: Size; quantity: number }[];
+}
+
+export interface OrderFormProduct {
+  id: string;
+  name: string;
+  priceCents: number;
+  colours: OrderFormProductColour[];
+}
+
 export function OrderForm({
   customers,
   discounts,
+  products,
   action,
   submitLabel,
 }: {
   customers: OrderFormCustomer[];
   discounts: OrderFormDiscount[];
+  products: OrderFormProduct[];
   action: (prevState: FormState, formData: FormData) => Promise<FormState>;
   submitLabel: string;
 }) {
@@ -60,6 +83,25 @@ export function OrderForm({
     setItems((prev) => prev.filter((_, i) => i !== index));
   }
 
+  /** Switching products resets colour/size (a size that made sense for the old
+   * product is meaningless for the new one) and pulls in the catalogue price
+   * as a starting point -- still just a number in an input, free to override
+   * for a discount or a price that's changed since. */
+  function pickProduct(index: number, productId: string) {
+    const product = products.find((p) => p.id === productId);
+    if (!product) {
+      updateItem(index, { productId: "" });
+      return;
+    }
+    updateItem(index, {
+      productId,
+      productName: product.name,
+      colourName: product.colours[0]?.name ?? "",
+      size: "",
+      unitPriceDollars: (product.priceCents / 100).toFixed(2),
+    });
+  }
+
   const dollarsToCents = (v: string) => Math.round(Number(v || "0") * 100);
   const subtotalCents = items.reduce(
     (sum, it) => sum + Number(it.quantity || "0") * dollarsToCents(it.unitPriceDollars),
@@ -79,7 +121,7 @@ export function OrderForm({
       shippingAddress,
       notes,
       items: items.map((it) => ({
-        productId: null,
+        productId: it.productId || null,
         productName: it.productName,
         colourName: it.colourName || null,
         size: it.size || null,
@@ -197,29 +239,69 @@ export function OrderForm({
 
         {items.map((item, index) => {
           const iid = `${idPrefix}-item-${String(index)}`;
+          const product = products.find((p) => p.id === item.productId);
+          const colour = product?.colours.find((c) => c.name === item.colourName);
+
           return (
             <Card key={index} className="grid gap-4 sm:grid-cols-5">
               <div className="sm:col-span-2">
-                <Field label="Product name" htmlFor={`${iid}-name`}>
+                <Field label="Product" htmlFor={`${iid}-product`}>
+                  <Select
+                    id={`${iid}-product`}
+                    value={item.productId}
+                    onChange={(e) => {
+                      pickProduct(index, e.target.value);
+                    }}
+                  >
+                    <option value="">Custom — not in the catalogue</option>
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </Select>
+                </Field>
+                {!item.productId && (
                   <Input
-                    id={`${iid}-name`}
+                    className="mt-2"
+                    placeholder="Product name"
+                    aria-label="Custom product name"
                     required
                     value={item.productName}
                     onChange={(e) => {
                       updateItem(index, { productName: e.target.value });
                     }}
                   />
-                </Field>
+                )}
               </div>
-              <Field label="Colour (optional)" htmlFor={`${iid}-colour`}>
-                <Input
-                  id={`${iid}-colour`}
-                  value={item.colourName}
-                  onChange={(e) => {
-                    updateItem(index, { colourName: e.target.value });
-                  }}
-                />
+
+              <Field label="Colour" htmlFor={`${iid}-colour`}>
+                {product ? (
+                  <Select
+                    id={`${iid}-colour`}
+                    value={item.colourName}
+                    onChange={(e) => {
+                      updateItem(index, { colourName: e.target.value, size: "" });
+                    }}
+                  >
+                    {product.colours.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <Input
+                    id={`${iid}-colour`}
+                    placeholder="Optional"
+                    value={item.colourName}
+                    onChange={(e) => {
+                      updateItem(index, { colourName: e.target.value });
+                    }}
+                  />
+                )}
               </Field>
+
               <Field label="Size" htmlFor={`${iid}-size`}>
                 <Select
                   id={`${iid}-size`}
@@ -229,13 +311,18 @@ export function OrderForm({
                   }}
                 >
                   <option value="">—</option>
-                  {SIZES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
+                  {SIZES.map((s) => {
+                    const stock = colour?.stock.find((row) => row.size === s)?.quantity;
+                    return (
+                      <option key={s} value={s}>
+                        {s}
+                        {product && stock !== undefined ? ` (${String(stock)} in stock)` : ""}
+                      </option>
+                    );
+                  })}
                 </Select>
               </Field>
+
               <Field label="Qty" htmlFor={`${iid}-qty`}>
                 <Input
                   id={`${iid}-qty`}
