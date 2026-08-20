@@ -39,6 +39,16 @@ export default async function ProductsPage() {
                         New
                       </span>
                     )}
+                    {!product.published && (
+                      <span className="rounded-full bg-coral px-2 py-0.5 text-[10px] font-bold uppercase">
+                        Draft
+                      </span>
+                    )}
+                    {product.studioApprovedDesignId && (
+                      <span className="rounded-full border border-ink/15 px-2 py-0.5 text-[10px] font-bold uppercase text-ink/50">
+                        Studio
+                      </span>
+                    )}
                   </div>
                   <span className="text-[13px] text-ink/50">/{product.slug}</span>
                 </div>

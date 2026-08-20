@@ -36,6 +36,13 @@
       "when": 1787203135135,
       "tag": "0004_lush_vengeance",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787204732416,
+      "tag": "0005_shallow_thanos",
+      "breakpoints": true
     }
   ]
 }

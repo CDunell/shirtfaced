@@ -21,6 +21,7 @@ export const productSchema = z.object({
   art: z.string().min(1, "Art key is required"),
   priceCents: z.coerce.number().int().min(0),
   isNew: z.coerce.boolean().default(false),
+  published: z.coerce.boolean().default(true),
   blurb: z.string().min(1, "Blurb is required"),
   description: z.string().min(1, "Description is required"),
   colours: z.array(colourSchema).min(1, "Add at least one colourway"),

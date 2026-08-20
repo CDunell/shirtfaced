@@ -31,6 +31,16 @@ export const products = pgTable("products", {
   isNew: boolean("is_new").notNull().default(false),
   blurb: text("blurb").notNull(),
   description: text("description").notNull(),
+  /* Live on the storefront once true. Defaults true so every product created
+     by hand in this admin behaves exactly as before this column existed —
+     only sync-approved-designs.ts inserts a row with this false. Nothing
+     price-less or unphotographed reaches a customer by accident. */
+  published: boolean("published").notNull().default(true),
+  /* Traceability back to Shirtfaced Studio's design pipeline (a separate
+     Postgres database and app — see sync-approved-designs.ts). Null for
+     products created by hand in this admin, which is most of them today. */
+  studioConceptId: uuid("studio_concept_id"),
+  studioApprovedDesignId: uuid("studio_approved_design_id").unique(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

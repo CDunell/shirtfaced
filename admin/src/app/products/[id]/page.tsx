@@ -20,6 +20,7 @@ export default async function EditProductPage({
     art: product.art,
     priceDollars: (product.priceCents / 100).toFixed(2),
     isNew: product.isNew,
+    published: product.published,
     blurb: product.blurb,
     description: product.description,
     colours: product.colours.map((c) => ({
@@ -42,6 +43,13 @@ export default async function EditProductPage({
   return (
     <div className="flex flex-col gap-6">
       <h1 className="display text-[40px]">Edit product</h1>
+      {product.studioApprovedDesignId && (
+        <p className="rounded-[var(--radius-card)] border border-ink/10 bg-white/60 px-4 py-3 text-[13px] text-ink/60">
+          Synced from Shirtfaced Studio — approved design{" "}
+          <span className="font-mono">{product.studioApprovedDesignId}</span>. Price, stock and
+          photography here are yours to set; the design itself is tracked back to that approval.
+        </p>
+      )}
       <ProductForm initial={initial} action={action} submitLabel="Save changes" />
     </div>
   );

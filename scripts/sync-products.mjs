@@ -81,6 +81,7 @@ if (!(await reachable(sql))) {
 const products = await sql`
   SELECT id, slug, name, category, art, price_cents, is_new, blurb, description
   FROM products
+  WHERE published
   ORDER BY created_at
 `;
 

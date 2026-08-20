@@ -22,6 +22,7 @@ export type ProductFormValues = {
   art: string;
   priceDollars: string;
   isNew: boolean;
+  published: boolean;
   blurb: string;
   description: string;
   colours: ColourState[];
@@ -49,6 +50,7 @@ export const emptyProduct: ProductFormValues = {
   art: "",
   priceDollars: "45.00",
   isNew: false,
+  published: true,
   blurb: "",
   description: "",
   colours: [newColour()],
@@ -96,6 +98,7 @@ export function ProductForm({
       art: product.art,
       priceCents: Math.round(Number(product.priceDollars || "0") * 100),
       isNew: product.isNew,
+      published: product.published,
       blurb: product.blurb,
       description: product.description,
       colours: product.colours.map((c) => ({
@@ -175,7 +178,7 @@ export function ProductForm({
           />
         </Field>
 
-        <div className="flex items-end pb-2.5">
+        <div className="flex items-end gap-5 pb-2.5">
           <label className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-wide text-ink/70">
             <input
               type="checkbox"
@@ -184,6 +187,15 @@ export function ProductForm({
               className="h-4 w-4 accent-lime"
             />
             Mark as new
+          </label>
+          <label className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-wide text-ink/70">
+            <input
+              type="checkbox"
+              checked={product.published}
+              onChange={(e) => setProduct((p) => ({ ...p, published: e.target.checked }))}
+              className="h-4 w-4 accent-lime"
+            />
+            Published — live on the storefront
           </label>
         </div>
 

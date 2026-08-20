@@ -56,6 +56,7 @@ export async function createProduct(data: ProductInput) {
         art: data.art,
         priceCents: data.priceCents,
         isNew: data.isNew,
+        published: data.published,
         blurb: data.blurb,
         description: data.description,
       })
@@ -77,6 +78,7 @@ export async function updateProduct(id: string, data: ProductInput) {
         art: data.art,
         priceCents: data.priceCents,
         isNew: data.isNew,
+        published: data.published,
         blurb: data.blurb,
         description: data.description,
         updatedAt: new Date(),

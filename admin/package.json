@@ -12,7 +12,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx src/db/seed.ts",
-    "seed:content": "tsx src/db/seed-content.ts"
+    "seed:content": "tsx src/db/seed-content.ts",
+    "sync:approved-designs": "tsx src/db/sync-approved-designs.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
