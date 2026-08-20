@@ -1,20 +1,17 @@
 /**
- * Entry point: Styletron engine, Base provider and theme state.
+ * Entry point.
+ *
+ * Used to also set up the Styletron engine and Base Web's BaseProvider here;
+ * now that every component is Tailwind, App itself handles theme sync (see
+ * useSyncDarkClass) and there's no provider tree left to build.
  */
 
 import { StrictMode, useCallback, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { BaseProvider } from "baseui";
-import { Client as Styletron } from "styletron-engine-monolithic";
-import { Provider as StyletronProvider } from "styletron-react";
 
 import { App } from "./App";
-// Brand sheet: page background, the two display faces, the focus ring. Base Web
-// takes the palette from theme.ts; this covers what a component theme cannot.
 import "./index.css";
-import { initialThemeName, storeThemeName, THEMES, type ThemeName } from "./theme";
-
-const engine = new Styletron();
+import { initialThemeName, storeThemeName, type ThemeName } from "./theme";
 
 function Root(): React.JSX.Element {
   const [themeName, setThemeName] = useState<ThemeName>(initialThemeName);
@@ -27,13 +24,7 @@ function Root(): React.JSX.Element {
     });
   }, []);
 
-  return (
-    <StyletronProvider value={engine}>
-      <BaseProvider theme={THEMES[themeName]}>
-        <App themeName={themeName} onToggleTheme={toggleTheme} />
-      </BaseProvider>
-    </StyletronProvider>
-  );
+  return <App themeName={themeName} onToggleTheme={toggleTheme} />;
 }
 
 const container = document.getElementById("root");

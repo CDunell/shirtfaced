@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Base Web interface for Shirtfaced Studio",
+  "description": "Tailwind interface for Shirtfaced Studio",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -15,21 +15,13 @@
     "test": "vitest run"
   },
   "comments": {
-    "react": "Pinned to 18. Base Web 18.2.0 relies on defaultProps for function components, which React 19 removed; Card and others throw at render. See docs/DECISIONS.md ADR-011.",
-    "overrides": "A baseui dependency pulls @types/react 16. Two copies of the React types make every Base component fail to typecheck as a JSX element, so the direct dependency version is forced everywhere. '$name' means 'match our own dependency'."
-  },
-  "overrides": {
-    "@types/react": "$@types/react",
-    "@types/react-dom": "$@types/react-dom"
+    "react": "Was pinned to 18 only because Base Web 18.2.0 relied on defaultProps for function components, which React 19 removed (see docs/DECISIONS.md ADR-011). Base Web is gone as of the Tailwind migration (docs/ADMIN_STUDIO_UI_OVERHAUL_PLAN.md Phase 0) -- the pin is no longer load-bearing, but bumping to 19 is left as its own separate, deliberately-verified change rather than bundled into this cleanup."
   },
   "dependencies": {
     "@fontsource-variable/space-grotesk": "^5.3.0",
     "@fontsource/anton": "^5.3.0",
-    "baseui": "^18.2.0",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "styletron-engine-monolithic": "^1.0.0",
-    "styletron-react": "^6.1.1"
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

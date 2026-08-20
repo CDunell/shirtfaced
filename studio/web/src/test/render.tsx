@@ -1,24 +1,19 @@
 /**
  * Test render helper.
  *
- * Base components read theme tokens through context, so every rendered component
- * needs the Styletron engine and BaseProvider around it.
+ * Named `renderWithBase` from when every component needed Base Web's
+ * StyletronProvider/BaseProvider context to render at all -- kept as-is since
+ * 15+ test files import it by this name and there's nothing left for a rename
+ * to fix functionally. `themeName` still threads through so the handful of
+ * dark-mode-aware tests keep working the same way.
  */
 
 import type { ReactElement } from "react";
-import { BaseProvider } from "baseui";
 import { render, type RenderResult } from "@testing-library/react";
-import { Client as Styletron } from "styletron-engine-monolithic";
-import { Provider as StyletronProvider } from "styletron-react";
 
-import { THEMES, type ThemeName } from "../theme";
+import type { ThemeName } from "../theme";
 
 export function renderWithBase(ui: ReactElement, themeName: ThemeName = "light"): RenderResult {
-  const engine = new Styletron();
-
-  return render(
-    <StyletronProvider value={engine}>
-      <BaseProvider theme={THEMES[themeName]}>{ui}</BaseProvider>
-    </StyletronProvider>,
-  );
+  document.documentElement.classList.toggle("dark", themeName === "dark");
+  return render(ui);
 }

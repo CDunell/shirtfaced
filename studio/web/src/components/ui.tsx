@@ -4,18 +4,16 @@
  * Ported in spirit from admin/src/components/ui.tsx (Button, Input, Textarea,
  * Select, Field, Card) and extended with the additional primitives Studio's
  * benches use that Admin's simpler forms never needed: Checkbox, Notification,
- * Tag, ProgressBar, Spinner, Table, and the Typography scale. Every bench still
- * on baseui migrates onto these one file at a time -- this file is the target,
- * not a finished migration.
+ * Tag, ProgressBar, Spinner, Table, and the Typography scale. Every bench has
+ * migrated onto these (Phase 0 of docs/ADMIN_STUDIO_UI_OVERHAUL_PLAN.md) --
+ * baseui and styletron are no longer a dependency of this project at all.
  *
- * Prop shapes intentionally echo baseui's where that costs nothing (variant
- * names, a `kind` prop on Tag/Notification) so each bench's own migration is a
- * near-mechanical import swap rather than a redesign. Select is the one
- * deliberate exception: baseui's Select returns an array of {id,label} option
+ * Prop shapes intentionally echoed baseui's where that cost nothing (variant
+ * names, a `kind` prop on Tag/Notification) so the migration was a
+ * near-mechanical import swap rather than a redesign. Select was the one
+ * deliberate exception: baseui's Select returned an array of {id,label} option
  * objects even in single-select mode, which no native element does -- this
- * Select takes and returns a plain string value, and each bench's migration
- * updates its own state shape to match rather than this component faking
- * baseui's shape back.
+ * Select takes and returns a plain string value instead.
  */
 import {
   createContext,
@@ -350,7 +348,7 @@ export function ProgressBar({
     >
       <div
         className="h-full rounded-full bg-ink transition-[width] duration-300 ease-out"
-        style={{ width: `${clamped}%` }}
+        style={{ width: `${String(clamped)}%` }}
       />
     </div>
   );
