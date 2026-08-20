@@ -1,7 +1,11 @@
 /**
  * The page furniture every bench shares.
  *
- * The brand sheet gave Studio its palette and type; this gives it a voice.
+ * Rebuilt on Tailwind, off Base Web/styletron -- see docs/ADMIN_STUDIO_UI_OVERHAUL_PLAN.md
+ * Phase 0. Every exported signature here is unchanged from the Base Web version
+ * so consuming benches don't need to change anything until their own migration
+ * turn.
+ *
  * Three rules, all taken from the storefront rather than invented:
  *
  * - Pages open with a display block, not a component-library heading. The
@@ -14,9 +18,8 @@
  */
 
 import { useCallback, useEffect, useState, type ReactNode } from "react";
-import { useStyletron } from "baseui";
 
-import { CORAL, CREAM, LIME } from "../tokens";
+import { cx, Tag, type TagKind } from "./ui";
 
 export function PageTitle({
   children,
@@ -25,37 +28,11 @@ export function PageTitle({
   children: ReactNode;
   meta?: ReactNode;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   return (
-    <div
-      className={css({
-        display: "flex",
-        alignItems: "baseline",
-        justifyContent: "space-between",
-        gap: "12px",
-        flexWrap: "wrap",
-        marginBottom: theme.sizing.scale600,
-      })}
-    >
-      <h1
-        className={`display ${css({
-          fontSize: "clamp(34px, 6vw, 44px)",
-          margin: 0,
-          color: theme.colors.contentPrimary,
-        })}`}
-      >
-        {children}
-      </h1>
+    <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+      <h1 className="display text-[clamp(34px,6vw,44px)] text-ink">{children}</h1>
       {meta ? (
-        <span
-          className={css({
-            fontSize: "13px",
-            fontWeight: 600,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            color: theme.colors.contentTertiary,
-          })}
-        >
+        <span className="text-[13px] font-semibold tracking-wide text-ink/50 uppercase">
           {meta}
         </span>
       ) : null}
@@ -70,27 +47,10 @@ export function SectionTitle({
   children: ReactNode;
   count?: number;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   return (
-    <h2
-      className={css({
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        fontSize: "13px",
-        fontWeight: 700,
-        letterSpacing: "0.08em",
-        textTransform: "uppercase",
-        color: theme.colors.contentPrimary,
-        margin: `${theme.sizing.scale800} 0 ${theme.sizing.scale400}`,
-      })}
-    >
+    <h2 className="mt-8 mb-2 flex items-center gap-2 text-[13px] font-bold tracking-wide text-ink uppercase">
       {children}
-      {count !== undefined ? (
-        <span className={css({ color: theme.colors.contentTertiary, fontWeight: 600 })}>
-          {count}
-        </span>
-      ) : null}
+      {count !== undefined ? <span className="font-semibold text-ink/50">{count}</span> : null}
     </h2>
   );
 }
@@ -100,40 +60,21 @@ export function SectionTitle({
  * read the same on paper and on ink, which is why the site uses them as its
  * only colour. Neutral states stay theme-coloured and quiet.
  */
-const CHIP_ACCENTS: Record<string, string> = {
-  approved: LIME,
-  rejected: CORAL,
-  retired: CORAL,
-  failed: CORAL,
-  held: CREAM,
-  variation_requested: CREAM,
+const CHIP_KIND: Record<string, TagKind> = {
+  approved: "positive",
+  rejected: "negative",
+  retired: "negative",
+  failed: "negative",
+  held: "warning",
+  variation_requested: "warning",
 };
 
 export function StatusChip({ status }: { status: string }): React.JSX.Element {
-  const [css, theme] = useStyletron();
-  const accent = CHIP_ACCENTS[status];
-  return (
-    <span
-      className={css({
-        display: "inline-block",
-        fontSize: "11px",
-        fontWeight: 700,
-        letterSpacing: "0.06em",
-        textTransform: "uppercase",
-        whiteSpace: "nowrap",
-        borderRadius: "8px",
-        paddingTop: "3px",
-        paddingBottom: "3px",
-        paddingLeft: "8px",
-        paddingRight: "8px",
-        backgroundColor: accent ?? theme.colors.backgroundSecondary,
-        color: accent ? "#0d0d0d" : theme.colors.contentSecondary,
-      })}
-    >
-      {status.replace(/_/g, " ")}
-    </span>
-  );
+  return <Tag kind={CHIP_KIND[status] ?? "neutral"}>{status.replace(/_/g, " ")}</Tag>;
 }
+
+const iconButtonClass =
+  "press inline-flex items-center gap-1.5 rounded-[10px] border border-ink/15 px-2 py-1 font-sans text-[12px] font-semibold";
 
 /**
  * Copy a block of text, and say that it worked.
@@ -153,7 +94,6 @@ export function CopyButton({
   text: string;
   label?: string;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [copied, setCopied] = useState(false);
 
   const copy = useCallback(() => {
@@ -183,21 +123,7 @@ export function CopyButton({
       onClick={copy}
       aria-label={copied ? "Copied" : `Copy ${label}`}
       title={copied ? "Copied" : `Copy ${label}`}
-      className={css({
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        appearance: "none",
-        cursor: "pointer",
-        border: `1px solid ${theme.colors.borderOpaque}`,
-        borderRadius: "8px",
-        padding: "4px 8px",
-        fontFamily: "inherit",
-        fontSize: "12px",
-        fontWeight: 600,
-        backgroundColor: copied ? theme.colors.contentPrimary : "transparent",
-        color: copied ? theme.colors.backgroundPrimary : theme.colors.contentPrimary,
-      })}
+      className={cx(iconButtonClass, copied ? "bg-ink text-paper" : "bg-transparent text-ink")}
     >
       {copied ? (
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
@@ -212,16 +138,7 @@ export function CopyButton({
         </svg>
       ) : (
         <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-          <rect
-            x="9"
-            y="9"
-            width="11"
-            height="11"
-            rx="2"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" strokeWidth="2" />
           <path
             d="M5 15V5a2 2 0 0 1 2-2h10"
             fill="none"
@@ -256,7 +173,6 @@ export function PasteButton({
   onPaste: (text: string) => void;
   label?: string;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [state, setState] = useState<"idle" | "done" | "refused">("idle");
 
   const paste = useCallback(() => {
@@ -296,33 +212,10 @@ export function PasteButton({
           ? "The browser refused clipboard access — paste into the field instead"
           : caption
       }
-      className={css({
-        display: "inline-flex",
-        alignItems: "center",
-        gap: "6px",
-        appearance: "none",
-        cursor: "pointer",
-        border: `1px solid ${theme.colors.borderOpaque}`,
-        borderRadius: "8px",
-        padding: "4px 8px",
-        fontFamily: "inherit",
-        fontSize: "12px",
-        fontWeight: 600,
-        backgroundColor: state === "done" ? theme.colors.contentPrimary : "transparent",
-        color: state === "done" ? theme.colors.backgroundPrimary : theme.colors.contentPrimary,
-      })}
+      className={cx(iconButtonClass, state === "done" ? "bg-ink text-paper" : "bg-transparent text-ink")}
     >
       <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
-        <rect
-          x="8"
-          y="4"
-          width="8"
-          height="4"
-          rx="1"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        />
+        <rect x="8" y="4" width="8" height="4" rx="1" fill="none" stroke="currentColor" strokeWidth="2" />
         <path
           d="M8 6H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"
           fill="none"
@@ -352,55 +245,26 @@ export function Disclosure({
   blurb: string;
   children: () => ReactNode;
 }): React.JSX.Element {
-  const [css, theme] = useStyletron();
   const [open, setOpen] = useState(false);
   return (
-    <section
-      className={css({
-        border: `1px solid ${theme.colors.backgroundSecondary}`,
-        borderRadius: "16px",
-        marginTop: theme.sizing.scale600,
-        overflow: "hidden",
-      })}
-    >
+    <section className="mt-6 overflow-hidden rounded-2xl border border-paper-2">
       <button
         type="button"
         aria-expanded={open}
         onClick={() => {
           setOpen((previous) => !previous);
         }}
-        className={css({
-          appearance: "none",
-          border: "none",
-          cursor: "pointer",
-          fontFamily: "inherit",
-          textAlign: "left",
-          width: "100%",
-          display: "flex",
-          alignItems: "baseline",
-          gap: "10px",
-          flexWrap: "wrap",
-          padding: "14px 16px",
-          backgroundColor: open ? theme.colors.backgroundSecondary : "transparent",
-          ":hover": { backgroundColor: theme.colors.backgroundSecondary },
-        })}
+        className={cx(
+          "flex w-full flex-wrap items-baseline gap-2.5 px-4 py-3.5 text-left font-sans",
+          open ? "bg-paper-2" : "bg-transparent hover:bg-paper-2",
+        )}
       >
-        <span
-          className={css({
-            fontSize: "13px",
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            color: theme.colors.contentPrimary,
-          })}
-        >
+        <span className="text-[13px] font-bold tracking-wide text-ink uppercase">
           {open ? "−" : "+"} {label}
         </span>
-        <span className={css({ fontSize: "12px", color: theme.colors.contentTertiary })}>
-          {blurb}
-        </span>
+        <span className="text-[12px] text-ink/50">{blurb}</span>
       </button>
-      {open ? <div className={css({ padding: "16px" })}>{children()}</div> : null}
+      {open ? <div className="p-4">{children()}</div> : null}
     </section>
   );
 }

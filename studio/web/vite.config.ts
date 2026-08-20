@@ -1,3 +1,4 @@
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 // vitest/config re-exports Vite's defineConfig with the `test` block typed.
 import { defineConfig } from "vitest/config";
@@ -7,7 +8,7 @@ import { defineConfig } from "vitest/config";
 const API_TARGET = process.env.STUDIO_API_URL ?? "http://127.0.0.1:8000";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
     host: "127.0.0.1",

@@ -12,8 +12,7 @@
  * destination reads a list instead of scanning a strip.
  */
 import { useState } from "react";
-import { useStyletron } from "baseui";
-import { ParagraphMedium } from "baseui/typography";
+import { cx, useSyncDarkClass } from "./components/ui";
 import { WorkBench } from "./components/WorkBench";
 import { DesignsBench } from "./components/DesignsBench";
 import { DesignPromptBench } from "./components/DesignPromptBench";
@@ -134,8 +133,17 @@ const IconClose = () => (
     <path d="M6 6l12 12M18 6L6 18" />
   </svg>
 );
+const navItemClass = (active: boolean) =>
+  cx(
+    "press appearance-none cursor-pointer rounded-[14px] px-3 py-2 font-sans text-[13px] font-semibold tracking-wide uppercase no-underline",
+    active ? "bg-ink text-paper" : "bg-transparent text-ink",
+  );
+
 export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
-  const [css, theme] = useStyletron();
+  // Mirrors themeName onto <html class="dark"> for Tailwind's dark: variant.
+  // Base Web components keep taking their theme from BaseProvider in
+  // main.tsx directly -- this only covers the Tailwind-rebuilt chrome.
+  useSyncDarkClass(themeName);
   // Work is the front door: it is the one screen that answers what to do
   // without knowing which screen owns what.
   const [view, setView] = useState<View>("work");
@@ -143,98 +151,30 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   // consumed, so navigating away and back does not silently re-open it.
   const [focus, setFocus] = useState<{ conceptId: string; attemptId: string | null } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
-  const hairline = `1px solid color-mix(in srgb, ${theme.colors.contentPrimary} 10%, transparent)`;
-  const item = (active: boolean) =>
-    css({
-      appearance: "none",
-      border: "none",
-      cursor: "pointer",
-      fontFamily: "inherit",
-      fontSize: "13px",
-      fontWeight: 600,
-      textTransform: "uppercase",
-      borderRadius: "14px",
-      padding: "8px 12px",
-      backgroundColor: active ? theme.colors.contentPrimary : "transparent",
-      color: active ? theme.colors.backgroundPrimary : theme.colors.contentPrimary,
-      textDecoration: "none",
-    });
   const pick = (id: View) => {
     setView(id);
     setMenuOpen(false);
   };
   return (
-    <div className={css({ minHeight: "100vh", backgroundColor: theme.colors.backgroundPrimary })}>
-      <header
-        className={css({
-          position: "sticky",
-          top: 0,
-          zIndex: 40,
-          borderBottom: hairline,
-          backgroundColor: theme.colors.backgroundPrimary,
-        })}
-      >
-        <div
-          className={css({
-            maxWidth: "1024px",
-            margin: "auto",
-            height: "64px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "0 16px",
-          })}
-        >
-          <span className="wordmark">shirtfaced / studio</span>
+    <div className="min-h-screen bg-paper dark:bg-ink">
+      <header className="sticky top-0 z-40 border-b border-ink/10 bg-paper dark:border-paper/10 dark:bg-ink">
+        <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
+          <span className="wordmark text-[22px] text-ink dark:text-paper">shirtfaced / studio</span>
           <button
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             onClick={() => {
               setMenuOpen((x) => !x);
             }}
-            className={css({
-              display: "grid",
-              placeItems: "center",
-              width: "44px",
-              height: "44px",
-              border: 0,
-              background: "transparent",
-              cursor: "pointer",
-              color: theme.colors.contentPrimary,
-            })}
+            className="grid h-11 w-11 place-items-center border-0 bg-transparent text-ink dark:text-paper"
           >
             {menuOpen ? <IconClose /> : <IconMenu />}
           </button>
         </div>
         {menuOpen ? (
-          <nav
-            className={css({
-              display: "grid",
-              // Two pipelines side by side where there is room, stacked where
-              // there is not. The blurb is the point of the grouping and only
-              // fits in a panel.
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
-              gap: "4px 24px",
-              maxWidth: "1024px",
-              margin: "auto",
-              padding: "12px 16px 16px",
-              borderTop: hairline,
-            })}
-          >
+          <nav className="mx-auto grid max-w-5xl grid-cols-[repeat(auto-fit,minmax(260px,1fr))] gap-x-6 gap-y-1 border-t border-ink/10 px-4 pt-3 pb-4 dark:border-paper/10">
             {PIPELINES.map((pipeline) => (
-              <div
-                key={pipeline.id}
-                className={css({ display: "flex", flexDirection: "column", gap: "4px" })}
-              >
-                <span
-                  className={css({
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: theme.colors.contentTertiary,
-                    paddingTop: "8px",
-                  })}
-                >
+              <div key={pipeline.id} className="flex flex-col gap-1">
+                <span className="pt-2 text-[10px] font-bold tracking-[0.12em] text-ink/50 uppercase dark:text-paper/50">
                   {pipeline.label} — {pipeline.blurb}
                 </span>
                 {VIEWS.filter((v) => v.pipeline === pipeline.id).map((v) => (
@@ -243,27 +183,18 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
                     onClick={() => {
                       pick(v.id);
                     }}
-                    className={item(view === v.id)}
+                    className={navItemClass(view === v.id)}
                   >
                     {v.label}
                   </button>
                 ))}
               </div>
             ))}
-            <div className={css({ display: "flex", flexDirection: "column", gap: "4px" })}>
-              <span
-                className={css({
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: theme.colors.contentTertiary,
-                  paddingTop: "8px",
-                })}
-              >
+            <div className="flex flex-col gap-1">
+              <span className="pt-2 text-[10px] font-bold tracking-[0.12em] text-ink/50 uppercase dark:text-paper/50">
                 Elsewhere
               </span>
-              <a href={ADMIN_URL} className={item(false)}>
+              <a href={ADMIN_URL} className={navItemClass(false)}>
                 Admin ↗
               </a>
               <button
@@ -271,7 +202,7 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
                   onToggleTheme();
                   setMenuOpen(false);
                 }}
-                className={item(false)}
+                className={navItemClass(false)}
               >
                 {themeName === "light" ? "Dark theme" : "Light theme"}
               </button>
@@ -279,15 +210,7 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           </nav>
         ) : null}
       </header>
-      <main
-        className={css({
-          maxWidth: "1024px",
-          margin: "auto",
-          padding: theme.sizing.scale900,
-          paddingLeft: "16px",
-          paddingRight: "16px",
-        })}
-      >
+      <main className="mx-auto max-w-5xl px-4 py-9">
         {view === "design-prompt" ? (
           <DesignPromptBench />
         ) : view === "design-gallery" ? (
@@ -325,10 +248,10 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
           <EmailBench />
         ) : (
           <>
-            <h1 className="display">Dashboard</h1>
-            <ParagraphMedium>
+            <h1 className="display text-ink dark:text-paper">Dashboard</h1>
+            <p className="text-[15px] leading-relaxed text-ink/80 dark:text-paper/80">
               A private production tool for building coherent Shirtfaced photographic worlds.
-            </ParagraphMedium>
+            </p>
             <WorldPage />
             <ServiceStatus />
           </>
