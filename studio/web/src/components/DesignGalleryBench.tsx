@@ -12,7 +12,28 @@ import {
 } from "../api/concepts";
 import { CopyButton, PageTitle } from "./chrome";
 
-const PAGE_SIZE = 16;
+const MOBILE_PAGE_SIZE = 16;
+const DESKTOP_PAGE_SIZE = 30;
+// 1024px matches the app shell's own <main> max-width (App.tsx) -- the point
+// past which the grid has real room to breathe, not an arbitrary number.
+const DESKTOP_BREAKPOINT = "(min-width: 1024px)";
+
+function useIsDesktop(): boolean {
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.matchMedia(DESKTOP_BREAKPOINT).matches,
+  );
+  useEffect(() => {
+    const mql = window.matchMedia(DESKTOP_BREAKPOINT);
+    const onChange = (e: MediaQueryListEvent): void => {
+      setIsDesktop(e.matches);
+    };
+    mql.addEventListener("change", onChange);
+    return () => {
+      mql.removeEventListener("change", onChange);
+    };
+  }, []);
+  return isDesktop;
+}
 
 const STATUS_OPTIONS: { id: GenerationStatus | ""; label: string }[] = [
   { id: "", label: "All statuses" },
@@ -22,6 +43,8 @@ const STATUS_OPTIONS: { id: GenerationStatus | ""; label: string }[] = [
 
 export function DesignGalleryBench(): React.JSX.Element {
   const [css, theme] = useStyletron();
+  const isDesktop = useIsDesktop();
+  const pageSize = isDesktop ? DESKTOP_PAGE_SIZE : MOBILE_PAGE_SIZE;
   const [page, setPage] = useState(1);
   const [tradition, setTradition] = useState("");
   const [statusFilter, setStatusFilter] = useState<GenerationStatus | "">("");
@@ -35,7 +58,7 @@ export function DesignGalleryBench(): React.JSX.Element {
     let cancelled = false;
     setBusy(true);
     setError("");
-    fetchGenerations(page, PAGE_SIZE, tradition || undefined, statusFilter || undefined)
+    fetchGenerations(page, pageSize, tradition || undefined, statusFilter || undefined)
       .then((result) => {
         if (cancelled) return;
         setItems(result.items);
@@ -51,11 +74,11 @@ export function DesignGalleryBench(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [page, tradition, statusFilter]);
+  }, [page, pageSize, tradition, statusFilter]);
 
   useEffect(() => {
     setPage(1);
-  }, [tradition, statusFilter]);
+  }, [tradition, statusFilter, pageSize]);
 
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -70,7 +93,7 @@ export function DesignGalleryBench(): React.JSX.Element {
     };
   }, [lightboxIndex, items.length]);
 
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const traditions = Array.from(new Set(items.map((i) => i.tradition))).sort();
   const active = lightboxIndex !== null ? items[lightboxIndex] : null;
 
