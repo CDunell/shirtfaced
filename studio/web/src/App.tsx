@@ -17,6 +17,7 @@ import { ParagraphMedium } from "baseui/typography";
 import { WorkBench } from "./components/WorkBench";
 import { DesignsBench } from "./components/DesignsBench";
 import { DesignPromptBench } from "./components/DesignPromptBench";
+import { DesignGalleryBench } from "./components/DesignGalleryBench";
 import { EmailBench } from "./components/EmailBench";
 import { VintageEvidenceBench } from "./components/VintageEvidenceBench";
 import { VintageResearchBench } from "./components/VintageResearchBench";
@@ -35,6 +36,7 @@ export interface AppProps {
 }
 type View =
   | "design-prompt"
+  | "design-gallery"
   | "work"
   | "prompts"
   | "concepts"
@@ -80,6 +82,10 @@ const VIEWS: { id: View; label: string; pipeline: Pipeline }[] = [
   // all of it. Leads the list because it answers what most people actually
   // want on the first visit.
   { id: "design-prompt", label: "Prompt", pipeline: "product" },
+  // Every concept a batch actually rendered and someone looked at -- proof,
+  // not a live feed. Sits next to Prompt because it answers the question
+  // Prompt's "hit and miss by nature" line raises: hit and miss how, exactly.
+  { id: "design-gallery", label: "Gallery", pipeline: "product" },
   // Product: evidence → research → concept → design → approved version → print.
   // Work leads because it is the answer to "what should I be doing", and the
   // other destinations are where its rows send you.
@@ -284,6 +290,8 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
       >
         {view === "design-prompt" ? (
           <DesignPromptBench />
+        ) : view === "design-gallery" ? (
+          <DesignGalleryBench />
         ) : view === "work" ? (
           <WorkBench
             onOpen={(item: WorkItem) => {

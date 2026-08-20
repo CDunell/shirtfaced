@@ -13,20 +13,24 @@ every recommendation is a marked default until the corpus is measured.
 from __future__ import annotations
 
 import uuid
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.adapters.asset_store import AssetStoreError, FilesystemAssetStore
+from app.config import Settings, get_settings
 from app.db.concept_pool_models import DesignConceptPoolEntry
+from app.db.generation_sample_models import DesignGenerationSample
 from app.db.session import get_db_session
 from app.services.design_advisor import advise, measurement_rows, render_generation_prompt
 
 router = APIRouter(prefix="/api/design", tags=["design"])
 
 SessionDependency = Annotated[Session, Depends(get_db_session)]
+SettingsDependency = Annotated[Settings, Depends(get_settings)]
 
 
 class AdviseRequest(BaseModel):
@@ -168,3 +172,117 @@ def retire_concept(concept_id: str, session: SessionDependency) -> RetireRespons
     entry.active = False
     session.commit()
     return RetireResponse(concept_id=concept_id, active=False)
+
+
+# --- Gallery: every concept that was actually rendered and looked at -------
+#
+# The concept pool holds ideas; ``design_generation_samples`` holds proof one
+# was tested -- the image and the exact prompt that produced it. Written by
+# the batch-eval harness (``scripts/eval_concept_batch.py``), read here.
+
+
+class GenerationSampleView(BaseModel):
+    id: str
+    tradition: str
+    concept_text: str
+    prompt: str
+    status: str
+    drop_reason: str | None
+    batch: str
+    created_at: str
+
+
+class GenerationSamplePage(BaseModel):
+    items: list[GenerationSampleView]
+    total: int
+    page: int
+    page_size: int
+
+
+def _sample_view(row: DesignGenerationSample) -> GenerationSampleView:
+    return GenerationSampleView(
+        id=str(row.id),
+        tradition=row.tradition,
+        concept_text=row.concept_text,
+        prompt=row.prompt,
+        status=row.status,
+        drop_reason=row.drop_reason,
+        batch=row.batch,
+        created_at=row.created_at.isoformat(),
+    )
+
+
+@router.get(
+    "/generations",
+    response_model=GenerationSamplePage,
+    summary="Every tested concept render, newest first",
+)
+def list_generations(
+    session: SessionDependency,
+    page: int = 1,
+    page_size: int = 16,
+    tradition: str | None = None,
+    status_filter: str | None = None,
+) -> GenerationSamplePage:
+    """Paginated gallery feed. ``page_size`` is capped at 64 -- this is a
+    review page for a person, not a bulk export."""
+    page = max(page, 1)
+    page_size = max(1, min(page_size, 64))
+
+    query = select(DesignGenerationSample)
+    if tradition:
+        query = query.where(DesignGenerationSample.tradition == tradition)
+    if status_filter:
+        query = query.where(DesignGenerationSample.status == status_filter)
+
+    total = session.execute(
+        select(func.count()).select_from(query.subquery())
+    ).scalar_one()
+
+    rows = session.execute(
+        query.order_by(DesignGenerationSample.created_at.desc())
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    ).scalars().all()
+
+    return GenerationSamplePage(
+        items=[_sample_view(r) for r in rows],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get("/generations/{sample_id}/image", summary="Fetch a tested render")
+def get_generation_image(
+    sample_id: str,
+    session: SessionDependency,
+    settings: SettingsDependency,
+    variant: Literal["thumb", "full"] = "thumb",
+) -> Response:
+    try:
+        parsed_id = uuid.UUID(sample_id)
+    except ValueError as error:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Not a valid sample id.") from error
+
+    row = session.get(DesignGenerationSample, parsed_id)
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No sample with that id.")
+
+    key = row.thumb_relative_path if variant == "thumb" else row.image_relative_path
+    mime_type = "image/jpeg" if variant == "thumb" else "image/png"
+
+    store = FilesystemAssetStore(settings.assets_root_resolved)
+    try:
+        data = store.load(key)
+    except AssetStoreError as error:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            f"The image is recorded but its file could not be read. {error}",
+        ) from error
+
+    return Response(
+        content=data,
+        media_type=mime_type,
+        headers={"Cache-Control": "private, max-age=31536000, immutable"},
+    )

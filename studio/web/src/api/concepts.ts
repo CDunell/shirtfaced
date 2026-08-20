@@ -558,3 +558,47 @@ export async function recordBriefTaken(attemptId: string): Promise<unknown> {
     { method: "POST", body: "{}" },
   );
 }
+
+/* --- Gallery: every concept that was actually rendered and looked at ------
+ *
+ * Distinct from the concept pool (ideas) and from /advise (one prompt for one
+ * typed idea) -- this is the durable record of a batch's real output: the
+ * image and the exact prompt that produced it, kept whether or not the
+ * concept survived review. See app/db/generation_sample_models.py.
+ */
+
+export type GenerationStatus = "kept" | "dropped";
+
+export interface GenerationSample {
+  id: string;
+  tradition: string;
+  concept_text: string;
+  prompt: string;
+  status: GenerationStatus;
+  drop_reason: string | null;
+  batch: string;
+  created_at: string;
+}
+
+export interface GenerationSamplePage {
+  items: GenerationSample[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export async function fetchGenerations(
+  page: number,
+  pageSize = 16,
+  tradition?: string,
+  status?: GenerationStatus,
+): Promise<GenerationSamplePage> {
+  const params = new URLSearchParams({ page: String(page), page_size: String(pageSize) });
+  if (tradition) params.set("tradition", tradition);
+  if (status) params.set("status_filter", status);
+  return await json<GenerationSamplePage>(`/api/design/generations?${params.toString()}`);
+}
+
+export function generationImageUrl(sampleId: string, variant: "thumb" | "full" = "thumb"): string {
+  return `/api/design/generations/${encodeURIComponent(sampleId)}/image?variant=${variant}`;
+}
