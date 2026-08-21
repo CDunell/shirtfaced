@@ -61,13 +61,24 @@ commit) and confirmed working end to end by real test orders.
 
 ## 4. Catalogue gaps
 
-- Five products still render fallback artwork instead of photography:
-  No Regrets, Handle With Care, Mentally On Annual Leave, Offline Since Birth,
-  Emotional Support Beverage. Drop shots into `public/products`, run
-  `node scripts/optimise-images.mjs`, add the path to the colourway.
+**None of the products in the storefront are real. All 17 are demo/placeholder
+data** — no design has been through Studio's approval pipeline yet, so there
+is nothing production-worthy to sell. This is the actual gap; the items below
+are just symptoms of it, not separate problems:
+
+- Some of the demo products render fallback artwork instead of photography
+  (No Regrets, Handle With Care, Mentally On Annual Leave, Offline Since
+  Birth, Emotional Support Beverage) — irrelevant until there's a real design
+  to photograph.
 - Tanks, hoodies, hats and accessories are navigation entries with no stock
-  behind them — either stock them or remove the filters.
+  behind them.
 - No light-background logo variant (the wordmark is white).
+
+The real fix is upstream: an approved design in Studio flows in as a draft
+product via `admin/src/db/sync-approved-designs.ts` (built, unused so far —
+nothing has been approved yet), gets priced, stocked and photographed by a
+human, then published. Getting one real design through that whole pipeline
+is the actual milestone here, not touching up demo copy.
 
 ---
 
@@ -81,6 +92,3 @@ The one real gap — no legal entity named anywhere — is now closed. The
 operating entity is **BM Media, ABN 34 538 203 506** (owner-supplied,
 21 August 2026), trading as shirtfaced. Named on `/terms` ("Who you're
 dealing with") and `/privacy` ("Your rights").
-
-Still open: **`hello@shirtfaced.wtf` is referenced everywhere as the contact
-address but the mailbox doesn't exist yet.** Nothing above fixes that.
