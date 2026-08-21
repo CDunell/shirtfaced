@@ -3,13 +3,25 @@
  * Pixel / TikTok Pixel are actually configured (see Analytics.tsx for the
  * scripts that put gtag/fbq/ttq on window) — a platform with no env var set
  * never got its script loaded, so its call here is just a no-op.
+ *
+ * The Meta and TikTok calls pass transactionId as their event ID, matching
+ * the event_id the server-side Conversions/Events API call uses for the same
+ * order (src/lib/server-analytics.ts, called from the Stripe webhook) — that
+ * shared ID is what lets each platform dedupe the client and server fires
+ * into one conversion instead of counting the sale twice.
  */
 
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     fbq?: (...args: unknown[]) => void;
-    ttq?: { track: (event: string, params?: Record<string, unknown>) => void };
+    ttq?: {
+      track: (
+        event: string,
+        params?: Record<string, unknown>,
+        options?: { event_id: string },
+      ) => void;
+    };
   }
 }
 
@@ -44,27 +56,36 @@ export function trackPurchase(purchase: Purchase) {
     })),
   });
 
-  window.fbq?.("track", "Purchase", {
-    value: purchase.value,
-    currency: purchase.currency,
-    contents: purchase.items.map((item) => ({
-      id: item.id,
-      quantity: item.quantity,
-      item_price: item.price,
-    })),
-    content_type: "product",
-  });
+  window.fbq?.(
+    "track",
+    "Purchase",
+    {
+      value: purchase.value,
+      currency: purchase.currency,
+      contents: purchase.items.map((item) => ({
+        id: item.id,
+        quantity: item.quantity,
+        item_price: item.price,
+      })),
+      content_type: "product",
+    },
+    { eventID: purchase.transactionId },
+  );
 
-  window.ttq?.track("CompletePayment", {
-    value: purchase.value,
-    currency: purchase.currency,
-    contents: purchase.items.map((item) => ({
-      content_id: item.id,
-      content_name: item.name,
-      quantity: item.quantity,
-      price: item.price,
-    })),
-  });
+  window.ttq?.track(
+    "CompletePayment",
+    {
+      value: purchase.value,
+      currency: purchase.currency,
+      contents: purchase.items.map((item) => ({
+        content_id: item.id,
+        content_name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+      })),
+    },
+    { event_id: purchase.transactionId },
+  );
 }
 
 /** Guards against firing the same order twice — see the two call sites in
