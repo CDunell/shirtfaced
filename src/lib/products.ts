@@ -67,4 +67,4 @@ export const CATEGORIES = [
   { key: "accessories", label: "Accessories" },
 ] as const;
 
-export const FREE_SHIPPING_THRESHOLD = 130;
+export const FREE_SHIPPING_THRESHOLD = 100;
