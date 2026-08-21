@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getOrder, orderReference } from "@/db/store-queries";
 import { OrderStatusControl } from "@/components/OrderStatusControl";
+import { TrackingControl } from "@/components/TrackingControl";
 import { Card } from "@/components/ui";
 import { formatCents } from "@/lib/money";
 
@@ -56,6 +57,15 @@ export default async function OrderDetailPage({
             <p className="whitespace-pre-line text-ink/80">{order.notes}</p>
           </div>
         )}
+      </Card>
+
+      <Card className="flex flex-col gap-3">
+        <p className="text-[11px] font-bold uppercase tracking-wide text-ink/50">Shipping</p>
+        <TrackingControl
+          id={order.id}
+          trackingNumber={order.trackingNumber}
+          carrier={order.carrier}
+        />
       </Card>
 
       <div className="flex flex-col gap-3">

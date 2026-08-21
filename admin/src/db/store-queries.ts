@@ -13,7 +13,7 @@ import {
   type Size,
 } from "./schema";
 import { getStripe } from "../lib/stripe";
-import { sendOrderConfirmationEmail } from "../lib/email";
+import { sendOrderConfirmationEmail, sendShippingConfirmationEmail } from "../lib/email";
 
 /* ---------------------------------------------------------------------------
    Customers
@@ -307,6 +307,52 @@ export async function markOrderPaid(id: string): Promise<void> {
     // Loud in the logs on purpose, same as the webhook's own order-update
     // failure — a silent email failure means no one ever finds out.
     console.error(`markOrderPaid: failed to send confirmation email for order ${id}`, error);
+  }
+}
+
+/** Records a tracking number (and optional carrier), and — only the first
+ * time a real tracking number is set on this order — sends the shipping
+ * confirmation email. Editing an already-set number (a typo fix) updates the
+ * record without re-emailing; setting one for the first time always does,
+ * independent of the order's status field. */
+export async function setOrderTracking(
+  id: string,
+  trackingNumber: string,
+  carrier: string | null,
+): Promise<void> {
+  const order = await db.query.orders.findFirst({
+    where: eq(orders.id, id),
+    with: { items: true, customer: true },
+  });
+  if (!order) throw new Error("Order not found.");
+
+  const cleanTracking = trackingNumber.trim() || null;
+  const cleanCarrier = carrier?.trim() || null;
+  const isNewTracking = !order.trackingNumber && cleanTracking !== null;
+
+  await db
+    .update(orders)
+    .set({ trackingNumber: cleanTracking, carrier: cleanCarrier, updatedAt: new Date() })
+    .where(eq(orders.id, id));
+
+  if (!isNewTracking || !order.customer) return;
+
+  try {
+    await sendShippingConfirmationEmail({
+      toEmail: order.customer.email,
+      toName: order.customer.name,
+      reference: orderReference(order.orderSeq),
+      trackingNumber: cleanTracking,
+      carrier: cleanCarrier,
+      items: order.items.map((item) => ({
+        productName: item.productName,
+        colourName: item.colourName,
+        size: item.size,
+        quantity: item.quantity,
+      })),
+    });
+  } catch (error) {
+    console.error(`setOrderTracking: failed to send shipping confirmation for order ${id}`, error);
   }
 }
 
