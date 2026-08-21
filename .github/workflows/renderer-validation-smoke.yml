@@ -22,10 +22,35 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
 
+      # Studio sits behind session auth (app/session_auth.py, 21 August 2026) --
+      # the smoke script below needs a real session cookie now, not just a
+      # reachable URL, same as deploy.yml's own smoke steps (see e0bd137).
+      # Minted here rather than stored as its own secret: a short-lived,
+      # purpose-built token, not the SESSION_SECRET itself.
+      - name: Mint a CI session token for the smoke test
+        id: mint-token
+        env:
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: |
+          token=$(python3 -c "
+          import base64, hashlib, hmac, os, time
+          secret = os.environ['SESSION_SECRET']
+          email = 'ci@shirtfaced.wtf'
+          expires = int(time.time()) + 600
+          email_b64 = base64.urlsafe_b64encode(email.encode()).rstrip(b'=').decode()
+          payload = f'{email_b64}.{expires}'
+          sig = base64.urlsafe_b64encode(hmac.new(secret.encode(), payload.encode(), hashlib.sha256).digest()).rstrip(b'=').decode()
+          print(f'{payload}.{sig}')
+          ")
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
       - name: Smoke renderer validation contract on production host
+        env:
+          SMOKE_SESSION_TOKEN: ${{ steps.mint-token.outputs.token }}
         run: |
           scp -i ~/.ssh/deploy_key \
             studio/scripts/smoke_renderer_validation.py \
             ubuntu@${{ secrets.ORACLE_HOST }}:/tmp/smoke_renderer_validation.py
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
-            'python3 /tmp/smoke_renderer_validation.py --base http://127.0.0.1:8010'
+            "SMOKE_SESSION_TOKEN='${SMOKE_SESSION_TOKEN}' python3 /tmp/smoke_renderer_validation.py --base http://127.0.0.1:8010"

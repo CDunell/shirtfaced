@@ -5,11 +5,34 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import urllib.request
+
+# Studio now sits behind the same session auth admin does (app/session_auth.py,
+# 21 August 2026) -- a request with no valid session cookie gets redirected to
+# the Cloudflare-fronted login page instead of the real response this script
+# is checking for, and following that redirect with urllib's default agent
+# gets a 403 from Cloudflare. CI mints a short-lived token from the same
+# SESSION_SECRET both boxes already have and passes it here; a local run
+# against a dev server with auth disabled just leaves this unset.
+SESSION_TOKEN = os.environ.get("SMOKE_SESSION_TOKEN")
+
+USER_AGENT = (
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+    "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
+)
+
+
+def _headers() -> dict[str, str]:
+    headers = {"User-Agent": USER_AGENT}
+    if SESSION_TOKEN:
+        headers["Cookie"] = f"sf_admin_session={SESSION_TOKEN}"
+    return headers
 
 
 def get_json(url: str) -> dict[str, object]:
-    with urllib.request.urlopen(url, timeout=15) as response:
+    request = urllib.request.Request(url, headers=_headers())
+    with urllib.request.urlopen(request, timeout=15) as response:
         return json.loads(response.read())
 
 
