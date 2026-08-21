@@ -17,10 +17,10 @@ anywhere). These are what's left.
 
 | Claim | Where | Status |
 |---|---|---|
-| Standard shipping $10, 3–5 business days | `src/app/shipping/page.tsx`, `src/app/checkout/page.tsx` | invented |
-| Express shipping $15, 1–2 business days | same | invented |
-| Free shipping over $130 | `src/lib/products.ts` (`FREE_SHIPPING_THRESHOLD`), cart, checkout | invented |
-| New Zealand flat $18, 5–10 days | `src/app/shipping/page.tsx` | invented |
+| Standard shipping $11.70, 2–6 business days | `src/lib/checkout-pricing.ts` (charged), `src/app/shipping/page.tsx` (shown) | **real** — Australia Post Parcel Post, own packaging, ≤500g, 1 July 2026 published rate. No small-business discount below $50+/4wks spend, so retail-counter price is what's actually paid |
+| Express shipping $15.20, 1–3 business days | same | **real** — AusPost Express Post, same conditions as above |
+| Free shipping over $130 | `src/lib/products.ts` (`FREE_SHIPPING_THRESHOLD`), cart, checkout | invented — still needs a real margin-based decision, not a shipping-cost lookup |
+| New Zealand flat $21.60, 4–7 days | `src/app/shipping/page.tsx` | **real** — AusPost Standard international, own packaging, 251–500g. Sendle (the usual cheaper AU small-business alternative) ceased Australian operations January 2026 and was ruled out for that reason |
 | Same-day dispatch before 2pm AEST | `src/app/shipping/page.tsx` | removed, but re-check before re-adding |
 | 30-day returns window | `src/app/returns/page.tsx` | invented |
 | Prepaid return label within 1 business day | `src/app/returns/page.tsx` | invented |

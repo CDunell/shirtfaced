@@ -8,9 +8,16 @@
  */
 import { products, FREE_SHIPPING_THRESHOLD } from "./products";
 
+/* Real Australia Post rates, own packaging, up to 500g (a folded tee in a
+   satchel), from AusPost's published Parcel Post / Express Post guides
+   (effective 1 July 2026). Not discounted — MyPost Business pricing is
+   identical to retail until $50+/4 weeks in postage spend, a volume this
+   business isn't at. Sendle, the usual cheaper alternative for a small AU
+   ecommerce brand, ceased Australian operations in January 2026 and isn't a
+   live option. Revisit these once real order volume exists. */
 export const SHIPPING_METHODS = [
-  { key: "standard", name: "Standard", time: "3–5 business days", price: 10 },
-  { key: "express", name: "Express", time: "1–2 business days", price: 15 },
+  { key: "standard", name: "Standard", time: "2–6 business days", price: 11.7 },
+  { key: "express", name: "Express", time: "1–3 business days", price: 15.2 },
 ] as const;
 
 export type ShippingMethodKey = (typeof SHIPPING_METHODS)[number]["key"];

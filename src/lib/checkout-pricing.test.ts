@@ -9,15 +9,15 @@ const REAL_LINE = { slug: "roll-the-dice-tee", size: "M", colour: "Washed Black"
 test("priceCart charges standard shipping under the free-shipping threshold", () => {
   const result = priceCart([REAL_LINE], "standard");
   assert.equal(result.subtotalCents, 4995);
-  assert.equal(result.shippingCents, 1000);
-  assert.equal(result.totalCents, 5995);
+  assert.equal(result.shippingCents, 1170);
+  assert.equal(result.totalCents, 6165);
   assert.equal(result.freeShipping, false);
 });
 
 test("priceCart charges express shipping when selected", () => {
   const result = priceCart([REAL_LINE], "express");
-  assert.equal(result.shippingCents, 1500);
-  assert.equal(result.totalCents, 6495);
+  assert.equal(result.shippingCents, 1520);
+  assert.equal(result.totalCents, 6515);
 });
 
 test("priceCart waives shipping at or over the free-shipping threshold", () => {

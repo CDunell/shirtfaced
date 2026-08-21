@@ -16,9 +16,9 @@ export const about = {
 
 export const shipping = {
   "intro": "Designed in Australia, printed and shipped from wherever gets it to you fastest.",
-  "standardName": "Standard", "standardTime": "3–5 business days", "standardPrice": "$10.00",
-  "expressName": "Express", "expressTime": "1–2 business days", "expressPrice": "$15.00",
-  "whereP1": "Australia-wide, including WA and the Territories. New Zealand ships at a flat $18 and takes 5–10 business days.",
+  "standardName": "Standard", "standardTime": "2–6 business days", "standardPrice": "$11.70",
+  "expressName": "Express", "expressTime": "1–3 business days", "expressPrice": "$15.20",
+  "whereP1": "Australia-wide, including WA and the Territories. New Zealand ships at a flat $21.60 and takes 4–7 business days.",
   "whereP2": "Everywhere else — we're working on it. If you're overseas and desperate, get in touch and we'll quote you properly rather than guess.",
   "trackingP1": "Every order gets a tracking number by email the moment it leaves. If it hasn't arrived within the window above, tell us and we'll chase it — you shouldn't have to argue with a courier on our behalf.",
   "packagingP1": "Recycled mailers, no plastic filler, no branded tissue paper that goes straight in the bin. The mailer is the packaging."

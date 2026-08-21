@@ -43,13 +43,13 @@ const shipping = {
   intro:
     "Designed in Australia, printed and shipped from wherever gets it to you fastest.",
   standardName: "Standard",
-  standardTime: "3–5 business days",
-  standardPrice: "$10.00",
+  standardTime: "2–6 business days",
+  standardPrice: "$11.70",
   expressName: "Express",
-  expressTime: "1–2 business days",
-  expressPrice: "$15.00",
+  expressTime: "1–3 business days",
+  expressPrice: "$15.20",
   whereP1:
-    "Australia-wide, including WA and the Territories. New Zealand ships at a flat $18 and takes 5–10 business days.",
+    "Australia-wide, including WA and the Territories. New Zealand ships at a flat $21.60 and takes 4–7 business days.",
   whereP2:
     "Everywhere else — we're working on it. If you're overseas and desperate, get in touch and we'll quote you properly rather than guess.",
   trackingP1:
