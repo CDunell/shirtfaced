@@ -46,6 +46,47 @@ export default function CheckoutPage() {
     state: "NSW",
     postcode: "",
   });
+  const [discountInput, setDiscountInput] = useState("");
+  const [discount, setDiscount] = useState<{ code: string; cents: number } | null>(null);
+  const [discountError, setDiscountError] = useState<string | null>(null);
+  const [applyingDiscount, setApplyingDiscount] = useState(false);
+
+  async function applyDiscount() {
+    if (!discountInput.trim()) return;
+    setApplyingDiscount(true);
+    setDiscountError(null);
+    try {
+      const res = await fetch("/api/apply-discount", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          code: discountInput.trim(),
+          lines: lines.map((l) => ({
+            slug: l.slug,
+            size: l.size,
+            colour: l.colour,
+            quantity: l.quantity,
+          })),
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDiscountError(body.error ?? "That code isn't valid.");
+        return;
+      }
+      setDiscount({ code: body.code, cents: body.discountCents });
+    } catch {
+      setDiscountError("Couldn't reach the server. Try again.");
+    } finally {
+      setApplyingDiscount(false);
+    }
+  }
+
+  function removeDiscount() {
+    setDiscount(null);
+    setDiscountInput("");
+    setDiscountError(null);
+  }
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -83,7 +124,8 @@ export default function CheckoutPage() {
   const shipping = freeShipping
     ? 0
     : SHIPPING_METHODS.find((m) => m.key === method)!.price;
-  const total = subtotal + shipping;
+  const discountAmount = discount ? discount.cents / 100 : 0;
+  const total = Math.max(0, subtotal + shipping - discountAmount);
 
   const addressDone =
     form.email.includes("@") &&
@@ -341,7 +383,47 @@ export default function CheckoutPage() {
             })}
           </ul>
 
-          <dl className="mt-6 flex flex-col gap-2 border-t border-ink/10 pt-5 text-[15px]">
+          <div className="mt-6 border-t border-ink/10 pt-5">
+            {discount ? (
+              <div className="flex items-center justify-between gap-3 rounded-[14px] border border-lime bg-lime/10 px-4 py-3">
+                <span className="text-[14px] font-semibold">
+                  Code <span className="uppercase">{discount.code}</span> applied
+                </span>
+                <button
+                  type="button"
+                  onClick={removeDiscount}
+                  className="press text-[13px] font-semibold underline underline-offset-4"
+                >
+                  Remove
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input
+                  className={`${field} min-w-0 flex-1`}
+                  placeholder="Discount code"
+                  aria-label="Discount code"
+                  value={discountInput}
+                  onChange={(e) => setDiscountInput(e.target.value)}
+                />
+                <button
+                  type="button"
+                  disabled={!discountInput.trim() || applyingDiscount}
+                  onClick={applyDiscount}
+                  className="press h-14 shrink-0 rounded-[16px] bg-ink px-5 text-[14px] font-bold text-paper disabled:opacity-35"
+                >
+                  {applyingDiscount ? "Checking…" : "Apply"}
+                </button>
+              </div>
+            )}
+            {discountError && (
+              <p role="alert" className="mt-2 text-[13px] font-semibold text-coral">
+                {discountError}
+              </p>
+            )}
+          </div>
+
+          <dl className="mt-5 flex flex-col gap-2 text-[15px]">
             <div className="flex justify-between">
               <dt className="text-grey-dark">Subtotal</dt>
               <dd className="font-semibold tabular-nums">{money(subtotal)}</dd>
@@ -352,6 +434,12 @@ export default function CheckoutPage() {
                 {shipping === 0 ? "Free" : money(shipping)}
               </dd>
             </div>
+            {discount && (
+              <div className="flex justify-between">
+                <dt className="text-grey-dark">Discount</dt>
+                <dd className="font-semibold tabular-nums">−{money(discountAmount)}</dd>
+              </div>
+            )}
             <div className="mt-2 flex items-baseline justify-between border-t border-ink/10 pt-3">
               <dt className="display text-[20px]">Total</dt>
               <dd className="display text-[24px] tabular-nums">
@@ -362,6 +450,11 @@ export default function CheckoutPage() {
           </dl>
 
           <PaymentStep
+            // Remounts (and creates a fresh pending order + PaymentIntent)
+            // whenever the applied code changes — the alternative is a
+            // PaymentIntent whose amount silently stops matching what's on
+            // screen the moment a code is applied or removed after it loads.
+            key={discount?.code ?? "no-discount"}
             request={{
               lines: lines.map((l) => ({
                 slug: l.slug,
@@ -377,6 +470,7 @@ export default function CheckoutPage() {
                 state: form.state,
                 postcode: form.postcode,
               },
+              discountCode: discount?.code ?? null,
             } satisfies CheckoutRequest}
             total={total}
           />

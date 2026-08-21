@@ -19,7 +19,10 @@ export function OrderStatusControl({ id, status }: { id: string; status: OrderSt
           variant={s === status ? "primary" : "ghost"}
           disabled={pending || s === status}
           onClick={() => {
-            startTransition(() => updateOrderStatusAction(id, s));
+            startTransition(async () => {
+              const result = await updateOrderStatusAction(id, s);
+              if (result.error) alert(result.error);
+            });
           }}
         >
           {s}

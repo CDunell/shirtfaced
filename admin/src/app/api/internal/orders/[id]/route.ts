@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyInternalRequest } from "@/lib/internal-auth";
 import { ORDER_STATUSES } from "@/db/schema";
-import { setOrderPaymentIntent, updateOrderStatus } from "@/db/store-queries";
+import { markOrderPaid, setOrderPaymentIntent, updateOrderStatus } from "@/db/store-queries";
 
 /**
  * Called by the storefront twice per real order: once right after creating
@@ -39,7 +39,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (parsed.data.stripePaymentIntentId) {
     await setOrderPaymentIntent(id, parsed.data.stripePaymentIntentId);
   }
-  if (parsed.data.status) {
+  if (parsed.data.status === "paid") {
+    await markOrderPaid(id);
+  } else if (parsed.data.status) {
     await updateOrderStatus(id, parsed.data.status);
   }
 

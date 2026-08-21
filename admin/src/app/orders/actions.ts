@@ -59,15 +59,53 @@ export async function createOrderAction(
   redirect(`/orders/${id}`);
 }
 
-export async function updateOrderStatusAction(id: string, status: string) {
+export async function updateOrderStatusAction(
+  id: string,
+  status: string,
+): Promise<{ error: string | null }> {
   const result = z.enum(ORDER_STATUSES).safeParse(status);
-  if (!result.success) return;
-  await queries.updateOrderStatus(id, result.data);
+  if (!result.success) return { error: "Invalid status." };
+
+  // "paid" and "cancelled" aren't just label changes — paid decrements stock
+  // and sends the confirmation email, cancelled refunds Stripe if money
+  // already moved. Both go through the same paths the webhook uses, whether
+  // staff triggers them by hand here or Stripe does automatically.
+  try {
+    if (result.data === "paid") {
+      await queries.markOrderPaid(id);
+    } else if (result.data === "cancelled") {
+      await queries.cancelOrder(id);
+    } else {
+      await queries.updateOrderStatus(id, result.data);
+    }
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "That didn't save. Try again." };
+  }
+
   revalidatePath("/orders");
   revalidatePath(`/orders/${id}`);
+  return { error: null };
 }
 
 export async function deleteOrderAction(id: string) {
   await queries.deleteOrder(id);
   revalidatePath("/orders");
+}
+
+export async function setOrderTrackingAction(
+  id: string,
+  trackingNumber: string,
+  carrier: string,
+): Promise<{ error: string | null }> {
+  if (!trackingNumber.trim()) return { error: "Enter a tracking number." };
+
+  try {
+    await queries.setOrderTracking(id, trackingNumber, carrier || null);
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : "That didn't save. Try again." };
+  }
+
+  revalidatePath("/orders");
+  revalidatePath(`/orders/${id}`);
+  return { error: null };
 }

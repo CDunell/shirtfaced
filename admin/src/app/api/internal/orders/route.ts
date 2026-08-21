@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyInternalRequest } from "@/lib/internal-auth";
-import { createOrder, upsertCustomerByEmail } from "@/db/store-queries";
+import {
+  createOrder,
+  findProductIdBySlug,
+  redeemDiscountByCode,
+  upsertCustomerByEmail,
+} from "@/db/store-queries";
 
 /**
  * Called by the storefront's checkout — see
@@ -16,7 +21,10 @@ import { createOrder, upsertCustomerByEmail } from "@/db/store-queries";
  * should ever mark an order paid — never this route, and never the client.
  */
 const itemSchema = z.object({
-  productId: z.string().uuid().nullable(),
+  // Not productId directly — the storefront has no direct database access,
+  // so it can't hand us its own idea of a product's id. Resolved to a real
+  // productId below, against this app's own catalogue.
+  slug: z.string().min(1),
   productName: z.string().min(1),
   colourName: z.string().nullable(),
   size: z.string().nullable(),
@@ -31,6 +39,7 @@ const bodySchema = z.object({
   }),
   shippingCents: z.number().int().nonnegative(),
   shippingAddress: z.string().min(1),
+  discountCode: z.string().min(1).nullable(),
   items: z.array(itemSchema).min(1),
 });
 
@@ -51,16 +60,47 @@ export async function POST(request: Request) {
 
   const customerId = await upsertCustomerByEmail(body.customer.email, body.customer.name);
 
+  const items = await Promise.all(
+    body.items.map(async (item) => ({
+      productId: await findProductIdBySlug(item.slug),
+      productName: item.productName,
+      colourName: item.colourName,
+      size: item.size,
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCents,
+    })),
+  );
+
+  // Redeemed here, atomically, rather than trusting a discountCents the
+  // storefront computed — that's the only way to enforce usage limits
+  // race-free (see redeemDiscountByCode) and it means the amount actually
+  // charged (computed by the caller from this response) can't drift from
+  // what the code is actually worth.
+  let discountId: string | null = null;
+  let discountCents = 0;
+  if (body.discountCode) {
+    const redeemed = await redeemDiscountByCode(body.discountCode);
+    if (!redeemed) {
+      return NextResponse.json({ error: "That code's no longer valid." }, { status: 400 });
+    }
+    discountId = redeemed.id;
+    const subtotalCents = items.reduce((sum, item) => sum + item.quantity * item.unitPriceCents, 0);
+    discountCents =
+      redeemed.type === "percent"
+        ? Math.round((subtotalCents * redeemed.value) / 100)
+        : Math.min(redeemed.value, subtotalCents);
+  }
+
   const orderId = await createOrder({
     customerId,
     status: "pending",
-    discountId: null,
-    discountCents: 0,
+    discountId,
+    discountCents,
     shippingCents: body.shippingCents,
     shippingAddress: body.shippingAddress,
     notes: "Created from storefront checkout.",
-    items: body.items,
+    items,
   });
 
-  return NextResponse.json({ orderId }, { status: 201 });
+  return NextResponse.json({ orderId, discountCents }, { status: 201 });
 }

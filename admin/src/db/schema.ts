@@ -364,6 +364,19 @@ export const orders = pgTable("orders", {
      status to "paid" matches on the PaymentIntent's own metadata, not this
      column, so this is a record, not a join key. */
   stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
+  /* Both null until staff enter a tracking number — see OrderStatusControl.
+     Freeform, same reasoning as shippingAddress above: no carrier API is
+     integrated, so there's no structured carrier/service to validate
+     against, just what a human typed. Entering one triggers the shipping
+     confirmation email regardless of status, so it can be set before or
+     at the same moment as flipping to "fulfilled". */
+  trackingNumber: text("tracking_number"),
+  carrier: text("carrier"),
+  /* Null until the abandoned-cart recovery email has gone out for this order
+     — see notifyAbandonedOrders in store-queries.ts. Only ever set once; an
+     order that goes on to pay never needs it and the notify script only
+     ever selects status = "pending" rows anyway. */
+  abandonedEmailSentAt: timestamp("abandoned_email_sent_at", { withTimezone: true }),
   /* Staff-facing only, never shown to the customer. */
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true })

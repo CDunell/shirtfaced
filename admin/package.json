@@ -13,7 +13,8 @@
     "db:studio": "drizzle-kit studio",
     "seed": "tsx src/db/seed.ts",
     "seed:content": "tsx src/db/seed-content.ts",
-    "sync:approved-designs": "tsx src/db/sync-approved-designs.ts"
+    "sync:approved-designs": "tsx src/db/sync-approved-designs.ts",
+    "notify:abandoned-orders": "tsx src/db/notify-abandoned-orders.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",
@@ -22,6 +23,8 @@
     "postgres": "^3.4.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "resend": "^6.21.0",
+    "stripe": "^22.5.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {

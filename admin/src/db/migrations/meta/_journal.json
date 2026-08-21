@@ -57,6 +57,20 @@
       "when": 1787281276952,
       "tag": "0007_handy_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787294273911,
+      "tag": "0008_add_order_tracking",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787301933718,
+      "tag": "0009_add_abandoned_email_tracking",
+      "breakpoints": true
     }
   ]
 }

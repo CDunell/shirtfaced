@@ -99,6 +99,35 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/deploy-admin.sh'
 
+      # Applies any migrations deploy-admin.sh's own build didn't already run
+      # (drizzle-kit migrate skips anything already applied, so this is safe
+      # to run on every deploy regardless). Explicit here rather than only
+      # inside that box-side script so a new migration landing is visible in
+      # this workflow, not just inferred from deploy-admin.sh's own contents.
+      #
+      # npx --yes rather than `npm run db:migrate`: this repo doesn't control
+      # deploy-admin.sh (it lives only on the box, not version-controlled
+      # anywhere this session can see), so whether its own npm install keeps
+      # devDependencies like drizzle-kit is unknown. npx fetches it itself
+      # if it isn't already in node_modules, so this step doesn't depend on
+      # that script's install flags either way.
+      - name: Run admin database migrations
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'cd /home/ubuntu/shirtfaced-admin && npx --yes drizzle-kit migrate'
+
+      # notify-abandoned-orders.ts (added alongside the abandoned-cart email)
+      # has no in-process scheduler to call it, so cron does. Idempotent: the
+      # grep/replace means re-running this step (every deploy) never adds a
+      # second copy of the line.
+      - name: Schedule the abandoned-cart recovery job
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '
+            (crontab -l 2>/dev/null | grep -v "notify-abandoned-orders.ts";
+             echo "0 * * * * cd /home/ubuntu/shirtfaced-admin && npx tsx src/db/notify-abandoned-orders.ts >> /var/log/shirtfaced-abandoned-cart.log 2>&1"
+            ) | crontab -
+          '
+
       # Studio owns mutable runtime/canon state on the box. Never let rsync --delete
       # erase var/ (canonical cast originals, cached derivatives, renderer results, etc.)
       # or worlds/. Canonical cast binaries are provisioned directly into persistent
