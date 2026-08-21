@@ -12,6 +12,7 @@ const LINKS = [
   { href: "/customers", label: "Customers" },
   { href: "/discounts", label: "Discounts" },
   { href: "/content", label: "Content" },
+  { href: "/analytics", label: "Analytics" },
 ];
 
 /**
