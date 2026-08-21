@@ -253,8 +253,36 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/deploy-site.sh'
 
+      # Studio sits behind the same session auth admin does as of 21 August
+      # 2026 (app/session_auth.py) -- the smoke scripts below need a real
+      # session cookie now, not just a reachable URL. Minted here rather than
+      # stored as its own secret: it's a short-lived, purpose-built token,
+      # not the SESSION_SECRET itself, and expires long before this workflow
+      # would ever run again.
+      - name: Mint a CI session token for the smoke tests
+        id: mint-token
+        env:
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        run: |
+          token=$(python3 -c "
+          import base64, hashlib, hmac, os, time
+          secret = os.environ['SESSION_SECRET']
+          email = 'ci@shirtfaced.wtf'
+          expires = int(time.time()) + 600
+          email_b64 = base64.urlsafe_b64encode(email.encode()).rstrip(b'=').decode()
+          payload = f'{email_b64}.{expires}'
+          sig = base64.urlsafe_b64encode(hmac.new(secret.encode(), payload.encode(), hashlib.sha256).digest()).rstrip(b'=').decode()
+          print(f'{payload}.{sig}')
+          ")
+          echo "::add-mask::$token"
+          echo "token=$token" >> "$GITHUB_OUTPUT"
+
       - name: Smoke the vintage chain
+        env:
+          SMOKE_SESSION_TOKEN: ${{ steps.mint-token.outputs.token }}
         run: python studio/scripts/smoke_vintage.py --base https://studio.shirtfaced.wtf
 
       - name: Smoke the design chain
+        env:
+          SMOKE_SESSION_TOKEN: ${{ steps.mint-token.outputs.token }}
         run: python studio/scripts/smoke_design_chain.py --base https://studio.shirtfaced.wtf

@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -33,6 +34,21 @@ from typing import Any
 
 DEFAULT_BASE = "https://studio.shirtfaced.wtf"
 TIMEOUT = 60
+
+# Studio now sits behind the same session auth admin does (app/session_auth.py,
+# 21 August 2026) -- a request with no valid session cookie gets a redirect or
+# a 401, not the real response this script is checking for. CI mints a
+# short-lived token from the same SESSION_SECRET both boxes already have and
+# passes it here; a local run against a dev server with auth disabled just
+# leaves this unset.
+SESSION_TOKEN = os.environ.get("SMOKE_SESSION_TOKEN")
+
+
+def _headers(extra: dict[str, str] | None = None) -> dict[str, str]:
+    headers = {"User-Agent": USER_AGENT, **(extra or {})}
+    if SESSION_TOKEN:
+        headers["Cookie"] = f"sf_admin_session={SESSION_TOKEN}"
+    return headers
 
 IMAGE_MAGIC = (b"\xff\xd8\xff", b"\x89PNG\r\n\x1a\n", b"GIF87a", b"GIF89a", b"RIFF")
 
@@ -55,7 +71,7 @@ class Link:
 
 
 def _get(url: str) -> tuple[int, bytes]:
-    request = urllib.request.Request(url, headers={"Accept": "*/*", "User-Agent": USER_AGENT})
+    request = urllib.request.Request(url, headers=_headers({"Accept": "*/*"}))
     try:
         with urllib.request.urlopen(request, timeout=TIMEOUT) as response:
             return response.status, response.read()
@@ -69,11 +85,7 @@ def _post(url: str, body: dict[str, Any]) -> tuple[int, bytes]:
     request = urllib.request.Request(
         url,
         data=json.dumps(body).encode(),
-        headers={
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-            "User-Agent": USER_AGENT,
-        },
+        headers=_headers({"Content-Type": "application/json", "Accept": "application/json"}),
         method="POST",
     )
     try:
@@ -195,7 +207,7 @@ def run(base: str, era: str) -> list[Link]:
         redirect = Link(f"{path} redirects to the shell")
         request = urllib.request.Request(
             path if path.startswith("http") else base + path,
-            headers={"User-Agent": USER_AGENT},
+            headers=_headers(),
         )
 
         class _NoRedirect(urllib.request.HTTPRedirectHandler):
