@@ -4,6 +4,7 @@ import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import { Header } from "@/components/Header";
 import { PaperGrain } from "@/components/Texture";
+import { Analytics } from "@/components/Analytics";
 import { LINE_THREE, TAGLINES } from "@/lib/taglines";
 
 /* Reference form from docs/foundations/BRAND_VOICE.md §3 — the first pair in
@@ -67,6 +68,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-paper text-ink">
+        <Analytics />
         <PaperGrain />
         <CartProvider>
           <a

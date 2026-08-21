@@ -5,16 +5,36 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
 import { IconArrowRight, IconCheck } from "@/components/Icons";
+import { trackPurchase, hasTrackedPurchase, markPurchaseTracked } from "@/lib/analytics";
 
 function SuccessContent() {
-  const { clearCart } = useCart();
+  const { lines, subtotal, clearCart } = useCart();
   const orderId = useSearchParams().get("orderId");
 
   useEffect(() => {
     // Covers the redirect-based confirmation path (bank redirects, some 3DS
-    // flows) — PaymentStep already clears the cart on the inline path, but
-    // a payment method that leaves the page via return_url skips that call
-    // entirely and lands here instead.
+    // flows) — PaymentStep already tracks the purchase and clears the cart on
+    // the inline path, but a payment method that leaves the page via
+    // return_url skips that call entirely and lands here instead, with the
+    // cart still populated (nothing else has cleared it yet).
+    if (orderId && lines.length > 0 && !hasTrackedPurchase(orderId)) {
+      // subtotal only — shipping/discount live in the checkout page's own
+      // pricing calc, which this page (reached via bank redirect, no state
+      // carried over) has no access to.
+      trackPurchase({
+        transactionId: orderId,
+        value: subtotal,
+        currency: "AUD",
+        items: lines.map((line) => ({
+          id: line.slug,
+          name: line.name,
+          price: line.price,
+          quantity: line.quantity,
+          variant: `${line.colour} / ${line.size}`,
+        })),
+      });
+      markPurchaseTracked(orderId);
+    }
     clearCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
