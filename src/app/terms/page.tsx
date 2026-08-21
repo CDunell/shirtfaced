@@ -13,6 +13,17 @@ export default function TermsPage() {
       intro="The boring page. Read it once, then never think about it again."
     >
       <div className="flex flex-col gap-8">
+        <Section heading="Who you're dealing with">
+          <Prose>
+            <p>
+              shirtfaced is run by BM Media (ABN 34 538 203 506). That&apos;s
+              who you&apos;re actually contracting with when you order
+              something — the shirtfaced name is the brand, BM Media is the
+              business behind it.
+            </p>
+          </Prose>
+        </Section>
+
         <Section heading="Using this site">
           <Prose>
             <p>

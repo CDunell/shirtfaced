@@ -22,11 +22,9 @@ anywhere). These are what's left.
 | Free shipping over $100 | `src/lib/products.ts` (`FREE_SHIPPING_THRESHOLD`), cart, checkout | **real** — owner-set 21 August 2026 |
 | New Zealand flat $21.60, 4–7 days | `src/app/shipping/page.tsx` | **real** — AusPost Standard international, own packaging, 251–500g. Sendle (the usual cheaper AU small-business alternative) ceased Australian operations January 2026 and was ruled out for that reason |
 | Same-day dispatch before 2pm AEST | `src/app/shipping/page.tsx` | removed, but re-check before re-adding |
-| 30-day returns window | `src/app/returns/page.tsx` | invented |
-| Prepaid return label within 1 business day | `src/app/returns/page.tsx` | invented |
-| Refund within 5 business days of arrival | `src/app/returns/page.tsx` | invented |
+| 30-day returns window, prepaid label, 5-day refund timing | `src/app/returns/page.tsx` | **resolved by removal** — the returns policy was reworked to no change-of-mind returns (owner decision); none of these day-count promises exist in the current copy any more, so there's nothing left here to verify |
 | Recycled mailers, no plastic filler | `src/app/shipping/page.tsx` | invented |
-| 240gsm / 230gsm combed cotton, garment-dyed | `src/app/about/page.tsx`, `src/lib/products.ts`, `src/components/BuyPanel.tsx` | invented |
+| 240gsm / 230gsm combed cotton, garment-dyed | `src/app/about/page.tsx`, `src/lib/products.ts`, `src/components/BuyPanel.tsx` | **mostly real** — corrected to the locked 220gsm (AS Colour 5026, main range) / 207gsm (Comfort Colors 1717, washed line) figures from `GARMENT_BLANK_STRATEGY.md` in the generic About/product-feature copy and the two washed-line demo products. Any *other* individual product description not yet checked against its actual blank may still be wrong |
 | Size chart measurements (chest/length per size) | `src/lib/products.ts` (`SIZE_CHART`), `/size-guide` | invented |
 | "Started in 2026" | `src/app/about/page.tsx` | invented |
 | Product descriptions (fit, weight, print detail) | `src/lib/products.ts` | invented |
@@ -79,9 +77,16 @@ step 3 is where that goes.
 
 ---
 
-## 5. Legal pages that don't exist
+## 5. Legal pages
 
-There is no Terms of Sale, Privacy Policy or Refund Policy page. A store
-collecting an email address and shipping address needs at minimum a privacy
-policy, and Australian Consumer Law guarantees should be referenced properly
-rather than only implied on `/returns`.
+`/terms`, `/privacy` and `/returns` all exist and reference Australian
+Consumer Law properly — this section's original claim that none of them
+existed was itself stale by the time anyone re-checked it.
+
+The one real gap — no legal entity named anywhere — is now closed. The
+operating entity is **BM Media, ABN 34 538 203 506** (owner-supplied,
+21 August 2026), trading as shirtfaced. Named on `/terms` ("Who you're
+dealing with") and `/privacy` ("Your rights").
+
+Still open: **`hello@shirtfaced.wtf` is referenced everywhere as the contact
+address but the mailbox doesn't exist yet.** Nothing above fixes that.

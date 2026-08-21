@@ -70,6 +70,10 @@ export default function PrivacyPage() {
               we&apos;ll sort it out — no form, no ticket number, no
               three-week hold music.
             </p>
+            <p>
+              The entity actually responsible for your data is BM Media
+              (ABN 34 538 203 506), trading as shirtfaced.
+            </p>
           </Prose>
         </Section>
 
