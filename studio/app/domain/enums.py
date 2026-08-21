@@ -563,6 +563,11 @@ class ConceptLibrary(StrEnum):
     # -- the day the Markdown grew to that number. Nothing imports this
     # library, so nothing can collide with it.
     VINTAGE_RESEARCH = "vintage_research"
+    # Concepts the quick-prompt screen produced -- a typed idea or a pool roll
+    # turned straight into a concept, same reasoning as VINTAGE_RESEARCH: its
+    # own library so nothing imported from a document can ever collide with
+    # it.
+    DESIGN_PROMPT = "design_prompt"
 
 
 class ConceptStatus(StrEnum):

@@ -12,20 +12,24 @@ every recommendation is a marked default until the corpus is measured.
 
 from __future__ import annotations
 
+import re
 import uuid
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.adapters.asset_store import AssetStoreError, FilesystemAssetStore
 from app.config import Settings, get_settings
+from app.db.concept_models import DesignBrief
 from app.db.concept_pool_models import DesignConceptPoolEntry
 from app.db.generation_sample_models import DesignGenerationSample
 from app.db.session import get_db_session
+from app.domain.enums import CollectionRole, ConceptLibrary, DesignAttemptMethod, GraphicArchetype
 from app.services.design_advisor import advise, measurement_rows, render_generation_prompt
+from app.services.design_pipeline import InvalidDesignAction, create_attempt, create_concept
 
 router = APIRouter(prefix="/api/design", tags=["design"])
 
@@ -172,6 +176,152 @@ def retire_concept(concept_id: str, session: SessionDependency) -> RetireRespons
     entry.active = False
     session.commit()
     return RetireResponse(concept_id=concept_id, active=False)
+
+
+# --- Quick attempt: idea straight to an upload-ready attempt ---------------
+#
+# `create_attempt` (design_pipeline.py) refuses without a brief carrying a
+# collection role and a graphic archetype -- constitution steps 2 and 4,
+# enforced where artwork begins, not a screen's choice to make or skip. This
+# answers both here instead of sending the owner to Work to fill in a form:
+# graphic archetype from the advisor's own corpus recommendation (the same
+# one /advise and /random already compute), collection role from the one
+# thing nothing in Studio can infer -- so it is a single required field, not
+# a form.
+
+
+class QuickAttemptIn(BaseModel):
+    source: Literal["typed", "pool"]
+    phrase: str = Field(default="", max_length=4000)
+    pool_concept_id: str | None = None
+    has_graphic: bool = True
+    tradition: str = "novelty"
+    collection_role: CollectionRole
+
+
+class QuickAttemptOut(BaseModel):
+    concept_id: str
+    concept_number: int
+    concept_title: str
+    attempt_id: str
+    generation_prompt: str
+    graphic_archetype: str
+    collection_role: str
+
+
+def _archetype_from_label(label: str) -> GraphicArchetype:
+    key = re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_")
+    try:
+        return GraphicArchetype(key)
+    except ValueError:
+        return GraphicArchetype.IMAGE_AND_TITLE_LOCKUP
+
+
+@router.post(
+    "/quick-attempt",
+    response_model=QuickAttemptOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="A typed idea or a pool roll, straight to an upload-ready attempt",
+)
+def quick_attempt(payload: QuickAttemptIn, session: SessionDependency) -> QuickAttemptOut:
+    if payload.source == "pool":
+        if payload.pool_concept_id is None:
+            # No id supplied -- roll the die here rather than making the
+            # caller fetch one from /random first and send it straight back.
+            # Same query /random runs, so a card asking for N designs is N of
+            # these calls, not a preview step in front of each one.
+            entry = session.execute(
+                select(DesignConceptPoolEntry)
+                .where(
+                    DesignConceptPoolEntry.tradition == payload.tradition,
+                    DesignConceptPoolEntry.active.is_(True),
+                )
+                .order_by(func.random())
+                .limit(1)
+            ).scalar_one_or_none()
+            if entry is None:
+                raise HTTPException(
+                    status.HTTP_404_NOT_FOUND,
+                    f"No batch-written concepts for tradition '{payload.tradition}' yet.",
+                )
+        else:
+            try:
+                pool_id = uuid.UUID(payload.pool_concept_id)
+            except ValueError as error:
+                raise HTTPException(
+                    status.HTTP_400_BAD_REQUEST, "Not a valid pool concept id."
+                ) from error
+            entry = session.get(DesignConceptPoolEntry, pool_id)
+            if entry is None:
+                raise HTTPException(status.HTTP_404_NOT_FOUND, "No pool concept with that id.")
+        concept_text = entry.concept_text
+        # advise() on the graphic alone, same reasoning as /random: a 25-35
+        # word scene description miscounted as on-shirt copy puts every pool
+        # concept in the same word bucket regardless of tradition.
+        direction = advise(
+            phrase="", has_graphic=True, tradition=payload.tradition, rows=measurement_rows(session)
+        )
+        prompt_text = render_generation_prompt(direction, concept_text)
+        source_path = f"design-prompt/pool/{entry.id}"
+    else:
+        phrase = payload.phrase.strip()
+        if not phrase:
+            raise HTTPException(
+                status.HTTP_400_BAD_REQUEST, "Type an idea, or roll the dice instead."
+            )
+        direction = advise(
+            phrase=phrase,
+            has_graphic=payload.has_graphic,
+            tradition=payload.tradition,
+            rows=measurement_rows(session),
+        )
+        prompt_text = render_generation_prompt(direction, phrase)
+        concept_text = phrase
+        source_path = f"design-prompt/typed/{uuid.uuid4()}"
+
+    title = concept_text.strip()[:80] or "Untitled"
+    archetype_label = next(
+        (r.value for r in direction.recommendations if r.field_name == "Graphic archetype"),
+        "image-and-title lockup",
+    )
+    graphic_archetype = _archetype_from_label(archetype_label)
+
+    concept = create_concept(
+        session,
+        ConceptLibrary.DESIGN_PROMPT,
+        title,
+        concept_text,
+        source_path=source_path,
+    )
+    brief = DesignBrief(
+        concept_id=concept.id,
+        collection_role=payload.collection_role,
+        graphic_archetype=graphic_archetype,
+    )
+    session.add(brief)
+    concept.brief = brief
+    session.flush()
+
+    try:
+        attempt = create_attempt(
+            session,
+            concept,
+            DesignAttemptMethod.IMAGE_GENERATION,
+            production_prompt=prompt_text,
+        )
+    except InvalidDesignAction as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(error)) from error
+
+    session.commit()
+    return QuickAttemptOut(
+        concept_id=str(concept.id),
+        concept_number=concept.external_number,
+        concept_title=concept.title,
+        attempt_id=str(attempt.id),
+        generation_prompt=prompt_text,
+        graphic_archetype=graphic_archetype.value,
+        collection_role=payload.collection_role.value,
+    )
 
 
 # --- Gallery: every concept that was actually rendered and looked at -------

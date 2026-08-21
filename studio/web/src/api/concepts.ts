@@ -529,6 +529,69 @@ export async function retireConcept(conceptId: string): Promise<void> {
   );
 }
 
+/** The five roles the constitution names, §4. The one choice quick-attempt
+ * cannot infer -- everything else it fills from the advisor's own corpus
+ * recommendation. */
+export const COLLECTION_ROLES = [
+  "anchor",
+  "core",
+  "expression",
+  "hero",
+  "collaboration",
+] as const;
+export type CollectionRole = (typeof COLLECTION_ROLES)[number];
+
+export interface QuickAttemptResult {
+  concept_id: string;
+  concept_number: number;
+  concept_title: string;
+  attempt_id: string;
+  generation_prompt: string;
+  graphic_archetype: string;
+  collection_role: string;
+}
+
+/** An idea (typed, or an existing concept's own text) straight to an
+ * upload-ready attempt. No brief screen, no queue -- create_attempt's own
+ * gate (a collection role and a graphic archetype) is answered here: role
+ * from `collectionRole`, archetype from the advisor's corpus recommendation.
+ */
+export async function quickAttemptFromPhrase(
+  phrase: string,
+  hasGraphic: boolean,
+  tradition: string,
+  collectionRole: CollectionRole,
+): Promise<QuickAttemptResult> {
+  return await json<QuickAttemptResult>("/api/design/quick-attempt", {
+    method: "POST",
+    body: JSON.stringify({
+      source: "typed",
+      phrase,
+      has_graphic: hasGraphic,
+      tradition,
+      collection_role: collectionRole,
+    }),
+  });
+}
+
+/** A batch-written pool concept, picked server-side -- same "hit and miss by
+ * nature" pool `fetchRandomConcept` reads -- straight to an upload-ready
+ * attempt. One round trip: the server rolls the die itself when no id is
+ * supplied. */
+export async function quickAttemptFromRandomPool(
+  tradition: string,
+  collectionRole: CollectionRole,
+): Promise<QuickAttemptResult> {
+  return await json<QuickAttemptResult>("/api/design/quick-attempt", {
+    method: "POST",
+    body: JSON.stringify({
+      source: "pool",
+      tradition,
+      collection_role: collectionRole,
+    }),
+  });
+}
+
 /** Everything that leaves the building with one attempt: the words, the product
  * definition, the prompt and the evidence images. Composed on the server so the
  * text a person takes and the record of what they took cannot differ. */
