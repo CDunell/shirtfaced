@@ -78,7 +78,7 @@ export async function POST(request: Request) {
       shippingCents: priced.shippingCents,
       shippingAddress,
       items: priced.lines.map((line) => ({
-        productId: null,
+        slug: line.slug,
         productName: line.name,
         colourName: line.colour,
         size: line.size,

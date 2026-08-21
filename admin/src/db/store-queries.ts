@@ -1,13 +1,19 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
+  colourStock,
   customers,
   discounts,
   orderItems,
   orders,
+  products,
+  productColours,
   type DiscountType,
   type OrderStatus,
+  type Size,
 } from "./schema";
+import { getStripe } from "../lib/stripe";
+import { sendOrderConfirmationEmail } from "../lib/email";
 
 /* ---------------------------------------------------------------------------
    Customers
@@ -53,6 +59,18 @@ export async function updateCustomer(id: string, data: CustomerInput) {
 
 export async function deleteCustomer(id: string) {
   await db.delete(customers).where(eq(customers.id, id));
+}
+
+/** Resolves a storefront cart line's slug to its current productId, for the
+ * checkout order-creation path — null if the product's been deleted since it
+ * was added to a cart (order still goes through with just the name snapshot,
+ * same graceful degradation the schema already documents for productId). */
+export async function findProductIdBySlug(slug: string): Promise<string | null> {
+  const row = await db.query.products.findFirst({
+    where: eq(products.slug, slug),
+    columns: { id: true },
+  });
+  return row?.id ?? null;
 }
 
 /** Find-or-create by email, for checkout — a customer's email is the only
@@ -193,6 +211,87 @@ export async function createOrder(data: OrderInput) {
 
 export async function updateOrderStatus(id: string, status: OrderStatus) {
   await db.update(orders).set({ status, updatedAt: new Date() }).where(eq(orders.id, id));
+}
+
+/** The only path that should ever move an order into "paid" — called by the
+ * storefront's Stripe webhook, and by staff manually flipping status in
+ * admin. Decrements stock for each line that resolves to a real
+ * product/colour/size, and sends the order-confirmation email, in the same
+ * transition so both happen exactly once alongside the status change.
+ *
+ * Guarded on the order not already being paid: Stripe retries webhooks, and
+ * without this a retried event would decrement stock and re-email twice for
+ * one sale. */
+export async function markOrderPaid(id: string): Promise<void> {
+  const paidOrder = await db.transaction(async (tx) => {
+    const order = await tx.query.orders.findFirst({
+      where: eq(orders.id, id),
+      with: { items: true, customer: true },
+    });
+    if (!order || order.status === "paid") return null;
+
+    await tx.update(orders).set({ status: "paid", updatedAt: new Date() }).where(eq(orders.id, id));
+
+    for (const item of order.items) {
+      if (!item.productId || !item.colourName || !item.size) continue;
+      const colour = await tx.query.productColours.findFirst({
+        where: and(eq(productColours.productId, item.productId), eq(productColours.name, item.colourName)),
+      });
+      if (!colour) continue;
+      await tx
+        .update(colourStock)
+        .set({ quantity: sql`${colourStock.quantity} - ${item.quantity}` })
+        .where(and(eq(colourStock.colourId, colour.id), eq(colourStock.size, item.size as Size)));
+    }
+
+    return order;
+  });
+
+  if (!paidOrder || !paidOrder.customer) return;
+
+  try {
+    await sendOrderConfirmationEmail({
+      toEmail: paidOrder.customer.email,
+      toName: paidOrder.customer.name,
+      reference: orderReference(paidOrder.orderSeq),
+      items: paidOrder.items.map((item) => ({
+        productName: item.productName,
+        colourName: item.colourName,
+        size: item.size,
+        quantity: item.quantity,
+        unitPriceCents: item.unitPriceCents,
+      })),
+      subtotalCents: paidOrder.subtotalCents,
+      shippingCents: paidOrder.shippingCents,
+      totalCents: paidOrder.totalCents,
+    });
+  } catch (error) {
+    // Loud in the logs on purpose, same as the webhook's own order-update
+    // failure — a silent email failure means no one ever finds out.
+    console.error(`markOrderPaid: failed to send confirmation email for order ${id}`, error);
+  }
+}
+
+/** Cancels an order, refunding the Stripe charge first if money already
+ * moved (paid or fulfilled) — cancelling is not just a label change once a
+ * customer has actually been charged. Throws rather than silently cancelling
+ * without refunding if Stripe isn't configured or the refund itself fails,
+ * since that combination (marked cancelled, customer still charged) is worse
+ * than leaving the order's status alone. */
+export async function cancelOrder(id: string): Promise<void> {
+  const order = await db.query.orders.findFirst({ where: eq(orders.id, id) });
+  if (!order) throw new Error("Order not found.");
+
+  const moneyHasMoved = order.status === "paid" || order.status === "fulfilled";
+  if (moneyHasMoved && order.stripePaymentIntentId) {
+    const stripe = getStripe();
+    if (!stripe) {
+      throw new Error("Can't cancel a paid order — Stripe isn't configured on admin.");
+    }
+    await stripe.refunds.create({ payment_intent: order.stripePaymentIntentId });
+  }
+
+  await db.update(orders).set({ status: "cancelled", updatedAt: new Date() }).where(eq(orders.id, id));
 }
 
 export async function setOrderPaymentIntent(id: string, stripePaymentIntentId: string) {
