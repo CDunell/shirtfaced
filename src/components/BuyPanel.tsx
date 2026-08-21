@@ -311,7 +311,8 @@ export function BuyPanel({ product }: { product: Product }) {
 
             <p className="mt-4 flex items-center gap-2 text-[13px] text-grey-dark">
               <IconSmiley className="h-4 w-4" strokeWidth={1.8} />
-              Not sure? Send it back. Easy.
+              Those are the real measurements — get it right the first time.
+              We don&apos;t do wrong-size returns.
             </p>
           </div>
         </div>

@@ -52,8 +52,8 @@ export default function TermsPage() {
           <Prose>
             <p>
               Covered properly on the <Link href="/shipping" className="underline underline-offset-2">shipping</Link> and{" "}
-              <Link href="/returns" className="underline underline-offset-2">returns</Link> pages.
-              Not repeating it here — you can read the same sentence twice
+              <Link href="/returns" className="underline underline-offset-2">returns</Link>{" "}
+              pages. Not repeating it here — you can read the same sentence twice
               somewhere that isn&apos;t this one.
             </p>
           </Prose>

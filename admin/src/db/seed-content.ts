@@ -60,25 +60,29 @@ const shipping = {
 
 const returns = {
   id: 1,
-  intro: "Thirty days. Unworn, unwashed, tags on. We won't ask why.",
-  step1Title: "Email us",
-  step1Body: "Order number and which items are coming back. That's the whole form.",
-  step2Title: "We send a label",
-  step2Body: "Prepaid, within one business day.",
-  step3Title: "Post it",
-  step3Body: "Any Australia Post box. Keep the receipt until it's refunded.",
-  step4Title: "Refunded",
-  step4Body: "Back to your original payment method within 5 business days of arrival.",
+  intro:
+    "Choose carefully. We don't do change-of-mind returns because you got home and decided the vibe was wrong.",
+  step1Title: "Check the size guide",
+  step1Body:
+    "Before you order. Measure a tee you already own if you have to. Future you will appreciate the effort.",
+  step2Title: "Order the one you actually want",
+  step2Body: "Wrong size, wrong colour or changed your mind isn't a return reason. That's the deal.",
+  step3Title: "Something actually wrong?",
+  step3Body:
+    "Fault, damage, wrong item or something that doesn't match what we sold you — email us with your order number and a photo.",
+  step4Title: "We'll sort our shit out",
+  step4Body:
+    "If we've stuffed it, we'll provide the remedy you're entitled to under Australian Consumer Law. No bullshit obstacle course.",
   exchangesP1:
-    "Wrong size is the usual one. Return it and order the right size — it's faster than a formal exchange and you're not waiting on our stock check.",
+    "We don't offer exchanges for change of mind, including ordering the wrong size or colour. Check the size guide before committing.",
   exchangesP2:
-    "If the size you want has sold out in the meantime, tell us and we'll hold one from the next run.",
+    "If there's a genuine problem with the garment, that's different. Get in touch and we'll sort it properly.",
   wrongP1:
-    "Faulty print, dodgy stitching, wrong item in the bag — send a photo and we'll replace it, no return needed. That's our mistake, not your errand.",
+    "Faulty print, dodgy stitching, damaged garment, wrong item in the bag, or something that doesn't match its description — send your order number and a photo to hello@shirtfaced.wtf.",
   wrongP2:
-    "This sits alongside your rights under Australian Consumer Law, which nothing here limits.",
+    "Your rights under Australian Consumer Law still apply. This policy doesn't remove, limit or replace them. If the law says you're entitled to a repair, replacement, refund or other remedy, that's what applies.",
   cantTakeP1:
-    "Worn or washed items, and anything returned after 30 days. Not because we're precious — we just can't resell it and won't pretend otherwise.",
+    "We don't accept returns because you changed your mind, picked the wrong size, picked the wrong colour, found something else you like more, or your mate said it looked shit. Genuine faults and your Australian Consumer Law rights are a different story.",
 };
 
 const contact = {
@@ -122,7 +126,7 @@ const home = {
   id: 1,
   trust1: "Designed in Aus",
   trust2: "Zero apologies",
-  trust3: "Returns easy as",
+  trust3: "No change-of-mind returns",
   promoHeading: "dress like you've got better plans.",
   promoAlt: "Model wearing the Send It Club tee in vintage white",
   newsletterHeading: "we promise fewer emails than your ex.",
@@ -142,8 +146,8 @@ const productPage = {
   feature2B: "holds its shape",
   feature3A: "designed in australia",
   feature3B: "printed worldwide",
-  feature4A: "easy returns",
-  feature4B: "no drama",
+  feature4A: "choose carefully",
+  feature4B: "no change-of-mind returns",
 };
 
 const account = {

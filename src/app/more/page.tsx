@@ -9,7 +9,7 @@ const LINKS = [
   { href: "/faq", label: "FAQ", note: "The quick answers" },
   { href: "/size-guide", label: "Size guide", note: "Measurements, honestly" },
   { href: "/shipping", label: "Shipping", note: "Where and how fast" },
-  { href: "/returns", label: "Returns", note: "No drama" },
+  { href: "/returns", label: "Returns", note: "Choose carefully" },
   { href: "/garment-care", label: "Garment care", note: "How to not wreck it" },
   { href: "/contact", label: "Contact", note: "Talk to a human" },
   { href: "/privacy", label: "Privacy", note: "What we collect" },
