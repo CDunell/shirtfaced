@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { logoutAction } from "@/app/actions";
 import { IconClose, IconMenu } from "./Icons";
 
@@ -30,8 +30,16 @@ export function Sidebar({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Close the mobile drawer on navigation (covers back/forward, not just link taps).
-  useEffect(() => setOpen(false), [pathname]);
+  // Close the mobile drawer on navigation (covers back/forward, not just link
+  // taps). Adjusted during render rather than in an effect — React's own
+  // recommended pattern for "reset state when a prop changes", one render
+  // cheaper than an effect that fires after paint. See
+  // react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    setOpen(false);
+  }
 
   const isActive = (href: string) => pathname.startsWith(href);
 
