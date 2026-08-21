@@ -814,9 +814,12 @@ export interface PipelineResult {
   design_concept_library: string;
   /** True when this call created the concept rather than adding to one. */
   concept_created: boolean;
-  attempt_id: string;
-  attempt_number: number;
-  state: string;
+  /** Null when the concept has no ready-for-artwork brief yet -- the pipeline
+   * deliberately withholds the attempt rather than create one nobody can work,
+   * per the comment in vintage_design.py. Not "attempt null": no attempt. */
+  attempt_id: string | null;
+  attempt_number: number | null;
+  state: string | null;
   /** What to do next, in a sentence, composed by the server so every screen
    * says the same thing about the same situation. */
   next_action: string;

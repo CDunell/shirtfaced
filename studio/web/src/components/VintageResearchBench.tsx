@@ -67,7 +67,9 @@ function Landed({ result }: { result: PipelineResult | undefined }): React.JSX.E
   return (
     <ParagraphXSmall className="m-0 basis-full text-ink/70">
       {result.concept_created ? "Created " : "Added to "}#{String(result.design_concept_number)}{" "}
-      {result.design_concept_title}, attempt {String(result.attempt_number)}. {result.next_action}
+      {result.design_concept_title}
+      {result.attempt_number !== null ? `, attempt ${String(result.attempt_number)}` : ""}.{" "}
+      {result.next_action}
     </ParagraphXSmall>
   );
 }
@@ -90,8 +92,11 @@ export function VintageResearchBench(): React.JSX.Element {
   const [drafts, setDrafts] = useState<Record<number, string>>({});
   const [pipelineTarget, setPipelineTarget] = useState("");
   // Attempt number per concept, so the button reports what it created
-  // rather than leaving a click with nothing to show for it.
-  const [queued, setQueued] = useState<Record<number, number>>({});
+  // rather than leaving a click with nothing to show for it. Null means the
+  // concept was created or updated but no attempt could open yet -- see
+  // Landed and the tag below, which both read that as "no attempt" rather
+  // than printing the literal null.
+  const [queued, setQueued] = useState<Record<number, number | null>>({});
   // Where each research concept landed, so the bench can say what happened and
   // what to do about it rather than leaving the reader to go and look.
   const [landed, setLanded] = useState<Record<number, PipelineResult>>({});
@@ -530,7 +535,7 @@ export function VintageResearchBench(): React.JSX.Element {
                   Opens a design attempt against that concept. No image is generated — make it
                   wherever you make images, then upload it to the attempt.
                 </ParagraphXSmall>
-                {queued[concept.concept_number] !== undefined ? (
+                {queued[concept.concept_number] ? (
                   <Tag kind="positive">Attempt {String(queued[concept.concept_number])} created</Tag>
                 ) : null}
               </div>
