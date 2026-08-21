@@ -5,8 +5,10 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { money } from "@/lib/money";
 import { FREE_SHIPPING_THRESHOLD, products } from "@/lib/products";
+import { SHIPPING_METHODS } from "@/lib/checkout-pricing";
 import { ProductMedia } from "@/components/ProductMedia";
 import { TeeArt } from "@/components/TeeArt";
+import { PaymentStep, type CheckoutRequest } from "./PaymentStep";
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -17,20 +19,16 @@ import {
 /* ---------------------------------------------------------------------------
    Checkout.
 
-   Deliberately has NO card number / CVC / expiry fields. There is no payment
-   processor connected, so a form that looked like it took payment would invite
-   someone to type real card details into a page that does nothing with them —
-   and card data must never touch our own inputs anyway. When Stripe or Shopify
-   is wired up, payment is collected in their hosted element, not here.
+   Still deliberately has NO card number / CVC / expiry fields of our own —
+   that never changes, card data must never touch our own inputs. Step 3 now
+   embeds Stripe's own PaymentElement (see PaymentStep.tsx) rather than a
+   disabled button, once STRIPE_SECRET_KEY / NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+   are actually set; without them it still shows the same honest
+   "payment isn't connected" message as before.
 
-   Everything up to that point is real: contact, address, shipping method and
-   totals all work and carry through.
+   Contact, address, shipping method and totals are all real and carry
+   through into the order created the moment step 3 loads.
 --------------------------------------------------------------------------- */
-
-const SHIPPING_METHODS = [
-  { key: "standard", name: "Standard", time: "3–5 business days", price: 10 },
-  { key: "express", name: "Express", time: "1–2 business days", price: 15 },
-] as const;
 
 const STATES = ["NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"];
 
@@ -363,29 +361,30 @@ export default function CheckoutPage() {
             </div>
           </dl>
 
-          {/* Payment is not connected. Say so plainly rather than showing a
-              card form that would collect details nothing can process. */}
-          <div className="mt-8 rounded-[20px] border-2 border-dashed border-ink/20 px-5 py-6 text-center">
-            <p className="display text-[20px]">Payment isn&apos;t connected</p>
-            <p className="mx-auto mt-2 max-w-[40ch] text-[14px] leading-relaxed text-grey-dark">
-              There&apos;s no card form here on purpose — no processor is wired
-              up yet, so nothing could be charged and card details shouldn&apos;t
-              be typed into a page that can&apos;t handle them. Once Stripe or
-              Shopify is connected, payment happens in their hosted form.
-            </p>
-            <button
-              type="button"
-              disabled
-              className="mt-5 inline-flex h-14 w-full cursor-not-allowed items-center justify-center gap-2 rounded-[18px] bg-lime text-[16px] font-bold text-ink opacity-50"
-            >
-              <IconLock className="h-5 w-5" />
-              Pay {money(total)}
-            </button>
-          </div>
+          <PaymentStep
+            request={{
+              lines: lines.map((l) => ({
+                slug: l.slug,
+                size: l.size,
+                colour: l.colour,
+                quantity: l.quantity,
+              })),
+              shippingMethod: method,
+              contact: { email: form.email, name: form.name },
+              address: {
+                line1: form.address,
+                suburb: form.suburb,
+                state: form.state,
+                postcode: form.postcode,
+              },
+            } satisfies CheckoutRequest}
+            total={total}
+          />
 
           <p className="mt-5 flex items-start gap-2 text-[13px] text-grey-dark">
             <IconCheck className="mt-0.5 h-4 w-4 shrink-0" />
-            Your details stay in this browser — nothing has been sent anywhere.
+            Card details go straight to Stripe — this page never sees or
+            stores them.
           </p>
         </div>
       )}

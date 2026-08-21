@@ -358,6 +358,12 @@ export const orders = pgTable("orders", {
      it), and duplicating one here ahead of real checkout data would be
      guessing at a shape rather than building it. */
   shippingAddress: text("shipping_address"),
+  /* Set once the storefront's checkout creates a real Stripe PaymentIntent
+     for this order — null for anything entered by hand from /orders/new.
+     Looked up by staff in the Stripe dashboard; the webhook that flips
+     status to "paid" matches on the PaymentIntent's own metadata, not this
+     column, so this is a record, not a join key. */
+  stripePaymentIntentId: text("stripe_payment_intent_id").unique(),
   /* Staff-facing only, never shown to the customer. */
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true })

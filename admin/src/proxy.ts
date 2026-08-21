@@ -32,6 +32,16 @@ export function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Server-to-server routes: the storefront's own server calls these, never
+  // a browser, so there is no session cookie to present. This is not an
+  // unauthenticated hole -- every route under /api/internal checks its own
+  // shared secret via verifyInternalRequest (see lib/internal-auth.ts) and
+  // returns 401 without it. Skipping the cookie check here only avoids
+  // redirecting a machine caller to an HTML login page it can't use.
+  if (pathname.startsWith("/api/internal/")) {
+    return NextResponse.next();
+  }
+
   const token = request.cookies.get(SESSION_COOKIE)?.value;
   if (verifySessionToken(token)) {
     return NextResponse.next();

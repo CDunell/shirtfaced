@@ -55,6 +55,30 @@ export async function deleteCustomer(id: string) {
   await db.delete(customers).where(eq(customers.id, id));
 }
 
+/** Find-or-create by email, for checkout — a customer's email is the only
+ * thing guaranteed present at that point, and it's already unique. Updates
+ * the name on an existing row rather than ignoring it, since a repeat buyer
+ * typing their name slightly differently shouldn't fork two records. */
+export async function upsertCustomerByEmail(email: string, name: string): Promise<string> {
+  const [{ id }] = await db
+    .insert(customers)
+    .values({
+      email,
+      name,
+      phone: null,
+      addressLine1: null,
+      addressLine2: null,
+      suburb: null,
+      state: null,
+      postcode: null,
+      country: "AU",
+      notes: null,
+    })
+    .onConflictDoUpdate({ target: customers.email, set: { name } })
+    .returning({ id: customers.id });
+  return id;
+}
+
 /* ---------------------------------------------------------------------------
    Discounts
 --------------------------------------------------------------------------- */
@@ -92,9 +116,11 @@ export async function deleteDiscount(id: string) {
 }
 
 /* ---------------------------------------------------------------------------
-   Orders — read-heavy for now. There's no checkout generating these yet (see
-   schema.ts's header comment), so creation is a manual "record a phone/email
-   order" path, not a customer-facing flow.
+   Orders. Two sources: a manual "record a phone/email order" path from
+   /orders/new, and the storefront's checkout, which reaches these through
+   admin/src/app/api/internal/orders (never this module directly — the
+   storefront is a separate Next.js app with no access to this database; see
+   that route's own comment for why it exists and how it's authenticated).
 --------------------------------------------------------------------------- */
 
 export function listOrders() {
@@ -169,6 +195,13 @@ export async function updateOrderStatus(id: string, status: OrderStatus) {
   await db.update(orders).set({ status, updatedAt: new Date() }).where(eq(orders.id, id));
 }
 
+export async function setOrderPaymentIntent(id: string, stripePaymentIntentId: string) {
+  await db
+    .update(orders)
+    .set({ stripePaymentIntentId, updatedAt: new Date() })
+    .where(eq(orders.id, id));
+}
+
 export async function deleteOrder(id: string) {
   await db.delete(orders).where(eq(orders.id, id));
 }
@@ -187,6 +220,70 @@ export interface LowStockRow {
   colourName: string;
   size: string;
   quantity: number;
+}
+
+/* ---------------------------------------------------------------------------
+   Dashboard summary — the numbers worth seeing without going looking for
+   them. Revenue counts paid + fulfilled orders only; pending isn't money yet
+   and cancelled never was.
+--------------------------------------------------------------------------- */
+
+export interface DashboardSummary {
+  totalOrders: number;
+  pendingOrders: number;
+  revenueCents: number;
+  customerCount: number;
+  activeDiscountCount: number;
+  lowStockCount: number;
+  recentOrders: {
+    id: string;
+    orderSeq: number;
+    status: OrderStatus;
+    totalCents: number;
+    customerName: string | null;
+    createdAt: Date;
+  }[];
+}
+
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  const [[orderStats], [customerStats], [discountStats], lowStock, recentOrders] =
+    await Promise.all([
+      db.execute<{ total_orders: number; pending_orders: number; revenue_cents: number }>(sql`
+        SELECT
+          COUNT(*)::int AS total_orders,
+          COUNT(*) FILTER (WHERE status = 'pending')::int AS pending_orders,
+          COALESCE(SUM(total_cents) FILTER (WHERE status IN ('paid', 'fulfilled')), 0)::int
+            AS revenue_cents
+        FROM orders
+      `),
+      db.execute<{ count: number }>(sql`SELECT COUNT(*)::int AS count FROM customers`),
+      db.execute<{ count: number }>(
+        sql`SELECT COUNT(*)::int AS count FROM discounts WHERE active = true`,
+      ),
+      listLowStock(),
+      db.query.orders.findMany({
+        with: { customer: true },
+        orderBy: (o, { desc: d }) => d(o.createdAt),
+        limit: 5,
+      }),
+    ]);
+
+  return {
+    totalOrders: orderStats.total_orders,
+    pendingOrders: orderStats.pending_orders,
+    revenueCents: orderStats.revenue_cents,
+    customerCount: customerStats.count,
+    activeDiscountCount: discountStats.count,
+    lowStockCount: lowStock.length,
+    recentOrders: recentOrders.map((o) => ({
+      id: o.id,
+      orderSeq: o.orderSeq,
+      status: o.status,
+      totalCents: o.totalCents,
+      customerName: o.customer?.name ?? null,
+      createdAt: o.createdAt,
+    })),
+  };
 }
 
 export async function listLowStock(): Promise<LowStockRow[]> {

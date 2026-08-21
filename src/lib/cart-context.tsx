@@ -34,6 +34,9 @@ type CartContextValue = {
     colour: string,
     quantity: number
   ) => void;
+  /** Called once an order is actually placed — not a "start over" action, so
+   * it lives separately from removeLine rather than being "remove everything". */
+  clearCart: () => void;
   itemCount: number;
   subtotal: number;
   /** Bumps on every add — drives the cart badge pop */
@@ -156,6 +159,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const clearCart = useCallback(() => setLines([]), []);
+
   const itemCount = useMemo(
     () => lines.reduce((sum, l) => sum + l.quantity, 0),
     [lines]
@@ -171,12 +176,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
       addLine,
       removeLine,
       setQuantity,
+      clearCart,
       itemCount,
       subtotal,
       addTick,
       hydrated,
     }),
-    [lines, addLine, removeLine, setQuantity, itemCount, subtotal, addTick, hydrated]
+    [
+      lines,
+      addLine,
+      removeLine,
+      setQuantity,
+      clearCart,
+      itemCount,
+      subtotal,
+      addTick,
+      hydrated,
+    ]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
