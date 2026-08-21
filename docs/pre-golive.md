@@ -43,9 +43,9 @@ they're backed by real reviews.
 Resend's sending-domain verification is live (confirmed via public DNS
 lookup and, better, three real order-confirmation emails actually arriving
 — see `docs/dns.md`). SPF authorises Amazon SES (Resend's sender), MX routes
-inbound through Cloudflare Email Routing. One step left from the original
-plan: DMARC is still `p=quarantine` for the changeover and should return to
-`p=reject` once alignment's held for a few more real sends.
+inbound through Cloudflare Email Routing, DMARC is at `p=reject` (moved
+there 22 August 2026 after the changeover period held clean). Nothing open
+here.
 
 ---
 
