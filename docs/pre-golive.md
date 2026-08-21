@@ -28,7 +28,7 @@ anywhere). These are what's left.
 | Size chart measurements (chest/length per size) | `src/lib/products.ts` (`SIZE_CHART`), `/size-guide` | invented |
 | "Started in 2026" | `src/app/about/page.tsx` | invented |
 | Product descriptions (fit, weight, print detail) | `src/lib/products.ts` | invented |
-| `hello@shirtfaced.wtf` | `src/app/contact/page.tsx` | **likely resolved** — MX now routes inbound mail through Cloudflare Email Routing (confirmed via public DNS), but that only proves the infrastructure exists, not that this specific address forwards somewhere read. Worth a real test send to confirm |
+| `hello@shirtfaced.wtf` | `src/app/contact/page.tsx` | **resolved** — owner confirmed reading real mail there, 22 August 2026 |
 
 **Ratings and review counts were removed entirely** (2026-08-03) rather than
 left as placeholders — invented ratings on a live store are a misleading-conduct
