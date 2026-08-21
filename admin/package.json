@@ -13,7 +13,8 @@
     "db:studio": "drizzle-kit studio",
     "seed": "tsx src/db/seed.ts",
     "seed:content": "tsx src/db/seed-content.ts",
-    "sync:approved-designs": "tsx src/db/sync-approved-designs.ts"
+    "sync:approved-designs": "tsx src/db/sync-approved-designs.ts",
+    "notify:abandoned-orders": "tsx src/db/notify-abandoned-orders.ts"
   },
   "dependencies": {
     "dotenv": "^17.4.2",

@@ -295,3 +295,145 @@ export async function sendShippingConfirmationEmail(input: ShippingConfirmationI
     text: renderShippingText(input),
   });
 }
+
+export type AbandonedCartItem = {
+  productName: string;
+  colourName: string | null;
+  size: string | null;
+  quantity: number;
+  unitPriceCents: number;
+};
+
+export type AbandonedCartInput = {
+  toEmail: string;
+  items: AbandonedCartItem[];
+  cartUrl: string;
+};
+
+/* Adapted from emails/html/04-abandoned-cart.html, which shows a single
+   sample item — this lists everything actually left in the order. Links to
+   /cart rather than reconstructing anything server-side: the storefront
+   cart lives in the browser's own localStorage and is only ever cleared on
+   a successful payment (see cart-context.tsx), so anyone who abandoned
+   checkout still has these exact items sitting there. */
+function renderAbandonedCartHtml(input: AbandonedCartInput): string {
+  const rows = input.items
+    .map((item) => {
+      const detail = [item.colourName, item.size].filter(Boolean).join(" · ");
+      return `
+        <tr>
+          <td style="padding:14px;border-bottom:1px solid #eee;" class="body-text">
+            <div style="font-weight:bold;font-size:15px;">${escapeHtml(item.productName)}</div>
+            <div class="small" style="margin-top:4px;">${detail ? `${escapeHtml(detail)} · ` : ""}Qty: ${item.quantity}</div>
+            <div style="font-size:15px;margin-top:6px;font-weight:bold;">${money(item.unitPriceCents * item.quantity)}</div>
+          </td>
+        </tr>`;
+    })
+    .join("");
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body, table, td, a { -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
+table, td { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
+img { border: 0; height: auto; display: block; }
+body { margin: 0 !important; padding: 0 !important; background-color: #0a0a0a; }
+a { text-decoration: none; }
+.display { font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', 'Arial Black', Arial, sans-serif; font-weight: 900; letter-spacing: -0.03em; text-transform: uppercase; line-height: 0.9; }
+.body-text { font-family: Arial, Helvetica, sans-serif; line-height: 1.5; color: #111; }
+.small { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #333; }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;">Your cart is waiting. Hesitation is the only thing that sells out.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0a0a0a;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px;max-width:600px;background:#F5F0E6;">
+<tr>
+<td style="background:#000;padding:18px 24px;">
+<span class="display" style="font-size:28px;color:#fff;">shirtfaced</span>
+<span style="display:inline-block;width:26px;height:26px;background:#C8FF1A;border-radius:50%;margin-left:6px;vertical-align:middle;text-align:center;line-height:26px;font-size:14px;">☺</span>
+</td>
+</tr>
+<tr>
+<td style="padding:40px 32px 28px;background:#F5F0E6;">
+<div class="display" style="font-size:42px;color:#000;margin-bottom:8px;">
+LEFT SOMETHING<br>BEHIND?
+</div>
+<div style="width:120px;height:6px;background:#C8FF1A;margin:10px 0 18px;"></div>
+<div class="body-text" style="font-size:16px;color:#333;margin-bottom:28px;">Your cart is waiting.</div>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#fff;border:2px solid #111;margin-bottom:24px;">
+${rows}
+</table>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:20px;">
+<tr>
+<td style="background:#000;">
+<a href="${escapeHtml(input.cartUrl)}" style="display:inline-block;padding:14px 28px;font-family:Impact,'Arial Black',Arial,sans-serif;font-size:15px;color:#C8FF1A;text-transform:uppercase;letter-spacing:1px;">RETURN TO CART →</a>
+</td>
+</tr>
+</table>
+<div style="background:#111;color:#C8FF1A;padding:12px 16px;display:inline-block;font-family:Arial,sans-serif;font-size:13px;font-weight:bold;">
+HESITATION IS THE ONLY THING THAT SELLS OUT. ☺
+</div>
+</td>
+</tr>
+<tr>
+<td style="background:#000;padding:22px;text-align:center;">
+<div style="font-family:Arial,sans-serif;font-size:13px;color:#C8FF1A;font-weight:bold;">SHIRTFACED.WTF</div>
+<div class="display" style="font-size:11px;color:#C8FF1A;margin-top:12px;">GOOD MATES, GREAT TIMES, SHIRTFACED.</div>
+</td>
+</tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+function renderAbandonedCartText(input: AbandonedCartInput): string {
+  const lines = input.items
+    .map((item) => {
+      const detail = [item.colourName, item.size].filter(Boolean).join(" ");
+      return `${item.productName}${detail ? ` (${detail})` : ""} x${item.quantity} — ${money(item.unitPriceCents * item.quantity)}`;
+    })
+    .join("\n");
+
+  return `SHIRTFACED
+
+LEFT SOMETHING BEHIND?
+Your cart is waiting.
+
+${lines}
+
+RETURN TO CART → ${input.cartUrl}
+
+Hesitation is the only thing that sells out.
+
+---
+GOOD MATES. GREAT TIMES. SHIRTFACED.
+shirtfaced.wtf`;
+}
+
+/**
+ * Fires from the notify-abandoned-orders script (see
+ * admin/src/db/notify-abandoned-orders.ts) — a cron job on the box, not
+ * anything triggered by a request. Same env-gated no-op as the other two
+ * order emails.
+ */
+export async function sendAbandonedCartEmail(input: AbandonedCartInput): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.RESEND_FROM_EMAIL;
+  if (!apiKey || !from) return;
+
+  const resend = new Resend(apiKey);
+  await resend.emails.send({
+    from,
+    to: input.toEmail,
+    subject: "Left something behind?",
+    html: renderAbandonedCartHtml(input),
+    text: renderAbandonedCartText(input),
+  });
+}

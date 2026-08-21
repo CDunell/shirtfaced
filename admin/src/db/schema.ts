@@ -372,6 +372,11 @@ export const orders = pgTable("orders", {
      at the same moment as flipping to "fulfilled". */
   trackingNumber: text("tracking_number"),
   carrier: text("carrier"),
+  /* Null until the abandoned-cart recovery email has gone out for this order
+     — see notifyAbandonedOrders in store-queries.ts. Only ever set once; an
+     order that goes on to pay never needs it and the notify script only
+     ever selects status = "pending" rows anyway. */
+  abandonedEmailSentAt: timestamp("abandoned_email_sent_at", { withTimezone: true }),
   /* Staff-facing only, never shown to the customer. */
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true })

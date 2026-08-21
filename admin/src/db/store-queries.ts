@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, lt, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
   colourStock,
@@ -13,7 +13,11 @@ import {
   type Size,
 } from "./schema";
 import { getStripe } from "../lib/stripe";
-import { sendOrderConfirmationEmail, sendShippingConfirmationEmail } from "../lib/email";
+import {
+  sendAbandonedCartEmail,
+  sendOrderConfirmationEmail,
+  sendShippingConfirmationEmail,
+} from "../lib/email";
 
 /* ---------------------------------------------------------------------------
    Customers
@@ -404,6 +408,55 @@ export async function cancelOrder(id: string): Promise<void> {
   }
 
   await db.update(orders).set({ status: "cancelled", updatedAt: new Date() }).where(eq(orders.id, id));
+}
+
+const ABANDONED_AFTER_MINUTES = 60;
+
+/** Finds pending orders old enough to count as abandoned and not already
+ * emailed, sends each the cart-recovery email, and marks it sent. Called
+ * from admin/src/db/notify-abandoned-orders.ts — a script meant to run on a
+ * schedule (cron on the box; this repo has no in-process job scheduler),
+ * never from a request handler. Returns how many were sent, for that
+ * script's own log line. */
+export async function notifyAbandonedOrders(): Promise<number> {
+  const cutoff = new Date(Date.now() - ABANDONED_AFTER_MINUTES * 60 * 1000);
+  const candidates = await db.query.orders.findMany({
+    where: and(
+      eq(orders.status, "pending"),
+      isNull(orders.abandonedEmailSentAt),
+      lt(orders.createdAt, cutoff),
+    ),
+    with: { items: true, customer: true },
+  });
+
+  const cartUrl = `${process.env.SITE_URL ?? "https://shirtfaced.wtf"}/cart`;
+  let sent = 0;
+
+  for (const order of candidates) {
+    if (!order.customer) continue;
+    try {
+      await sendAbandonedCartEmail({
+        toEmail: order.customer.email,
+        items: order.items.map((item) => ({
+          productName: item.productName,
+          colourName: item.colourName,
+          size: item.size,
+          quantity: item.quantity,
+          unitPriceCents: item.unitPriceCents,
+        })),
+        cartUrl,
+      });
+      await db
+        .update(orders)
+        .set({ abandonedEmailSentAt: new Date() })
+        .where(eq(orders.id, order.id));
+      sent++;
+    } catch (error) {
+      console.error(`notifyAbandonedOrders: failed to email order ${order.id}`, error);
+    }
+  }
+
+  return sent;
 }
 
 export async function setOrderPaymentIntent(id: string, stripePaymentIntentId: string) {
