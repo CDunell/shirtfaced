@@ -16,6 +16,7 @@ type RequestBody = {
   shippingMethod: string;
   contact: { email: string; name: string };
   address: { line1: string; suburb: string; state: string; postcode: string };
+  discountCode: string | null;
 };
 
 function isRequestBody(value: unknown): value is RequestBody {
@@ -31,7 +32,8 @@ function isRequestBody(value: unknown): value is RequestBody {
     typeof (v.address as Record<string, unknown>).line1 === "string" &&
     typeof (v.address as Record<string, unknown>).suburb === "string" &&
     typeof (v.address as Record<string, unknown>).state === "string" &&
-    typeof (v.address as Record<string, unknown>).postcode === "string"
+    typeof (v.address as Record<string, unknown>).postcode === "string" &&
+    (v.discountCode === null || typeof v.discountCode === "string")
   );
 }
 
@@ -77,6 +79,7 @@ export async function POST(request: Request) {
       customer: { email: json.contact.email, name: json.contact.name },
       shippingCents: priced.shippingCents,
       shippingAddress,
+      discountCode: json.discountCode,
       items: priced.lines.map((line) => ({
         slug: line.slug,
         productName: line.name,
@@ -89,16 +92,28 @@ export async function POST(request: Request) {
   });
 
   if (!orderResponse.ok) {
+    const body = await orderResponse.json().catch(() => ({}));
+    // A discount code that expired or hit its usage limit in the seconds
+    // between preview and submit is a 400 from admin — worth showing the
+    // customer, unlike a generic backend failure.
     return NextResponse.json(
-      { error: "Couldn't start your order. Try again in a moment." },
-      { status: 502 },
+      { error: body.error ?? "Couldn't start your order. Try again in a moment." },
+      { status: orderResponse.status === 400 ? 400 : 502 },
     );
   }
-  const { orderId } = (await orderResponse.json()) as { orderId: string };
+  const { orderId, discountCents } = (await orderResponse.json()) as {
+    orderId: string;
+    discountCents: number;
+  };
+
+  // discountCents comes from admin's own atomic redemption, not from
+  // anything the browser sent — the amount actually charged has to match
+  // what the code was really worth, not what the client claimed it was.
+  const chargeCents = Math.max(0, priced.totalCents - discountCents);
 
   const stripe = new Stripe(stripeSecretKey);
   const paymentIntent = await stripe.paymentIntents.create({
-    amount: priced.totalCents,
+    amount: chargeCents,
     currency: "aud",
     receipt_email: json.contact.email,
     metadata: { orderId },

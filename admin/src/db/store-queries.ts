@@ -133,6 +133,44 @@ export async function deleteDiscount(id: string) {
   await db.delete(discounts).where(eq(discounts.id, id));
 }
 
+/** Read-only check for the checkout code-entry preview — same validity rules
+ * as redeemDiscountByCode below, but doesn't touch timesUsed. A code that
+ * passes this can still fail redemption a moment later (exhausted by someone
+ * else, expired mid-checkout); the preview is a convenience, not a promise. */
+export async function findValidDiscountByCode(code: string) {
+  const now = new Date();
+  const discount = await db.query.discounts.findFirst({
+    where: and(eq(discounts.code, code.trim().toUpperCase()), eq(discounts.active, true)),
+  });
+  if (!discount) return null;
+  if (discount.startsAt && discount.startsAt > now) return null;
+  if (discount.expiresAt && discount.expiresAt < now) return null;
+  if (discount.usageLimit !== null && discount.timesUsed >= discount.usageLimit) return null;
+  return discount;
+}
+
+/** Atomically validates and redeems a discount code in one statement — the
+ * WHERE clause carries every validity check, so two concurrent checkouts
+ * racing for the last use of a limited code can't both succeed (a
+ * read-then-write version of this would let exactly that happen). Called
+ * once, from order creation, never from the preview endpoint. */
+export async function redeemDiscountByCode(
+  code: string,
+): Promise<{ id: string; type: DiscountType; value: number } | null> {
+  const now = new Date();
+  const rows = await db.execute<{ id: string; type: DiscountType; value: number }>(sql`
+    UPDATE discounts
+    SET times_used = times_used + 1, updated_at = now()
+    WHERE code = ${code.trim().toUpperCase()}
+      AND active = true
+      AND (starts_at IS NULL OR starts_at <= ${now})
+      AND (expires_at IS NULL OR expires_at >= ${now})
+      AND (usage_limit IS NULL OR times_used < usage_limit)
+    RETURNING id, type, value
+  `);
+  return rows[0] ?? null;
+}
+
 /* ---------------------------------------------------------------------------
    Orders. Two sources: a manual "record a phone/email order" path from
    /orders/new, and the storefront's checkout, which reaches these through

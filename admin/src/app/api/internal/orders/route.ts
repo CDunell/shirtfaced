@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyInternalRequest } from "@/lib/internal-auth";
-import { createOrder, findProductIdBySlug, upsertCustomerByEmail } from "@/db/store-queries";
+import {
+  createOrder,
+  findProductIdBySlug,
+  redeemDiscountByCode,
+  upsertCustomerByEmail,
+} from "@/db/store-queries";
 
 /**
  * Called by the storefront's checkout — see
@@ -34,6 +39,7 @@ const bodySchema = z.object({
   }),
   shippingCents: z.number().int().nonnegative(),
   shippingAddress: z.string().min(1),
+  discountCode: z.string().min(1).nullable(),
   items: z.array(itemSchema).min(1),
 });
 
@@ -65,16 +71,36 @@ export async function POST(request: Request) {
     })),
   );
 
+  // Redeemed here, atomically, rather than trusting a discountCents the
+  // storefront computed — that's the only way to enforce usage limits
+  // race-free (see redeemDiscountByCode) and it means the amount actually
+  // charged (computed by the caller from this response) can't drift from
+  // what the code is actually worth.
+  let discountId: string | null = null;
+  let discountCents = 0;
+  if (body.discountCode) {
+    const redeemed = await redeemDiscountByCode(body.discountCode);
+    if (!redeemed) {
+      return NextResponse.json({ error: "That code's no longer valid." }, { status: 400 });
+    }
+    discountId = redeemed.id;
+    const subtotalCents = items.reduce((sum, item) => sum + item.quantity * item.unitPriceCents, 0);
+    discountCents =
+      redeemed.type === "percent"
+        ? Math.round((subtotalCents * redeemed.value) / 100)
+        : Math.min(redeemed.value, subtotalCents);
+  }
+
   const orderId = await createOrder({
     customerId,
     status: "pending",
-    discountId: null,
-    discountCents: 0,
+    discountId,
+    discountCents,
     shippingCents: body.shippingCents,
     shippingAddress: body.shippingAddress,
     notes: "Created from storefront checkout.",
     items,
   });
 
-  return NextResponse.json({ orderId }, { status: 201 });
+  return NextResponse.json({ orderId, discountCents }, { status: 201 });
 }

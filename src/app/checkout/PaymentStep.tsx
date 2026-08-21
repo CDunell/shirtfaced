@@ -25,6 +25,7 @@ export type CheckoutRequest = {
   shippingMethod: string;
   contact: { email: string; name: string };
   address: { line1: string; suburb: string; state: string; postcode: string };
+  discountCode: string | null;
 };
 
 /** Same "no card form here" honesty as before, now shown only when payments
