@@ -61,14 +61,11 @@ export function PaymentStep({
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [notConfigured, setNotConfigured] = useState(false);
+  const [notConfigured, setNotConfigured] = useState(!publishableKey);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!publishableKey) {
-      setNotConfigured(true);
-      return;
-    }
+    if (!publishableKey) return;
 
     let cancelled = false;
 

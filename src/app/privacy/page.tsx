@@ -43,9 +43,9 @@ export default function PrivacyPage() {
               The payment processor, to take your money properly. The
               courier, to find your house. The email platform, if you signed
               up for the newsletter and haven&apos;t got around to
-              unsubscribing. Each of them is bound to use it for that job
-              and nothing else — nobody&apos;s getting a bonus copy for
-              their own purposes.
+              unsubscribing. Google, Meta and TikTok get a slice too — see
+              Cookies below — strictly to tell us whether an ad worked, not
+              a bonus copy of your details for anyone&apos;s own purposes.
             </p>
           </Prose>
         </Section>
@@ -54,10 +54,15 @@ export default function PrivacyPage() {
           <Prose>
             <p>
               The cart remembers what&apos;s in it, which needs a cookie. We
-              also run basic analytics so we know which pages people
-              actually read — this one, hopefully. No ad network, no
-              tracking pixel farm, no shirt following you around the
-              internet for a fortnight after you looked at it once.
+              also run analytics (Google Analytics) so we know which pages
+              people actually read — this one, hopefully — plus Meta and
+              TikTok pixels, so if we run an ad we can tell whether it
+              actually sold a shirt instead of just guessing. If you come
+              in from one of those ads, that platform knows you looked. We
+              use that to see what&apos;s working, not to build a profile on
+              you or follow you around the rest of the internet — turn the
+              relevant setting off in your Google, Meta or TikTok account if
+              you&apos;d rather opt out of that measurement entirely.
             </p>
           </Prose>
         </Section>
