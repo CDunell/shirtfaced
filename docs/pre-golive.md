@@ -28,7 +28,7 @@ anywhere). These are what's left.
 | Size chart measurements (chest/length per size) | `src/lib/products.ts` (`SIZE_CHART`), `/size-guide` | invented |
 | "Started in 2026" | `src/app/about/page.tsx` | invented |
 | Product descriptions (fit, weight, print detail) | `src/lib/products.ts` | invented |
-| `hello@shirtfaced.wtf` | `src/app/contact/page.tsx` | mailbox does not exist yet |
+| `hello@shirtfaced.wtf` | `src/app/contact/page.tsx` | **likely resolved** — MX now routes inbound mail through Cloudflare Email Routing (confirmed via public DNS), but that only proves the infrastructure exists, not that this specific address forwards somewhere read. Worth a real test send to confirm |
 
 **Ratings and review counts were removed entirely** (2026-08-03) rather than
 left as placeholders — invented ratings on a live store are a misleading-conduct
@@ -38,30 +38,24 @@ they're backed by real reviews.
 
 ---
 
-## 2. Mail records — will reject every receipt
+## 2. Mail records — done
 
-See `docs/dns.md` for the full detail. Short version:
-
-- SPF is `v=spf1 -all` — **nothing** may send as this domain
-- DMARC is `p=quarantine`
-- The wildcard `*._domainkey` null-DKIM record was removed, so a provider's real
-  DKIM can validate
-
-Before a payment provider sends order confirmations:
-
-1. Run the provider's sending-domain verification for the real records
-2. Swap SPF to `v=spf1 <their include> -all`
-3. Return DMARC to `p=reject` once mail is confirmed aligned
-
-Skipping this means confirmations are **rejected outright**, not spam-filed.
+Resend's sending-domain verification is live (confirmed via public DNS
+lookup and, better, three real order-confirmation emails actually arriving
+— see `docs/dns.md`). SPF authorises Amazon SES (Resend's sender), MX routes
+inbound through Cloudflare Email Routing. One step left from the original
+plan: DMARC is still `p=quarantine` for the changeover and should return to
+`p=reject` once alignment's held for a few more real sends.
 
 ---
 
 ## 3. Payment
 
-Checkout deliberately has **no card fields**. Card data must be collected in a
-hosted Stripe or Shopify element, never our own inputs. `src/app/checkout/page.tsx`
-step 3 is where that goes.
+Done. Checkout has no card fields of its own — card data goes straight into
+Stripe's own PaymentElement (`src/app/checkout/PaymentStep.tsx`), never
+through our inputs. Server-side pricing, a real PaymentIntent, and the order
+webhook are all wired (see the `feat(checkout): wire real Stripe payment...`
+commit) and confirmed working end to end by real test orders.
 
 ---
 

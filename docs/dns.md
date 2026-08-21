@@ -23,8 +23,22 @@ work with no config change if it ever completes.
 | CNAME | `www` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | CNAME | `admin` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 | CNAME | `studio` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
-| TXT | `@` | `v=spf1 -all` | — |
+| TXT | `@` | `v=spf1 include:amazonses.com include:_spf.mx.cloudflare.net ~all` | — |
 | TXT | `_dmarc` | `v=DMARC1; p=quarantine;` | — |
+| MX | `@` | `route1/2/3.mx.cloudflare.net` (Cloudflare Email Routing) | — |
+
+**Mail is live** (confirmed 22 August 2026 via public DNS lookup — `nslookup`,
+no credentials needed — and by three real order-confirmation emails actually
+arriving). SPF authorises Amazon SES, which is Resend's underlying sender —
+Resend's domain verification was completed for real, not just planned. MX
+routes inbound through Cloudflare Email Routing, so `hello@shirtfaced.wtf`
+now receives mail. DMARC is still deliberately at `p=quarantine`, the
+mid-changeover setting from §"MUST DO" below — return it to `p=reject` once
+alignment's been watched for a few more real sends, per that section's own
+plan. This section previously described the pre-Resend blocked state
+(`v=spf1 -all`, no MX) — that was stale; this repo's docs had not been
+updated to match what was actually configured on the box/Cloudflare
+dashboard.
 
 `admin` was added by hand and is live (confirmed 2026-08-06 — `/login` serves,
 every other path redirects to it). Same tunnel; `/etc/cloudflared/config.yml`
@@ -66,22 +80,17 @@ the reports. A `rua=` pointing at Gmail would be decorative, not functional.
 stop spoofing without booby-trapping future inbound. When inbound is wanted, use
 **Cloudflare Email Routing** — `orveris.com` already runs that way.
 
-## ⚠️ MUST DO before checkout goes live
+## Done — was "MUST DO before checkout goes live"
 
-`v=spf1 -all` means **nothing** may send as this domain. That is correct today
-and **wrong the moment a payment provider starts sending on our behalf** —
-order confirmations and receipts will be rejected outright, not just spam-filed.
+This was written when SPF was `v=spf1 -all` and would have rejected every
+order-confirmation email outright. Resend's sending-domain verification has
+since been completed for real (see the Records table above) — the SPF
+include, the wildcard null-DKIM removal, and the DMARC relax to
+`p=quarantine` all happened. Confirmed working, not just configured: three
+real orders have gone through checkout and their confirmation emails
+actually arrived.
 
-Before enabling Stripe Checkout or Shopify:
-
-1. Run the provider's sending-domain verification flow. It issues the exact
-   records to add — typically an SPF `include:` plus one or more DKIM CNAMEs.
-   Take the values from that flow; do not guess them.
-2. Replace the SPF record with `v=spf1 <provider include> -all`.
-3. Remove the wildcard `*._domainkey` null-DKIM record, or it will override the
-   provider's real DKIM selector and every signature will fail.
-4. Temporarily relax DMARC to `v=DMARC1; p=quarantine;` during the changeover,
-   then return it to `p=reject` once mail is confirmed delivering and aligned.
-
-Step 3 is the one that bites — the wildcard null key is deliberately hostile to
-all selectors, including legitimate ones.
+**One step left from the original plan:** DMARC is still at
+`v=DMARC1; p=quarantine;` for the changeover. Return it to `p=reject` once
+alignment's been watched for a few more real sends — that was always meant
+to be temporary, not the resting state.
