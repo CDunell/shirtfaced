@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { Header } from "@/components/Header";
 import { PaperGrain } from "@/components/Texture";
 import { LINE_THREE, TAGLINES } from "@/lib/taglines";
@@ -67,6 +68,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full bg-paper text-ink">
+        <GoogleAnalytics />
         <PaperGrain />
         <CartProvider>
           <a
