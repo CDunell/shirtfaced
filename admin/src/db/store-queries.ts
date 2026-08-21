@@ -193,6 +193,34 @@ export function getOrder(id: string) {
   });
 }
 
+/** SF-1000 -> 1, the inverse of orderReference below. Null for anything that
+ * doesn't parse — callers treat that the same as "not found" rather than a
+ * 500, since it's just as likely to be a customer mistyping as an attack. */
+export function parseOrderReference(reference: string): number | null {
+  const match = reference.trim().toUpperCase().match(/^SF-?(\d+)$/);
+  if (!match) return null;
+  const seq = Number(match[1]) - 999;
+  return seq > 0 ? seq : null;
+}
+
+/** Customer-facing order lookup — requires both the reference AND the exact
+ * email on the order, not just a guessable sequential number, since order
+ * references alone (SF-1000, SF-1001, ...) give no protection against
+ * someone paging through other customers' orders. */
+export async function findOrderForCustomer(reference: string, email: string) {
+  const seq = parseOrderReference(reference);
+  if (seq === null) return null;
+
+  const order = await db.query.orders.findFirst({
+    where: eq(orders.orderSeq, seq),
+    with: { customer: true, items: true },
+  });
+  if (!order || !order.customer) return null;
+  if (order.customer.email.trim().toLowerCase() !== email.trim().toLowerCase()) return null;
+
+  return order;
+}
+
 export interface OrderItemInput {
   productId: string | null;
   productName: string;
