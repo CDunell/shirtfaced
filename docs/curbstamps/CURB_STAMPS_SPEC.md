@@ -117,39 +117,50 @@ derive from the creature list.
 
 ## 4. Print-on-demand — what's real, what's a stub
 
-**No POD vendor account exists yet.** This was an explicit scope decision (see the
-project's Q&A): build the integration point generically now, wire up a real vendor once
-one's chosen. That leaves three pieces:
+**Decided: Printify.** Chosen over Printful/Prodigi/Gooten for confirmed real kids/youth
+SKUs (Gildan 5000B youth tee at $6.98 base, Gildan 18500B youth hoodie at $21.77 —
+both real, currently-listed products, not adult sizes relabelled), OEKO-TEX-certified
+blanks, and the best margin of the four at this store's price points. Printful is kept as
+a working alternative adapter. **No Printify account exists yet** — `POD_PROVIDER=mock`
+until one does. That leaves three pieces:
 
 1. **`curbstamps-admin/src/lib/pod/types.ts`** — the `PodProvider` interface
-   (`createOrder`, `getOrderStatus`). Nothing else in the app talks to a vendor's API
-   shape directly; everything calls this.
+   (`createOrder`, `getOrderStatus`, `getShippingQuote`). Nothing else in the app talks to
+   a vendor's API shape directly; everything calls this.
 2. **`mock-adapter.ts`** — the default (`POD_PROVIDER` unset or `mock`). Logs what a real
-   provider would receive and fakes a lifecycle. This is what runs today, and it's
-   enough to exercise checkout → paid → "in production" end to end without a vendor.
-3. **`printful-adapter.ts`** — a **reference implementation**, not a working
-   integration. It calls Printful's real Orders API
-   (`POST/GET https://api.printful.com/orders`) with the right shape, but:
-   - `SYNC_VARIANT_MAP` (which maps this catalog's slug/colour/size to Printful's own
-     per-variant ids) is **empty** — it can only be filled in once a Printful account
-     exists and the 36 products above are built there as "sync products" against real
-     blanks (kids tee/hoodie/cap SKUs — Shirtfaced's own blank research in
-     `docs/production/GARMENT_BLANK_STRATEGY.md` and
-     `docs/production/POD_FULFILMENT_RESEARCH.md` is adult-garment-specific and doesn't
-     directly apply to kids sizing; a fresh blank decision is needed for Curb Stamps).
-   - `confirm: false` is hardcoded — real orders land as Printful drafts needing manual
-     confirmation until the integration is trusted enough to flip that.
-   - Untested against a real Printful account — there isn't one.
+   provider would receive, fakes a lifecycle, and returns an honest flat shipping
+   estimate. This is what runs today, and it's enough to exercise checkout → paid →
+   "in production" end to end without a vendor.
+3. **`printify-adapter.ts`** — a **real implementation**, not tested against a live
+   account. It calls Printify's documented v1 API (`POST /shops/{shop_id}/orders.json`
+   for orders, `POST /shops/{shop_id}/orders/shipping.json` for shipping quotes) with the
+   right shape, but:
+   - `SYNC_VARIANT_MAP` (which maps this catalog's slug/colour/size to a Printify
+     `(product_id, variant_id)` pair) is **empty** — it can only be filled in once a
+     Printify account exists and the 36 products are built there as real products
+     against the Gildan 5000B (youth tee) / 18500B (youth hoodie) blanks; a kids cap
+     blank hasn't been picked yet.
+   - Untested against a real Printify account — there isn't one. `PRINTIFY_API_KEY` and
+     `PRINTIFY_SHOP_ID` are both unset.
+4. **`printful-adapter.ts`** — kept as a working alternative adapter, same shape and same
+   caveats (empty `SYNC_VARIANT_MAP`, untested, `confirm: false` hardcoded).
 
-**To go live with real fulfilment:** pick a vendor (Printful and Printify both do
-kids-sized blanks; this hasn't been evaluated — do it before committing), open an
-account, build the 36 products in the vendor's dashboard against real kids blanks, fill
-in `SYNC_VARIANT_MAP`, set `POD_PROVIDER=printful` (or write a new adapter file for
-whichever vendor was actually chosen — Printify's API shape differs and would need its
-own adapter following the same `PodProvider` interface), and set the vendor's webhook to
-POST fulfilment updates to `/api/pod/webhook` with the shared `POD_WEBHOOK_SECRET` header
-(exact header/signing scheme depends on the vendor — adjust `verifyPodWebhook` in that
-route to match their real mechanism).
+**Real per-order shipping quotes are wired up**, not a flat rate — see
+`curbstamps-admin/src/app/api/internal/shipping-quote` and
+`curbstamps-site/src/lib/shipping-quote.ts`. The checkout calls curbstamps-admin, which
+asks the active `PodProvider` for a real shipping cost for the actual cart and address,
+falling back to a flat estimate if the POD provider isn't configured/reachable — this
+replaced an earlier flat AU-domestic-style rate that would have badly undercharged
+genuinely international orders. Confirmed end-to-end against the mock adapter; the real
+Printify numbers only start flowing once an account exists.
+
+**To go live with real fulfilment:** open a Printify account, build the 36 products in
+its dashboard against the Gildan 5000B/18500B blanks (and pick a kids cap blank), fill in
+`SYNC_VARIANT_MAP` in `printify-adapter.ts`, set `PRINTIFY_API_KEY`/`PRINTIFY_SHOP_ID`/
+`POD_PROVIDER=printify`, and set Printify's webhook to POST fulfilment updates to
+`/api/pod/webhook` with the shared `POD_WEBHOOK_SECRET` header (confirm Printify's actual
+webhook signing scheme against `verifyPodWebhook` in that route — written generically,
+not yet matched against Printify's real payload).
 
 ## 5. Data model
 
