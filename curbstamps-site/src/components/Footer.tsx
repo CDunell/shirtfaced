@@ -26,7 +26,12 @@ export function Footer() {
             <Link key={l.href} href={l.href} className="press hover:text-paper">{l.label}</Link>
           ))}
         </nav>
-        <p className="mt-9 pb-1 text-[11px] text-paper/45">© {new Date().getFullYear()} Curb Stamps. Made in Australia.</p>
+        <p className="mt-9 pb-1 text-[11px] text-paper/45">
+          © {new Date().getFullYear()} Curb Stamps. Made in Australia. ·{" "}
+          <a href="https://admin.curbstamps.com" className="press hover:text-paper">
+            Admin
+          </a>
+        </p>
       </div>
     </footer>
   );

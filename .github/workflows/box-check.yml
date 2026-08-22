@@ -1,22 +1,22 @@
 name: Box check
 
-# Existing Oracle access workflow. Manual runs remain read-only; Curb Stamps
-# pushes use the same proven SSH path to deploy and verify the separate app.
+# Read-only Oracle diagnostic workflow, manual only. Curb Stamps deploys
+# (both curbstamps-site and curbstamps-admin) run from deploy.yml on every
+# push to main, same pipeline as shirtfaced-admin/site/studio — that was the
+# push trigger this workflow briefly carried too, which raced deploy.yml's
+# own curbstamps-site build in the same directory on every push (two
+# `npm ci && npm run build` runs against /home/ubuntu/curbstamps-site at
+# once). Removed rather than left as a second, partial (curbstamps-admin was
+# never covered here) deployer. deploy-curbstamps.yml remains as a manual-only
+# fallback for curbstamps specifically.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "curbstamps-site/**"
-      - "curbstamps-admin/**"
-      - ".github/workflows/box-check.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   check:
-    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Set up deploy key
@@ -46,57 +46,3 @@ jobs:
           echo "===== cloudflared ingress ====="
           sudo cat /etc/cloudflared/config.yml 2>/dev/null || echo "(no config)"
           REMOTE
-
-  deploy-curbstamps:
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-curbstamps-production
-      cancel-in-progress: true
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up deploy key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
-
-      - name: Sync Curb Stamps site
-        run: |
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/deploy_key" \
-            --exclude=node_modules --exclude=.next --exclude=out --exclude=.env \
-            curbstamps-site/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-site/
-
-      - name: Build and restart Curb Stamps site
-        run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
-            'bash /home/ubuntu/curbstamps-site/deploy/deploy-curbstamps-site.sh'
-
-      - name: Verify Oracle is serving current homepage
-        run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
-          set -euo pipefail
-          systemctl is-active --quiet curbstamps-site
-          html=$(curl -fsS http://127.0.0.1:4100/)
-          printf '%s' "$html" | grep -qi "pick your"
-          printf '%s' "$html" | grep -qi "weirdo"
-          printf '%s' "$html" | grep -qi "the whole curb crew"
-          echo "Curb Stamps verified on Oracle"
-          REMOTE
-
-      - name: Record verified source commit
-        run: |
-          mkdir -p docs/curbstamps/runtime
-          {
-            echo "source_commit=$GITHUB_SHA"
-            echo "verified_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "oracle_site=verified"
-          } > docs/curbstamps/runtime/oracle-verification.txt
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/curbstamps/runtime/oracle-verification.txt
-          git commit -m "chore(curbstamps): record verified Oracle deploy" || exit 0
-          git push
