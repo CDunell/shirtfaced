@@ -1,12 +1,19 @@
 name: Box check
 
-# Read-only look at the Oracle box. Manual only -- it exists because there is no
-# other way to see what is actually running there before changing it.
+# Existing Oracle access workflow. Manual runs remain read-only; Curb Stamps
+# pushes use the same proven SSH path to deploy and verify the separate app.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "curbstamps-site/**"
+      - "curbstamps-admin/**"
+      - ".github/workflows/box-check.yml"
 
 jobs:
   check:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Set up deploy key
@@ -25,32 +32,53 @@ jobs:
           echo
           echo "===== services ====="
           systemctl list-units --type=service --state=running --no-pager --no-legend |
-            grep -Ei 'shirtfaced|studio|uvicorn|cloudflared|nginx|postgres' || echo "(none matched)"
+            grep -Ei 'shirtfaced|curbstamps|studio|uvicorn|cloudflared|nginx|postgres' || echo "(none matched)"
           echo
           echo "===== /home/ubuntu ====="
           ls -1 /home/ubuntu
-          echo
-          echo "===== studio-shaped directories ====="
-          for d in /home/ubuntu/*/ /srv/*/; do
-            [ -d "$d/app" ] && [ -f "$d/alembic.ini" ] && echo "$d"
-          done
-          echo
-          echo "===== .env files, keys masked ====="
-          # Every secret-shaped var across all three apps' .env files (root,
-          # admin/, studio/.env.example) -- this repo is public, so anything
-          # missing here is a live credential in a public Actions log.
-          SECRET_VARS='OPENAI_API_KEY|SESSION_SECRET|ADMIN_PASSWORD_HASH|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|ADMIN_INTERNAL_API_KEY|INTERNAL_API_KEY|TIKTOK_EVENTS_API_ACCESS_TOKEN|META_CONVERSIONS_API_ACCESS_TOKEN|RESEND_API_KEY|GEMINI_API_KEY|GA4_SERVICE_ACCOUNT_PRIVATE_KEY|META_ADS_READ_ACCESS_TOKEN|TIKTOK_ADS_READ_ACCESS_TOKEN'
-          for f in /home/ubuntu/*/.env /srv/*/.env; do
-            [ -f "$f" ] || continue
-            echo "--- $f"
-            sed -E "s/^($SECRET_VARS)=.+/\1=<set>/;
-                    s/^($SECRET_VARS)=\$/\1=<EMPTY>/;
-                    s#(://[^:]+:)[^@]+@#\1<redacted>@#" "$f"
-          done
           echo
           echo "===== databases ====="
           sudo -u postgres psql -tAc "select datname from pg_database where datname not like 'template%'" 2>/dev/null
           echo
           echo "===== cloudflared ingress ====="
           sudo cat /etc/cloudflared/config.yml 2>/dev/null || echo "(no config)"
+          REMOTE
+
+  deploy-curbstamps:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-curbstamps-production
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync Curb Stamps site
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=node_modules --exclude=.next --exclude=out --exclude=.env \
+            curbstamps-site/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-site/
+
+      - name: Build and restart Curb Stamps site
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/curbstamps-site/deploy/deploy-curbstamps-site.sh'
+
+      - name: Verify Oracle is serving current homepage
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          systemctl is-active --quiet curbstamps-site
+          html=$(curl -fsS http://127.0.0.1:4100/)
+          printf '%s' "$html" | grep -q "PICK YOUR WEIRDO"
+          printf '%s' "$html" | grep -q "THE WHOLE CURB CREW"
+          echo "Curb Stamps verified on Oracle"
           REMOTE
