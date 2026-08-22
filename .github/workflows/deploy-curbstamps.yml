@@ -1,0 +1,61 @@
+name: Deploy Curb Stamps
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "curbstamps-site/**"
+      - "curbstamps-admin/**"
+      - ".github/workflows/deploy-curbstamps.yml"
+
+jobs:
+  deploy-curbstamps:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-curbstamps-production
+      cancel-in-progress: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync curbstamps-admin app
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=node_modules --exclude=.next --exclude=.env \
+            curbstamps-admin/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-admin/
+
+      - name: Build and restart curbstamps-admin app
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/curbstamps-admin/deploy/deploy-curbstamps-admin.sh'
+
+      - name: Run curbstamps-admin database migrations
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'cd /home/ubuntu/curbstamps-admin && npx --yes drizzle-kit migrate'
+
+      - name: Sync curbstamps-site
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=node_modules --exclude=.next --exclude=out --exclude=.env \
+            curbstamps-site/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-site/
+
+      - name: Build and restart curbstamps-site
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/curbstamps-site/deploy/deploy-curbstamps-site.sh'
+
+      - name: Verify curbstamps site on Oracle
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'curl -fsS http://127.0.0.1:4100/ | grep -q "PICK YOUR WEIRDO"'
