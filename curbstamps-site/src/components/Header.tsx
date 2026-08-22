@@ -36,8 +36,8 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-paper/10 bg-ink text-paper">
-      <div className="mx-auto flex h-[62px] max-w-5xl items-center justify-between px-4 sm:h-16 sm:px-6">
-        <Link href="/" aria-label="Curb Stamps home" className="press flex items-center">
+      <div className="mx-auto flex h-[74px] max-w-5xl items-center justify-between px-4 sm:h-[78px] sm:px-6">
+        <Link href="/" aria-label="Curb Stamps home" className="press flex items-center py-2">
           <CurbStampsLogoTransparent className="h-[50px] w-auto sm:h-[54px]" />
         </Link>
 
@@ -83,13 +83,13 @@ export function Header() {
       <div
         aria-hidden="true"
         onClick={() => setOpen(false)}
-        className={`fixed inset-x-0 bottom-0 top-[62px] z-40 bg-black/65 transition-opacity duration-200 sm:top-16 sm:hidden ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed inset-x-0 bottom-0 top-[74px] z-40 bg-black/65 transition-opacity duration-200 sm:top-[78px] sm:hidden ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
       />
 
       <aside
         id="mobile-nav-drawer"
         aria-hidden={!open}
-        className={`fixed bottom-0 right-0 top-[62px] z-50 w-[82vw] max-w-[340px] border-l border-paper/10 bg-ink text-paper shadow-2xl transition-transform duration-200 ease-out sm:hidden ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed bottom-0 right-0 top-[74px] z-50 w-[82vw] max-w-[340px] border-l border-paper/10 bg-ink text-paper shadow-2xl transition-transform duration-200 ease-out sm:hidden ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <nav className="flex h-full flex-col px-5 py-8">
           <div className="flex flex-col border-t border-paper/10">
