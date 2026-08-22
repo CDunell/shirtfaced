@@ -47,7 +47,7 @@ export function CurbCrewScene() {
             >
               <span className="display self-start text-[13px] uppercase sm:text-[17px]">{c.name}</span>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/creatures/${c.slug}-icon.png`} alt={`${c.name} creature`} className="h-14 w-full object-contain sm:h-20" />
+              <img src={`/creatures/${c.slug}-icon.png`} alt={`${c.name} creature`} className="h-14 w-full object-contain brightness-0 sm:h-20" />
               <span className="flex h-6 w-6 items-center justify-center rounded-full border border-ink text-[13px] font-black sm:h-7 sm:w-7">→</span>
             </Link>
           ))}

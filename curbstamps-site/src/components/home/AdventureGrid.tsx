@@ -30,7 +30,7 @@ export function AdventureGrid() {
                 <p className="mt-0.5 text-[10px] leading-tight text-ink/60 sm:text-[11px]">{body}</p>
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/creatures/${creature.slug}-icon.png`} alt="" aria-hidden="true" className="h-8 w-full object-contain sm:h-10" />
+              <img src={`/creatures/${creature.slug}-icon.png`} alt="" aria-hidden="true" className="h-8 w-full object-contain brightness-0 sm:h-10" />
             </div>
           ))}
         </div>
