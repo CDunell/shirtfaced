@@ -13,6 +13,7 @@ import { useCart } from "@/lib/cart-context";
 import { money } from "@/lib/money";
 import { IconLock } from "@/components/Icons";
 import type { CartLineInput } from "@/lib/checkout-pricing";
+import { trackPurchase, markPurchaseTracked } from "@/lib/analytics";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 let stripePromise: Promise<StripeJs | null> | null = null;
@@ -60,14 +61,11 @@ export function PaymentStep({
 }) {
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderId, setOrderId] = useState<string | null>(null);
-  const [notConfigured, setNotConfigured] = useState(false);
+  const [notConfigured, setNotConfigured] = useState(!publishableKey);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!publishableKey) {
-      setNotConfigured(true);
-      return;
-    }
+    if (!publishableKey) return;
 
     let cancelled = false;
 
@@ -128,7 +126,7 @@ function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
-  const { clearCart } = useCart();
+  const { lines, clearCart } = useCart();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -141,7 +139,7 @@ function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
     const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/checkout/success?orderId=${orderId}&value=${total}`,
+        return_url: `${window.location.origin}/checkout/success?orderId=${orderId}`,
       },
       redirect: "if_required",
     });
@@ -157,8 +155,21 @@ function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
     // Anything that returns here without redirecting is either settled or
     // on its way — either way the customer's part is done.
     if (paymentIntent) {
+      trackPurchase({
+        transactionId: orderId,
+        value: total,
+        currency: "AUD",
+        items: lines.map((line) => ({
+          id: line.slug,
+          name: line.name,
+          price: line.price,
+          quantity: line.quantity,
+          variant: `${line.colour} / ${line.size}`,
+        })),
+      });
+      markPurchaseTracked(orderId);
       clearCart();
-      router.push(`/checkout/success?orderId=${orderId}&value=${total}`);
+      router.push(`/checkout/success?orderId=${orderId}`);
     } else {
       setSubmitting(false);
     }

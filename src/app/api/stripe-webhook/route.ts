@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { sendTikTokPurchaseEvent } from "@/lib/tiktok-events";
+import { sendServerSidePurchase } from "@/lib/server-analytics";
 
 /**
  * Stripe calls this directly (server to server), never the browser — this is
@@ -63,10 +63,10 @@ export async function POST(request: Request) {
 
       // Ad-attribution signal, not order state — logged on failure, never
       // allowed to fail the webhook itself. Line items are a second
-      // best-effort fetch: TikTok's own event-quality check flags a Purchase
-      // with no content_id, which needs per-product ids the PaymentIntent
-      // itself doesn't carry — a fetch failure here just means the event
-      // goes out without contents, not that it doesn't go out at all.
+      // best-effort fetch: both platforms' own event-quality checks flag a
+      // Purchase with no content_id, which needs per-product ids the
+      // PaymentIntent itself doesn't carry — a fetch failure here just means
+      // the event goes out without contents, not that it doesn't go out.
       const itemsResponse = await fetch(`${adminApiUrl}/api/internal/orders/${orderId}`, {
         headers: { "x-internal-api-key": adminApiKey },
       }).catch(() => null);
@@ -76,18 +76,29 @@ export async function POST(request: Request) {
           } | null)
         : null;
 
-      await sendTikTokPurchaseEvent({
-        orderId,
-        valueCents: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        email: paymentIntent.receipt_email,
-        contents: (itemsBody?.items ?? []).map((item) => ({
-          contentId: item.productId ?? item.productName,
-          quantity: item.quantity,
-        })),
-      }).catch((error) => {
-        console.error(`stripe-webhook: TikTok purchase event failed for order ${orderId}`, error);
-      });
+      // Best-effort — the order is already marked paid above regardless of
+      // whether this succeeds. Same orderId as the client event_id (see
+      // PaymentStep.tsx / checkout/success/page.tsx) so Meta/TikTok dedupe
+      // the client and server fires into one conversion.
+      if (paymentIntent.receipt_email) {
+        await sendServerSidePurchase({
+          transactionId: orderId,
+          value: paymentIntent.amount_received / 100,
+          currency: "AUD",
+          email: paymentIntent.receipt_email,
+          clientIp: paymentIntent.metadata.ip ?? null,
+          userAgent: paymentIntent.metadata.ua ?? null,
+          fbp: paymentIntent.metadata.fbp ?? null,
+          fbc: paymentIntent.metadata.fbc ?? null,
+          ttp: paymentIntent.metadata.ttp ?? null,
+          contents: (itemsBody?.items ?? []).map((item) => ({
+            contentId: item.productId ?? item.productName,
+            quantity: item.quantity,
+          })),
+        }).catch((error) => {
+          console.error(`stripe-webhook: server-side purchase tracking failed for ${orderId}`, error);
+        });
+      }
     }
   }
 

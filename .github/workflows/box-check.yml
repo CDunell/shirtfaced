@@ -36,12 +36,16 @@ jobs:
           done
           echo
           echo "===== .env files, keys masked ====="
+          # Every secret-shaped var across all three apps' .env files (root,
+          # admin/, studio/.env.example) -- this repo is public, so anything
+          # missing here is a live credential in a public Actions log.
+          SECRET_VARS='OPENAI_API_KEY|SESSION_SECRET|ADMIN_PASSWORD_HASH|STRIPE_SECRET_KEY|STRIPE_WEBHOOK_SECRET|ADMIN_INTERNAL_API_KEY|INTERNAL_API_KEY|TIKTOK_EVENTS_API_ACCESS_TOKEN|META_CONVERSIONS_API_ACCESS_TOKEN|RESEND_API_KEY|GEMINI_API_KEY'
           for f in /home/ubuntu/*/.env /srv/*/.env; do
             [ -f "$f" ] || continue
             echo "--- $f"
-            sed -E 's/^(OPENAI_API_KEY|SESSION_SECRET|ADMIN_PASSWORD_HASH)=.+/\1=<set>/;
-                    s/^(OPENAI_API_KEY|SESSION_SECRET|ADMIN_PASSWORD_HASH)=$/\1=<EMPTY>/;
-                    s#(://[^:]+:)[^@]+@#\1<redacted>@#' "$f"
+            sed -E "s/^($SECRET_VARS)=.+/\1=<set>/;
+                    s/^($SECRET_VARS)=\$/\1=<EMPTY>/;
+                    s#(://[^:]+:)[^@]+@#\1<redacted>@#" "$f"
           done
           echo
           echo "===== databases ====="

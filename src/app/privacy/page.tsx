@@ -43,9 +43,9 @@ export default function PrivacyPage() {
               The payment processor, to take your money properly. The
               courier, to find your house. The email platform, if you signed
               up for the newsletter and haven&apos;t got around to
-              unsubscribing. Each of them is bound to use it for that job
-              and nothing else — nobody&apos;s getting a bonus copy for
-              their own purposes.
+              unsubscribing. Google, Meta and TikTok get a slice too — see
+              Cookies below — strictly to tell us whether an ad worked, not
+              a bonus copy of your details for anyone&apos;s own purposes.
             </p>
           </Prose>
         </Section>
@@ -54,17 +54,17 @@ export default function PrivacyPage() {
           <Prose>
             <p>
               The cart remembers what&apos;s in it, which needs a cookie. We
-              also run basic analytics so we know which pages people
-              actually read — this one, hopefully. We run TikTok&apos;s ad
-              pixel too, so we can tell which ads are actually working and
-              stop paying for the ones that aren&apos;t — if you came from a
-              TikTok ad, TikTok knows you visited and roughly what you did
-              here. We&apos;re not selling that on, and we&apos;re not
-              building some deeper profile from it — it&apos;s ad
-              accounting, not a shirt following you around the internet
-              forever. Block it the same way you&apos;d block any other
-              ad-tracking pixel, through your browser or TikTok&apos;s own
-              ad settings.
+              also run analytics (Google Analytics) so we know which pages
+              people actually read — this one, hopefully — plus Meta and
+              TikTok ad pixels, so we can tell which ads are actually
+              working and stop paying for the ones that aren&apos;t. If you
+              came from one of those ads, that platform knows you visited
+              and roughly what you did here. We&apos;re not selling that
+              on, and we&apos;re not building some deeper profile from it —
+              it&apos;s ad accounting, not a shirt following you around the
+              internet forever. Block it the same way you&apos;d block any
+              other ad-tracking pixel, through your browser or that
+              platform&apos;s own ad settings.
             </p>
           </Prose>
         </Section>

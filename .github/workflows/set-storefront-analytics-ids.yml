@@ -1,0 +1,62 @@
+name: Set storefront analytics IDs
+
+# Manual. Updates the storefront's own NEXT_PUBLIC_ analytics IDs on the
+# Oracle box and rebuilds. These are public, client-side identifiers (they
+# ship in the page source anyway), unlike STRIPE_SECRET_KEY or
+# TIKTOK_EVENTS_API_ACCESS_TOKEN -- passing them as plain workflow_dispatch
+# inputs is fine; a real secret never should be (see box-check.yml).
+on:
+  workflow_dispatch:
+    inputs:
+      ga4_measurement_id:
+        description: "NEXT_PUBLIC_GA4_MEASUREMENT_ID (blank = leave unchanged)"
+        required: false
+        default: ""
+      meta_pixel_id:
+        description: "NEXT_PUBLIC_META_PIXEL_ID (blank = leave unchanged)"
+        required: false
+        default: ""
+      tiktok_pixel_id:
+        description: "NEXT_PUBLIC_TIKTOK_PIXEL_ID (blank = leave unchanged)"
+        required: false
+        default: ""
+
+jobs:
+  set:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up deploy key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Update .env and rebuild
+        env:
+          GA4_ID: ${{ inputs.ga4_measurement_id }}
+          META_PIXEL_ID: ${{ inputs.meta_pixel_id }}
+          TIKTOK_PIXEL_ID: ${{ inputs.tiktok_pixel_id }}
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            "GA4_ID='$GA4_ID' META_PIXEL_ID='$META_PIXEL_ID' TIKTOK_PIXEL_ID='$TIKTOK_PIXEL_ID' bash -s" <<'REMOTE'
+          set -euo pipefail
+          ENV_FILE=/home/ubuntu/shirtfaced-site/.env
+
+          upsert() {
+            key="$1"; value="$2"
+            [ -z "$value" ] && return 0
+            if grep -q "^${key}=" "$ENV_FILE" 2>/dev/null; then
+              sed -i "s|^${key}=.*|${key}=${value}|" "$ENV_FILE"
+            else
+              printf '%s=%s\n' "$key" "$value" >> "$ENV_FILE"
+            fi
+          }
+
+          upsert NEXT_PUBLIC_GA4_MEASUREMENT_ID "$GA4_ID"
+          upsert NEXT_PUBLIC_META_PIXEL_ID "$META_PIXEL_ID"
+          upsert NEXT_PUBLIC_TIKTOK_PIXEL_ID "$TIKTOK_PIXEL_ID"
+
+          echo "Updated. Rebuilding..."
+          bash /home/ubuntu/deploy-site.sh
+          REMOTE

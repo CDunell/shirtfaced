@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { priceCart, CheckoutPricingError, type CartLineInput } from "@/lib/checkout-pricing";
+import { extractRequestMatchData } from "@/lib/server-analytics";
 
 /**
  * Called from the checkout page once the customer reaches the review step.
@@ -111,12 +112,26 @@ export async function POST(request: Request) {
   // what the code was really worth, not what the client claimed it was.
   const chargeCents = Math.max(0, priced.totalCents - discountCents);
 
+  // Captured here rather than in the webhook — Stripe calls the webhook
+  // server-to-server, with no trace of the customer's own request left to
+  // read. Carried through as metadata so sendServerSidePurchase (called from
+  // the webhook once payment settles) can match the conversion back to this
+  // browser session for Meta/TikTok.
+  const matchData = extractRequestMatchData(request);
+
   const stripe = new Stripe(stripeSecretKey);
   const paymentIntent = await stripe.paymentIntents.create({
     amount: chargeCents,
     currency: "aud",
     receipt_email: json.contact.email,
-    metadata: { orderId },
+    metadata: {
+      orderId,
+      ...(matchData.clientIp && { ip: matchData.clientIp }),
+      ...(matchData.userAgent && { ua: matchData.userAgent }),
+      ...(matchData.fbp && { fbp: matchData.fbp }),
+      ...(matchData.fbc && { fbc: matchData.fbc }),
+      ...(matchData.ttp && { ttp: matchData.ttp }),
+    },
   });
 
   // Best-effort — the order already exists and the payment already has an
