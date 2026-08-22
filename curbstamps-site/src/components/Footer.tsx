@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/contact", label: "Contact" },
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
+  { href: "https://admin.curbstamps.com", label: "Admin" },
 ];
 
 export function Footer() {
@@ -27,10 +28,7 @@ export function Footer() {
           ))}
         </nav>
         <p className="mt-9 pb-1 text-[11px] text-paper/45">
-          © {new Date().getFullYear()} Curb Stamps. Made in Australia. ·{" "}
-          <a href="https://admin.curbstamps.com" className="press hover:text-paper">
-            Admin
-          </a>
+          © {new Date().getFullYear()} Curb Stamps. Made in Australia.
         </p>
       </div>
     </footer>
