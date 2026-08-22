@@ -1,5 +1,5 @@
-source_commit=83d51fe2bfa4cf363560ca2a2c96d678c2b70777
-checked_at=2026-08-22T14:26:32Z
+source_commit=6bb9ed4de8a6838921be1cd7435d260b2c073124
+checked_at=2026-08-22T14:34:18Z
 ssh=success
 sync_admin=success
 build_admin=success
@@ -14,28 +14,8 @@ site_port_4100=listening
 site_dir=present
 site_package=present
 homepage_marker=missing
-homepage_sha256=c1c7d9d85a758dcc021cbab8bd98b7ef905b83fe432012ecadf628b45f9cfc49
+homepage_sha256=475169e5071647534245eab462db59afbad11dee9438fababef542dfdb4db718
 --- site journal tail ---
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:       '/home/ubuntu/curbstamps-site/node_modules/next/dist/server/lib/start-server.js',
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:       '/home/ubuntu/curbstamps-site/node_modules/next/dist/cli/next-start.js'
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:     ]
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   }
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]: }
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]: ⨯ unhandledRejection:  Error [ChunkLoadError]: Failed to load chunk server/chunks/ssr/[root-of-the-server]__1xamhoa._.js from module 41488
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:     at Context.loadChunkAsync [as l] (.next/server/chunks/ssr/[turbopack]_runtime.js:766:27) {
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   digest: '1409408512',
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   [cause]: Error: Cannot find module '/home/ubuntu/curbstamps-site/.next/server/chunks/ssr/[root-of-the-server]__1xamhoa._.js'
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   Require stack:
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   - /home/ubuntu/curbstamps-site/.next/server/chunks/ssr/[turbopack]_runtime.js
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   - /home/ubuntu/curbstamps-site/.next/server/app/_global-error/page.js
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   - /home/ubuntu/curbstamps-site/node_modules/next/dist/server/require.js
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   - /home/ubuntu/curbstamps-site/node_modules/next/dist/server/next-server.js
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   - /home/ubuntu/curbstamps-site/node_modules/next/dist/server/next.js
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   - /home/ubuntu/curbstamps-site/node_modules/next/dist/server/lib/start-server.js
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:   - /home/ubuntu/curbstamps-site/node_modules/next/dist/cli/next-start.js
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:       at Context.loadChunkAsync [as l] (.next/server/chunks/ssr/[turbopack]_runtime.js:761:34) {
-Aug 22 14:25:55 instance-20260615-2316 next[1629609]:     code: 'MODULE_NOT_FOUND',
-Aug 22 14:26:30 instance-20260615-2316 systemd[1]: Stopping Curb Stamps storefront...
 Aug 22 14:26:30 instance-20260615-2316 systemd[1]: curbstamps-site.service: Main process exited, code=exited, status=143/n/a
 Aug 22 14:26:30 instance-20260615-2316 systemd[1]: curbstamps-site.service: Failed with result 'exit-code'.
 Aug 22 14:26:30 instance-20260615-2316 systemd[1]: Stopped Curb Stamps storefront.
@@ -46,3 +26,23 @@ Aug 22 14:26:30 instance-20260615-2316 systemd-journald[3869909]: Suppressed 155
 Aug 22 14:26:30 instance-20260615-2316 next[1642124]: - Local:         http://localhost:4100
 Aug 22 14:26:30 instance-20260615-2316 next[1642124]: - Network:       http://10.0.0.74:4100
 Aug 22 14:26:30 instance-20260615-2316 next[1642124]: ✓ Ready in 211ms
+Aug 22 14:28:56 instance-20260615-2316 systemd[1]: Stopping Curb Stamps storefront...
+Aug 22 14:28:56 instance-20260615-2316 systemd[1]: curbstamps-site.service: Main process exited, code=exited, status=143/n/a
+Aug 22 14:28:56 instance-20260615-2316 systemd[1]: curbstamps-site.service: Failed with result 'exit-code'.
+Aug 22 14:28:56 instance-20260615-2316 systemd[1]: Stopped Curb Stamps storefront.
+Aug 22 14:28:56 instance-20260615-2316 systemd[1]: curbstamps-site.service: Consumed 1.025s CPU time.
+Aug 22 14:28:56 instance-20260615-2316 systemd[1]: Started Curb Stamps storefront.
+Aug 22 14:28:56 instance-20260615-2316 next[1647342]: ▲ Next.js 16.2.12
+Aug 22 14:28:56 instance-20260615-2316 next[1647342]: - Local:         http://localhost:4100
+Aug 22 14:28:56 instance-20260615-2316 next[1647342]: - Network:       http://10.0.0.74:4100
+Aug 22 14:28:56 instance-20260615-2316 next[1647342]: ✓ Ready in 235ms
+Aug 22 14:34:16 instance-20260615-2316 systemd[1]: Stopping Curb Stamps storefront...
+Aug 22 14:34:16 instance-20260615-2316 systemd[1]: curbstamps-site.service: Main process exited, code=exited, status=143/n/a
+Aug 22 14:34:16 instance-20260615-2316 systemd[1]: curbstamps-site.service: Failed with result 'exit-code'.
+Aug 22 14:34:16 instance-20260615-2316 systemd[1]: Stopped Curb Stamps storefront.
+Aug 22 14:34:16 instance-20260615-2316 systemd[1]: curbstamps-site.service: Consumed 3.129s CPU time.
+Aug 22 14:34:16 instance-20260615-2316 systemd[1]: Started Curb Stamps storefront.
+Aug 22 14:34:16 instance-20260615-2316 next[1659857]: ▲ Next.js 16.2.12
+Aug 22 14:34:16 instance-20260615-2316 next[1659857]: - Local:         http://localhost:4100
+Aug 22 14:34:16 instance-20260615-2316 next[1659857]: - Network:       http://10.0.0.74:4100
+Aug 22 14:34:16 instance-20260615-2316 next[1659857]: ✓ Ready in 192ms
