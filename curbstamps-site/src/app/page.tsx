@@ -8,25 +8,18 @@ import { AdventureGrid } from "@/components/home/AdventureGrid";
 import { ParentsCorner } from "@/components/home/ParentsCorner";
 import { NewsletterJoin } from "@/components/home/NewsletterJoin";
 
-/**
- * Homepage — built from DESIGN_HANDOFF.md's approved storyboard (§4, sections
- * B through K). Section F, "FIND YOUR WEIRDO" (the hidden-creature mini-game),
- * is deliberately not built yet — the handoff's own build order (§12) puts it
- * last, after every other section is live. Admin fields for this page (§10)
- * are the step after that, once the visual homepage itself is approved.
- */
 export default function HomePage() {
   return (
-    <>
+    <div className="overflow-hidden">
       <HeroWeirdo />
       <NewDropStrip />
-      <TrustStrip />
       <CurbCrewScene />
       <ShopByCategory />
       <WeirdoMatch />
       <AdventureGrid />
       <ParentsCorner />
+      <TrustStrip />
       <NewsletterJoin />
-    </>
+    </div>
   );
 }
