@@ -14,26 +14,26 @@ export function ShopByCategory() {
   return (
     <section className="bg-paper">
       <div className="mx-auto max-w-5xl px-4 py-9 sm:px-6 sm:py-12">
-        <div className="grid gap-5 sm:grid-cols-2 sm:items-center">
+        <div className="grid grid-cols-[.9fr_1.1fr] items-center gap-4 sm:grid-cols-2 sm:gap-6">
           <div>
-            <p className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-ink/55">Made for play. Loved all day.</p>
-            <h2 className="display text-[12vw] uppercase leading-[0.86] sm:text-[46px]">good days<br />start here.</h2>
-            <p className="mt-3 max-w-[28ch] text-[14px] font-bold text-ink/70">Clothes for little weirdos who do big things.</p>
-            <div className="mt-4 flex gap-2">
-              <Link href="/shop?category=tee" className="press rounded-md bg-ink px-4 py-3 text-[11px] font-black uppercase text-paper">Shop tees</Link>
-              <Link href="/shop?category=hoodie" className="press rounded-md bg-ink px-4 py-3 text-[11px] font-black uppercase text-paper">Shop hoodies</Link>
+            <p className="mb-1 text-[9px] font-black uppercase tracking-[0.14em] text-ink/50 sm:text-[11px]">Made for play. Loved all day.</p>
+            <h2 className="display text-[11vw] uppercase leading-[0.84] sm:text-[48px]">good days<br />start here.</h2>
+            <p className="mt-3 max-w-[22ch] text-[11px] font-bold leading-snug text-ink/70 sm:text-[14px]">Clothes for little weirdos who do big things.</p>
+            <div className="mt-4 flex flex-col items-start gap-2 sm:flex-row">
+              <Link href="/shop?category=tee" className="press rounded-md bg-ink px-3 py-2.5 text-[9px] font-black uppercase text-paper sm:px-4 sm:py-3 sm:text-[11px]">Shop tees</Link>
+              <Link href="/shop?category=hoodie" className="press rounded-md bg-ink px-3 py-2.5 text-[9px] font-black uppercase text-paper sm:px-4 sm:py-3 sm:text-[11px]">Shop hoodies</Link>
             </div>
           </div>
-          <PlaceholderPhoto label="Happy kid running outside" className="aspect-[0.92] w-full rounded-[18px]" tone="var(--color-grit-yellow)" />
+          <PlaceholderPhoto label="Happy kid running outside in Curb Stamps tee" className="aspect-[0.88] w-full rounded-[16px]" tone="var(--color-grit-yellow)" />
         </div>
 
-        <div className="mt-7 grid grid-cols-5 gap-2">
+        <div className="mt-6 grid grid-cols-5 gap-2 border-t border-ink/10 pt-4">
           {CATEGORIES.map((cat) => (
             <Link key={cat.label} href={cat.href} className="press flex min-w-0 flex-col items-center gap-2 text-center">
-              <span className="flex aspect-square w-full items-center justify-center rounded-full border-2 border-ink/10" style={{ background: cat.tone }}>
-                <cat.icon className="h-6 w-6" />
+              <span className="flex aspect-square w-full items-center justify-center rounded-full" style={{ background: cat.tone }}>
+                <cat.icon className="h-5 w-5 sm:h-6 sm:w-6" />
               </span>
-              <span className="text-[9px] font-black uppercase leading-tight sm:text-[11px]">{cat.label}</span>
+              <span className="text-[8px] font-black uppercase leading-tight sm:text-[11px]">{cat.label}</span>
             </Link>
           ))}
         </div>
