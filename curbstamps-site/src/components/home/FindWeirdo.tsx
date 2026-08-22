@@ -19,7 +19,7 @@ export function FindWeirdo() {
         </div>
 
         <div className="relative overflow-hidden border-y border-paper/15 bg-paper px-4 py-5 text-ink">
-          <div className="grid grid-cols-6 gap-x-3 gap-y-5 opacity-75">
+          <div className="grid grid-cols-6 gap-x-3 gap-y-5">
             {FIELD.map((index, i) => {
               const c = CREATURES[index % CREATURES.length];
               const isTarget = i === 10;
@@ -33,7 +33,7 @@ export function FindWeirdo() {
                   className={`press flex aspect-square items-center justify-center rounded-full disabled:cursor-default ${found && isTarget ? "badge-pop bg-grit-green/70" : ""}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/creatures/${c.slug}-icon.png`} alt="" aria-hidden="true" className="h-9 w-full object-contain" />
+                  <img src={`/creatures/${c.slug}-icon.png`} alt="" aria-hidden="true" className="h-9 w-full object-contain brightness-0" />
                 </button>
               );
             })}
