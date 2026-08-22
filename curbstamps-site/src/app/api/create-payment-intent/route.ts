@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { priceCart, CheckoutPricingError, type CartLineInput } from "@/lib/checkout-pricing";
+import { getShippingQuote } from "@/lib/shipping-quote";
 
 /**
  * Called from checkout once the customer reaches the review step.
@@ -51,9 +52,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 
+  // Re-quoted here rather than trusting a shippingCents the browser sent —
+  // same "never trust the client" rule the rest of this route already
+  // follows for line prices. The customer's chosen method (standard/
+  // express) picks which of the quote's two numbers applies.
+  const quote = await getShippingQuote(json.lines, { ...json.address, name: json.contact.name });
+  const shippingCents = json.shippingMethod === "express" ? quote.expressCents : quote.standardCents;
+
   let priced;
   try {
-    priced = priceCart(json.lines, json.shippingMethod);
+    priced = priceCart(json.lines, shippingCents);
   } catch (error) {
     if (error instanceof CheckoutPricingError) {
       return NextResponse.json({ error: error.message }, { status: 400 });

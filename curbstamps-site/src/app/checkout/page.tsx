@@ -13,11 +13,14 @@ import { IconArrowLeft, IconArrowRight, IconCheck, IconLock } from "@/components
 const STATES = ["NSW", "VIC", "QLD", "WA", "SA", "TAS", "ACT", "NT"];
 
 type Step = 1 | 2 | 3;
+type Quote = { standardCents: number; expressCents: number };
 
 export default function CheckoutPage() {
   const { lines, subtotal, hydrated } = useCart();
   const [step, setStep] = useState<Step>(1);
   const [method, setMethod] = useState<string>("standard");
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [quoteLoading, setQuoteLoading] = useState(false);
   const [form, setForm] = useState({
     email: "",
     name: "",
@@ -29,6 +32,29 @@ export default function CheckoutPage() {
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  // Real shipping cost for this cart + address, from curbstamps-admin's POD
+  // provider — see lib/shipping-quote.ts. Fetched once on entering step 2
+  // rather than per-keystroke; the address is locked in by that point.
+  async function goToShipping() {
+    setStep(2);
+    setQuoteLoading(true);
+    try {
+      const res = await fetch("/api/shipping-quote", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          lines: lines.map((l) => ({ slug: l.slug, size: l.size, colour: l.colour, quantity: l.quantity })),
+          address: { name: form.name, line1: form.address, suburb: form.suburb, state: form.state, postcode: form.postcode },
+        }),
+      });
+      if (res.ok) setQuote(await res.json());
+    } catch {
+      // Leave quote null — the fallback flat rate below covers this.
+    } finally {
+      setQuoteLoading(false);
+    }
+  }
 
   if (!hydrated) {
     return (
@@ -56,7 +82,8 @@ export default function CheckoutPage() {
   }
 
   const freeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
-  const shipping = freeShipping ? 0 : SHIPPING_METHODS.find((m) => m.key === method)!.price;
+  const methodCents = method === "express" ? quote?.expressCents : quote?.standardCents;
+  const shipping = freeShipping ? 0 : (methodCents ?? 0) / 100;
   const total = subtotal + shipping;
 
   const addressDone =
@@ -177,7 +204,7 @@ export default function CheckoutPage() {
           <button
             type="button"
             disabled={!addressDone}
-            onClick={() => setStep(2)}
+            onClick={goToShipping}
             className="press mt-8 h-14 w-full rounded-full bg-ink text-[16px] font-extrabold text-paper disabled:opacity-35"
           >
             Continue to shipping
@@ -202,32 +229,40 @@ export default function CheckoutPage() {
           </div>
 
           <h2 className="display mt-8 text-[22px]">Shipping method</h2>
-          <ul className="mt-3 flex flex-col gap-2">
-            {SHIPPING_METHODS.map((m) => {
-              const active = method === m.key;
-              const cost = freeShipping ? 0 : m.price;
-              return (
-                <li key={m.key}>
-                  <button
-                    type="button"
-                    onClick={() => setMethod(m.key)}
-                    aria-pressed={active}
-                    className={`press flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-4 text-left ${
-                      active ? "border-grit-pink bg-grit-pink/10" : "border-ink/12"
-                    }`}
-                  >
-                    <span>
-                      <span className="block text-[15px] font-bold">{m.name}</span>
-                      <span className="text-[13px] text-grey-dark">{m.time}</span>
-                    </span>
-                    <span className="text-[15px] font-bold tabular-nums">
-                      {cost === 0 ? "Free" : money(cost)}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+          {quoteLoading ? (
+            <div className="mt-3 flex flex-col gap-2">
+              <div className="skeleton h-[68px] rounded-2xl" />
+              <div className="skeleton h-[68px] rounded-2xl" />
+            </div>
+          ) : (
+            <ul className="mt-3 flex flex-col gap-2">
+              {SHIPPING_METHODS.map((m) => {
+                const active = method === m.key;
+                const cents = m.key === "express" ? quote?.expressCents : quote?.standardCents;
+                const cost = freeShipping ? 0 : (cents ?? 0) / 100;
+                return (
+                  <li key={m.key}>
+                    <button
+                      type="button"
+                      onClick={() => setMethod(m.key)}
+                      aria-pressed={active}
+                      className={`press flex w-full items-center justify-between gap-3 rounded-2xl border-2 px-4 py-4 text-left ${
+                        active ? "border-grit-pink bg-grit-pink/10" : "border-ink/12"
+                      }`}
+                    >
+                      <span>
+                        <span className="block text-[15px] font-bold">{m.name}</span>
+                        <span className="text-[13px] text-grey-dark">{m.time}</span>
+                      </span>
+                      <span className="text-[15px] font-bold tabular-nums">
+                        {cost === 0 ? "Free" : money(cost)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
 
           {freeShipping && (
             <p className="mt-3 text-[13px] text-grey-dark">
@@ -237,8 +272,9 @@ export default function CheckoutPage() {
 
           <button
             type="button"
+            disabled={quoteLoading || !quote}
             onClick={() => setStep(3)}
-            className="press mt-8 h-14 w-full rounded-full bg-ink text-[16px] font-extrabold text-paper"
+            className="press mt-8 h-14 w-full rounded-full bg-ink text-[16px] font-extrabold text-paper disabled:opacity-35"
           >
             Continue to review
           </button>

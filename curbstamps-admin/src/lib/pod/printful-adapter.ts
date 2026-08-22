@@ -1,9 +1,19 @@
-import type { PodProvider, PodOrderInput, PodOrderResult, PodStatusResult } from "./types";
+import type {
+  PodProvider,
+  PodOrderInput,
+  PodOrderResult,
+  PodStatusResult,
+  PodShippingQuoteInput,
+  PodShippingQuoteResult,
+} from "./types";
 import { PodError } from "./types";
 
 /**
- * Reference implementation against Printful's real order API — NOT
- * production-ready. It will make real requests and, if given a real API key
+ * Reference implementation against Printful's real order API. Printify is
+ * the decided provider (see printify-adapter.ts and
+ * docs/curbstamps/CURB_STAMPS_SPEC.md §4) — this is kept as a working
+ * alternative, not the one getPodProvider() defaults to. NOT
+ * production-ready either way. It will make real requests and, if given a real API key
  * and confirm: true, place real orders for real money the moment
  * SYNC_VARIANT_MAP is filled in. Two things block that today:
  *
@@ -103,6 +113,55 @@ export class PrintfulProvider implements PodProvider {
       trackingNumber: shipment?.tracking_number,
       trackingUrl: shipment?.tracking_url,
       carrier: shipment?.carrier,
+    };
+  }
+
+  /**
+   * Printful's own /shipping/rates endpoint — real per-order shipping cost
+   * instead of a hardcoded zone table, same reasoning as
+   * PrintifyProvider.getShippingQuote. Unverified against a live account
+   * (developers.printful.com is unreachable from this environment): the
+   * request shape below (recipient + items keyed by variant_id) and the
+   * response shape (result: an array of {id, rate, currency} options) are
+   * both taken from Printful's own SDK examples, not confirmed against a
+   * real response. Whether `items` here wants the catalog variant_id or the
+   * store-specific sync_variant_id (used for orders above) is the one
+   * genuine unknown — confirm against a real account before trusting this.
+   */
+  async getShippingQuote(input: PodShippingQuoteInput): Promise<PodShippingQuoteResult> {
+    const body = {
+      recipient: {
+        country_code: input.address.country,
+        state_code: input.address.state,
+      },
+      items: input.items.map((item) => ({
+        sync_variant_id: lookupSyncVariantId(item.slug, item.colourName, item.size),
+        quantity: item.quantity,
+      })),
+    };
+
+    const res = await fetch(`${PRINTFUL_API_BASE}/shipping/rates`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${this.apiKey()}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new PodError(`Printful shipping rate lookup failed (${res.status}): ${text}`);
+    }
+
+    const json = (await res.json()) as { result: { id: string; rate: string }[] };
+    const toCents = (rate: string) => Math.round(parseFloat(rate) * 100);
+    const standard = json.result.find((r) => !/express/i.test(r.id)) ?? json.result[0];
+    const express = json.result.find((r) => /express/i.test(r.id));
+    if (!standard) throw new PodError("Printful returned no shipping options for this address.");
+
+    return {
+      standardCents: toCents(standard.rate),
+      expressCents: express ? toCents(express.rate) : undefined,
     };
   }
 }

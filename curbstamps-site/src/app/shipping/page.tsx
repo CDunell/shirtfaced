@@ -11,17 +11,16 @@ export default function ShippingPage() {
       <Section heading="Methods">
         <ul className="mt-1 flex flex-col gap-3">
           {SHIPPING_METHODS.map((m) => (
-            <li key={m.key} className="flex items-baseline justify-between">
-              <span>
-                <span className="block text-[15px] font-bold">{m.name}</span>
-                <span className="text-[13px] text-grey-dark">{m.time}</span>
-              </span>
-              <span className="text-[15px] font-bold">{money(m.price)}</span>
+            <li key={m.key}>
+              <span className="block text-[15px] font-bold">{m.name}</span>
+              <span className="text-[13px] text-grey-dark">{m.time}</span>
             </li>
           ))}
         </ul>
         <p className="mt-4 text-[13px] text-grey-dark">
-          Free standard shipping on orders over {money(FREE_SHIPPING_THRESHOLD)}.
+          Exact cost is worked out at checkout from your address — it varies by
+          destination rather than one flat price. Free standard shipping on orders over{" "}
+          {money(FREE_SHIPPING_THRESHOLD)}.
         </p>
       </Section>
       <Section heading="Where we ship">

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { IconCart } from "./Icons";
 import { CurbStampsLogo } from "./CurbStampsLogo";
@@ -15,15 +15,7 @@ const NAV = [
 
 export function Header() {
   const { itemCount, addTick, hydrated } = useCart();
-  const [pop, setPop] = useState(false);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (addTick === 0) return;
-    setPop(true);
-    const t = setTimeout(() => setPop(false), 280);
-    return () => clearTimeout(t);
-  }, [addTick]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-ink/10 bg-paper/95 backdrop-blur">
@@ -62,7 +54,15 @@ export function Header() {
           >
             <IconCart className="h-5 w-5" />
             {hydrated && itemCount > 0 && (
-              <span className={`absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-grit-pink px-1 text-[11px] font-extrabold text-ink ${pop ? "badge-pop" : ""}`}>
+              // key={addTick}: remounting on every add retriggers the
+              // badge-pop CSS animation with no state/effect needed — a
+              // pop-state-in-an-effect version of this kept getting its
+              // eslint-disable comment dropped by unrelated rewrites of
+              // this file, so this shape can't regress the same way.
+              <span
+                key={addTick}
+                className="badge-pop absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-grit-pink px-1 text-[11px] font-extrabold text-ink"
+              >
                 {itemCount}
               </span>
             )}

@@ -1,4 +1,11 @@
-import type { PodProvider, PodOrderInput, PodOrderResult, PodStatusResult } from "./types";
+import type {
+  PodProvider,
+  PodOrderInput,
+  PodOrderResult,
+  PodStatusResult,
+  PodShippingQuoteInput,
+  PodShippingQuoteResult,
+} from "./types";
 
 /**
  * Default provider until a real vendor account exists. Accepts every order,
@@ -24,5 +31,22 @@ export class MockPodProvider implements PodProvider {
   async getOrderStatus(podOrderId: string): Promise<PodStatusResult> {
     console.log(`[pod:mock] getOrderStatus ${podOrderId}`);
     return { status: "in_production" };
+  }
+
+  /**
+   * A flat, honestly-fake estimate — AU domestic rate for an AU address,
+   * otherwise a rough "further away costs more" guess by item count. Not
+   * calibrated against anything real; it exists so checkout has a shipping
+   * quote to show while no real POD account exists, same spirit as the
+   * mock adapter's createOrder. Never confuse this for a real rate table —
+   * see getShippingQuote on PrintifyProvider for the real thing.
+   */
+  async getShippingQuote(input: PodShippingQuoteInput): Promise<PodShippingQuoteResult> {
+    const itemCount = input.items.reduce((sum, i) => sum + i.quantity, 0);
+    const isDomestic = input.address.country === "AU";
+    const base = isDomestic ? 995 : 2495;
+    const perExtra = isDomestic ? 200 : 800;
+    const standardCents = base + perExtra * Math.max(0, itemCount - 1);
+    return { standardCents, expressCents: standardCents + (isDomestic ? 500 : 1500) };
   }
 }

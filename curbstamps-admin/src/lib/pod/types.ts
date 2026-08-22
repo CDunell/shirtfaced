@@ -47,10 +47,36 @@ export type PodStatusResult = {
   carrier?: string;
 };
 
+export type PodShippingQuoteInput = {
+  address: PodAddress;
+  items: PodOrderItem[];
+};
+
+/**
+ * Cents, not dollars — matches every other money value in this app
+ * (priceCents, totalCents, etc.), so the internal API and checkout never
+ * have to convert between the two representations mid-flow.
+ */
+export type PodShippingQuoteResult = {
+  standardCents: number;
+  expressCents?: number;
+};
+
 export interface PodProvider {
   readonly name: string;
   createOrder(input: PodOrderInput): Promise<PodOrderResult>;
   getOrderStatus(podOrderId: string): Promise<PodStatusResult>;
+  /**
+   * Real per-destination shipping cost for a cart, before payment. Added
+   * because a flat AU-domestic-style rate (what curbstamps-site's checkout
+   * used before this existed) badly undercharges genuinely international
+   * orders — Printful's own published rates run a single hoodie from
+   * ~US$8 domestically to ~US$25+ to a "Worldwide" destination. Rather than
+   * hardcode a second guessed rate table with more zones, this asks the
+   * real POD provider what it actually costs for this exact cart and
+   * address — accurate by construction instead of approximated.
+   */
+  getShippingQuote(input: PodShippingQuoteInput): Promise<PodShippingQuoteResult>;
 }
 
 export class PodError extends Error {}
