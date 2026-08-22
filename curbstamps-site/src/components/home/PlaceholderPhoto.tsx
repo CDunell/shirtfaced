@@ -1,11 +1,3 @@
-/**
- * Every real photography slot in DESIGN_HANDOFF.md §6 (candid kids, outdoor
- * play) needs an actual shoot — there is no photography for Curb Stamps yet
- * (see curbstamps-site/README.md). Rather than fake a photo or leave a grey
- * box, this names exactly what belongs in the slot so it reads as "shoot
- * this" rather than "broken image" — swap for a real <img>/next-image once
- * the shoot in DESIGN_HANDOFF.md §6 happens; nothing else needs to change.
- */
 export function PlaceholderPhoto({
   label,
   tone = "var(--color-paper-2)",
@@ -17,13 +9,19 @@ export function PlaceholderPhoto({
 }) {
   return (
     <div
-      className={`flex flex-col items-center justify-center gap-2 rounded-[20px] border-2 border-dashed border-ink/20 p-4 text-center ${className ?? ""}`}
+      className={`relative overflow-hidden border-2 border-ink/10 ${className ?? ""}`}
       style={{ background: tone }}
+      role="img"
+      aria-label={label}
     >
-      <span className="text-[11px] font-extrabold tracking-wide text-ink/50 uppercase">
-        Photo needed
-      </span>
-      <span className="text-[13px] font-bold text-ink/70">{label}</span>
+      <div className="absolute inset-x-0 bottom-0 h-[34%] bg-ink/8" />
+      <div className="absolute right-[12%] top-[14%] h-8 w-8 rounded-full border-2 border-ink/35 bg-paper/40" />
+      <div className="absolute left-[18%] top-[22%] h-[42%] w-[34%] rounded-[45%_45%_35%_35%] bg-ink/75" />
+      <div className="absolute left-[23%] top-[12%] h-10 w-10 rounded-full bg-ink/75" />
+      <div className="absolute left-[13%] top-[48%] h-2 w-[48%] -rotate-6 rounded-full bg-ink/75" />
+      <div className="absolute bottom-[9%] left-[12%] right-[12%] rounded-lg bg-paper/90 px-2 py-1.5 text-center text-[9px] font-black uppercase leading-tight text-ink/65">
+        {label}
+      </div>
     </div>
   );
 }
