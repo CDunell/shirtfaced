@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CurbStampsLogo } from "./CurbStampsLogo";
+import { CurbStampsLogoTransparent } from "./CurbStampsLogoTransparent";
 
 const LINKS = [
   { href: "/shop", label: "Shop" },
@@ -17,7 +17,7 @@ export function Footer() {
   return (
     <footer className="border-t border-ink/10 bg-paper-2/60">
       <div className="mx-auto max-w-5xl px-4 py-9 sm:px-6">
-        <CurbStampsLogo className="h-[86px] w-auto" />
+        <CurbStampsLogoTransparent className="h-[72px] w-auto" />
         <p className="mt-3 max-w-[34ch] text-[13px] font-bold text-grey-dark">
           Little weirdos on clothes made for play. Kids roughly 2–10.
         </p>
