@@ -48,6 +48,11 @@ export function extractRequestMatchData(request: Request) {
   };
 }
 
+export type ServerPurchaseContent = {
+  contentId: string;
+  quantity: number;
+};
+
 export type ServerPurchase = {
   transactionId: string;
   value: number;
@@ -61,6 +66,11 @@ export type ServerPurchase = {
   fbp: string | null;
   fbc: string | null;
   ttp: string | null;
+  /** Per-product line items, fetched separately from admin by the webhook
+   * (the PaymentIntent itself doesn't carry them) — both platforms' own
+   * event-quality checks flag a Purchase with no content_id, since it's what
+   * catalog-linked ad optimization needs to map a sale back to products. */
+  contents: ServerPurchaseContent[];
 };
 
 export async function sendServerSidePurchase(purchase: ServerPurchase) {
@@ -85,7 +95,12 @@ async function sendMetaCapiPurchase(purchase: ServerPurchase) {
           ...(purchase.fbp && { fbp: purchase.fbp }),
           ...(purchase.fbc && { fbc: purchase.fbc }),
         },
-        custom_data: { value: purchase.value, currency: purchase.currency },
+        custom_data: {
+          value: purchase.value,
+          currency: purchase.currency,
+          contents: purchase.contents.map((c) => ({ id: c.contentId, quantity: c.quantity })),
+          content_type: "product",
+        },
       },
     ],
   };
@@ -117,7 +132,15 @@ async function sendTikTokEventsApiPurchase(purchase: ServerPurchase) {
           ...(purchase.ttp && { ttp: purchase.ttp }),
         },
         page: { url: `${SITE_URL}/checkout/success` },
-        properties: { currency: purchase.currency, value: purchase.value },
+        properties: {
+          currency: purchase.currency,
+          value: purchase.value,
+          contents: purchase.contents.map((c) => ({
+            content_id: c.contentId,
+            content_type: "product",
+            quantity: c.quantity,
+          })),
+        },
       },
     ],
   };

@@ -56,13 +56,15 @@ export default function PrivacyPage() {
               The cart remembers what&apos;s in it, which needs a cookie. We
               also run analytics (Google Analytics) so we know which pages
               people actually read — this one, hopefully — plus Meta and
-              TikTok pixels, so if we run an ad we can tell whether it
-              actually sold a shirt instead of just guessing. If you come
-              in from one of those ads, that platform knows you looked. We
-              use that to see what&apos;s working, not to build a profile on
-              you or follow you around the rest of the internet — turn the
-              relevant setting off in your Google, Meta or TikTok account if
-              you&apos;d rather opt out of that measurement entirely.
+              TikTok ad pixels, so we can tell which ads are actually
+              working and stop paying for the ones that aren&apos;t. If you
+              came from one of those ads, that platform knows you visited
+              and roughly what you did here. We&apos;re not selling that
+              on, and we&apos;re not building some deeper profile from it —
+              it&apos;s ad accounting, not a shirt following you around the
+              internet forever. Block it the same way you&apos;d block any
+              other ad-tracking pixel, through your browser or that
+              platform&apos;s own ad settings.
             </p>
           </Prose>
         </Section>

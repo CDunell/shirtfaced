@@ -61,10 +61,25 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Could not update the order." }, { status: 500 });
       }
 
+      // Ad-attribution signal, not order state — logged on failure, never
+      // allowed to fail the webhook itself. Line items are a second
+      // best-effort fetch: both platforms' own event-quality checks flag a
+      // Purchase with no content_id, which needs per-product ids the
+      // PaymentIntent itself doesn't carry — a fetch failure here just means
+      // the event goes out without contents, not that it doesn't go out.
+      const itemsResponse = await fetch(`${adminApiUrl}/api/internal/orders/${orderId}`, {
+        headers: { "x-internal-api-key": adminApiKey },
+      }).catch(() => null);
+      const itemsBody = itemsResponse?.ok
+        ? ((await itemsResponse.json().catch(() => null)) as {
+            items: { productId: string | null; productName: string; quantity: number }[];
+          } | null)
+        : null;
+
       // Best-effort — the order is already marked paid above regardless of
-      // whether this succeeds, same as the client-side pixel fire it backs
-      // up. Same orderId as the client event_id (see PaymentStep.tsx /
-      // checkout/success/page.tsx) so Meta/TikTok dedupe the pair.
+      // whether this succeeds. Same orderId as the client event_id (see
+      // PaymentStep.tsx / checkout/success/page.tsx) so Meta/TikTok dedupe
+      // the client and server fires into one conversion.
       if (paymentIntent.receipt_email) {
         await sendServerSidePurchase({
           transactionId: orderId,
@@ -76,6 +91,10 @@ export async function POST(request: Request) {
           fbp: paymentIntent.metadata.fbp ?? null,
           fbc: paymentIntent.metadata.fbc ?? null,
           ttp: paymentIntent.metadata.ttp ?? null,
+          contents: (itemsBody?.items ?? []).map((item) => ({
+            contentId: item.productId ?? item.productName,
+            quantity: item.quantity,
+          })),
         }).catch((error) => {
           console.error(`stripe-webhook: server-side purchase tracking failed for ${orderId}`, error);
         });

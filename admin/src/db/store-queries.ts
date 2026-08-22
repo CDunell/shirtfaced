@@ -251,6 +251,15 @@ export function orderReference(orderSeq: number): string {
   return `SF-${String(orderSeq + 999)}`;
 }
 
+/** Line items for one order by internal id -- used by the storefront's
+ * TikTok Purchase event (src/lib/tiktok-events.ts) to attach a per-product
+ * content_id, never by anything customer-facing (see findOrderForCustomer
+ * for that path, which additionally checks the order belongs to the caller). */
+export async function getOrderItemsById(id: string) {
+  const order = await db.query.orders.findFirst({ where: eq(orders.id, id), with: { items: true } });
+  return order?.items ?? null;
+}
+
 export async function createOrder(data: OrderInput) {
   const subtotalCents = data.items.reduce((sum, item) => sum + item.quantity * item.unitPriceCents, 0);
   const totalCents = Math.max(0, subtotalCents - data.discountCents + data.shippingCents);
