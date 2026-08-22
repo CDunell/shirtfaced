@@ -1,0 +1,15 @@
+[Unit]
+Description=Curb Stamps storefront
+After=network.target
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/curbstamps-site
+EnvironmentFile=/home/ubuntu/curbstamps-site/.env
+ExecStart=/home/ubuntu/curbstamps-site/node_modules/.bin/next start -p 4100
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

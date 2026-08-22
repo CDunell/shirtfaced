@@ -1,0 +1,65 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
+import { verifyInternalRequest } from "@/lib/internal-auth";
+import { createOrder, findProductIdBySlug, upsertCustomerByEmail } from "@/db/store-queries";
+
+/**
+ * Called by curbstamps-site's checkout — see api/create-payment-intent in
+ * that app — to create a pending order the moment a Stripe PaymentIntent is
+ * about to be created for it. The storefront has no direct database access,
+ * so this is the only door in. Always creates status "pending" — the
+ * webhook that later PATCHes status to "paid" is the only thing that should
+ * ever mark an order paid.
+ */
+const itemSchema = z.object({
+  slug: z.string().min(1),
+  productName: z.string().min(1),
+  colourName: z.string().nullable(),
+  size: z.string().nullable(),
+  quantity: z.number().int().positive(),
+  unitPriceCents: z.number().int().nonnegative(),
+});
+
+const bodySchema = z.object({
+  customer: z.object({ email: z.string().email(), name: z.string().min(1) }),
+  shippingCents: z.number().int().nonnegative(),
+  shippingAddress: z.string().min(1),
+  items: z.array(itemSchema).min(1),
+});
+
+export async function POST(request: Request) {
+  if (!verifyInternalRequest(request)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const json = await request.json().catch(() => null);
+  const parsed = bodySchema.safeParse(json);
+  if (!parsed.success) {
+    return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid request body." }, { status: 400 });
+  }
+  const body = parsed.data;
+
+  const customerId = await upsertCustomerByEmail(body.customer.email, body.customer.name);
+
+  const items = await Promise.all(
+    body.items.map(async (item) => ({
+      productId: await findProductIdBySlug(item.slug),
+      productName: item.productName,
+      colourName: item.colourName,
+      size: item.size,
+      quantity: item.quantity,
+      unitPriceCents: item.unitPriceCents,
+    })),
+  );
+
+  const orderId = await createOrder({
+    customerId,
+    status: "pending",
+    shippingCents: body.shippingCents,
+    shippingAddress: body.shippingAddress,
+    notes: "Created from storefront checkout.",
+    items,
+  });
+
+  return NextResponse.json({ orderId }, { status: 201 });
+}

@@ -1,0 +1,17 @@
+/node_modules
+/.pnp
+.pnp.*
+
+/coverage
+
+/.next/
+/out/
+
+/build
+
+.DS_Store
+*.pem
+.env
+.env.local
+
+npm-debug.log*

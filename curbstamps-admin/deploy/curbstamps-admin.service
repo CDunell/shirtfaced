@@ -1,0 +1,15 @@
+[Unit]
+Description=Curb Stamps admin (orders, POD fulfilment)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=ubuntu
+WorkingDirectory=/home/ubuntu/curbstamps-admin
+EnvironmentFile=/home/ubuntu/curbstamps-admin/.env
+ExecStart=/home/ubuntu/curbstamps-admin/node_modules/.bin/next start -p 4300
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

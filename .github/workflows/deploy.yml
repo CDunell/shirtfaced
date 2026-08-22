@@ -315,3 +315,47 @@ jobs:
         env:
           SMOKE_SESSION_TOKEN: ${{ steps.mint-token.outputs.token }}
         run: python studio/scripts/smoke_design_chain.py --base https://studio.shirtfaced.wtf
+
+      # ---------------------------------------------------------------------
+      # Curb Stamps — a separate brand, same box, same deploy key. Additive
+      # only: nothing above this point is touched. deploy-curbstamps-admin.sh
+      # and deploy-curbstamps-site.sh are versioned inside their own app
+      # directories (curbstamps-admin/deploy/, curbstamps-site/deploy/) and
+      # therefore land on the box via the rsync below — unlike deploy-admin.sh
+      # /deploy-site.sh/deploy-studio.sh above, nothing has to be hand-created
+      # on the box first. See docs/curbstamps/CURBSTAMPS_DEPLOYMENT.md for the
+      # one-time box setup (systemd units, nginx, .env files) this still
+      # doesn't do — first-time server provisioning isn't something a deploy
+      # step should be doing unattended.
+      # ---------------------------------------------------------------------
+
+      - name: Sync curbstamps-admin app
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=node_modules --exclude=.next --exclude=.env \
+            curbstamps-admin/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-admin/
+
+      - name: Build and restart curbstamps-admin app
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/curbstamps-admin/deploy/deploy-curbstamps-admin.sh'
+
+      # Same reasoning as the shirtfaced-admin migration step above: safe to
+      # run every deploy regardless of whether this build changed the schema.
+      - name: Run curbstamps-admin database migrations
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'cd /home/ubuntu/curbstamps-admin && npx --yes drizzle-kit migrate'
+
+      - name: Sync curbstamps-site
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=node_modules --exclude=.next --exclude=out --exclude=.env \
+            curbstamps-site/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-site/
+
+      - name: Build and restart curbstamps-site
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            'bash /home/ubuntu/curbstamps-site/deploy/deploy-curbstamps-site.sh'
