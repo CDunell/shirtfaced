@@ -274,7 +274,7 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key" \
             --exclude=node_modules --exclude=.next --exclude=out \
             --exclude=admin --exclude=studio --exclude=.env --exclude=.git \
-            --exclude=.github \
+            --exclude=.github --exclude=curbstamps-site --exclude=curbstamps-admin \
             ./ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-site/
 
       - name: Build and publish storefront
