@@ -109,3 +109,25 @@ export const CREATURES: Creature[] = [
 export function getCreature(slug: string) {
   return CREATURES.find((c) => c.slug === slug);
 }
+
+/**
+ * Homepage chrome (creature picker tiles, crew cards, tile states) uses the
+ * six approved brand accents, not each creature's own bespoke signature
+ * colour above — see DESIGN_HANDOFF.md §3 "avoid rainbow gradients; use one
+ * bright colour per tile". The signature colour stays what a garment
+ * colourway option actually offers on the product page; this is a separate,
+ * smaller palette cycling across creatures purely for homepage decoration.
+ */
+export const UI_ACCENTS = [
+  { name: "Yellow", hex: "#ffc93c" },
+  { name: "Blue", hex: "#3ec6e0" },
+  { name: "Pink", hex: "#ff6f9c" },
+  { name: "Green", hex: "#7ed957" },
+  { name: "Orange", hex: "#ff8c42" },
+  { name: "Lilac", hex: "#c7b8ff" },
+] as const;
+
+export function uiAccentFor(slug: string) {
+  const index = CREATURES.findIndex((c) => c.slug === slug);
+  return UI_ACCENTS[index % UI_ACCENTS.length];
+}

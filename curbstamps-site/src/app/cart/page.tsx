@@ -47,7 +47,7 @@ export default function CartPage() {
         </p>
       ) : (
         <p className="mt-3 text-[13px] font-semibold text-grit-green">
-          You&apos;ve got free standard shipping 🎉
+          You&apos;ve got free standard shipping.
         </p>
       )}
 
@@ -58,6 +58,7 @@ export default function CartPage() {
               category={line.slug.endsWith("hoodie") ? "hoodie" : line.slug.endsWith("cap") ? "cap" : "tee"}
               bodyColour={line.body}
               art={line.art}
+              artDark={line.artDark}
               creatureName={line.name}
               className="h-20 w-20 shrink-0 rounded-2xl"
             />

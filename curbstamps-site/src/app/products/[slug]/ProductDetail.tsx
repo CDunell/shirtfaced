@@ -24,6 +24,7 @@ export function ProductDetail({ product }: { product: Product }) {
       size,
       colour: colour.name,
       art: product.art,
+      artDark: product.artDark,
       body: colour.body,
     });
     setAdded(true);
@@ -36,6 +37,7 @@ export function ProductDetail({ product }: { product: Product }) {
         category={product.category}
         bodyColour={colour.body}
         art={product.art}
+        artDark={product.artDark}
         creatureName={product.name}
         className="aspect-square rounded-card"
       />

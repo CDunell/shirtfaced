@@ -255,6 +255,7 @@ export default function CheckoutPage() {
                   category={line.slug.endsWith("hoodie") ? "hoodie" : line.slug.endsWith("cap") ? "cap" : "tee"}
                   bodyColour={line.body}
                   art={line.art}
+                  artDark={line.artDark}
                   creatureName={line.name}
                   className="h-[76px] w-[62px] shrink-0 rounded-xl"
                 />

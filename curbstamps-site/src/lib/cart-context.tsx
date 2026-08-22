@@ -18,6 +18,7 @@ export type CartLine = {
   size: string;
   colour: string;
   art: string;
+  artDark: string;
   body: string;
   quantity: number;
 };
@@ -62,6 +63,7 @@ function migrate(stored: unknown[]): CartLine[] {
       size: l.size,
       colour: colour.name,
       art: product.art,
+      artDark: product.artDark,
       body: colour.body,
       quantity,
     });

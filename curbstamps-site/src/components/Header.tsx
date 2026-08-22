@@ -30,11 +30,14 @@ export function Header() {
           <Link href="/shop" className="press">
             Shop
           </Link>
+          <Link href="/#crew" className="press">
+            Weirdos
+          </Link>
+          <Link href="/shop" className="press">
+            New
+          </Link>
           <Link href="/about" className="press">
             About
-          </Link>
-          <Link href="/faq" className="press">
-            FAQ
           </Link>
         </nav>
         <Link

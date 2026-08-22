@@ -11,6 +11,7 @@ export function ProductCard({ product }: { product: Product }) {
         category={product.category}
         bodyColour={colour.body}
         art={product.art}
+        artDark={product.artDark}
         creatureName={product.name}
         className="aspect-square rounded-card"
       />

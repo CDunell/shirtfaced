@@ -37,8 +37,14 @@ export type Product = {
   category: Category;
   name: string;
   price: number;
-  /** The transparent line-art PNG printed on the garment. */
+  /** Cream-ink line art — reads on mid-to-dark garment colours. */
   art: string;
+  /** Same artwork, ink-coloured — reads on light garment colours (Natural,
+   * and light accents like Butter/Powder/Lilac/Sand). GarmentArt picks
+   * between the two by the chosen colourway's actual brightness rather than
+   * by colour name, since "light enough to need dark ink" isn't only true
+   * of Natural. */
+  artDark: string;
   colours: Colourway[];
   sizes: readonly string[];
   blurb: string;
@@ -67,6 +73,7 @@ function buildProducts(): Product[] {
         name: `${creature.name} ${CATEGORY_LABEL[category]}`,
         price: CATEGORY_PRICE[category],
         art: `/creatures/${creature.slug}-logo.png`,
+        artDark: `/creatures/${creature.slug}-logo-dark.png`,
         colours,
         sizes: sizesFor(category),
         blurb: creature.blurb,

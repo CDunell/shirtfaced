@@ -25,16 +25,30 @@ const SHAPES: Record<Category, { d: string; extra?: string }> = {
   },
 };
 
+/** True if a hex garment colour is light enough that the cream-ink artwork
+ * would barely show — cream print needs a mid-to-dark body, same as a real
+ * screen print needs dark ink on a light shirt and light ink on a dark one. */
+function isLightColour(hex: string): boolean {
+  const n = parseInt(hex.replace("#", ""), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  // Perceived luminance (ITU-R BT.601).
+  return (r * 299 + g * 587 + b * 114) / 1000 > 170;
+}
+
 export function GarmentArt({
   category,
   bodyColour,
   art,
+  artDark,
   creatureName,
   className,
 }: {
   category: Category;
   bodyColour: string;
   art: string;
+  artDark: string;
   creatureName: string;
   className?: string;
 }) {
@@ -45,6 +59,7 @@ export function GarmentArt({
       : category === "hoodie"
         ? { left: "26%", top: "46%", width: "48%" }
         : { left: "26%", top: "38%", width: "48%" };
+  const printSrc = isLightColour(bodyColour) ? artDark : art;
 
   return (
     <div className={`relative overflow-hidden bg-paper-2 ${className ?? ""}`}>
@@ -56,7 +71,7 @@ export function GarmentArt({
       </svg>
       {/* eslint-disable-next-line @next/next/no-img-element -- static, unoptimized art; next/image adds nothing here */}
       <img
-        src={art}
+        src={printSrc}
         alt={`${creatureName} print`}
         className="absolute drop-shadow-sm"
         style={{ left: printBox.left, top: printBox.top, width: printBox.width }}
