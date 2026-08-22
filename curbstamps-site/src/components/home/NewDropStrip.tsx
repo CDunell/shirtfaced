@@ -11,17 +11,17 @@ export function NewDropStrip() {
 
   return (
     <section className="bg-paper">
-      <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-9">
-        <div className="grid grid-cols-[0.86fr_1.14fr] overflow-hidden rounded-[18px] border-2 border-ink sm:grid-cols-4">
-          <div className="flex min-h-[180px] flex-col justify-between bg-grit-pink p-4 sm:min-h-0">
+      <div className="mx-auto max-w-5xl py-0 sm:px-6 sm:py-7">
+        <div className="no-scrollbar flex overflow-x-auto border-y border-ink/15 sm:grid sm:grid-cols-5 sm:overflow-hidden sm:rounded-[16px] sm:border-2 sm:border-ink">
+          <div className="flex min-h-[142px] w-[124px] shrink-0 flex-col justify-between bg-grit-pink p-3.5 sm:min-h-[190px] sm:w-auto">
             <div>
-              <h2 className="display text-[24px] uppercase leading-[0.88]">new drop!</h2>
-              <p className="mt-1 text-[11px] font-bold">Just landed.</p>
+              <h2 className="display text-[21px] uppercase leading-[0.88]">new drop!</h2>
+              <p className="mt-1 text-[10px] font-bold">Just landed.</p>
             </div>
-            <Link href="/shop" className="press inline-flex w-fit rounded-md bg-ink px-3 py-2 text-[10px] font-black uppercase text-paper">Shop new</Link>
+            <Link href="/shop" className="press inline-flex w-fit rounded-md bg-ink px-3 py-2 text-[9px] font-black uppercase text-paper">Shop new</Link>
           </div>
 
-          <PlaceholderPhoto label="Kid wearing the new drop" className="min-h-[180px] border-0" tone="var(--color-grit-yellow)" />
+          <PlaceholderPhoto label="Kid wearing the new drop" className="min-h-[142px] w-[132px] shrink-0 rounded-none border-0 border-l border-ink/15 sm:min-h-[190px] sm:w-auto" tone="var(--color-grit-yellow)" />
 
           <GarmentArt
             category="tee"
@@ -29,7 +29,7 @@ export function NewDropStrip() {
             art={tee.art}
             artDark={tee.artDark}
             creatureName={tee.name}
-            className="hidden aspect-square rounded-none border-l-2 border-ink sm:block"
+            className="min-h-[142px] w-[132px] shrink-0 rounded-none border-l border-ink/15 sm:min-h-[190px] sm:w-auto"
           />
           <GarmentArt
             category="hoodie"
@@ -37,8 +37,9 @@ export function NewDropStrip() {
             art={hoodie.art}
             artDark={hoodie.artDark}
             creatureName={hoodie.name}
-            className="hidden aspect-square rounded-none border-l-2 border-ink sm:block"
+            className="min-h-[142px] w-[132px] shrink-0 rounded-none border-l border-ink/15 sm:min-h-[190px] sm:w-auto"
           />
+          <PlaceholderPhoto label="Kid wearing a Curb Stamps tee" className="min-h-[142px] w-[132px] shrink-0 rounded-none border-0 border-l border-ink/15 sm:min-h-[190px] sm:w-auto" tone="var(--color-grit-blue)" />
         </div>
       </div>
     </section>
