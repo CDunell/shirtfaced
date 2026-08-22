@@ -1,14 +1,7 @@
 name: Box check
 
-# Read-only Oracle diagnostic workflow, manual only. Curb Stamps deploys
-# (both curbstamps-site and curbstamps-admin) run from deploy.yml on every
-# push to main, same pipeline as shirtfaced-admin/site/studio — that was the
-# push trigger this workflow briefly carried too, which raced deploy.yml's
-# own curbstamps-site build in the same directory on every push (two
-# `npm ci && npm run build` runs against /home/ubuntu/curbstamps-site at
-# once). Removed rather than left as a second, partial (curbstamps-admin was
-# never covered here) deployer. deploy-curbstamps.yml remains as a manual-only
-# fallback for curbstamps specifically.
+# Read-only Oracle diagnostic workflow, manual only. Production Curb Stamps
+# deploys run exclusively through deploy-curbstamps.yml.
 on:
   workflow_dispatch:
 

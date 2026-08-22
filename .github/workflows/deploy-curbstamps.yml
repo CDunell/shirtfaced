@@ -1,9 +1,15 @@
 name: Deploy Curb Stamps
 
-# Manual fallback only. Production push deploys are handled by box-check.yml so
-# there is exactly one Oracle deployer and no shared-concurrency race.
+# The sole Curb Stamps production deployer. The main stack workflow explicitly
+# ignores these paths, so the two deployers cannot race or cancel each other.
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "curbstamps-site/**"
+      - "curbstamps-admin/**"
+      - "scripts/curbstamps/**"
 
 permissions:
   contents: write
@@ -11,6 +17,9 @@ permissions:
 jobs:
   deploy-curbstamps:
     runs-on: ubuntu-latest
+    concurrency:
+      group: deploy-curbstamps-production
+      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v4

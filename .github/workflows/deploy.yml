@@ -8,6 +8,11 @@ on:
     branches: [main]
     paths-ignore:
       - "*.md"
+      # Curb Stamps has its own Oracle deploy workflow and concurrency group.
+      # Never rebuild the Shirtfaced stack for an isolated Curb Stamps change.
+      - "curbstamps-site/**"
+      - "curbstamps-admin/**"
+      - "scripts/curbstamps/**"
 
 jobs:
   deploy:
