@@ -1,2 +1,3 @@
 Redeploy Curb Stamps production from current main.
-Trigger: 2026-08-23 header-footer pass
+Trigger: footer-logo-black-footer 2026-08-23
+Target: 4e5e99f1374bc5bfca0a00f89bd3c4cd5106cb20
