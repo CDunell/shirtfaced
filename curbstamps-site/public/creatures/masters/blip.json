@@ -1,0 +1,18 @@
+{
+  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 1.3100436681222707,
+  "offset": [
+    208.9519650655022,
+    29.03930131004367
+  ],
+  "pathCount": 24
+}
