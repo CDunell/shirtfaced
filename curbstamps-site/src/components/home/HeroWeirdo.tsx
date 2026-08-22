@@ -11,13 +11,13 @@ export function HeroWeirdo() {
 
   return (
     <section className="bg-ink text-paper">
-      <div className="mx-auto max-w-5xl px-4 pb-4 pt-6 sm:px-6 sm:pb-10 sm:pt-12">
+      <div className="mx-auto max-w-5xl px-4 pb-5 pt-6 sm:px-6 sm:pb-10 sm:pt-12">
         <p className="mb-4 text-[9px] font-black uppercase tracking-[0.17em] text-paper/60 sm:text-[11px]">
           Tap a weirdo. Pick a favourite.
         </p>
 
-        <div className="relative pb-2 sm:min-h-[330px] sm:pb-0">
-          <div className="relative z-10 w-[58%] sm:w-1/2">
+        <div className="relative grid grid-cols-[58%_42%] items-center gap-0 pb-1 sm:min-h-[330px] sm:grid-cols-2 sm:pb-0">
+          <div className="relative z-10">
             <h1 className="display uppercase leading-[0.84]">
               <span className="block whitespace-nowrap text-[11.4vw] sm:text-[64px]">pick your</span>
               <span className="block whitespace-nowrap text-[12.2vw] sm:text-[68px]">weirdo!</span>
@@ -32,9 +32,9 @@ export function HeroWeirdo() {
             </Link>
           </div>
 
-          <div className="absolute right-0 top-7 flex h-[190px] w-[48%] items-center justify-center sm:top-0 sm:h-[260px] sm:w-1/2">
-            <span className="absolute right-3 top-1 h-9 w-1 rotate-12 rounded-full bg-grit-green sm:right-9 sm:top-5" />
-            <span className="absolute right-10 top-0 h-7 w-1 rotate-45 rounded-full bg-grit-green sm:right-16 sm:top-2" />
+          <div className="relative flex min-h-[190px] items-center justify-center sm:min-h-[260px]">
+            <span className="absolute right-1 top-2 h-9 w-1 rotate-12 rounded-full bg-grit-green sm:right-9 sm:top-5" />
+            <span className="absolute right-8 top-1 h-7 w-1 rotate-45 rounded-full bg-grit-green sm:right-16 sm:top-2" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               key={active.slug}
@@ -43,8 +43,6 @@ export function HeroWeirdo() {
               className="fade-rise max-h-[155px] w-full max-w-[205px] object-contain brightness-0 invert sm:max-h-[225px] sm:max-w-[320px]"
             />
           </div>
-
-          <div className="h-[205px] sm:hidden" aria-hidden="true" />
         </div>
       </div>
 
