@@ -27,7 +27,7 @@ export function AdventureGrid() {
             <div key={word} className="flex min-h-[92px] flex-col items-center justify-between border-r border-ink/10 bg-cream p-2 text-center last:border-r-0 sm:min-h-[116px] sm:p-3">
               <div>
                 <p className="text-[10px] font-black uppercase sm:text-[12px]">{word}</p>
-                <p className="mt-0.5 text-[9px] leading-tight text-ink/60 sm:text-[11px]">{body}</p>
+                <p className="mt-0.5 text-[10px] leading-tight text-ink/60 sm:text-[11px]">{body}</p>
               </div>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={`/creatures/${creature.slug}-icon.png`} alt="" aria-hidden="true" className="h-8 w-full object-contain sm:h-10" />
@@ -38,9 +38,9 @@ export function AdventureGrid() {
         <div className="mt-5 grid grid-cols-[1fr_auto] items-center gap-4 rounded-[14px] bg-grit-blue/45 p-4">
           <div>
             <p className="display text-[19px] uppercase">new here?</p>
-            <p className="mt-1 text-[11px] font-bold text-ink/65">Start with a favourite.</p>
+            <p className="mt-1 text-[12px] font-bold text-ink/65">Start with a favourite.</p>
           </div>
-          <Link href="/shop" className="press rounded-md bg-ink px-4 py-3 text-[10px] font-black uppercase text-paper">Shop best sellers</Link>
+          <Link href="/shop" className="press inline-flex min-h-11 items-center rounded-md bg-ink px-4 py-3 text-[11px] font-black uppercase text-paper">Shop best sellers</Link>
         </div>
       </div>
     </section>

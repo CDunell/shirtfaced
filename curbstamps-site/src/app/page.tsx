@@ -14,10 +14,10 @@ export default function HomePage() {
     <div className="overflow-hidden">
       <HeroWeirdo />
       <NewDropStrip />
+      <TrustStrip />
       <CurbCrewScene />
       <FindWeirdo />
       <ShopByCategory />
-      <TrustStrip />
       <WeirdoMatch />
       <AdventureGrid />
       <ParentsCorner />

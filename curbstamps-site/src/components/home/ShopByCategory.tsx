@@ -16,12 +16,12 @@ export function ShopByCategory() {
       <div className="mx-auto max-w-5xl px-4 py-9 sm:px-6 sm:py-12">
         <div className="grid grid-cols-[.9fr_1.1fr] items-center gap-4 sm:grid-cols-2 sm:gap-6">
           <div>
-            <p className="mb-1 text-[9px] font-black uppercase tracking-[0.14em] text-ink/50 sm:text-[11px]">Made for play. Loved all day.</p>
+            <p className="mb-1 text-[11px] font-black uppercase tracking-[0.12em] text-ink/50">Made for play. Loved all day.</p>
             <h2 className="display text-[11vw] uppercase leading-[0.84] sm:text-[48px]">good days<br />start here.</h2>
-            <p className="mt-3 max-w-[22ch] text-[11px] font-bold leading-snug text-ink/70 sm:text-[14px]">Clothes for little weirdos who do big things.</p>
+            <p className="mt-3 max-w-[22ch] text-[13px] font-bold leading-snug text-ink/70 sm:text-[14px]">Clothes for little weirdos who do big things.</p>
             <div className="mt-4 flex flex-col items-start gap-2 sm:flex-row">
-              <Link href="/shop?category=tee" className="press rounded-md bg-ink px-3 py-2.5 text-[9px] font-black uppercase text-paper sm:px-4 sm:py-3 sm:text-[11px]">Shop tees</Link>
-              <Link href="/shop?category=hoodie" className="press rounded-md bg-ink px-3 py-2.5 text-[9px] font-black uppercase text-paper sm:px-4 sm:py-3 sm:text-[11px]">Shop hoodies</Link>
+              <Link href="/shop?category=tee" className="press inline-flex min-h-11 items-center rounded-md bg-ink px-3 py-2.5 text-[11px] font-black uppercase text-paper sm:px-4 sm:py-3">Shop tees</Link>
+              <Link href="/shop?category=hoodie" className="press inline-flex min-h-11 items-center rounded-md bg-ink px-3 py-2.5 text-[11px] font-black uppercase text-paper sm:px-4 sm:py-3">Shop hoodies</Link>
             </div>
           </div>
           <PlaceholderPhoto label="Happy kid running outside in Curb Stamps tee" className="aspect-[0.88] w-full rounded-[16px]" tone="var(--color-grit-yellow)" />
@@ -33,7 +33,7 @@ export function ShopByCategory() {
               <span className="flex aspect-square w-full items-center justify-center rounded-full" style={{ background: cat.tone }}>
                 <cat.icon className="h-5 w-5 sm:h-6 sm:w-6" />
               </span>
-              <span className="text-[8px] font-black uppercase leading-tight sm:text-[11px]">{cat.label}</span>
+              <span className="text-[9px] font-black uppercase leading-tight sm:text-[11px]">{cat.label}</span>
             </Link>
           ))}
         </div>

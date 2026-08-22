@@ -11,28 +11,28 @@ export function HeroWeirdo() {
 
   return (
     <section className="bg-ink text-paper">
-      <div className="mx-auto max-w-5xl px-4 pb-5 pt-6 sm:px-6 sm:pb-10 sm:pt-12">
-        <p className="mb-4 text-[9px] font-black uppercase tracking-[0.17em] text-paper/60 sm:text-[11px]">
+      <div className="mx-auto max-w-5xl px-4 pb-4 pt-4 sm:px-6 sm:pb-10 sm:pt-12">
+        <p className="mb-3 text-[11px] font-black uppercase tracking-[0.14em] text-paper/60 sm:mb-4 sm:tracking-[0.17em]">
           Tap a weirdo. Pick a favourite.
         </p>
 
-        <div className="relative grid grid-cols-[58%_42%] items-center gap-0 pb-1 sm:min-h-[330px] sm:grid-cols-2 sm:pb-0">
+        <div className="relative grid grid-cols-[60%_40%] items-center gap-0 sm:min-h-[330px] sm:grid-cols-2">
           <div className="relative z-10">
             <h1 className="display uppercase leading-[0.84]">
-              <span className="block whitespace-nowrap text-[11.4vw] sm:text-[64px]">pick your</span>
-              <span className="block whitespace-nowrap text-[12.2vw] sm:text-[68px]">weirdo!</span>
+              <span className="block whitespace-nowrap text-[12.7vw] sm:text-[64px]">pick your</span>
+              <span className="block whitespace-nowrap text-[13.7vw] sm:text-[68px]">weirdo!</span>
             </h1>
 
             <Link
               href={`/products/${active.slug}-tee`}
-              className="press mt-6 inline-flex min-h-11 items-center rounded-full px-5 py-3 text-[11px] font-black uppercase text-ink sm:mt-7 sm:min-h-12 sm:px-6 sm:text-[13px]"
+              className="press mt-4 inline-flex min-h-11 items-center rounded-full px-5 py-3 text-[12px] font-black uppercase text-ink sm:mt-7 sm:min-h-12 sm:px-6 sm:text-[13px]"
               style={{ background: accent.hex }}
             >
               Find your favourite
             </Link>
           </div>
 
-          <div className="relative flex min-h-[190px] items-center justify-center sm:min-h-[260px]">
+          <div className="relative flex min-h-[160px] items-center justify-center sm:min-h-[260px]">
             <span className="absolute right-1 top-2 h-9 w-1 rotate-12 rounded-full bg-grit-green sm:right-9 sm:top-5" />
             <span className="absolute right-8 top-1 h-7 w-1 rotate-45 rounded-full bg-grit-green sm:right-16 sm:top-2" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -40,7 +40,7 @@ export function HeroWeirdo() {
               key={active.slug}
               src={`/creatures/${active.slug}-icon.png`}
               alt={`${active.name} creature`}
-              className="fade-rise max-h-[155px] w-full max-w-[205px] object-contain brightness-0 invert sm:max-h-[225px] sm:max-w-[320px]"
+              className="fade-rise max-h-[132px] w-full max-w-[180px] object-contain brightness-0 invert sm:max-h-[225px] sm:max-w-[320px]"
             />
           </div>
         </div>
@@ -68,7 +68,7 @@ export function HeroWeirdo() {
                   aria-hidden="true"
                   className="h-7 w-11 object-contain opacity-90 brightness-0"
                 />
-                <span className="text-[9px] font-black uppercase">{c.name}</span>
+                <span className="text-[10px] font-black uppercase">{c.name}</span>
               </button>
             );
           })}
