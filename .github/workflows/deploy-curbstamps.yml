@@ -1,13 +1,9 @@
 name: Deploy Curb Stamps
 
+# Manual fallback only. Production push deploys are handled by box-check.yml so
+# there is exactly one Oracle deployer and no shared-concurrency race.
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - "curbstamps-site/**"
-      - "curbstamps-admin/**"
-      - ".github/workflows/deploy-curbstamps.yml"
 
 permissions:
   contents: write
@@ -15,15 +11,11 @@ permissions:
 jobs:
   deploy-curbstamps:
     runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-curbstamps-production
-      cancel-in-progress: true
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up deploy key
-        id: ssh
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
@@ -31,7 +23,6 @@ jobs:
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Sync curbstamps-admin app
-        id: sync_admin
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
@@ -39,19 +30,16 @@ jobs:
             curbstamps-admin/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-admin/
 
       - name: Build and restart curbstamps-admin app
-        id: build_admin
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/curbstamps-admin/deploy/deploy-curbstamps-admin.sh'
 
       - name: Run curbstamps-admin database migrations
-        id: migrate_admin
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'cd /home/ubuntu/curbstamps-admin && npx --yes drizzle-kit migrate'
 
       - name: Sync curbstamps-site
-        id: sync_site
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
@@ -59,68 +47,17 @@ jobs:
             curbstamps-site/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-site/
 
       - name: Build and restart curbstamps-site
-        id: build_site
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/curbstamps-site/deploy/deploy-curbstamps-site.sh'
 
       - name: Verify curbstamps site on Oracle
-        id: verify
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
-            'curl -fsS http://127.0.0.1:4100/ | grep -q "PICK YOUR WEIRDO"'
-
-      - name: Capture Oracle deploy diagnostics
-        if: always()
-        env:
-          SSH_OUTCOME: ${{ steps.ssh.outcome }}
-          SYNC_ADMIN_OUTCOME: ${{ steps.sync_admin.outcome }}
-          BUILD_ADMIN_OUTCOME: ${{ steps.build_admin.outcome }}
-          MIGRATE_ADMIN_OUTCOME: ${{ steps.migrate_admin.outcome }}
-          SYNC_SITE_OUTCOME: ${{ steps.sync_site.outcome }}
-          BUILD_SITE_OUTCOME: ${{ steps.build_site.outcome }}
-          VERIFY_OUTCOME: ${{ steps.verify.outcome }}
-        run: |
-          mkdir -p docs/curbstamps/runtime
-          report=docs/curbstamps/runtime/oracle-verification.txt
-          {
-            echo "source_commit=$GITHUB_SHA"
-            echo "checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "ssh=$SSH_OUTCOME"
-            echo "sync_admin=$SYNC_ADMIN_OUTCOME"
-            echo "build_admin=$BUILD_ADMIN_OUTCOME"
-            echo "migrate_admin=$MIGRATE_ADMIN_OUTCOME"
-            echo "sync_site=$SYNC_SITE_OUTCOME"
-            echo "build_site=$BUILD_SITE_OUTCOME"
-            echo "verify=$VERIFY_OUTCOME"
-          } > "$report"
-
-          if [ "$SSH_OUTCOME" = "success" ]; then
-            ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' >> "$report" 2>&1 <<'REMOTE' || true
-          echo "site_service=$(systemctl is-active curbstamps-site 2>/dev/null || true)"
-          echo "admin_service=$(systemctl is-active curbstamps-admin 2>/dev/null || true)"
-          echo "site_enabled=$(systemctl is-enabled curbstamps-site 2>/dev/null || true)"
-          echo "site_port_4100=$(ss -ltn 2>/dev/null | awk '$4 ~ /:4100$/ {print "listening"; found=1} END {if (!found) print "not-listening"}')"
-          echo "site_dir=$(test -d /home/ubuntu/curbstamps-site && echo present || echo missing)"
-          echo "site_package=$(test -f /home/ubuntu/curbstamps-site/package.json && echo present || echo missing)"
-          if html=$(curl -fsS http://127.0.0.1:4100/ 2>/dev/null); then
-            if printf '%s' "$html" | grep -q "PICK YOUR WEIRDO"; then
-              echo "homepage_marker=present"
-            else
-              echo "homepage_marker=missing"
-            fi
-            printf '%s' "$html" | sha256sum | awk '{print "homepage_sha256=" $1}'
-          else
-            echo "homepage_http=failed"
-          fi
-          echo "--- site journal tail ---"
-          journalctl -u curbstamps-site -n 30 --no-pager 2>/dev/null || true
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          systemctl is-active --quiet curbstamps-site
+          html=$(curl -fsS http://127.0.0.1:4100/)
+          printf '%s' "$html" | grep -qi "pick your"
+          printf '%s' "$html" | grep -qi "weirdo"
+          printf '%s' "$html" | grep -qi "the whole curb crew"
           REMOTE
-          fi
-
-          cat "$report"
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$report"
-          git commit -m "chore(curbstamps): record Oracle deploy diagnostics" || exit 0
-          git push
