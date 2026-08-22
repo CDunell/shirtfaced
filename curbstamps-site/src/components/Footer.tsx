@@ -14,25 +14,18 @@ const LINKS = [
 
 export function Footer() {
   return (
-    <footer className="mt-16 border-t-2 border-ink/8 bg-paper-2/60">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-        <p className="display text-[20px]">
-          curb <span className="text-grit-pink">stamps</span>
+    <footer className="border-t border-ink/10 bg-paper-2/60">
+      <div className="mx-auto max-w-5xl px-4 py-9 sm:px-6">
+        <p className="display text-[20px] uppercase leading-[0.8]">curb<br />stamps</p>
+        <p className="mt-3 max-w-[34ch] text-[13px] font-bold text-grey-dark">
+          Little weirdos on clothes made for play. Kids roughly 2–10.
         </p>
-        <p className="mt-2 max-w-[46ch] text-[14px] text-grey-dark">
-          Little creatures on little clothes. Toddler to teen, screen-printed properly,
-          made to be handed down.
-        </p>
-        <nav className="mt-6 flex flex-wrap gap-x-5 gap-y-2 text-[13px] font-bold text-ink/70">
+        <nav className="mt-6 grid grid-cols-2 gap-x-5 gap-y-3 text-[12px] font-extrabold text-ink/70 sm:flex sm:flex-wrap">
           {LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="press hover:text-ink">
-              {l.label}
-            </Link>
+            <Link key={l.href} href={l.href} className="press hover:text-ink">{l.label}</Link>
           ))}
         </nav>
-        <p className="mt-8 text-[12px] text-grey">
-          © {new Date().getFullYear()} Curb Stamps. Made in Australia.
-        </p>
+        <p className="mt-8 text-[11px] text-grey">© {new Date().getFullYear()} Curb Stamps. Made in Australia.</p>
       </div>
     </footer>
   );
