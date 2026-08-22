@@ -12,6 +12,10 @@ on:
         description: "NEXT_PUBLIC_GA4_MEASUREMENT_ID (blank = leave unchanged)"
         required: false
         default: ""
+      meta_pixel_id:
+        description: "NEXT_PUBLIC_META_PIXEL_ID (blank = leave unchanged)"
+        required: false
+        default: ""
       tiktok_pixel_id:
         description: "NEXT_PUBLIC_TIKTOK_PIXEL_ID (blank = leave unchanged)"
         required: false
@@ -31,10 +35,11 @@ jobs:
       - name: Update .env and rebuild
         env:
           GA4_ID: ${{ inputs.ga4_measurement_id }}
+          META_PIXEL_ID: ${{ inputs.meta_pixel_id }}
           TIKTOK_PIXEL_ID: ${{ inputs.tiktok_pixel_id }}
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
-            "GA4_ID='$GA4_ID' TIKTOK_PIXEL_ID='$TIKTOK_PIXEL_ID' bash -s" <<'REMOTE'
+            "GA4_ID='$GA4_ID' META_PIXEL_ID='$META_PIXEL_ID' TIKTOK_PIXEL_ID='$TIKTOK_PIXEL_ID' bash -s" <<'REMOTE'
           set -euo pipefail
           ENV_FILE=/home/ubuntu/shirtfaced-site/.env
 
@@ -49,6 +54,7 @@ jobs:
           }
 
           upsert NEXT_PUBLIC_GA4_MEASUREMENT_ID "$GA4_ID"
+          upsert NEXT_PUBLIC_META_PIXEL_ID "$META_PIXEL_ID"
           upsert NEXT_PUBLIC_TIKTOK_PIXEL_ID "$TIKTOK_PIXEL_ID"
 
           echo "Updated. Rebuilding..."

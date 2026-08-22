@@ -4,29 +4,38 @@ import { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
-import { trackTikTokPurchase } from "@/lib/tiktok-pixel";
+import { trackPurchase, hasTrackedPurchase, markPurchaseTracked } from "@/lib/analytics";
 import { IconArrowRight, IconCheck } from "@/components/Icons";
 
 function SuccessContent() {
-  const { clearCart } = useCart();
-  const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId");
-  const value = searchParams.get("value");
+  const { lines, subtotal, clearCart } = useCart();
+  const orderId = useSearchParams().get("orderId");
 
   useEffect(() => {
     // Covers the redirect-based confirmation path (bank redirects, some 3DS
-    // flows) — PaymentStep already clears the cart on the inline path, but
-    // a payment method that leaves the page via return_url skips that call
-    // entirely and lands here instead.
-    clearCart();
-
-    // Client half of Purchase tracking; the server half fires from the
-    // Stripe webhook (src/lib/tiktok-events.ts) with the same order id as
-    // event_id so TikTok dedupes the pair. A no-op until the pixel is
-    // configured — see src/components/TikTokPixel.tsx.
-    if (orderId && value) {
-      trackTikTokPurchase(orderId, Number(value));
+    // flows) — PaymentStep already tracks the purchase and clears the cart on
+    // the inline path, but a payment method that leaves the page via
+    // return_url skips that call entirely and lands here instead, with the
+    // cart still populated (nothing else has cleared it yet).
+    if (orderId && lines.length > 0 && !hasTrackedPurchase(orderId)) {
+      // subtotal only — shipping/discount live in the checkout page's own
+      // pricing calc, which this page (reached via bank redirect, no state
+      // carried over) has no access to.
+      trackPurchase({
+        transactionId: orderId,
+        value: subtotal,
+        currency: "AUD",
+        items: lines.map((line) => ({
+          id: line.slug,
+          name: line.name,
+          price: line.price,
+          quantity: line.quantity,
+          variant: `${line.colour} / ${line.size}`,
+        })),
+      });
+      markPurchaseTracked(orderId);
     }
+    clearCart();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

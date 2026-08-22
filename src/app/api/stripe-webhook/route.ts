@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { sendTikTokPurchaseEvent } from "@/lib/tiktok-events";
+import { sendServerSidePurchase } from "@/lib/server-analytics";
 
 /**
  * Stripe calls this directly (server to server), never the browser — this is
@@ -61,16 +61,25 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Could not update the order." }, { status: 500 });
       }
 
-      // Ad-attribution signal, not order state — logged on failure, never
-      // allowed to fail the webhook itself.
-      await sendTikTokPurchaseEvent({
-        orderId,
-        valueCents: paymentIntent.amount,
-        currency: paymentIntent.currency,
-        email: paymentIntent.receipt_email,
-      }).catch((error) => {
-        console.error(`stripe-webhook: TikTok purchase event failed for order ${orderId}`, error);
-      });
+      // Best-effort — the order is already marked paid above regardless of
+      // whether this succeeds, same as the client-side pixel fire it backs
+      // up. Same orderId as the client event_id (see PaymentStep.tsx /
+      // checkout/success/page.tsx) so Meta/TikTok dedupe the pair.
+      if (paymentIntent.receipt_email) {
+        await sendServerSidePurchase({
+          transactionId: orderId,
+          value: paymentIntent.amount_received / 100,
+          currency: "AUD",
+          email: paymentIntent.receipt_email,
+          clientIp: paymentIntent.metadata.ip ?? null,
+          userAgent: paymentIntent.metadata.ua ?? null,
+          fbp: paymentIntent.metadata.fbp ?? null,
+          fbc: paymentIntent.metadata.fbc ?? null,
+          ttp: paymentIntent.metadata.ttp ?? null,
+        }).catch((error) => {
+          console.error(`stripe-webhook: server-side purchase tracking failed for ${orderId}`, error);
+        });
+      }
     }
   }
 
