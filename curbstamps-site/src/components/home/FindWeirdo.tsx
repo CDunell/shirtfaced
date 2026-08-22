@@ -2,53 +2,47 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CREATURES } from "@/lib/creatures";
+import { CREATURES, uiAccentFor } from "@/lib/creatures";
 
-const FIELD = [2, 7, 4, 9, 1, 6, 3, 8, 5, 10, 0, 11, 4, 2, 8, 7, 3, 10, 5, 1, 6, 9, 11, 4];
+const START = [0, 18, 31];
+function nextRound(previous: number[]) {
+  const first = (previous[0] + 7) % CREATURES.length;
+  return [first, (first + 11) % CREATURES.length, (first + 23) % CREATURES.length];
+}
 
 export function FindWeirdo() {
-  const target = CREATURES[0];
-  const [found, setFound] = useState(false);
-
+  const [round, setRound] = useState(START);
+  const [picked, setPicked] = useState<number | null>(null);
+  const target = CREATURES[round[0]];
+  const won = picked === round[0];
+  function playAgain() { setRound(nextRound(round)); setPicked(null); }
   return (
-    <section className="bg-ink text-paper">
+    <section className="bg-ink px-4 py-10 text-paper sm:px-6 sm:py-14">
       <div className="mx-auto max-w-5xl">
-        <div className="px-4 pb-6 pt-9 text-center sm:px-6 sm:pt-12">
-          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-paper/55">Can you spot them all?</p>
-          <h2 className="display text-[13vw] uppercase leading-[0.84] sm:text-[52px]">can you<br />find <span className="text-grit-green">{target.name}?</span></h2>
+        <div className="text-center">
+          <p className="mb-2 text-[11px] font-black uppercase tracking-[0.18em] text-paper/60">Weirdo match</p>
+          <h2 className="display text-[12vw] uppercase leading-[0.88] sm:text-[54px]">which one is<br /><span className="text-grit-green">{target.name}?</span></h2>
+          <p className="mt-3 text-[13px] font-bold text-paper/70">Tap the right creature.</p>
         </div>
-
-        <div className="relative overflow-hidden border-y border-paper/15 bg-paper px-4 py-5 text-ink">
-          <div className="grid grid-cols-6 gap-x-3 gap-y-5">
-            {FIELD.map((index, i) => {
-              const c = CREATURES[index % CREATURES.length];
-              const isTarget = i === 10;
-              return (
-                <button
-                  key={`${c.slug}-${i}`}
-                  type="button"
-                  disabled={!isTarget}
-                  onClick={() => setFound(true)}
-                  aria-label={isTarget ? `Found ${target.name}` : undefined}
-                  className={`press flex aspect-square items-center justify-center rounded-full disabled:cursor-default ${found && isTarget ? "badge-pop bg-grit-green/70" : ""}`}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/creatures/${c.slug}-icon.png`} alt="" aria-hidden="true" className="h-9 w-full object-contain brightness-0" />
-                </button>
-              );
-            })}
-          </div>
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-8 bg-[linear-gradient(8deg,transparent_0_42%,rgba(28,26,23,.08)_43%_48%,transparent_49%)]" />
+        <div className="mt-7 grid grid-cols-3 gap-2 sm:mx-auto sm:max-w-2xl sm:gap-4">
+          {round.map((index) => {
+            const creature = CREATURES[index], selected = picked === index, correct = index === round[0];
+            return <button key={creature.slug} type="button" onClick={() => setPicked(index)} disabled={won} aria-label={`Choose ${creature.name}`} className={`press flex min-h-[150px] flex-col items-center justify-between rounded-[22px] border-2 p-3 text-ink transition sm:min-h-[190px] sm:p-5 ${selected && correct ? "border-grit-green bg-grit-green" : selected ? "border-[#ff6f9c] bg-[#ff6f9c]" : "border-paper bg-paper"}`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/creatures/${creature.slug}-icon.png`} alt="" className="h-24 w-full object-contain brightness-0 sm:h-32" />
+              <span className="display text-[18px] uppercase leading-none sm:text-[22px]">{picked === null ? "?" : creature.name}</span>
+            </button>;
+          })}
         </div>
-
-        <div aria-live="polite" className="grid grid-cols-[1fr_auto] items-center gap-5 px-4 py-7 sm:px-6">
-          <div>
-            <p className="display text-[24px] uppercase leading-none">{found ? "found one!" : `find ${target.name}!`}</p>
-            <p className="mt-1 text-[12px] font-bold text-paper/65">{found ? `That's ${target.name}.` : "Tap the matching weirdo."}</p>
-            {found && <Link href={`/products/${target.slug}-tee`} className="press mt-4 inline-flex min-h-11 items-center rounded-md bg-grit-green px-4 py-3 text-[11px] font-black uppercase text-ink">See {target.name}&apos;s stuff</Link>}
-          </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/creatures/${target.slug}-icon.png`} alt={`${target.name} creature`} className="h-24 w-32 object-contain brightness-0 invert" />
+        <div aria-live="polite" className="mt-6 min-h-[68px] text-center">
+          {picked !== null && !won && <p className="display text-[22px] uppercase text-[#ff9cbc]">nope — try again!</p>}
+          {won && <div className="badge-pop flex flex-wrap justify-center gap-3">
+            <button type="button" onClick={playAgain} className="press min-h-12 rounded-md bg-grit-green px-5 py-3 text-[12px] font-black uppercase text-ink">Next weirdo</button>
+            <Link href={`/products/${target.slug}-tee`} className="press min-h-12 rounded-md border-2 border-paper px-5 py-3 text-[12px] font-black uppercase text-paper">Shop {target.name}</Link>
+          </div>}
+        </div>
+        <div className="mt-5 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.12em] text-paper/55">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ background: uiAccentFor(target.slug).hex }} />{CREATURES.length} weirdos in the crew
         </div>
       </div>
     </section>

@@ -1,5 +1,5 @@
 /**
- * The 12 creatures with finished artwork today, out of a planned 60. Each
+ * The finished creature artwork supplied for the launch collection. Each
  * creature is a character, not just a print — name, personality blurb and a
  * signature accent colour, used across the shop grid, product pages and the
  * garment mockups in components/GarmentArt.tsx.
@@ -104,6 +104,38 @@ export const CREATURES: Creature[] = [
     blurb: "Sniffs everything first. Trust issues.",
     accent: { name: "Sand", hex: "#e0b98a" },
   },
+  { slug: "drake", name: "Drake", animal: "dragon", blurb: "Tiny dragon. Huge plans. Questionable landing skills.", accent: { name: "Grass", hex: "#7ed957" } },
+  { slug: "rex", name: "Rex", animal: "dinosaur", blurb: "The smallest big dinosaur on the whole curb.", accent: { name: "Sky", hex: "#3ec6e0" } },
+  { slug: "boff", name: "Boff", animal: "rabbit", blurb: "Big ears, little legs, always listening for snacks.", accent: { name: "Pink", hex: "#ff6f9c" } },
+  { slug: "pex", name: "Pex", animal: "armadillo", blurb: "Armoured on the outside. Absolute softie inside.", accent: { name: "Butter", hex: "#ffc93c" } },
+  { slug: "crumb", name: "Crumb", animal: "caterpillar", blurb: "Leaves a trail of crumbs and very good ideas.", accent: { name: "Orange", hex: "#ff8c42" } },
+  { slug: "bone", name: "Bone", animal: "fish", blurb: "Not much fish left. Still plenty of personality.", accent: { name: "Lilac", hex: "#c7b8ff" } },
+  { slug: "yip", name: "Yip", animal: "dog", blurb: "Fast paws, loud opinions, excellent friend.", accent: { name: "Grass", hex: "#7ed957" } },
+  { slug: "chit", name: "Chit", animal: "beetle", blurb: "A shiny little beetle with important places to be.", accent: { name: "Sky", hex: "#3ec6e0" } },
+  { slug: "mug", name: "Mug", animal: "blob", blurb: "Round, proud and permanently a bit surprised.", accent: { name: "Pink", hex: "#ff6f9c" } },
+  { slug: "fizz", name: "Fizz", animal: "beetle", blurb: "Small bug. Big buzz. Cannot sit still.", accent: { name: "Butter", hex: "#ffc93c" } },
+  { slug: "mote", name: "Mote", animal: "mite", blurb: "So tiny you nearly missed the best one.", accent: { name: "Orange", hex: "#ff8c42" } },
+  { slug: "wisp", name: "Wisp", animal: "worm", blurb: "A quiet squiggle who turns up everywhere.", accent: { name: "Lilac", hex: "#c7b8ff" } },
+  { slug: "shrew", name: "Shrew", animal: "shrew", blurb: "Nose first. Questions later.", accent: { name: "Grass", hex: "#7ed957" } },
+  { slug: "nub", name: "Nub", animal: "critter", blurb: "A little bit of this and a little bit of that.", accent: { name: "Sky", hex: "#3ec6e0" } },
+  { slug: "loam", name: "Loam", animal: "lizard", blurb: "Likes dirt, warm rocks and doing absolutely nothing.", accent: { name: "Pink", hex: "#ff6f9c" } },
+  { slug: "zot", name: "Zot", animal: "bug", blurb: "Zips in, zips out, forgets why it came.", accent: { name: "Butter", hex: "#ffc93c" } },
+  { slug: "crux", name: "Crux", animal: "critter", blurb: "Pointy in places. Friendly in all the others.", accent: { name: "Orange", hex: "#ff8c42" } },
+  { slug: "pip", name: "Pip", animal: "bug", blurb: "Pocket-sized trouble with excellent manners.", accent: { name: "Lilac", hex: "#c7b8ff" } },
+  { slug: "slag", name: "Slag", animal: "slug", blurb: "Takes the scenic route. Every single time.", accent: { name: "Grass", hex: "#7ed957" } },
+  { slug: "puff", name: "Puff", animal: "pufferfish", blurb: "Puffs up when excited. Gets excited a lot.", accent: { name: "Sky", hex: "#3ec6e0" } },
+  { slug: "vol", name: "Vol", animal: "vole", blurb: "Digs first, checks the map afterwards.", accent: { name: "Pink", hex: "#ff6f9c" } },
+  { slug: "blob", name: "Blob", animal: "blob", blurb: "No corners. No worries.", accent: { name: "Butter", hex: "#ffc93c" } },
+  { slug: "clump", name: "Clump", animal: "critter", blurb: "Built like a pebble. Moves like one too.", accent: { name: "Orange", hex: "#ff8c42" } },
+  { slug: "blink", name: "Blink", animal: "bug", blurb: "Now you see Blink. Now you probably still do.", accent: { name: "Lilac", hex: "#c7b8ff" } },
+  { slug: "prick", name: "Prick", animal: "echidna", blurb: "Spiky coat. Surprisingly good cuddler.", accent: { name: "Grass", hex: "#7ed957" } },
+  { slug: "tum", name: "Tum", animal: "critter", blurb: "Mostly tummy, partly feet, entirely hungry.", accent: { name: "Sky", hex: "#3ec6e0" } },
+  { slug: "flit", name: "Flit", animal: "fly", blurb: "Never stays put long enough for a photo.", accent: { name: "Pink", hex: "#ff6f9c" } },
+  { slug: "gnat", name: "Gnat", animal: "gnat", blurb: "Tiny wings and absolutely no indoor voice.", accent: { name: "Butter", hex: "#ffc93c" } },
+  { slug: "plop", name: "Plop", animal: "frog", blurb: "Arrives with a plop. Leaves with another one.", accent: { name: "Orange", hex: "#ff8c42" } },
+  { slug: "nib", name: "Nib", animal: "mouse", blurb: "Nibbles the corner. Then the other corner.", accent: { name: "Lilac", hex: "#c7b8ff" } },
+  { slug: "snout", name: "Snout", animal: "pig", blurb: "Finds mud, snacks and secrets with one sniff.", accent: { name: "Grass", hex: "#7ed957" } },
+  { slug: "spit", name: "Spit", animal: "lizard", blurb: "Long, low and just a little bit rude.", accent: { name: "Sky", hex: "#3ec6e0" } },
 ];
 
 export function getCreature(slug: string) {
