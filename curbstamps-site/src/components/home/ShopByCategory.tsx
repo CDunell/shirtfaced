@@ -3,44 +3,37 @@ import { IconShirt, IconHoodie, IconShorts, IconCap, IconBag } from "@/component
 import { PlaceholderPhoto } from "./PlaceholderPhoto";
 
 const CATEGORIES = [
-  { label: "Tees", href: "/shop?category=tee", icon: IconShirt, soon: false },
-  { label: "Hoodies", href: "/shop?category=hoodie", icon: IconHoodie, soon: false },
-  { label: "Shorts", href: "/shop", icon: IconShorts, soon: true },
-  { label: "Hats", href: "/shop?category=cap", icon: IconCap, soon: false },
-  { label: "Accessories", href: "/shop", icon: IconBag, soon: true },
+  { label: "Tees", href: "/shop?category=tee", icon: IconShirt, tone: "#d8ef6d" },
+  { label: "Hoodies", href: "/shop?category=hoodie", icon: IconHoodie, tone: "#b9ddf3" },
+  { label: "Shorts", href: "/shop", icon: IconShorts, tone: "#f8b3c6" },
+  { label: "Hats", href: "/shop?category=cap", icon: IconCap, tone: "#ffd45c" },
+  { label: "Accessories", href: "/shop", icon: IconBag, tone: "#cabcf3" },
 ];
 
-/** Section G — "SHOP THE LOOK" (DESIGN_HANDOFF.md §4.G). Shorts and
- * Accessories aren't real SKUs yet (see curbstamps-site/README.md) — shown
- * as coming soon rather than left out, since the handoff lists all five. */
 export function ShopByCategory() {
   return (
-    <section className="bg-paper-2/50">
-      <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
-        <div className="grid gap-6 sm:grid-cols-2 sm:items-center">
-          <PlaceholderPhoto label="Candid kid outdoors, doodle accents" className="aspect-[4/3]" tone="var(--color-grit-green)" />
+    <section className="bg-paper">
+      <div className="mx-auto max-w-5xl px-4 py-9 sm:px-6 sm:py-12">
+        <div className="grid gap-5 sm:grid-cols-2 sm:items-center">
           <div>
-            <h2 className="display text-[11vw] leading-[0.92] sm:text-[38px]">good days start here.</h2>
-            <p className="mt-2 max-w-[36ch] text-[15px] text-ink/70">
-              Clothes for little weirdos who do big things.
-            </p>
+            <p className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-ink/55">Made for play. Loved all day.</p>
+            <h2 className="display text-[12vw] uppercase leading-[0.86] sm:text-[46px]">good days<br />start here.</h2>
+            <p className="mt-3 max-w-[28ch] text-[14px] font-bold text-ink/70">Clothes for little weirdos who do big things.</p>
+            <div className="mt-4 flex gap-2">
+              <Link href="/shop?category=tee" className="press rounded-md bg-ink px-4 py-3 text-[11px] font-black uppercase text-paper">Shop tees</Link>
+              <Link href="/shop?category=hoodie" className="press rounded-md bg-ink px-4 py-3 text-[11px] font-black uppercase text-paper">Shop hoodies</Link>
+            </div>
           </div>
+          <PlaceholderPhoto label="Happy kid running outside" className="aspect-[0.92] w-full rounded-[18px]" tone="var(--color-grit-yellow)" />
         </div>
 
-        <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        <div className="mt-7 grid grid-cols-5 gap-2">
           {CATEGORIES.map((cat) => (
-            <Link
-              key={cat.label}
-              href={cat.href}
-              className="press relative flex min-h-[88px] flex-col items-center justify-center gap-2 rounded-[20px] bg-cream text-center"
-            >
-              <cat.icon className="h-7 w-7" />
-              <span className="text-[13px] font-extrabold">{cat.label}</span>
-              {cat.soon && (
-                <span className="absolute top-2 right-2 rounded-full bg-grit-orange px-2 py-0.5 text-[9px] font-extrabold text-ink">
-                  Soon
-                </span>
-              )}
+            <Link key={cat.label} href={cat.href} className="press flex min-w-0 flex-col items-center gap-2 text-center">
+              <span className="flex aspect-square w-full items-center justify-center rounded-full border-2 border-ink/10" style={{ background: cat.tone }}>
+                <cat.icon className="h-6 w-6" />
+              </span>
+              <span className="text-[9px] font-black uppercase leading-tight sm:text-[11px]">{cat.label}</span>
             </Link>
           ))}
         </div>
