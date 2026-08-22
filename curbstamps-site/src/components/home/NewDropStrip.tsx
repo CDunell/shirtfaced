@@ -23,6 +23,7 @@ export function NewDropStrip() {
             category="tee"
             bodyColour={tee.colours[1].body}
             art={tee.art}
+            artDark={tee.artDark}
             creatureName={tee.name}
             className="aspect-[3/4] rounded-[20px]"
           />
@@ -30,6 +31,7 @@ export function NewDropStrip() {
             category="hoodie"
             bodyColour={hoodie.colours[0].body}
             art={hoodie.art}
+            artDark={hoodie.artDark}
             creatureName={hoodie.name}
             className="aspect-[3/4] rounded-[20px]"
           />
