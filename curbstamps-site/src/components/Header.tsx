@@ -19,6 +19,10 @@ export function Header() {
 
   useEffect(() => {
     if (addTick === 0) return;
+    // Bumps a CSS animation class on every add — genuinely reacting to an
+    // external event (addTick from cart-context), not state this component
+    // could derive during render.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPop(true);
     const t = setTimeout(() => setPop(false), 280);
     return () => clearTimeout(t);
