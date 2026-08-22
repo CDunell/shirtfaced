@@ -11,6 +11,9 @@ on:
       - "curbstamps-admin/**"
       - ".github/workflows/box-check.yml"
 
+permissions:
+  contents: write
+
 jobs:
   check:
     if: github.event_name == 'workflow_dispatch'
@@ -82,3 +85,17 @@ jobs:
           printf '%s' "$html" | grep -q "THE WHOLE CURB CREW"
           echo "Curb Stamps verified on Oracle"
           REMOTE
+
+      - name: Record verified source commit
+        run: |
+          mkdir -p docs/curbstamps/runtime
+          {
+            echo "source_commit=$GITHUB_SHA"
+            echo "verified_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "oracle_site=verified"
+          } > docs/curbstamps/runtime/oracle-verification.txt
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/curbstamps/runtime/oracle-verification.txt
+          git commit -m "chore(curbstamps): record verified Oracle deploy" || exit 0
+          git push
