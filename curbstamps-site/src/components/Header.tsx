@@ -20,7 +20,6 @@ export function Header() {
 
   useEffect(() => {
     if (addTick === 0) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPop(true);
     const t = setTimeout(() => setPop(false), 280);
     return () => clearTimeout(t);
@@ -92,8 +91,7 @@ export function Header() {
         aria-hidden={!open}
         className={`fixed bottom-0 right-0 top-[62px] z-50 w-[82vw] max-w-[340px] border-l border-paper/10 bg-ink text-paper shadow-2xl transition-transform duration-200 ease-out sm:hidden ${open ? "translate-x-0" : "translate-x-full"}`}
       >
-        <nav className="flex h-full flex-col px-5 py-6">
-          <CurbStampsLogoTransparent className="mb-5 h-[58px] w-auto self-start" />
+        <nav className="flex h-full flex-col px-5 py-8">
           <div className="flex flex-col border-t border-paper/10">
             {NAV.map((item) => (
               <Link
