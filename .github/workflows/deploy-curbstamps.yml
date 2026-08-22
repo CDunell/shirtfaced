@@ -9,6 +9,9 @@ on:
       - "curbstamps-admin/**"
       - ".github/workflows/deploy-curbstamps.yml"
 
+permissions:
+  contents: write
+
 jobs:
   deploy-curbstamps:
     runs-on: ubuntu-latest
@@ -55,7 +58,29 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/curbstamps-site/deploy/deploy-curbstamps-site.sh'
 
-      - name: Verify curbstamps site on Oracle
+      - name: Verify and capture Oracle state
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
-            'curl -fsS http://127.0.0.1:4100/ | grep -q "PICK YOUR WEIRDO"'
+          mkdir -p .runtime
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' > .runtime/curbstamps-oracle.txt <<'REMOTE'
+          set -euo pipefail
+          echo "checked_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "site_service=$(systemctl is-active curbstamps-site)"
+          echo "admin_service=$(systemctl is-active curbstamps-admin)"
+          echo "site_port_4100=$(ss -ltn | awk '$4 ~ /:4100$/ {print "listening"; found=1} END {if (!found) print "not-listening"}')"
+          html=$(curl -fsS http://127.0.0.1:4100/)
+          printf '%s' "$html" | grep -q "PICK YOUR WEIRDO"
+          echo "homepage_marker=PICK YOUR WEIRDO"
+          printf '%s' "$html" | sha256sum | awk '{print "homepage_sha256=" $1}'
+          REMOTE
+          cat .runtime/curbstamps-oracle.txt
+
+      - name: Record Oracle verification in repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          mkdir -p docs/curbstamps/runtime
+          cp .runtime/curbstamps-oracle.txt docs/curbstamps/runtime/oracle-verification.txt
+          printf 'source_commit=%s\n' "$GITHUB_SHA" >> docs/curbstamps/runtime/oracle-verification.txt
+          git add docs/curbstamps/runtime/oracle-verification.txt
+          git commit -m "chore(curbstamps): record Oracle verification" || exit 0
+          git push
