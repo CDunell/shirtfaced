@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { IconCart } from "./Icons";
+import { CurbStampsLogo } from "./CurbStampsLogo";
 
 const NAV = [
   { href: "/shop", label: "Shop" },
@@ -19,10 +20,6 @@ export function Header() {
 
   useEffect(() => {
     if (addTick === 0) return;
-    // Bumps a CSS animation class on every add — genuinely reacting to an
-    // external event (addTick from cart-context), not state this component
-    // could derive during render.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPop(true);
     const t = setTimeout(() => setPop(false), 280);
     return () => clearTimeout(t);
@@ -31,8 +28,8 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-ink/10 bg-paper/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" className="display leading-[0.8] text-[19px] uppercase tracking-[-0.04em]">
-          curb<br />stamps
+        <Link href="/" aria-label="Curb Stamps home" className="press flex items-center">
+          <CurbStampsLogo className="h-[46px] w-auto" />
         </Link>
 
         <nav className="hidden items-center gap-6 text-[14px] font-extrabold sm:flex">
