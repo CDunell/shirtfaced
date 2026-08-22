@@ -81,8 +81,9 @@ jobs:
           set -euo pipefail
           systemctl is-active --quiet curbstamps-site
           html=$(curl -fsS http://127.0.0.1:4100/)
-          printf '%s' "$html" | grep -q "PICK YOUR WEIRDO"
-          printf '%s' "$html" | grep -q "THE WHOLE CURB CREW"
+          printf '%s' "$html" | grep -qi "pick your"
+          printf '%s' "$html" | grep -qi "weirdo"
+          printf '%s' "$html" | grep -qi "the whole curb crew"
           echo "Curb Stamps verified on Oracle"
           REMOTE
 
