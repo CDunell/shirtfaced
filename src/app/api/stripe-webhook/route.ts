@@ -62,12 +62,29 @@ export async function POST(request: Request) {
       }
 
       // Ad-attribution signal, not order state — logged on failure, never
-      // allowed to fail the webhook itself.
+      // allowed to fail the webhook itself. Line items are a second
+      // best-effort fetch: TikTok's own event-quality check flags a Purchase
+      // with no content_id, which needs per-product ids the PaymentIntent
+      // itself doesn't carry — a fetch failure here just means the event
+      // goes out without contents, not that it doesn't go out at all.
+      const itemsResponse = await fetch(`${adminApiUrl}/api/internal/orders/${orderId}`, {
+        headers: { "x-internal-api-key": adminApiKey },
+      }).catch(() => null);
+      const itemsBody = itemsResponse?.ok
+        ? ((await itemsResponse.json().catch(() => null)) as {
+            items: { productId: string | null; productName: string; quantity: number }[];
+          } | null)
+        : null;
+
       await sendTikTokPurchaseEvent({
         orderId,
         valueCents: paymentIntent.amount,
         currency: paymentIntent.currency,
         email: paymentIntent.receipt_email,
+        contents: (itemsBody?.items ?? []).map((item) => ({
+          contentId: item.productId ?? item.productName,
+          quantity: item.quantity,
+        })),
       }).catch((error) => {
         console.error(`stripe-webhook: TikTok purchase event failed for order ${orderId}`, error);
       });

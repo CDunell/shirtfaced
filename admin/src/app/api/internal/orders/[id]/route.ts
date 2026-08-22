@@ -2,7 +2,38 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { verifyInternalRequest } from "@/lib/internal-auth";
 import { ORDER_STATUSES } from "@/db/schema";
-import { markOrderPaid, setOrderPaymentIntent, updateOrderStatus } from "@/db/store-queries";
+import {
+  getOrderItemsById,
+  markOrderPaid,
+  setOrderPaymentIntent,
+  updateOrderStatus,
+} from "@/db/store-queries";
+
+/**
+ * Line items only -- called by the storefront's Stripe webhook to attach a
+ * per-product content_id to the TikTok Purchase event (see
+ * src/lib/tiktok-events.ts). Internal-auth gated like every other route
+ * here; never exposes anything beyond product id/name/quantity.
+ */
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  if (!verifyInternalRequest(request)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const items = await getOrderItemsById(id);
+  if (!items) {
+    return NextResponse.json({ error: "Order not found." }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    items: items.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+    })),
+  });
+}
 
 /**
  * Called by the storefront twice per real order: once right after creating

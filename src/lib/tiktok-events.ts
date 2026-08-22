@@ -17,16 +17,23 @@ function hashForTikTok(value: string): string {
  * broken order, so callers should catch and log rather than let it fail
  * the webhook.
  */
+export type TikTokPurchaseContent = {
+  contentId: string;
+  quantity: number;
+};
+
 export async function sendTikTokPurchaseEvent({
   orderId,
   valueCents,
   currency,
   email,
+  contents,
 }: {
   orderId: string;
   valueCents: number;
   currency: string;
   email: string | null;
+  contents: TikTokPurchaseContent[];
 }): Promise<void> {
   const pixelCode = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
   const accessToken = process.env.TIKTOK_EVENTS_API_ACCESS_TOKEN;
@@ -50,6 +57,11 @@ export async function sendTikTokPurchaseEvent({
           properties: {
             currency: currency.toUpperCase(),
             value: valueCents / 100,
+            contents: contents.map((c) => ({
+              content_id: c.contentId,
+              content_type: "product",
+              quantity: c.quantity,
+            })),
           },
         },
       ],

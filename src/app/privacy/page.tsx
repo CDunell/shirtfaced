@@ -55,9 +55,16 @@ export default function PrivacyPage() {
             <p>
               The cart remembers what&apos;s in it, which needs a cookie. We
               also run basic analytics so we know which pages people
-              actually read — this one, hopefully. No ad network, no
-              tracking pixel farm, no shirt following you around the
-              internet for a fortnight after you looked at it once.
+              actually read — this one, hopefully. We run TikTok&apos;s ad
+              pixel too, so we can tell which ads are actually working and
+              stop paying for the ones that aren&apos;t — if you came from a
+              TikTok ad, TikTok knows you visited and roughly what you did
+              here. We&apos;re not selling that on, and we&apos;re not
+              building some deeper profile from it — it&apos;s ad
+              accounting, not a shirt following you around the internet
+              forever. Block it the same way you&apos;d block any other
+              ad-tracking pixel, through your browser or TikTok&apos;s own
+              ad settings.
             </p>
           </Prose>
         </Section>
