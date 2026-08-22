@@ -7,7 +7,7 @@ Type=simple
 User=ubuntu
 WorkingDirectory=/home/ubuntu/curbstamps-site
 EnvironmentFile=/home/ubuntu/curbstamps-site/.env
-ExecStart=/usr/bin/npm start
+ExecStart=/home/ubuntu/curbstamps-site/node_modules/.bin/next start -p 4100
 Restart=on-failure
 RestartSec=5
 

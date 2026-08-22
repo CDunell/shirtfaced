@@ -1,168 +1,97 @@
 # Curb Stamps — Cloudflare + Oracle deployment
 
-What's automated, what's a one-time manual step, and exactly what to run for
-each. I have no Cloudflare account access and no SSH access to the Oracle
-box in this session — nothing here could be executed directly; it's staged
-so the manual part is copy-paste, not figured out from scratch.
+Status: **live**, as of 22 August 2026. This replaces an earlier version of
+this doc written by a session with no Cloudflare/box access, which planned
+around A-records + nginx + port 3100 for the storefront — none of which
+matches how this box actually runs. What's below is the as-built record, from
+a session that actually had SSH and Cloudflare access and did the work.
 
-## What's already done (this branch)
+## What's actually running
 
-- `.github/workflows/deploy.yml` — new steps added (additive only, nothing
-  existing touched) that rsync `curbstamps-admin/` and `curbstamps-site/` to
-  the box and run their deploy scripts, same pattern as the existing
-  shirtfaced-admin/shirtfaced-site steps. Only fires on push to `main`, same
-  as everything else in that workflow — inert until this branch merges.
-- `curbstamps-admin/deploy/deploy-curbstamps-admin.sh` and
-  `curbstamps-site/deploy/deploy-curbstamps-site.sh` — the box-side
-  build+restart scripts, versioned here (unlike `deploy-admin.sh` /
-  `deploy-site.sh`, which exist only on the box) so they arrive automatically
-  via rsync — no manual file creation on the box needed for these two.
-- `curbstamps-admin/deploy/curbstamps-admin.service` and
-  `curbstamps-site/deploy/curbstamps-site.service` — systemd unit files,
-  reference copies to install once (§2 below).
-- Ports fixed to avoid colliding with the existing shirtfaced apps on the
-  same box: **curbstamps-site → 3100**, **curbstamps-admin → 4300**
-  (shirtfaced-site runs on 3000, shirtfaced-admin on 4200).
+Same Oracle box as shirtfaced (`161.33.31.74`), same Cloudflare Tunnel
+(`be826f3d-e8a5-4e7c-94bb-d547079fa529`) — no nginx involved, exactly like
+`shirtfaced.wtf`'s own admin/site/studio: cloudflared routes each hostname
+straight to a local Next.js port, no reverse proxy in between.
 
-## What I need from you before any of this goes live
-
-1. **Same Oracle box as shirtfaced, or a new one?** Everything below assumes
-   the same box (simplest — one server, one deploy key, already paid for).
-2. **The box's IP address.** It's a GitHub Actions secret (`ORACLE_HOST`)
-   I can't read from here. `shirtfaced.wtf` itself resolves to Cloudflare's
-   proxy IPs, not the real origin, so I can't discover it by looking the
-   domain up either.
-3. Once I have that IP, either:
-   - **You add the Cloudflare DNS records yourself** — takes about 2 minutes,
-     exact records in §1 below, or
-   - **You give me a Cloudflare API token** scoped to the `curbstamps.com`
-     zone (Zone → DNS → Edit permission is enough) and I'll create the
-     records directly via Cloudflare's API. Your call — sharing a scoped
-     token here is a real decision, not something to default into.
-
-## 1. Cloudflare DNS records
-
-Once `curbstamps.com` is added as a site in Cloudflare (nameservers pointed
-there — presumably already done since you said it's "secured" and ready to
-route through Cloudflare):
-
-| Type | Name | Content | Proxy status |
+| App | Port | systemd unit | Public hostname |
 |---|---|---|---|
-| A | `@` | `<ORACLE_HOST IP>` | Proxied (orange cloud) |
-| A | `www` | `<ORACLE_HOST IP>` | Proxied |
-| A | `admin` | `<ORACLE_HOST IP>` | Proxied |
+| `curbstamps-site` | **4100** | `curbstamps-site.service` | `curbstamps.com`, `www.curbstamps.com` |
+| `curbstamps-admin` | `4300` | `curbstamps-admin.service` | `admin.curbstamps.com` |
 
-Proxied (not "DNS only") matches how `shirtfaced.wtf` is already set up —
-Cloudflare terminates TLS and fronts the box, same as today. If you'd rather
-the admin subdomain skip Cloudflare's proxy entirely (direct-only, no CDN/
-WAF in front of the staff order dashboard), set that one row to "DNS only"
-instead — a legitimate choice, not required either way.
+Port note: `curbstamps-site/deploy/curbstamps-site.service` originally read
+`3100` (an earlier session's plan, untested — it also would have relied on
+`next start`'s default port with no `-p` flag, which resolves to `3000` and
+collides with the live `shirtfaced-site`). Corrected to `4100` with an
+explicit `-p` flag, matching the proven pattern the existing shirtfaced
+systemd units already use.
 
-No CNAME needed for `www` — an A record pointing at the same IP is simpler
-than a flattened CNAME-at-apex setup and is what Cloudflare recommends for
-this exact case.
+## Cloudflare DNS (zone `curbstamps.com`)
 
-## 2. One-time box setup (SSH in, run once)
+| Type | Name | Value | Proxy |
+|---|---|---|---|
+| CNAME | `@` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
+| CNAME | `www` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
+| CNAME | `admin` | `be826f3d-e8a5-4e7c-94bb-d547079fa529.cfargotunnel.com` | Proxied |
 
-Assuming the same Oracle box as shirtfaced, as `ubuntu`:
+CNAME-to-tunnel, not an A record to a raw IP — the box has nothing listening
+on :80/:443 at all; cloudflared dials outbound. Same pattern as
+`shirtfaced.wtf` in `docs/dns.md`. The two GoDaddy parking A-records the zone
+was created with (and a self-referencing `www` CNAME) were deleted and
+replaced with the above.
 
-```bash
-# 1. Create the app directories (rsync creates these on first deploy too,
-#    but the systemd units and .env need to exist before the first deploy
-#    tries to start the service).
-mkdir -p /home/ubuntu/curbstamps-admin /home/ubuntu/curbstamps-site
+`/etc/cloudflared/config.yml` on the box has three new ingress rules (before
+the `http_status:404` catch-all) routing the three hostnames to
+`localhost:4100`/`localhost:4300`. `cloudflared` was restarted to pick them
+up — a few seconds of shared downtime for every hostname on that tunnel
+(shirtfaced.wtf, tradeninja.au, orveris.com, etc.), unavoidable since it's
+one tunnel process for all of them.
 
-# 2. Postgres: create curbstamps' own database, separate from
-#    shirtfaced_shop and shirtfaced_studio (same instance is fine).
-sudo -u postgres psql -c "CREATE DATABASE curbstamps_shop;"
-sudo -u postgres psql -c "CREATE USER curbstamps WITH PASSWORD '<choose one>';"
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE curbstamps_shop TO curbstamps;"
+SSL/TLS mode: should be **Full**, matching shirtfaced.wtf — not verified by
+this session (the Cloudflare API token used was scoped to DNS edit only, by
+design; zone-settings permission wasn't granted).
 
-# 3. .env files — rsync excludes .env, so these are never overwritten by a
-#    deploy. Fill in real values per curbstamps-admin/.env.example and
-#    curbstamps-site/.env.example (Stripe keys, SESSION_SECRET,
-#    INTERNAL_API_KEY — same value in both — ADMIN_EMAIL/PASSWORD_HASH, etc).
-nano /home/ubuntu/curbstamps-admin/.env
-nano /home/ubuntu/curbstamps-site/.env
-# curbstamps-site's ADMIN_API_URL should be http://localhost:4300 in
-# production (same box, no need to go through the public domain).
+## One-time box setup (done)
 
-# 4. First deploy needs the code on the box before systemd can start it —
-#    either trigger the GitHub Actions workflow once first (it rsyncs but
-#    the service enable/start below still needs doing once), or rsync by
-#    hand right now:
-#      rsync -az curbstamps-admin/ ubuntu@<host>:/home/ubuntu/curbstamps-admin/
-#      rsync -az curbstamps-site/ ubuntu@<host>:/home/ubuntu/curbstamps-site/
+- `curbstamps_shop` Postgres database + `curbstamps` role created on the
+  box's existing Postgres instance (port 5432, same instance as
+  `shirtfaced_shop`).
+- `.env` files written on the box for both apps (never touched by rsync —
+  both deploy scripts exclude `.env`) with generated `SESSION_SECRET`,
+  `INTERNAL_API_KEY` (same value in both apps), `POD_WEBHOOK_SECRET`, and an
+  `ADMIN_PASSWORD_HASH` generated with the app's own `hashPassword()`
+  (scrypt) — real password given to the account owner directly, not stored
+  in this repo. `ADMIN_EMAIL=cdunell@gmail.com`.
+- Stripe keys and `PRINTFUL_API_KEY` left unset on purpose — see
+  "Still open" below. `POD_PROVIDER=mock`.
+- `curbstamps-admin`: `npm ci`, `drizzle-kit migrate`, `npm run seed` (36
+  products across 12 creatures), `npm run build`.
+- `curbstamps-site`: `npm ci`, `npm run build`.
+- Systemd units installed from `curbstamps-admin/deploy/curbstamps-admin.service`
+  and `curbstamps-site/deploy/curbstamps-site.service` (the corrected
+  versions — see the port note above), enabled and started.
 
-# 5. Install the systemd units (copied from the repo, already on the box
-#    after the rsync above).
-sudo cp /home/ubuntu/curbstamps-admin/deploy/curbstamps-admin.service /etc/systemd/system/
-sudo cp /home/ubuntu/curbstamps-site/deploy/curbstamps-site.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable curbstamps-admin curbstamps-site
+## Verified live (22 August 2026)
 
-# 6. Build once by hand, then start (subsequent deploys do this automatically).
-cd /home/ubuntu/curbstamps-admin && npm ci && npm run build
-cd /home/ubuntu/curbstamps-site && npm ci && npm run build
-sudo systemctl start curbstamps-admin curbstamps-site
-sudo systemctl status curbstamps-admin curbstamps-site
+```
+curl -I https://curbstamps.com          → 200
+curl -I https://www.curbstamps.com      → 200
+curl -I https://admin.curbstamps.com/login → 200
 ```
 
-## 3. Reverse proxy (nginx)
+Homepage content confirmed by reading the actual rendered page (not just a
+status code) — the mobile-first rebuild (Pick Your Weirdo / New Drop / Meet
+the Curb Crew / Shop the Look / Weirdo Match / Made for Adventures / Parents
+Corner / Join the Curb) is what's live, not the earlier placeholder hero.
 
-Assuming the box already runs nginx in front of shirtfaced's apps (typical
-for a Cloudflare-proxied Oracle Cloud VM) — add two server blocks. If the
-box uses something else (Caddy, a different setup) the shape is the same,
-just different config syntax.
+## Still open
 
-```nginx
-server {
-    listen 80;
-    server_name curbstamps.com www.curbstamps.com;
-    location / {
-        proxy_pass http://127.0.0.1:3100;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-
-server {
-    listen 80;
-    server_name admin.curbstamps.com;
-    location / {
-        proxy_pass http://127.0.0.1:4300;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-TLS: with Cloudflare in "Proxied" mode, Cloudflare terminates TLS to the
-visitor and can talk plain HTTP to the origin (Flexible mode) or HTTPS (Full
-mode, needs a cert on the box — e.g. `certbot --nginx`, or Cloudflare's own
-origin certificate, free, 15-year validity, purpose-built for exactly this).
-Full (or Full Strict) is the safer choice if the box already has a
-mechanism for it from the shirtfaced setup — reuse whatever that is.
-
-## 4. Verifying it's live
-
-```bash
-curl -I https://curbstamps.com
-curl -I https://admin.curbstamps.com/login
-```
-
-Both should return `200` (or `307`/`302` to `/login` for admin, if not yet
-signed in) once DNS has propagated (usually under 5 minutes through
-Cloudflare) and both systemd services are running.
-
-## Still open after this
-
-- Real Stripe keys, POD provider account, and the `.env` values that go with
-  them — see `docs/curbstamps/CURB_STAMPS_SPEC.md` §8.
-- The visual homepage rebuild is in progress on a separate track — this
-  document is only about getting *something* reachable at the domain, not
-  about what it looks like once it's there.
+- Real Stripe keys and a real POD provider account — see
+  `docs/curbstamps/CURB_STAMPS_SPEC.md` §4 and §8. `POD_PROVIDER=mock` and
+  both Stripe env vars are unset, so checkout shows the honest
+  "payment isn't connected" state and no real order can be placed yet.
+- A children's-clothing compliance review and a legal review of
+  Terms/Privacy — neither has happened; see `CURB_STAMPS_SPEC.md` §8.
+- `.github/workflows/deploy.yml` now has the rsync/build/restart steps for
+  both apps (additive, same pattern as shirtfaced's own) — they only fire on
+  push to `main`, so nothing auto-deploys again until this branch merges and
+  a future commit lands.
