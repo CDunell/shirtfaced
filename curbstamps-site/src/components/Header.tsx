@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { IconCart } from "./Icons";
-import { CurbStampsLogo } from "./CurbStampsLogo";
+import { CurbStampsLogoTransparent } from "./CurbStampsLogoTransparent";
 
 const NAV = [
   { href: "/shop", label: "Shop" },
@@ -37,14 +37,14 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-paper/10 bg-ink text-paper">
-      <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4 sm:px-6">
+      <div className="mx-auto flex h-[62px] max-w-5xl items-center justify-between px-4 sm:h-16 sm:px-6">
         <Link href="/" aria-label="Curb Stamps home" className="press flex items-center">
-          <CurbStampsLogo className="h-[46px] w-auto" />
+          <CurbStampsLogoTransparent className="h-[50px] w-auto sm:h-[54px]" />
         </Link>
 
         <nav className="hidden items-center gap-6 text-[12px] font-black uppercase tracking-[0.04em] sm:flex">
           {NAV.map((item) => (
-            <Link key={item.href + item.label} href={item.href} className="press text-paper hover:text-grit-yellow">
+            <Link key={item.href + item.label} href={item.href} className="press text-paper hover:text-grit-green">
               {item.label}
             </Link>
           ))}
@@ -84,16 +84,16 @@ export function Header() {
       <div
         aria-hidden="true"
         onClick={() => setOpen(false)}
-        className={`fixed inset-x-0 bottom-0 top-16 z-40 bg-black/60 transition-opacity duration-200 sm:hidden ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
+        className={`fixed inset-x-0 bottom-0 top-[62px] z-40 bg-black/65 transition-opacity duration-200 sm:top-16 sm:hidden ${open ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"}`}
       />
 
       <aside
         id="mobile-nav-drawer"
         aria-hidden={!open}
-        className={`fixed bottom-0 right-0 top-16 z-50 w-[82vw] max-w-[340px] border-l border-paper/10 bg-ink text-paper shadow-2xl transition-transform duration-200 ease-out sm:hidden ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed bottom-0 right-0 top-[62px] z-50 w-[82vw] max-w-[340px] border-l border-paper/10 bg-ink text-paper shadow-2xl transition-transform duration-200 ease-out sm:hidden ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <nav className="flex h-full flex-col px-5 py-6">
-          <p className="mb-5 text-[11px] font-black uppercase tracking-[0.16em] text-paper/45">Curb Stamps</p>
+          <CurbStampsLogoTransparent className="mb-5 h-[58px] w-auto self-start" />
           <div className="flex flex-col border-t border-paper/10">
             {NAV.map((item) => (
               <Link
