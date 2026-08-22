@@ -4,11 +4,14 @@ import { useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/lib/cart-context";
+import { trackTikTokPurchase } from "@/lib/tiktok-pixel";
 import { IconArrowRight, IconCheck } from "@/components/Icons";
 
 function SuccessContent() {
   const { clearCart } = useCart();
-  const orderId = useSearchParams().get("orderId");
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("orderId");
+  const value = searchParams.get("value");
 
   useEffect(() => {
     // Covers the redirect-based confirmation path (bank redirects, some 3DS
@@ -16,6 +19,14 @@ function SuccessContent() {
     // a payment method that leaves the page via return_url skips that call
     // entirely and lands here instead.
     clearCart();
+
+    // Client half of Purchase tracking; the server half fires from the
+    // Stripe webhook (src/lib/tiktok-events.ts) with the same order id as
+    // event_id so TikTok dedupes the pair. A no-op until the pixel is
+    // configured — see src/components/TikTokPixel.tsx.
+    if (orderId && value) {
+      trackTikTokPurchase(orderId, Number(value));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
