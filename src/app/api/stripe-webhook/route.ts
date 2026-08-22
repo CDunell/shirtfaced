@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { sendTikTokPurchaseEvent } from "@/lib/tiktok-events";
 
 /**
  * Stripe calls this directly (server to server), never the browser — this is
@@ -59,6 +60,17 @@ export async function POST(request: Request) {
         );
         return NextResponse.json({ error: "Could not update the order." }, { status: 500 });
       }
+
+      // Ad-attribution signal, not order state — logged on failure, never
+      // allowed to fail the webhook itself.
+      await sendTikTokPurchaseEvent({
+        orderId,
+        valueCents: paymentIntent.amount,
+        currency: paymentIntent.currency,
+        email: paymentIntent.receipt_email,
+      }).catch((error) => {
+        console.error(`stripe-webhook: TikTok purchase event failed for order ${orderId}`, error);
+      });
     }
   }
 

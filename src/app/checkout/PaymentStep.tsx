@@ -141,7 +141,7 @@ function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
     const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/checkout/success?orderId=${orderId}`,
+        return_url: `${window.location.origin}/checkout/success?orderId=${orderId}&value=${total}`,
       },
       redirect: "if_required",
     });
@@ -158,7 +158,7 @@ function PaymentForm({ orderId, total }: { orderId: string; total: number }) {
     // on its way — either way the customer's part is done.
     if (paymentIntent) {
       clearCart();
-      router.push(`/checkout/success?orderId=${orderId}`);
+      router.push(`/checkout/success?orderId=${orderId}&value=${total}`);
     } else {
       setSubmitting(false);
     }
