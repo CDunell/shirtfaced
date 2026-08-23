@@ -39,6 +39,7 @@ function Habitat({ index }: { index: number }) {
 export function CurbWorld() {
   const scroller = useRef<HTMLDivElement>(null);
   const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollingRef = useRef(false);
   const pointerStart = useRef({ x: 0, scrollLeft: 0 });
   const dragged = useRef(false);
   const [isScrolling, setIsScrolling] = useState(false);
@@ -55,12 +56,17 @@ export function CurbWorld() {
   useEffect(() => () => { if (scrollTimer.current) clearTimeout(scrollTimer.current); }, []);
 
   function handleScroll() {
+    scrollingRef.current = true;
     setIsScrolling(true);
     if (scrollTimer.current) clearTimeout(scrollTimer.current);
-    scrollTimer.current = setTimeout(() => setIsScrolling(false), 180);
+    scrollTimer.current = setTimeout(() => {
+      scrollingRef.current = false;
+      setIsScrolling(false);
+    }, 180);
   }
 
   function move(direction: number) {
+    handleScroll();
     scroller.current?.scrollBy({ left: direction * Math.min(window.innerWidth * 0.75, 680), behavior: "smooth" });
   }
 
@@ -81,7 +87,7 @@ export function CurbWorld() {
           <Link
             key={creature.slug}
             href={`/shop?creature=${creature.slug}`}
-            onClick={(event) => { if (isScrolling || dragged.current) event.preventDefault(); }}
+            onClick={(event) => { if (scrollingRef.current || dragged.current) event.preventDefault(); }}
             className="curb-plot group relative h-[350px] min-w-[230px] overflow-hidden bg-cream text-ink sm:h-[400px] sm:min-w-[265px]"
             aria-label={`Visit ${creature.name}'s hiding spot and shop their range`}
             aria-disabled={isScrolling}
