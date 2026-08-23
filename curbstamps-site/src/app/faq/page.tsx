@@ -28,8 +28,8 @@ const FAQ: FaqItem[] = [
     linkLabel: "Returns policy",
   },
   {
-    question: "Is it just 12 creatures?",
-    answer: "For now — 60 are planned, and new ones ship as the art's finished, not on a fixed schedule.",
+    question: "How many creatures are there?",
+    answer: "There are 44 weirdos in the crew now, with 60 planned. New ones arrive as the art is finished, not on a fixed schedule.",
   },
   {
     question: "Where do I go if something's wrong with an order?",
