@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/pex-icon.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3100436681222707,
+  "scale": 1.7045454545454546,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    75.85227272727272,
+    41.47727272727272
   ],
   "pathCount": 24,
   "removedLowCropFragments": 0

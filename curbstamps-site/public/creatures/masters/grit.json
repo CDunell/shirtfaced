@@ -1,0 +1,19 @@
+{
+  "source": "curbstamps-site/public/creatures/grit-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 1.293103448275862,
+  "offset": [
+    73.70689655172416,
+    31.896551724137936
+  ],
+  "pathCount": 38,
+  "removedLowCropFragments": 4
+}

@@ -1,0 +1,19 @@
+{
+  "source": "curbstamps-site/public/creatures/fizz-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 2.142857142857143,
+  "offset": [
+    94.28571428571429,
+    41.428571428571445
+  ],
+  "pathCount": 14,
+  "removedLowCropFragments": 3
+}

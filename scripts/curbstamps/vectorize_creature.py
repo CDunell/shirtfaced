@@ -14,11 +14,35 @@ from pathlib import Path
 
 import numpy as np
 from PIL import Image
+from scipy import ndimage
 
 
 VIEW_W, VIEW_H = 1200, 500
 SAFE_W, SAFE_H = 1080, 300
 STROKE = 4
+
+
+def remove_low_crop_fragments(mask: np.ndarray) -> tuple[np.ndarray, int]:
+    """Drop small disconnected text/crop debris below the creature.
+
+    Some supplied icon crops include the very top of the name beneath the
+    creature. Legitimate eyes and internal marks sit higher in the frame, so
+    only small components wholly inside the bottom 18 percent are removed.
+    """
+    labels, count = ndimage.label(mask, structure=np.ones((3, 3), dtype=np.uint8))
+    if count < 2:
+        return mask, 0
+    areas = np.bincount(labels.ravel())[1:]
+    largest = int(areas.max())
+    cleaned = mask.copy()
+    removed = 0
+    cutoff = mask.shape[0] * 0.82
+    for label_id, area in enumerate(areas, start=1):
+        ys, _ = np.where(labels == label_id)
+        if len(ys) and ys.min() >= cutoff and area < largest * 0.18:
+            cleaned[labels == label_id] = False
+            removed += 1
+    return cleaned, removed
 
 
 def thin(mask: np.ndarray) -> np.ndarray:
@@ -121,7 +145,8 @@ def rdp(points: list[tuple[float, float]], epsilon: float) -> list[tuple[float, 
     if np.allclose(line, 0):
         distances = np.linalg.norm(body - start, axis=1)
     else:
-        distances = np.abs(np.cross(line, body - start) / np.linalg.norm(line))
+        relative = body - start
+        distances = np.abs((line[0] * relative[:, 1] - line[1] * relative[:, 0]) / np.linalg.norm(line))
     index = int(np.argmax(distances)); maximum = float(distances[index])
     if maximum > epsilon:
         split = index + 1
@@ -149,13 +174,15 @@ def main() -> None:
     parser.add_argument("source", type=Path)
     parser.add_argument("--slug", required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--threshold", type=int, default=96)
+    # The supplied extracted PNGs have fully opaque line cores but some carry
+    # semi-transparent generation noise along the edges. Trace only the core.
+    parser.add_argument("--threshold", type=int, default=250)
     parser.add_argument("--simplify", type=float, default=1.15)
     args = parser.parse_args()
 
     rgba = Image.open(args.source).convert("RGBA")
     alpha = np.asarray(rgba)[:, :, 3]
-    mask = alpha >= args.threshold
+    mask, removed_fragments = remove_low_crop_fragments(alpha >= args.threshold)
     skeleton = thin(mask)
     ys, xs = np.where(skeleton)
     if not len(xs):
@@ -199,6 +226,7 @@ def main() -> None:
         "source": str(args.source), "viewBox": [0, 0, VIEW_W, VIEW_H],
         "strokeWidth": STROKE, "printWidthMm": 240, "physicalStrokeMm": 0.8,
         "scale": scale, "offset": [offset_x, offset_y], "pathCount": len(transformed),
+        "removedLowCropFragments": removed_fragments,
     }
     (args.output / f"{args.slug}.json").write_text(json.dumps(metadata, indent=2) + "\n")
 

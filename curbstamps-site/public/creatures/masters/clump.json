@@ -1,0 +1,19 @@
+{
+  "source": "curbstamps-site/public/creatures/clump-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 1.6304347826086956,
+  "offset": [
+    211.95652173913047,
+    41.84782608695653
+  ],
+  "pathCount": 4,
+  "removedLowCropFragments": 1
+}

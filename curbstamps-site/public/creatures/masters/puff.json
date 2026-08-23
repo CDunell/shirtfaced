@@ -1,0 +1,19 @@
+{
+  "source": "curbstamps-site/public/creatures/puff-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 1.1764705882352942,
+  "offset": [
+    381.1764705882353,
+    45.29411764705881
+  ],
+  "pathCount": 2,
+  "removedLowCropFragments": 1
+}

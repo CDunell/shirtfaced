@@ -14,5 +14,6 @@
     127.71739130434786,
     35.86956521739131
   ],
-  "pathCount": 102
+  "pathCount": 102,
+  "removedLowCropFragments": 2
 }

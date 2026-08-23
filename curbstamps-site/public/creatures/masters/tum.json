@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/tum-icon.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3100436681222707,
+  "scale": 2.127659574468085,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    101.06382978723407,
+    39.36170212765958
   ],
-  "pathCount": 24,
+  "pathCount": 39,
   "removedLowCropFragments": 0
 }

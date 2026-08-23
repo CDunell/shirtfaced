@@ -1,0 +1,19 @@
+{
+  "source": "curbstamps-site/public/creatures/yip-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 1.6129032258064515,
+  "offset": [
+    209.67741935483875,
+    43.548387096774206
+  ],
+  "pathCount": 47,
+  "removedLowCropFragments": 3
+}

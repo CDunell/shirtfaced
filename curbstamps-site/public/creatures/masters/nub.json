@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/nub-icon.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3100436681222707,
+  "scale": 1.4851485148514851,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    211.63366336633663,
+    39.60396039603961
   ],
-  "pathCount": 24,
+  "pathCount": 8,
   "removedLowCropFragments": 0
 }

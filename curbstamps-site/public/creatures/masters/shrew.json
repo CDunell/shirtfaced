@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/shrew-icon.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3100436681222707,
+  "scale": 1.7763157894736843,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    51.118421052631575,
+    62.33552631578948
   ],
-  "pathCount": 24,
+  "pathCount": 10,
   "removedLowCropFragments": 0
 }

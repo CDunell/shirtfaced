@@ -1,0 +1,19 @@
+{
+  "source": "curbstamps-site/public/creatures/prick-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 1.25,
+  "offset": [
+    211.875,
+    40.0
+  ],
+  "pathCount": 13,
+  "removedLowCropFragments": 4
+}

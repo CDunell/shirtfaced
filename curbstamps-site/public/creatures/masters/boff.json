@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/boff-icon.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3100436681222707,
+  "scale": 1.2987012987012987,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    252.59740259740263,
+    40.90909090909091
   ],
-  "pathCount": 24,
+  "pathCount": 17,
   "removedLowCropFragments": 0
 }

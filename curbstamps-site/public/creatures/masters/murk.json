@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/murk-icon.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3100436681222707,
+  "scale": 1.2244897959183674,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    42.85714285714286,
+    100.20408163265306
   ],
-  "pathCount": 24,
+  "pathCount": 8,
   "removedLowCropFragments": 0
 }

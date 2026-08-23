@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/snu-icon.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3100436681222707,
+  "scale": 1.8090452261306533,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    32.8643216080402,
+    57.0854271356784
   ],
-  "pathCount": 24,
+  "pathCount": 35,
   "removedLowCropFragments": 0
 }

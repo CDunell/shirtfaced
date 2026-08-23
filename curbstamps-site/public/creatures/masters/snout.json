@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/snout-icon.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3100436681222707,
+  "scale": 1.761827079934747,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    54.71451876019576,
+    58.17292006525287
   ],
-  "pathCount": 24,
+  "pathCount": 11,
   "removedLowCropFragments": 0
 }

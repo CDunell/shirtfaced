@@ -1,0 +1,19 @@
+{
+  "source": "curbstamps-site/public/creatures/nib-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 1.6042780748663101,
+  "offset": [
+    122.7272727272727,
+    43.58288770053477
+  ],
+  "pathCount": 27,
+  "removedLowCropFragments": 4
+}

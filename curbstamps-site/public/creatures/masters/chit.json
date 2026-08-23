@@ -1,0 +1,19 @@
+{
+  "source": "curbstamps-site/public/creatures/chit-icon.png",
+  "viewBox": [
+    0,
+    0,
+    1200,
+    500
+  ],
+  "strokeWidth": 4,
+  "printWidthMm": 240,
+  "physicalStrokeMm": 0.8,
+  "scale": 1.5463917525773196,
+  "offset": [
+    173.19587628865978,
+    43.814432989690715
+  ],
+  "pathCount": 46,
+  "removedLowCropFragments": 1
+}
