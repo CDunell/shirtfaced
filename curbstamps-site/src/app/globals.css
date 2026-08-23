@@ -150,6 +150,17 @@ body {
   animation: wiggle 420ms var(--ease-bounce);
 }
 
+/* Play-only weight boost: keeps the approved master artwork untouched while
+   making small, tappable creatures read clearly on phone screens. */
+.game-creature {
+  filter:
+    brightness(0)
+    drop-shadow(1px 0 0 var(--color-ink))
+    drop-shadow(-1px 0 0 var(--color-ink))
+    drop-shadow(0 1px 0 var(--color-ink))
+    drop-shadow(0 -1px 0 var(--color-ink));
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

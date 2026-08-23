@@ -41,6 +41,13 @@ function playCreatureSound(frequency: number, type: OscillatorType, double = fal
   const context = new AudioContextClass();
   const start = context.currentTime;
   const notes = double ? [0, 0.13] : [0];
+  const compressor = context.createDynamicsCompressor();
+  compressor.threshold.setValueAtTime(-18, start);
+  compressor.knee.setValueAtTime(12, start);
+  compressor.ratio.setValueAtTime(4, start);
+  compressor.attack.setValueAtTime(0.003, start);
+  compressor.release.setValueAtTime(0.18, start);
+  compressor.connect(context.destination);
 
   notes.forEach((offset) => {
     const oscillator = context.createOscillator();
@@ -49,12 +56,12 @@ function playCreatureSound(frequency: number, type: OscillatorType, double = fal
     oscillator.frequency.setValueAtTime(frequency, start + offset);
     oscillator.frequency.exponentialRampToValueAtTime(Math.max(70, frequency * 0.72), start + offset + 0.16);
     gain.gain.setValueAtTime(0.0001, start + offset);
-    gain.gain.exponentialRampToValueAtTime(0.12, start + offset + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.18);
+    gain.gain.exponentialRampToValueAtTime(0.38, start + offset + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.24);
     oscillator.connect(gain);
-    gain.connect(context.destination);
+    gain.connect(compressor);
     oscillator.start(start + offset);
-    oscillator.stop(start + offset + 0.19);
+    oscillator.stop(start + offset + 0.25);
   });
 
   window.setTimeout(() => void context.close(), 500);
@@ -116,7 +123,7 @@ export function PlayOnTheCurb() {
                   style={active ? { backgroundColor: UI_ACCENTS[index % UI_ACCENTS.length].hex } : undefined}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={creatureMaster(creature.slug)} alt="" className="h-11 w-16 object-contain brightness-0" />
+                  <img src={creatureMaster(creature.slug)} alt="" className="game-creature h-11 w-16 object-contain brightness-0" />
                   <span className="mt-1 text-[12px]">{creature.name}</span>
                 </button>
               );
@@ -140,7 +147,7 @@ export function PlayOnTheCurb() {
                 src={creatureMaster(stamp.slug)}
                 alt={stamp.name}
                 draggable={false}
-                className="pointer-events-none absolute object-contain brightness-0"
+                className="game-creature pointer-events-none absolute object-contain brightness-0"
                 style={{ left: `${stamp.x}%`, top: `${stamp.y}%`, width: stamp.size, transform: `translate(-50%, -50%) rotate(${stamp.rotation}deg)` }}
               />
             ))}
@@ -180,7 +187,7 @@ export function PlayOnTheCurb() {
                   aria-label={`Hear ${creature.name}: ${sound.word}`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={creatureMaster(creature.slug)} alt="" className="mx-auto h-16 w-full object-contain brightness-0" />
+                  <img src={creatureMaster(creature.slug)} alt="" className="game-creature mx-auto h-16 w-full object-contain brightness-0" />
                   <span className="display mt-2 block text-[22px] uppercase">{active ? sound.word : creature.name}</span>
                 </button>
               );
