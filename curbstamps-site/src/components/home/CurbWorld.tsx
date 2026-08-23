@@ -149,7 +149,7 @@ export function CurbWorld() {
         ref={scroller}
         onScroll={keepLooping}
         className="no-scrollbar cursor-grab overflow-x-auto overscroll-x-none active:cursor-grabbing"
-        aria-label="Explore the illustrated Curb world and find 20 animated creatures"
+        aria-label="Explore the illustrated Curb world and discover hidden creatures"
       >
         <div className="flex w-max">
           {LOOP_PANEL_NUMBERS.map((panel, index) => (
