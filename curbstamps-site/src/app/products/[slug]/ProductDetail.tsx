@@ -52,7 +52,7 @@ export function ProductDetail({ product }: { product: Product }) {
 
         <div className="mt-6">
           <p className="text-[13px] font-bold tracking-wide text-grey-dark uppercase">Colour — {colour.name}</p>
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {product.colours.map((c) => (
               <button
                 key={c.name}
