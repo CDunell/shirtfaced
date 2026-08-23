@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CREATURES, uiAccentFor } from "@/lib/creatures";
 
 const START = [0, 18, 31];
@@ -10,30 +10,11 @@ function nextRound(previous: number[]) {
   return [first, (first + 11) % CREATURES.length, (first + 23) % CREATURES.length];
 }
 
-/** Fisher-Yates over the 3 display slots — which slot the correct answer
- * lands in should vary per round, not always be the first one. */
-function shuffledSlots(): number[] {
-  const slots = [0, 1, 2];
-  for (let i = slots.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [slots[i], slots[j]] = [slots[j], slots[i]];
-  }
-  return slots;
-}
-
 export function FindWeirdo() {
   const [round, setRound] = useState(START);
-  // [0, 1, 2] on first render so server and client markup match; shuffled
-  // client-side right after mount, and again every new round.
-  const [slots, setSlots] = useState<number[]>([0, 1, 2]);
   const [picked, setPicked] = useState<number | null>(null);
   const target = CREATURES[round[0]];
   const won = picked === round[0];
-
-  useEffect(() => {
-    setSlots(shuffledSlots());
-  }, [round]);
-
   function playAgain() { setRound(nextRound(round)); setPicked(null); }
   return (
     <section className="bg-ink px-4 py-10 text-paper sm:px-6 sm:py-14">
@@ -44,12 +25,11 @@ export function FindWeirdo() {
           <p className="mt-3 text-[13px] font-bold text-paper/70">Tap the right creature.</p>
         </div>
         <div className="mt-7 grid grid-cols-3 gap-2 sm:mx-auto sm:max-w-2xl sm:gap-4">
-          {slots.map((slot) => {
-            const index = round[slot];
+          {round.map((index) => {
             const creature = CREATURES[index], selected = picked === index, correct = index === round[0];
             return <button key={creature.slug} type="button" onClick={() => setPicked(index)} disabled={won} aria-label={`Choose ${creature.name}`} className={`press flex min-h-[150px] flex-col items-center justify-between rounded-[22px] border-2 p-3 text-ink transition sm:min-h-[190px] sm:p-5 ${selected && correct ? "border-grit-green bg-grit-green" : selected ? "border-[#ff6f9c] bg-[#ff6f9c]" : "border-paper bg-paper"}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/creatures/${creature.slug}-icon.png`} alt="" className="h-24 w-full object-contain brightness-0 sm:h-32" />
+              <img src={`/creatures/masters/${creature.slug}.svg`} alt="" className="h-24 w-full object-contain brightness-0 sm:h-32" />
               <span className="display text-[18px] uppercase leading-none sm:text-[22px]">{picked === null ? "?" : creature.name}</span>
             </button>;
           })}

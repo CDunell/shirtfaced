@@ -38,7 +38,7 @@ export function HeroWeirdo() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               key={active.slug}
-              src={`/creatures/${active.slug}-icon.png`}
+              src={`/creatures/masters/${active.slug}.svg`}
               alt={`${active.name} creature`}
               className="fade-rise max-h-[132px] w-full max-w-[180px] object-contain brightness-0 invert sm:max-h-[225px] sm:max-w-[320px]"
             />
@@ -63,7 +63,7 @@ export function HeroWeirdo() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/creatures/${c.slug}-icon.png`}
+                  src={`/creatures/masters/${c.slug}.svg`}
                   alt=""
                   aria-hidden="true"
                   className="h-7 w-11 object-contain opacity-90 brightness-0"

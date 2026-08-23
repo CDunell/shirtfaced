@@ -4,10 +4,9 @@
  * signature accent colour, used across the shop grid, product pages and the
  * garment mockups in components/GarmentArt.tsx.
  *
- * Artwork lives at /public/creatures/{slug}-logo.png — a transparent-
- * background line-art lockup (creature + wordmark) generated from the
- * supplied logo sheets. See docs/curbstamps/CURB_STAMPS_SPEC.md §3 for the
- * other 48 and how they slot in once art exists.
+ * Creature-only artwork lives in /public/creatures/masters. Product lockups
+ * live in /public/creatures/lockups and are generated from those masters by
+ * scripts/curbstamps/build_creature_lockups.py.
  */
 export type Creature = {
   slug: string;
