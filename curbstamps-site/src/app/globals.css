@@ -227,12 +227,8 @@ body {
   will-change: transform;
 }
 
-.curb-world-body {
-  filter: url(#curb-creature-body);
-}
-
-.curb-world-detail {
-  filter: brightness(0);
+.curb-world-filled {
+  display: block;
 }
 
 @keyframes curb-world-bob {
