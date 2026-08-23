@@ -40,7 +40,7 @@ export function ProductDetail({ product }: { product: Product }) {
         artDark={product.artDark}
         creatureName={product.name}
         photoSrc={product.photos?.[colour.name]}
-        className="aspect-square rounded-card"
+        className="aspect-[4/3] sm:aspect-square rounded-card"
       />
 
       <div>
