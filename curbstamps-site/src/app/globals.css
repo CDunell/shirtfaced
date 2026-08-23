@@ -167,27 +167,36 @@ body {
   100% { transform: translate(-50%, 0) rotate(0); }
 }
 
-@keyframes curb-door-open {
-  0%, 35% { transform: perspective(90px) rotateY(0); }
-  70%, 100% { transform: perspective(90px) rotateY(-38deg); }
-}
-
 @keyframes curb-cloud-drift {
   0%, 100% { transform: translateX(0); }
   50% { transform: translateX(-8px); }
 }
 
-@keyframes curb-smoke-pop {
-  0% { opacity: 0; transform: translateY(7px) scale(0.7); }
-  45% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(-10px) scale(1.12); }
+@keyframes curb-rubbish-shift {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  40% { transform: rotate(-1.5deg) translateY(-2px); }
+  70% { transform: rotate(1deg) translateY(0); }
+}
+
+@keyframes curb-puddle-ring {
+  0%, 100% { transform: scaleX(1); opacity: 0.75; }
+  50% { transform: scaleX(1.06); opacity: 1; }
 }
 
 .curb-plot.is-in-view .curb-creature { animation: curb-arrive 520ms var(--ease-bounce) both; }
-.curb-plot.is-in-view .curb-door { animation: curb-door-open 900ms 180ms var(--ease-out-natural) both; }
 .curb-plot.is-in-view .curb-cloud { animation: curb-cloud-drift 2.8s ease-in-out infinite; }
-.curb-plot.is-in-view .curb-smoke { animation: curb-smoke-pop 1.8s 350ms ease-out infinite; }
-.curb-plot.is-in-view .curb-plant { transform-origin: bottom center; animation: wiggle 1.8s 250ms ease-in-out infinite; }
+.curb-plot.is-in-view .curb-rubbish { transform-box: fill-box; transform-origin: bottom center; animation: curb-rubbish-shift 1.3s 180ms ease-in-out both; }
+.curb-plot.is-in-view .curb-puddle { transform-box: fill-box; transform-origin: center; animation: curb-puddle-ring 1.8s 150ms ease-in-out infinite; }
+.curb-plot.is-in-view .curb-weeds { transform-box: fill-box; transform-origin: bottom center; animation: wiggle 1.8s 250ms ease-in-out infinite; }
+
+.curb-plot + .curb-plot::before {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 58%;
+  height: 42%;
+  border-left: 1px solid rgb(28 26 23 / 0.12);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,
