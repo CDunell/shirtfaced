@@ -20,7 +20,7 @@ export type Creature = {
 
 /** Bump whenever creature artwork changes so mobile browsers cannot retain
  * superseded SVGs under the previous URL. */
-export const CREATURE_ASSET_VERSION = "20260823d";
+export const CREATURE_ASSET_VERSION = "20260823e";
 
 export function creatureMaster(slug: string) {
   return `/creatures/masters/${slug}.svg?v=${CREATURE_ASSET_VERSION}`;
