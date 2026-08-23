@@ -67,7 +67,7 @@ export function CurbWorld() {
             <img
               key={`${src}-${index}`}
               src={src}
-              width={1536}
+              width={1428}
               height={576}
               alt={index === 1 ? "A very long illustrated curb filled with cracks, drains, weeds and discarded street objects" : ""}
               aria-hidden={index === 1 ? undefined : true}
