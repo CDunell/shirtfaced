@@ -37,6 +37,12 @@ const bodySchema = z.object({
 });
 
 export async function POST(request: Request) {
+  // TEMP: capture the raw shape of a real Printify webhook payload via their
+  // simulate endpoint before writing the translation layer — remove once
+  // that's done.
+  const rawText = await request.clone().text().catch(() => "");
+  console.log("[pod:webhook:RAW]", rawText);
+
   if (!verifyPodWebhook(request)) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
