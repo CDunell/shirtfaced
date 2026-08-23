@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CREATURES, creatureMaster } from "@/lib/creatures";
 import { PlaceholderPhoto } from "./PlaceholderPhoto";
+import type { HomepagePhoto } from "@/lib/homepage-photos";
 
 const WORDS = [
   { word: "PLAY", body: "All day.", label: "Kid mid-play, laughing", creature: CREATURES[1], tone: "var(--color-grit-yellow)" },
@@ -9,7 +10,7 @@ const WORDS = [
   { word: "BE", body: "Your weird self.", label: "Kid just being a kid", creature: CREATURES[9], tone: "var(--color-grit-green)" },
 ] as const;
 
-export function AdventureGrid() {
+export function AdventureGrid({ photos }: { photos: HomepagePhoto[] }) {
   return (
     <section className="bg-paper">
       <div className="mx-auto max-w-5xl px-4 py-9 sm:px-6 sm:py-14">
@@ -17,9 +18,20 @@ export function AdventureGrid() {
         <h2 className="display text-[12vw] uppercase leading-[0.84] sm:text-[48px]">made for<br />adventures.</h2>
 
         <div className="mt-5 grid grid-cols-4 gap-1.5 sm:gap-3">
-          {WORDS.map(({ word, label, tone }) => (
-            <PlaceholderPhoto key={word} label={label} tone={tone} className="aspect-[0.72] w-full rounded-[12px] sm:rounded-[14px]" />
-          ))}
+          {WORDS.map(({ word, label, tone }, i) => {
+            const photo = photos[i];
+            return photo ? (
+              // eslint-disable-next-line @next/next/no-img-element -- static homepage photo, no next/image benefit
+              <img
+                key={word}
+                src={photo.src}
+                alt={photo.alt}
+                className="aspect-[0.72] w-full rounded-[12px] object-cover sm:rounded-[14px]"
+              />
+            ) : (
+              <PlaceholderPhoto key={word} label={label} tone={tone} className="aspect-[0.72] w-full rounded-[12px] sm:rounded-[14px]" />
+            );
+          })}
         </div>
 
         <div className="mt-0 grid grid-cols-4 overflow-hidden rounded-b-[14px] border border-t-0 border-ink/10">

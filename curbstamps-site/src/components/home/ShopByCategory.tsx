@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { IconShirt, IconHoodie, IconShorts, IconCap, IconBag } from "@/components/Icons";
 import { PlaceholderPhoto } from "./PlaceholderPhoto";
+import type { HomepagePhoto } from "@/lib/homepage-photos";
 
 const CATEGORIES = [
   { label: "Tees", href: "/shop?category=tee", icon: IconShirt, tone: "#d8ef6d" },
@@ -10,7 +11,7 @@ const CATEGORIES = [
   { label: "Accessories", href: "/shop", icon: IconBag, tone: "#cabcf3" },
 ];
 
-export function ShopByCategory() {
+export function ShopByCategory({ photo }: { photo?: HomepagePhoto }) {
   return (
     <section className="bg-paper">
       <div className="mx-auto max-w-5xl px-4 py-9 sm:px-6 sm:py-12">
@@ -24,7 +25,12 @@ export function ShopByCategory() {
               <Link href="/shop?category=hoodie" className="press inline-flex min-h-11 items-center rounded-md bg-ink px-3 py-2.5 text-[11px] font-black uppercase text-paper sm:px-4 sm:py-3">Shop hoodies</Link>
             </div>
           </div>
-          <PlaceholderPhoto label="Happy kid running outside in Curb Stamps tee" className="aspect-[0.88] w-full rounded-[16px]" tone="var(--color-grit-yellow)" />
+          {photo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- static homepage photo, no next/image benefit
+            <img src={photo.src} alt={photo.alt} className="aspect-[0.88] w-full rounded-[16px] object-cover" />
+          ) : (
+            <PlaceholderPhoto label="Happy kid running outside in Curb Stamps tee" className="aspect-[0.88] w-full rounded-[16px]" tone="var(--color-grit-yellow)" />
+          )}
         </div>
 
         <div className="mt-6 grid grid-cols-5 gap-2 border-t border-ink/10 pt-4">

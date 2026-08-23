@@ -3,8 +3,10 @@ import { CREATURES } from "@/lib/creatures";
 import { getProduct } from "@/lib/products";
 import { GarmentArt } from "@/components/GarmentArt";
 import { PlaceholderPhoto } from "./PlaceholderPhoto";
+import type { HomepagePhoto } from "@/lib/homepage-photos";
 
-export function NewDropStrip() {
+export function NewDropStrip({ photos }: { photos: [HomepagePhoto?, HomepagePhoto?] }) {
+  const [photoA, photoB] = photos;
   const featured = CREATURES[0];
   const tee = getProduct(`${featured.slug}-tee`)!;
   const hoodie = getProduct(`${featured.slug}-hoodie`)!;
@@ -21,7 +23,16 @@ export function NewDropStrip() {
             <Link href="/shop" className="press inline-flex min-h-11 w-fit items-center rounded-md bg-ink px-3 py-2 text-[11px] font-black uppercase text-paper">Shop new</Link>
           </div>
 
-          <PlaceholderPhoto label="Kid wearing the new drop" className="min-h-[154px] rounded-none border-0 border-l border-ink/15 sm:min-h-[190px]" tone="var(--color-grit-yellow)" />
+          {photoA ? (
+            // eslint-disable-next-line @next/next/no-img-element -- static homepage photo, no next/image benefit
+            <img
+              src={photoA.src}
+              alt={photoA.alt}
+              className="min-h-[154px] w-full rounded-none border-0 border-l border-ink/15 object-cover sm:min-h-[190px]"
+            />
+          ) : (
+            <PlaceholderPhoto label="Kid wearing the new drop" className="min-h-[154px] rounded-none border-0 border-l border-ink/15 sm:min-h-[190px]" tone="var(--color-grit-yellow)" />
+          )}
 
           <GarmentArt
             category="tee"
@@ -39,7 +50,16 @@ export function NewDropStrip() {
             creatureName={hoodie.name}
             className="min-h-[154px] rounded-none border-l border-t border-ink/15 sm:min-h-[190px] sm:border-t-0"
           />
-          <PlaceholderPhoto label="Kid wearing a Curb Stamps tee" className="col-span-2 min-h-[170px] rounded-none border-0 border-t border-ink/15 sm:col-span-1 sm:min-h-[190px] sm:border-l sm:border-t-0" tone="var(--color-grit-blue)" />
+          {photoB ? (
+            // eslint-disable-next-line @next/next/no-img-element -- static homepage photo, no next/image benefit
+            <img
+              src={photoB.src}
+              alt={photoB.alt}
+              className="col-span-2 min-h-[170px] w-full rounded-none border-0 border-t border-ink/15 object-cover sm:col-span-1 sm:min-h-[190px] sm:border-l sm:border-t-0"
+            />
+          ) : (
+            <PlaceholderPhoto label="Kid wearing a Curb Stamps tee" className="col-span-2 min-h-[170px] rounded-none border-0 border-t border-ink/15 sm:col-span-1 sm:min-h-[190px] sm:border-l sm:border-t-0" tone="var(--color-grit-blue)" />
+          )}
         </div>
       </div>
     </section>
