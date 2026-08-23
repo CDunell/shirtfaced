@@ -95,6 +95,17 @@ jobs:
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/curbstamps-site/deploy/deploy-curbstamps-site.sh'
 
+      - name: Refresh Printify artwork and mockups
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/curbstamps-site
+          set -a
+          . ./.env
+          set +a
+          node scripts/refresh-printify-art.mjs
+          REMOTE
+
       - name: Verify curbstamps site on Oracle
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
