@@ -69,6 +69,22 @@ function WorldPanel({ panel, loopIndex }: { panel: number; loopIndex: number }) 
 
   return (
     <div className="relative h-[420px] w-[1041.25px] shrink-0 overflow-hidden sm:h-[500px] sm:w-[1239.58px]">
+      <svg aria-hidden="true" className="absolute h-0 w-0">
+        <defs>
+          <filter id="curb-creature-body" x="-30%" y="-60%" width="160%" height="220%" colorInterpolationFilters="sRGB">
+            <feMorphology in="SourceAlpha" operator="dilate" radius="82" result="outer" />
+            <feFlood floodColor="#1c1a17" result="black" />
+            <feComposite in="black" in2="outer" operator="in" result="blackBody" />
+            <feMorphology in="SourceAlpha" operator="dilate" radius="62" result="inner" />
+            <feFlood floodColor="#ffffff" result="white" />
+            <feComposite in="white" in2="inner" operator="in" result="whiteBody" />
+            <feMerge>
+              <feMergeNode in="blackBody" />
+              <feMergeNode in="whiteBody" />
+            </feMerge>
+          </filter>
+        </defs>
+      </svg>
       <img
         src={src}
         width={1428}
@@ -92,12 +108,21 @@ function WorldPanel({ panel, loopIndex }: { panel: number; loopIndex: number }) 
               "--creature-rotation": `${creature.rotate ?? 0}deg`,
             } as CSSProperties}
           >
-            <img
-              src={`/creatures/${creature.name}-icon.png`}
-              alt={loopIndex === 1 ? creature.name : ""}
-              className={`curb-world-sprite curb-motion-${creature.motion} h-auto w-full ${creature.flip ? "-scale-x-100" : ""}`}
-              draggable={false}
-            />
+            <div className={`curb-world-motion curb-motion-${creature.motion} ${creature.flip ? "-scale-x-100" : ""}`}>
+              <img
+                src={`/creatures/${creature.name}-icon.png`}
+                alt=""
+                aria-hidden="true"
+                className="curb-world-body absolute inset-0 h-auto w-full"
+                draggable={false}
+              />
+              <img
+                src={`/creatures/${creature.name}-icon.png`}
+                alt={loopIndex === 1 ? creature.name : ""}
+                className="curb-world-detail relative h-auto w-full"
+                draggable={false}
+              />
+            </div>
           </div>
         ))}
       </div>
