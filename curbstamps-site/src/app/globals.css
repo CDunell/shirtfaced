@@ -198,6 +198,36 @@ body {
   border-left: 1px solid rgb(28 26 23 / 0.12);
 }
 
+@keyframes world-cloud-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(18px); }
+}
+
+@keyframes world-paper-flutter {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  35% { transform: translate(8px, -5px) rotate(4deg); }
+  70% { transform: translate(15px, 0) rotate(-2deg); }
+}
+
+@keyframes world-puddle-breathe {
+  0%, 100% { transform: scaleX(1); }
+  50% { transform: scaleX(1.025); }
+}
+
+@keyframes world-cart-rattle {
+  0%, 82%, 100% { transform: rotate(0); }
+  87% { transform: rotate(-0.7deg); }
+  92% { transform: rotate(0.7deg); }
+}
+
+.world-cloud { animation: world-cloud-drift 7s ease-in-out infinite; }
+.world-cloud-late { animation-delay: -3.2s; }
+.world-weeds, .world-tree { transform-box: fill-box; transform-origin: bottom center; animation: wiggle 3.4s ease-in-out infinite; }
+.world-paper { transform-box: fill-box; transform-origin: center; animation: world-paper-flutter 3.2s ease-in-out infinite; }
+.world-puddle { transform-box: fill-box; transform-origin: center; animation: world-puddle-breathe 2.7s ease-in-out infinite; }
+.world-cart { transform-box: fill-box; transform-origin: bottom center; animation: world-cart-rattle 4.2s ease-in-out infinite; }
+.world-sign, .world-board { transform-box: fill-box; transform-origin: top center; animation: wiggle 4s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
