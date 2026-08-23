@@ -208,3 +208,65 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+
+/* The world creatures stay deliberately flat against the semi-real street.
+   The source icons remain untouched; this display treatment gives each one a
+   white body and a sturdy black mobile-readable edge. */
+.curb-world-creature {
+  z-index: 2;
+  transform: translate(-50%, -50%);
+  transform-origin: center bottom;
+}
+
+.curb-world-sprite {
+  display: block;
+  filter:
+    brightness(0)
+    invert(1)
+    drop-shadow(2px 0 0 var(--color-ink))
+    drop-shadow(-2px 0 0 var(--color-ink))
+    drop-shadow(0 2px 0 var(--color-ink))
+    drop-shadow(0 -2px 0 var(--color-ink));
+  animation-delay: var(--creature-delay);
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
+@keyframes curb-world-bob {
+  0%, 72%, 100% { transform: translateY(0) rotate(var(--creature-rotation)); }
+  78% { transform: translateY(-7px) rotate(calc(var(--creature-rotation) - 2deg)); }
+  84% { transform: translateY(0) rotate(calc(var(--creature-rotation) + 1deg)); }
+}
+
+@keyframes curb-world-peek {
+  0%, 62%, 100% { transform: translateY(15%) rotate(var(--creature-rotation)); }
+  70%, 88% { transform: translateY(0) rotate(var(--creature-rotation)); }
+  94% { transform: translateY(8%) rotate(var(--creature-rotation)); }
+}
+
+@keyframes curb-world-scuttle {
+  0%, 58%, 100% { transform: translateX(0) rotate(var(--creature-rotation)); }
+  65% { transform: translateX(-7px) rotate(calc(var(--creature-rotation) - 2deg)); }
+  73% { transform: translateX(6px) rotate(calc(var(--creature-rotation) + 2deg)); }
+  81% { transform: translateX(-2px) rotate(var(--creature-rotation)); }
+}
+
+@keyframes curb-world-wobble {
+  0%, 68%, 100% { transform: rotate(var(--creature-rotation)); }
+  75% { transform: rotate(calc(var(--creature-rotation) - 4deg)); }
+  82% { transform: rotate(calc(var(--creature-rotation) + 4deg)); }
+  89% { transform: rotate(var(--creature-rotation)); }
+}
+
+@keyframes curb-world-breathe {
+  0%, 64%, 100% { transform: scale(1) rotate(var(--creature-rotation)); }
+  74%, 88% { transform: scale(1.025, 0.975) rotate(var(--creature-rotation)); }
+  81% { transform: scale(0.99, 1.015) rotate(var(--creature-rotation)); }
+}
+
+.curb-motion-bob { animation: curb-world-bob 4.3s ease-in-out infinite; }
+.curb-motion-peek { animation: curb-world-peek 5.1s ease-in-out infinite; }
+.curb-motion-scuttle { animation: curb-world-scuttle 4.7s ease-in-out infinite; }
+.curb-motion-wobble { animation: curb-world-wobble 4s ease-in-out infinite; }
+.curb-motion-breathe { animation: curb-world-breathe 3.8s ease-in-out infinite; }
