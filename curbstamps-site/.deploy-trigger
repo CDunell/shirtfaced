@@ -1,3 +1,3 @@
 Redeploy Curb Stamps production from current main.
-Trigger: persist-5px-creature-strokes 2026-08-24
-Target: 59790d60c5f1a8af2884035a62e6a4cb481ce955
+Trigger: refresh-printify-5px-art 2026-08-24
+Target: 9a94c8da810d559c29d5cb98eabfd0a23988fc1c
