@@ -1,4 +1,4 @@
-import { products, CATEGORY_LABEL, type Category } from "@/lib/products";
+import { products, withPrintifyData, CATEGORY_LABEL, type Category } from "@/lib/products";
 import { CREATURES } from "@/lib/creatures";
 import { ProductCard } from "@/components/ProductCard";
 import { ShopFilters } from "./ShopFilters";
@@ -13,11 +13,12 @@ export default async function ShopPage({
   const { category, creature } = await searchParams;
   const active = category && category in CATEGORY_LABEL ? (category as Category) : "all";
   const activeCreature = creature ? CREATURES.find((item) => item.slug === creature) : undefined;
-  const list = products.filter((product) => {
+  const filtered = products.filter((product) => {
     const categoryMatches = active === "all" || product.category === active;
     const creatureMatches = !activeCreature || product.creature === activeCreature.slug;
     return categoryMatches && creatureMatches;
   });
+  const list = await Promise.all(filtered.map(withPrintifyData));
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-4 pb-16 sm:px-6">

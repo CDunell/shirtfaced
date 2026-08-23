@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getProduct, relatedProducts, products } from "@/lib/products";
+import { getProduct, relatedProducts, withPrintifyData, products } from "@/lib/products";
 import { getCreature } from "@/lib/creatures";
 import { ProductCard } from "@/components/ProductCard";
 import { ProductDetail } from "./ProductDetail";
@@ -17,10 +17,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const product = getProduct(slug);
-  if (!product) notFound();
-  const creature = getCreature(product.creature);
-  const related = relatedProducts(slug);
+  const rawProduct = getProduct(slug);
+  if (!rawProduct) notFound();
+  const creature = getCreature(rawProduct.creature);
+  const [product, related] = await Promise.all([
+    withPrintifyData(rawProduct),
+    Promise.all(relatedProducts(slug).map(withPrintifyData)),
+  ]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 pt-4 pb-16 sm:px-6">

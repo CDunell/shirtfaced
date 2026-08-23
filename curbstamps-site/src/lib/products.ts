@@ -1,4 +1,5 @@
 import { CREATURES, creatureLockup, getCreature } from "./creatures";
+import { getPrintifyTeeData } from "./printify";
 
 export type Category = "tee" | "hoodie" | "cap";
 
@@ -49,6 +50,11 @@ export type Product = {
   sizes: readonly string[];
   blurb: string;
   description: string;
+  /** Real Printify garment mockup, keyed by colourway name — only set once
+   * live data has been merged in via withPrintifyData(). Falls back to the
+   * GarmentArt SVG stand-in where absent (colour not built yet, or the
+   * Printify fetch failed/is unconfigured). */
+  photos?: Record<string, string>;
 };
 
 function sizesFor(category: Category): readonly string[] {
@@ -88,6 +94,34 @@ export const products: Product[] = buildProducts();
 
 export function getProduct(slug: string) {
   return products.find((p) => p.slug === slug);
+}
+
+/** Overlays live Printify data (real colours, sizes, price, mockup photos)
+ * onto a tee product where the creature has a built Printify catalog entry.
+ * Hoodie/cap, or a tee whose creature isn't built yet / whose fetch failed,
+ * pass through unchanged — still the honest GarmentArt stand-in. */
+export async function withPrintifyData(product: Product): Promise<Product> {
+  if (product.category !== "tee") return product;
+  const live = await getPrintifyTeeData(product.creature);
+  if (!live || live.colours.length === 0) return product;
+
+  const photos: Record<string, string> = {};
+  const colours: Colourway[] = live.colours.map((c) => {
+    if (c.image) photos[c.name] = c.image;
+    return { name: c.name, swatch: c.hex, body: c.hex };
+  });
+  const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL"];
+  const sizeTitles = Array.from(new Set(live.colours.flatMap((c) => c.sizes.map((s) => s.title)))).sort(
+    (a, b) => SIZE_ORDER.indexOf(a) - SIZE_ORDER.indexOf(b)
+  );
+
+  return {
+    ...product,
+    price: live.price || product.price,
+    colours,
+    sizes: sizeTitles.length > 0 ? sizeTitles : product.sizes,
+    photos,
+  };
 }
 
 export function productsForCreature(slug: string) {

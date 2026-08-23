@@ -43,6 +43,7 @@ export function GarmentArt({
   art,
   artDark,
   creatureName,
+  photoSrc,
   className,
 }: {
   category: Category;
@@ -50,8 +51,20 @@ export function GarmentArt({
   art: string;
   artDark: string;
   creatureName: string;
+  /** Real Printify garment mockup for this colourway, when the catalog has
+   * one. Takes over rendering entirely — no SVG stand-in underneath. */
+  photoSrc?: string;
   className?: string;
 }) {
+  if (photoSrc) {
+    return (
+      <div className={`relative overflow-hidden bg-paper-2 ${className ?? ""}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- external Printify-hosted mockup */}
+        <img src={photoSrc} alt={`${creatureName} — product photo`} className="absolute inset-0 h-full w-full object-cover" />
+      </div>
+    );
+  }
+
   const shape = SHAPES[category];
   const printBox =
     category === "cap"

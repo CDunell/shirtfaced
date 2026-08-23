@@ -13,6 +13,7 @@ export function ProductCard({ product }: { product: Product }) {
         art={product.art}
         artDark={product.artDark}
         creatureName={product.name}
+        photoSrc={product.photos?.[colour.name]}
         className="aspect-square rounded-card"
       />
       <p className="mt-3 text-[15px] font-extrabold">{product.name}</p>
