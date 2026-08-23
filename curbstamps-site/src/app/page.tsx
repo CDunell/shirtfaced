@@ -8,6 +8,7 @@ import { WeirdoMatch } from "@/components/home/WeirdoMatch";
 import { AdventureGrid } from "@/components/home/AdventureGrid";
 import { ParentsCorner } from "@/components/home/ParentsCorner";
 import { NewsletterJoin } from "@/components/home/NewsletterJoin";
+import { PlayInvitation } from "@/components/home/PlayInvitation";
 
 export default function HomePage() {
   return (
@@ -16,6 +17,7 @@ export default function HomePage() {
       <NewDropStrip />
       <TrustStrip />
       <CurbCrewScene />
+      <PlayInvitation />
       <FindWeirdo />
       <ShopByCategory />
       <WeirdoMatch />
