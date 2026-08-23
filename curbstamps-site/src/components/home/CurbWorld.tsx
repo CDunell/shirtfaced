@@ -18,7 +18,8 @@ export function CurbWorld() {
     if (!track) return;
     panelWidth.current = image.getBoundingClientRect().width;
     worldWidth.current = panelWidth.current * PANELS.length;
-    track.scrollLeft = panelWidth.current;
+    const mobileRevealOffset = window.innerWidth < 640 ? panelWidth.current * 0.42 : 0;
+    track.scrollLeft = panelWidth.current + mobileRevealOffset;
   }, []);
 
   const keepLooping = useCallback(() => {
@@ -104,7 +105,7 @@ export function CurbWorld() {
       <style jsx>{`
         .pip-drain {
           left: 57.65%;
-          top: 72.6%;
+          top: calc(72.6% + 5px);
           width: 14.45%;
           height: 9.4%;
         }
