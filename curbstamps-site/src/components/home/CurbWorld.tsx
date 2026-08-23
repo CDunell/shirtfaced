@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 const PANELS = Array.from({ length: 10 }, (_, index) =>
-  `/curbstamps/world/panels/${String(index + 1).padStart(2, "0")}.webp`,
+  `/curbstamps/world/panels/${String(index + 1).padStart(2, "0")}.webp?v=20260823b`,
 );
 const LOOP_PANELS = [PANELS[9], ...PANELS, PANELS[0]];
 
@@ -37,6 +37,11 @@ export function CurbWorld() {
       correcting.current = false;
     }
   }, []);
+
+  useEffect(() => {
+    const image = scroller.current?.querySelectorAll("img")[1];
+    if (image?.complete) centreWorld(image);
+  }, [centreWorld]);
 
   function move(direction: number) {
     scroller.current?.scrollBy({
