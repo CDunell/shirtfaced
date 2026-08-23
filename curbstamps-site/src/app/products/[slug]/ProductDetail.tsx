@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Product } from "@/lib/products";
 import { money } from "@/lib/money";
@@ -14,6 +14,18 @@ export function ProductDetail({ product }: { product: Product }) {
   const [size, setSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
   const { addLine } = useCart();
+
+  // Next.js doesn't remount this component or reset scroll when navigating
+  // between two products under the same [slug] route — without this, the
+  // previous product's colour/size selection and scroll position leak into
+  // the next one.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    setColour(product.colours[0]);
+    setSize(null);
+    setAdded(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product.slug]);
 
   function handleAdd() {
     if (!size) return;
