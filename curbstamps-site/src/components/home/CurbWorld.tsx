@@ -2,33 +2,36 @@
 
 import { useCallback, useRef } from "react";
 
-const WORLD_PARTS = [
-  "/curbstamps/world/curb-world-a.webp",
-  "/curbstamps/world/curb-world-b.webp",
-];
+const PANELS = Array.from({ length: 10 }, (_, index) =>
+  `/curbstamps/world/panels/${String(index + 1).padStart(2, "0")}.webp`,
+);
+const LOOP_PANELS = [PANELS[9], ...PANELS, PANELS[0]];
 
 export function CurbWorld() {
   const scroller = useRef<HTMLDivElement>(null);
   const worldWidth = useRef(0);
+  const panelWidth = useRef(0);
   const correcting = useRef(false);
 
   const centreWorld = useCallback((image: HTMLImageElement) => {
     const track = scroller.current;
     if (!track) return;
-    worldWidth.current = image.parentElement?.getBoundingClientRect().width ?? 0;
-    track.scrollLeft = worldWidth.current;
+    panelWidth.current = image.getBoundingClientRect().width;
+    worldWidth.current = panelWidth.current * PANELS.length;
+    track.scrollLeft = panelWidth.current;
   }, []);
 
   const keepLooping = useCallback(() => {
     const track = scroller.current;
     const width = worldWidth.current;
-    if (!track || !width || correcting.current) return;
+    const panel = panelWidth.current;
+    if (!track || !width || !panel || correcting.current) return;
 
-    if (track.scrollLeft < width * 0.5) {
+    if (track.scrollLeft < panel * 0.5) {
       correcting.current = true;
       track.scrollLeft += width;
       correcting.current = false;
-    } else if (track.scrollLeft > width * 1.5) {
+    } else if (track.scrollLeft > panel + width - track.clientWidth * 0.5) {
       correcting.current = true;
       track.scrollLeft -= width;
       correcting.current = false;
@@ -60,21 +63,18 @@ export function CurbWorld() {
         aria-label="Explore the illustrated Curb world"
       >
         <div className="flex w-max">
-          {[0, 1, 2].map((copy) => (
-            <div key={copy} className="flex w-max shrink-0" aria-hidden={copy === 1 ? undefined : true}>
-              {WORLD_PARTS.map((src, part) => (
-                <img
-                  key={src}
-                  src={src}
-                  width={9664}
-                  height={768}
-                  alt={copy === 1 && part === 0 ? "A very long illustrated curb filled with cracks, drains, weeds and discarded street objects" : ""}
-                  draggable={false}
-                  onLoad={copy === 1 && part === 1 ? (event) => centreWorld(event.currentTarget) : undefined}
-                  className="h-[420px] w-auto max-w-none shrink-0 select-none sm:h-[500px]"
-                />
-              ))}
-            </div>
+          {LOOP_PANELS.map((src, index) => (
+            <img
+              key={`${src}-${index}`}
+              src={src}
+              width={1536}
+              height={576}
+              alt={index === 1 ? "A very long illustrated curb filled with cracks, drains, weeds and discarded street objects" : ""}
+              aria-hidden={index === 1 ? undefined : true}
+              draggable={false}
+              onLoad={index === 1 ? (event) => centreWorld(event.currentTarget) : undefined}
+              className="h-[420px] w-auto max-w-none shrink-0 select-none sm:h-[500px]"
+            />
           ))}
         </div>
       </div>
