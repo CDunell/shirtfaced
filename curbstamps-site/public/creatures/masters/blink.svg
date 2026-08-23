@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 500">
   <defs><mask id="blink-cleanup"><rect width="1200" height="500" fill="white"/><path d="M300 90H400V185H300Z M765 70H855V135H765Z" fill="black"/></mask></defs>
-  <g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" mask="url(#blink-cleanup)">
+  <g fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" mask="url(#blink-cleanup)">
     <path d="M 360.33 138.04 L 360.33 136.41"/>
     <path d="M 360.33 138.04 L 363.59 136.41"/>
     <path d="M 360.33 138.04 L 358.70 139.67"/>
@@ -116,5 +116,5 @@
     <path d="M 381.52 123.37 L 386.41 120.11"/>
     <path d="M 397.83 214.67 Q 391.30 208.15 385.60 206.52 Q 379.89 204.89 371.74 206.52 Q 363.59 208.15 357.88 215.49 Q 352.17 222.83 351.36 226.90 Q 350.54 230.98 352.99 238.32 Q 355.43 245.65 359.51 249.73 Q 363.59 253.80 366.85 254.62 Q 370.11 255.43 377.45 255.43 Q 384.78 255.43 390.49 252.99 Q 396.20 250.54 399.46 244.02 Q 402.72 237.50 402.72 230.98 Q 402.72 224.46 397.83 214.67"/>
   </g>
-  <path d="M298 183 Q320 153 342 137 Q365 116 403 96 M760 74 Q812 89 855 135" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M298 183 Q320 153 342 137 Q365 116 403 96 M760 74 Q812 89 855 135" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

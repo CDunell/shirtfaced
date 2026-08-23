@@ -27,7 +27,7 @@ SHORT_NAME_TRACKING = 13
 BRAND_SIZE = 29
 BRAND_BASELINE = 515
 BRAND_TRACKING = 11
-CREATURE_STROKE_WIDTH = 5
+CREATURE_STROKE_WIDTH = 7
 
 
 def outlined_text(font: TTFont, text: str, size: float, baseline: float, tracking: float) -> str:
