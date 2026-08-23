@@ -39,7 +39,7 @@ export function CurbWorld() {
   }, []);
 
   useEffect(() => {
-    const image = scroller.current?.querySelectorAll("img")[1];
+    const image = scroller.current?.querySelectorAll<HTMLImageElement>("[data-world-panel]")[1];
     if (image?.complete) centreWorld(image);
   }, [centreWorld]);
 
@@ -68,21 +68,67 @@ export function CurbWorld() {
         aria-label="Explore the illustrated Curb world"
       >
         <div className="flex w-max">
-          {LOOP_PANELS.map((src, index) => (
-            <img
-              key={`${src}-${index}`}
-              src={src}
-              width={1428}
-              height={576}
-              alt={index === 1 ? "A very long illustrated curb filled with cracks, drains, weeds and discarded street objects" : ""}
-              aria-hidden={index === 1 ? undefined : true}
-              draggable={false}
-              onLoad={index === 1 ? (event) => centreWorld(event.currentTarget) : undefined}
-              className="h-[420px] w-auto max-w-none shrink-0 select-none sm:h-[500px]"
-            />
-          ))}
+          {LOOP_PANELS.map((src, index) => {
+            const isPanelOne = index === 1 || index === LOOP_PANELS.length - 1;
+
+            return (
+              <div key={`${src}-${index}`} className="relative h-[420px] aspect-[1428/576] shrink-0 sm:h-[500px]">
+                <img
+                  data-world-panel
+                  src={src}
+                  width={1428}
+                  height={576}
+                  alt={index === 1 ? "A very long illustrated curb filled with cracks, drains, weeds and discarded street objects" : ""}
+                  aria-hidden={index === 1 ? undefined : true}
+                  draggable={false}
+                  onLoad={index === 1 ? (event) => centreWorld(event.currentTarget) : undefined}
+                  className="absolute inset-0 h-full w-full select-none"
+                />
+
+                {isPanelOne && (
+                  <div className="pip-drain absolute overflow-hidden" aria-hidden="true">
+                    <img
+                      src="/curbstamps/world/creatures/pip.svg?v=20260823c"
+                      alt=""
+                      draggable={false}
+                      className="pip-drain-creature absolute h-full w-auto max-w-none select-none"
+                    />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
+
+      <style jsx>{`
+        .pip-drain {
+          left: 57.65%;
+          top: 72.6%;
+          width: 14.45%;
+          height: 9.4%;
+        }
+
+        .pip-drain-creature {
+          left: 0;
+          top: 0;
+          animation: pip-peek 7.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+          will-change: transform;
+        }
+
+        @keyframes pip-peek {
+          0%, 18% { transform: translateX(112%); }
+          38%, 62% { transform: translateX(8%); }
+          82%, 100% { transform: translateX(112%); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .pip-drain-creature {
+            animation: none;
+            transform: translateX(8%);
+          }
+        }
+      `}</style>
     </div>
   );
 }
