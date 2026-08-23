@@ -96,6 +96,17 @@ export function CurbWorld() {
                     />
                   </div>
                 )}
+
+                {isPanelOne && (
+                  <div className="bub-wall-hole absolute overflow-hidden" aria-hidden="true">
+                    <img
+                      src="/curbstamps/world/creatures/bub.svg?v=20260823c"
+                      alt=""
+                      draggable={false}
+                      className="bub-wall-creature h-full w-full object-contain select-none"
+                    />
+                  </div>
+                )}
               </div>
             );
           })}
@@ -117,6 +128,24 @@ export function CurbWorld() {
           will-change: transform;
         }
 
+        .bub-wall-hole {
+          left: 66.5%;
+          top: 44%;
+          width: 4.65%;
+          height: 6.8%;
+        }
+
+        .bub-wall-creature {
+          animation: bub-peek 8.6s cubic-bezier(0.45, 0, 0.55, 1) -2.4s infinite;
+          will-change: transform;
+        }
+
+        @keyframes bub-peek {
+          0%, 22% { transform: translateX(112%); }
+          42%, 64% { transform: translateX(2%); }
+          84%, 100% { transform: translateX(112%); }
+        }
+
         @keyframes pip-peek {
           0%, 18% { transform: translateX(112%); }
           38%, 62% { transform: translateX(8%); }
@@ -127,6 +156,11 @@ export function CurbWorld() {
           .pip-drain-creature {
             animation: none;
             transform: translateX(8%);
+          }
+
+          .bub-wall-creature {
+            animation: none;
+            transform: translateX(2%);
           }
         }
       `}</style>
