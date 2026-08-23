@@ -9,6 +9,13 @@ set -euo pipefail
 cd /home/ubuntu/curbstamps-site
 
 npm ci
+# Next.js reuses .next/cache across builds by default for incremental
+# builds — that's exactly what makes ISR/static route output (including
+# the homepage) survive indefinitely across deploys unless cleared here.
+# Confirmed live: the homepage kept serving a stale cached render
+# referencing an old creature asset version well after the underlying
+# files had already been updated and redeployed.
+rm -rf .next
 npm run build
 sudo systemctl restart curbstamps-site
 sudo systemctl --no-pager status curbstamps-site
