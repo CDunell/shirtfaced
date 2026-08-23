@@ -130,7 +130,7 @@ export function CurbWorld() {
 
         .bub-wall-hole {
           left: 66.5%;
-          top: 44%;
+          top: 47.2%;
           width: 4.65%;
           height: 6.8%;
         }
