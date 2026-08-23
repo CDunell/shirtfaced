@@ -2,7 +2,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import sharp from "../../curbstamps-site/node_modules/sharp/lib/index.js";
+import sharp from "sharp";
 
 const root = path.resolve(import.meta.dirname, "../..");
 const creatures = path.join(root, "curbstamps-site/public/creatures");
