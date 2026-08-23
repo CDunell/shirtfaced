@@ -24,41 +24,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Thicken creature SVG line art
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          roots = [
-              Path("curbstamps-site/public/creatures/masters"),
-              Path("curbstamps-site/public/creatures/lockups"),
-          ]
-          changed = 0
-          for root in roots:
-              for path in root.glob("*.svg"):
-                  if path.name.endswith("-qa-vector.svg"):
-                      continue
-                  text = path.read_text()
-                  updated = text.replace('stroke-width="4"', 'stroke-width="5"')
-                  if updated != text:
-                      path.write_text(updated)
-                      changed += 1
-
-          print(f"Thickened {changed} creature SVG assets from 4px to 5px")
-          PY
-
-      - name: Persist thickened creature SVG assets
-        run: |
-          if git diff --quiet -- curbstamps-site/public/creatures/masters curbstamps-site/public/creatures/lockups; then
-            echo "Creature SVG assets already use 5px strokes"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add curbstamps-site/public/creatures/masters curbstamps-site/public/creatures/lockups
-            git commit -m "fix(curbstamps): persist 5px creature strokes"
-            git push origin HEAD:main
-          fi
-
       - name: Set up deploy key
         run: |
           mkdir -p ~/.ssh
@@ -117,6 +82,6 @@ jobs:
           printf '%s' "$html" | grep -qi "the whole curb crew"
           master=$(curl -fsS http://127.0.0.1:4100/creatures/masters/blip.svg)
           lockup=$(curl -fsS http://127.0.0.1:4100/creatures/lockups/blip-dark.svg)
-          printf '%s' "$master" | grep -q 'stroke-width="5"'
-          printf '%s' "$lockup" | grep -q 'stroke-width="5"'
+          printf '%s' "$master" | grep -q 'stroke-width="7"'
+          printf '%s' "$lockup" | grep -q 'stroke-width="7"'
           REMOTE
