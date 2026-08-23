@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useCallback, useEffect, useRef } from "react";
 
 const PANELS = Array.from({ length: 10 }, (_, index) =>
@@ -89,7 +90,7 @@ function WorldPanel({ panel, loopIndex }: { panel: number; loopIndex: number }) 
               width: `${creature.width}%`,
               "--creature-delay": `${creature.delay}s`,
               "--creature-rotation": `${creature.rotate ?? 0}deg`,
-            } as React.CSSProperties}
+            } as CSSProperties}
           >
             <img
               src={`/creatures/${creature.name}-icon.png`}
