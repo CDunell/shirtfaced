@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { CREATURES, creatureMaster, UI_ACCENTS } from "@/lib/creatures";
+import { PICTURE_SCENES, PictureScene, type PictureSceneId } from "./PictureScene";
 
 type PlacedStamp = {
   id: number;
@@ -15,12 +16,12 @@ type PlacedStamp = {
 
 const PLAY_CREATURES = CREATURES.slice(0, 12);
 const SOUND_CREATURES = [
-  { slug: "blip", word: "bip!", frequency: 310, type: "sine" as OscillatorType },
-  { slug: "plod", word: "plod.", frequency: 120, type: "triangle" as OscillatorType },
-  { slug: "bub", word: "bwoop!", frequency: 190, type: "sine" as OscillatorType },
-  { slug: "zot", word: "zzip!", frequency: 620, type: "square" as OscillatorType },
-  { slug: "fizz", word: "bzzzz!", frequency: 240, type: "sawtooth" as OscillatorType },
-  { slug: "nib", word: "nip nip!", frequency: 430, type: "triangle" as OscillatorType },
+  { slug: "blip", word: "bip!", frequency: 310, type: "sine" as OscillatorType, pattern: "single" as const },
+  { slug: "plod", word: "plod plod!", frequency: 205, type: "triangle" as OscillatorType, pattern: "plod" as const },
+  { slug: "bub", word: "bwoop!", frequency: 190, type: "sine" as OscillatorType, pattern: "single" as const },
+  { slug: "zot", word: "zzip!", frequency: 620, type: "square" as OscillatorType, pattern: "single" as const },
+  { slug: "fizz", word: "bzzzz!", frequency: 240, type: "sawtooth" as OscillatorType, pattern: "single" as const },
+  { slug: "nib", word: "nip nip!", frequency: 430, type: "triangle" as OscillatorType, pattern: "double" as const },
 ];
 
 const MISSIONS = [
@@ -34,13 +35,13 @@ const MISSIONS = [
   "Wiggle like Wisp without moving your feet.",
 ];
 
-function playCreatureSound(frequency: number, type: OscillatorType, double = false) {
+function playCreatureSound(frequency: number, type: OscillatorType, pattern: "single" | "double" | "plod" = "single") {
   const AudioContextClass = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!AudioContextClass) return;
 
   const context = new AudioContextClass();
   const start = context.currentTime;
-  const notes = double ? [0, 0.13] : [0];
+  const notes = pattern === "plod" ? [0, 0.2] : pattern === "double" ? [0, 0.13] : [0];
   const compressor = context.createDynamicsCompressor();
   compressor.threshold.setValueAtTime(-18, start);
   compressor.knee.setValueAtTime(12, start);
@@ -49,12 +50,13 @@ function playCreatureSound(frequency: number, type: OscillatorType, double = fal
   compressor.release.setValueAtTime(0.18, start);
   compressor.connect(context.destination);
 
-  notes.forEach((offset) => {
+  notes.forEach((offset, index) => {
     const oscillator = context.createOscillator();
     const gain = context.createGain();
     oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, start + offset);
-    oscillator.frequency.exponentialRampToValueAtTime(Math.max(70, frequency * 0.72), start + offset + 0.16);
+    const noteFrequency = pattern === "plod" ? frequency - index * 35 : frequency;
+    oscillator.frequency.setValueAtTime(noteFrequency, start + offset);
+    oscillator.frequency.exponentialRampToValueAtTime(Math.max(90, noteFrequency * 0.62), start + offset + 0.18);
     gain.gain.setValueAtTime(0.0001, start + offset);
     gain.gain.exponentialRampToValueAtTime(0.38, start + offset + 0.015);
     gain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.24);
@@ -62,6 +64,19 @@ function playCreatureSound(frequency: number, type: OscillatorType, double = fal
     gain.connect(compressor);
     oscillator.start(start + offset);
     oscillator.stop(start + offset + 0.25);
+
+    if (pattern === "plod") {
+      const knock = context.createOscillator();
+      const knockGain = context.createGain();
+      knock.type = "square";
+      knock.frequency.setValueAtTime(520 - index * 70, start + offset);
+      knockGain.gain.setValueAtTime(0.18, start + offset);
+      knockGain.gain.exponentialRampToValueAtTime(0.0001, start + offset + 0.055);
+      knock.connect(knockGain);
+      knockGain.connect(compressor);
+      knock.start(start + offset);
+      knock.stop(start + offset + 0.06);
+    }
   });
 
   window.setTimeout(() => void context.close(), 500);
@@ -71,6 +86,7 @@ export function PlayOnTheCurb() {
   const boardRef = useRef<HTMLDivElement>(null);
   const stampId = useRef(0);
   const [selectedSlug, setSelectedSlug] = useState(PLAY_CREATURES[0].slug);
+  const [scene, setScene] = useState<PictureSceneId>("curb");
   const [stamps, setStamps] = useState<PlacedStamp[]>([]);
   const [heard, setHeard] = useState<string | null>(null);
   const [missionShift, setMissionShift] = useState(0);
@@ -110,7 +126,45 @@ export function PlayOnTheCurb() {
           <h2 id="make-picture-title" className="display max-w-3xl text-[14vw] uppercase sm:text-[72px]">make a picture!</h2>
           <p className="mt-3 max-w-xl text-[16px] font-bold sm:text-[18px]">Pick a weirdo, then tap anywhere on the curb.</p>
 
-          <div className="no-scrollbar -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0" aria-label="Choose a creature stamp">
+          <div className="mt-6 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.15em]">1. Pick a place</p>
+              <h3 className="display mt-1 text-[25px] uppercase sm:text-[32px]">where are we?</h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setScene(PICTURE_SCENES[(PICTURE_SCENES.findIndex((item) => item.id === scene) + 1) % PICTURE_SCENES.length].id)}
+              className="press min-h-11 shrink-0 rounded-full border-2 border-ink bg-cream px-4 text-[12px] font-black uppercase"
+            >
+              Surprise me ↻
+            </button>
+          </div>
+
+          <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:grid sm:grid-cols-5 sm:px-0" aria-label="Choose a picture background">
+            {PICTURE_SCENES.map((item) => {
+              const active = item.id === scene;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setScene(item.id)}
+                  className={`press min-h-[76px] min-w-[132px] rounded-[18px] border-2 border-ink p-3 text-left ${active ? "translate-y-[-3px] shadow-[0_5px_0_#1c1a17]" : "bg-cream"}`}
+                  style={active ? { backgroundColor: item.colour } : undefined}
+                >
+                  <span className="mb-2 block h-3 w-10 rounded-full border border-ink" style={{ backgroundColor: item.colour }} />
+                  <span className="display block text-[15px] uppercase leading-[0.95]">{item.name}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="mt-6">
+            <p className="text-[10px] font-black uppercase tracking-[0.15em]">2. Pick a weirdo</p>
+            <h3 className="display mt-1 text-[25px] uppercase sm:text-[32px]">who lives here?</h3>
+          </div>
+
+          <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0" aria-label="Choose a creature stamp">
             {PLAY_CREATURES.map((creature, index) => {
               const active = creature.slug === selected.slug;
               return (
@@ -137,9 +191,7 @@ export function PlayOnTheCurb() {
             role="application"
             aria-label={`Picture board. Tap to place ${selected.name}.`}
           >
-            <div className="absolute inset-x-0 bottom-0 h-[32%] bg-grit-blue/35" aria-hidden="true" />
-            <div className="absolute inset-x-0 bottom-[32%] border-t-2 border-ink" aria-hidden="true" />
-            <div className="pointer-events-none absolute left-[8%] top-[10%] h-14 w-14 rounded-full bg-grit-pink sm:h-20 sm:w-20" aria-hidden="true" />
+            <PictureScene scene={scene} />
             {stamps.map((stamp) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -179,7 +231,7 @@ export function PlayOnTheCurb() {
                   type="button"
                   onClick={() => {
                     setHeard(sound.slug);
-                    playCreatureSound(sound.frequency, sound.type, sound.slug === "nib");
+                    playCreatureSound(sound.frequency, sound.type, sound.pattern);
                     window.setTimeout(() => setHeard((current) => current === sound.slug ? null : current), 450);
                   }}
                   className={`press min-h-[150px] rounded-[22px] border-2 border-cream p-3 text-ink ${active ? "scale-[0.97]" : ""}`}
