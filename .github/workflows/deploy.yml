@@ -10,9 +10,14 @@ on:
       - "*.md"
       # Curb Stamps has its own Oracle deploy workflow and concurrency group.
       # Never rebuild the Shirtfaced stack for an isolated Curb Stamps change.
+      # Confirmed gap: docs/curbstamps/** and the curb workflow file itself
+      # were NOT covered here, so edits to either still triggered a full
+      # Shirtfaced deploy alongside Deploy Curb Stamps.
       - "curbstamps-site/**"
       - "curbstamps-admin/**"
       - "scripts/curbstamps/**"
+      - "docs/curbstamps/**"
+      - ".github/workflows/deploy-curbstamps.yml"
 
 jobs:
   deploy:
