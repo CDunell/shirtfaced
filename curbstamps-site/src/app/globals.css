@@ -291,3 +291,110 @@ body {
 .curb-drain-foreground {
   clip-path: polygon(54% 61%, 76% 61%, 76% 77%, 54% 77%);
 }
+
+
+/* Hidden world-lab study: Pip is rigged to one physical stormwater pipe.
+   Nothing here is used by the production homepage. */
+.pip-lab-frame {
+  position: relative;
+  height: 430px;
+  overflow: hidden;
+  border: 2px solid var(--color-ink);
+  border-radius: 22px;
+  background: var(--color-ink);
+}
+
+.pip-lab-world {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 1066px;
+  height: 430px;
+  transform: translateX(-80%);
+}
+
+.pip-lab-creature {
+  position: absolute;
+  left: 67.8%;
+  top: 64.5%;
+  z-index: 2;
+  width: 20%;
+  overflow: hidden;
+  transform-origin: right center;
+}
+
+.pip-lab-rig {
+  position: relative;
+  transform-origin: right center;
+  animation: pip-pipe-cycle 11s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+.pip-lab-eyelid {
+  position: absolute;
+  left: 11.2%;
+  top: 33%;
+  width: 2.5%;
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background: var(--color-ink);
+  opacity: 0;
+  animation: pip-pipe-blink 11s linear infinite;
+}
+
+.pip-lab-curb-mask {
+  z-index: 3;
+  clip-path: polygon(55% 57%, 100% 57%, 100% 69.5%, 55% 69.5%);
+}
+
+.pip-lab-pipe-mask {
+  z-index: 4;
+  clip-path: polygon(78.2% 65%, 84.5% 65%, 84.5% 84%, 78.2% 84%);
+}
+
+@keyframes pip-pipe-cycle {
+  0%, 17% {
+    transform: translateX(78%) translateY(9%) scaleX(0.88) skewY(0deg);
+  }
+  25% {
+    transform: translateX(55%) translateY(5%) scaleX(0.93) skewY(-1deg);
+  }
+  34% {
+    transform: translateX(30%) translateY(1%) scaleX(0.98) skewY(1deg);
+  }
+  44%, 65% {
+    transform: translateX(2%) translateY(0) scaleX(1) skewY(0deg);
+  }
+  52% {
+    transform: translateX(-1%) translateY(-1%) scaleX(1.01) skewY(-0.6deg);
+  }
+  73% {
+    transform: translateX(27%) translateY(2%) scaleX(0.97) skewY(1deg);
+  }
+  82% {
+    transform: translateX(54%) translateY(5%) scaleX(0.92) skewY(-1deg);
+  }
+  91%, 100% {
+    transform: translateX(78%) translateY(9%) scaleX(0.88) skewY(0deg);
+  }
+}
+
+@keyframes pip-pipe-blink {
+  0%, 47%, 49%, 56%, 58%, 100% { opacity: 0; transform: scaleY(0.1); }
+  48%, 57% { opacity: 1; transform: scaleY(1); }
+}
+
+@media (min-width: 900px) {
+  .pip-lab-frame { height: 500px; }
+  .pip-lab-world {
+    width: 1239.58px;
+    height: 500px;
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pip-lab-rig {
+    transform: translateX(2%);
+  }
+}
