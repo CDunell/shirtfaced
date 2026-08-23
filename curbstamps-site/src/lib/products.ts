@@ -1,4 +1,4 @@
-import { CREATURES, getCreature } from "./creatures";
+import { CREATURES, creatureLockup, getCreature } from "./creatures";
 
 export type Category = "tee" | "hoodie" | "cap";
 
@@ -72,8 +72,8 @@ function buildProducts(): Product[] {
         category,
         name: `${creature.name} ${CATEGORY_LABEL[category]}`,
         price: CATEGORY_PRICE[category],
-        art: `/creatures/lockups/${creature.slug}-light.svg`,
-        artDark: `/creatures/lockups/${creature.slug}-dark.svg`,
+        art: creatureLockup(creature.slug, "light"),
+        artDark: creatureLockup(creature.slug, "dark"),
         colours,
         sizes: sizesFor(category),
         blurb: creature.blurb,

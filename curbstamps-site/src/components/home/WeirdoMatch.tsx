@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { getCreature, uiAccentFor } from "@/lib/creatures";
+import { creatureMaster, getCreature, uiAccentFor } from "@/lib/creatures";
 
 const OPTIONS = [
   { key: "animals", label: "LOVE ANIMALS", emoji: "🐾", matches: ["grit", "snu", "squib"] },
@@ -53,7 +53,7 @@ export function WeirdoMatch() {
               return (
                 <Link key={slug} href={`/products/${slug}-tee`} className="press rounded-[14px] bg-paper p-2 text-center text-ink">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`/creatures/masters/${slug}.svg`} alt={`${creature.name} creature`} className="mx-auto h-16 w-full object-contain brightness-0" />
+                  <img src={creatureMaster(slug)} alt={`${creature.name} creature`} className="mx-auto h-16 w-full object-contain brightness-0" />
                   <span className="text-[11px] font-black uppercase">{creature.name}</span>
                 </Link>
               );

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CREATURES } from "@/lib/creatures";
+import { CREATURES, creatureMaster } from "@/lib/creatures";
 
 export function NewsletterJoin() {
   const [email, setEmail] = useState("");
@@ -23,7 +23,7 @@ export function NewsletterJoin() {
             <p className="mt-3 max-w-[29ch] text-[12px] text-paper/70 sm:text-[14px]">Be the first to see new drops and special stuff.</p>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/creatures/masters/blip.svg" alt="" aria-hidden="true" className="h-24 w-28 object-contain brightness-0 invert sm:h-32 sm:w-40" />
+          <img src={creatureMaster("blip")} alt="" aria-hidden="true" className="h-24 w-28 object-contain brightness-0 invert sm:h-32 sm:w-40" />
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 flex overflow-hidden rounded-[8px] bg-paper">
@@ -50,7 +50,7 @@ export function NewsletterJoin() {
         <div className="mt-4 grid grid-cols-6 gap-x-2 gap-y-4 sm:grid-cols-12">
           {CREATURES.map((c) => (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={c.slug} src={`/creatures/masters/${c.slug}.svg`} alt="" aria-hidden="true" className="h-8 w-full object-contain brightness-0 invert opacity-85 sm:h-9" />
+            <img key={c.slug} src={creatureMaster(c.slug)} alt="" aria-hidden="true" className="h-8 w-full object-contain brightness-0 invert opacity-85 sm:h-9" />
           ))}
         </div>
         <div className="mt-6 flex items-center justify-between gap-4">

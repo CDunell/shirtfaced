@@ -18,6 +18,18 @@ export type Creature = {
   accent: { name: string; hex: string };
 };
 
+/** Bump whenever creature artwork changes so mobile browsers cannot retain
+ * superseded SVGs under the previous URL. */
+export const CREATURE_ASSET_VERSION = "20260823c";
+
+export function creatureMaster(slug: string) {
+  return `/creatures/masters/${slug}.svg?v=${CREATURE_ASSET_VERSION}`;
+}
+
+export function creatureLockup(slug: string, tone: "light" | "dark") {
+  return `/creatures/lockups/${slug}-${tone}.svg?v=${CREATURE_ASSET_VERSION}`;
+}
+
 export const CREATURES: Creature[] = [
   {
     slug: "blip",

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { CREATURES, uiAccentFor } from "@/lib/creatures";
+import { CREATURES, creatureMaster, uiAccentFor } from "@/lib/creatures";
 
 export function HeroWeirdo() {
   const [activeSlug, setActiveSlug] = useState(CREATURES[0].slug);
@@ -38,7 +38,7 @@ export function HeroWeirdo() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               key={active.slug}
-              src={`/creatures/masters/${active.slug}.svg`}
+              src={creatureMaster(active.slug)}
               alt={`${active.name} creature`}
               className="fade-rise max-h-[132px] w-full max-w-[180px] object-contain brightness-0 invert sm:max-h-[225px] sm:max-w-[320px]"
             />
@@ -63,7 +63,7 @@ export function HeroWeirdo() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/creatures/masters/${c.slug}.svg`}
+                  src={creatureMaster(c.slug)}
                   alt=""
                   aria-hidden="true"
                   className="h-7 w-11 object-contain opacity-90 brightness-0"

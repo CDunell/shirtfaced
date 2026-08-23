@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CREATURES, uiAccentFor } from "@/lib/creatures";
+import { CREATURES, creatureMaster, uiAccentFor } from "@/lib/creatures";
 
 const START = [0, 18, 31];
 function nextRound(previous: number[]) {
@@ -29,7 +29,7 @@ export function FindWeirdo() {
             const creature = CREATURES[index], selected = picked === index, correct = index === round[0];
             return <button key={creature.slug} type="button" onClick={() => setPicked(index)} disabled={won} aria-label={`Choose ${creature.name}`} className={`press flex min-h-[150px] flex-col items-center justify-between rounded-[22px] border-2 p-3 text-ink transition sm:min-h-[190px] sm:p-5 ${selected && correct ? "border-grit-green bg-grit-green" : selected ? "border-[#ff6f9c] bg-[#ff6f9c]" : "border-paper bg-paper"}`}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/creatures/masters/${creature.slug}.svg`} alt="" className="h-24 w-full object-contain brightness-0 sm:h-32" />
+              <img src={creatureMaster(creature.slug)} alt="" className="h-24 w-full object-contain brightness-0 sm:h-32" />
               <span className="display text-[18px] uppercase leading-none sm:text-[22px]">{picked === null ? "?" : creature.name}</span>
             </button>;
           })}

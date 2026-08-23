@@ -9,21 +9,13 @@ import { CurbStampsLogoTransparent } from "./CurbStampsLogoTransparent";
 const NAV = [
   { href: "/shop", label: "Shop" },
   { href: "/#crew", label: "Weirdos" },
-  { href: "/shop", label: "New" },
+  { href: "/play", label: "Play" },
   { href: "/about", label: "About" },
 ];
 
 export function Header() {
   const { itemCount, addTick, hydrated } = useCart();
-  const [pop, setPop] = useState(false);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (addTick === 0) return;
-    setPop(true);
-    const t = setTimeout(() => setPop(false), 280);
-    return () => clearTimeout(t);
-  }, [addTick]);
 
   useEffect(() => {
     if (!open) return;
@@ -72,7 +64,7 @@ export function Header() {
           >
             <IconCart className="h-5 w-5" />
             {hydrated && itemCount > 0 && (
-              <span className={`absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-grit-pink px-1 text-[11px] font-extrabold text-ink ${pop ? "badge-pop" : ""}`}>
+              <span key={addTick} className={`absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-grit-pink px-1 text-[11px] font-extrabold text-ink ${addTick > 0 ? "badge-pop" : ""}`}>
                 {itemCount}
               </span>
             )}
