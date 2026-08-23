@@ -211,26 +211,28 @@ body {
 
 
 /* The world creatures stay deliberately flat against the semi-real street.
-   The source icons remain untouched; this display treatment gives each one a
-   white body and a sturdy black mobile-readable edge. */
+   A generated display underlay closes the supplied line art into a crisp white
+   body with a black perimeter; the untouched source is rendered above it for
+   the creature's original black details. */
 .curb-world-creature {
   z-index: 2;
   transform: translate(-50%, -50%);
   transform-origin: center bottom;
 }
 
-.curb-world-sprite {
-  display: block;
-  filter:
-    brightness(0)
-    invert(1)
-    drop-shadow(2px 0 0 var(--color-ink))
-    drop-shadow(-2px 0 0 var(--color-ink))
-    drop-shadow(0 2px 0 var(--color-ink))
-    drop-shadow(0 -2px 0 var(--color-ink));
-  animation-delay: var(--creature-delay);
+.curb-world-motion {
+  position: relative;
   transform-origin: center bottom;
+  animation-delay: var(--creature-delay);
   will-change: transform;
+}
+
+.curb-world-body {
+  filter: url(#curb-creature-body);
+}
+
+.curb-world-detail {
+  filter: brightness(0);
 }
 
 @keyframes curb-world-bob {
