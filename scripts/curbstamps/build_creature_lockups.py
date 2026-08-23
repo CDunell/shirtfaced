@@ -27,6 +27,7 @@ SHORT_NAME_TRACKING = 13
 BRAND_SIZE = 29
 BRAND_BASELINE = 515
 BRAND_TRACKING = 11
+CREATURE_STROKE_WIDTH = 5
 
 
 def outlined_text(font: TTFont, text: str, size: float, baseline: float, tracking: float) -> str:
@@ -56,7 +57,8 @@ def creature_group(master: Path, colour: str) -> str:
     match = re.search(r"(<g\b.*?</g>)", svg, flags=re.DOTALL)
     if not match:
         raise ValueError(f"No creature group in {master}")
-    return match.group(1).replace('stroke="currentColor"', f'stroke="{colour}"')
+    group = match.group(1).replace('stroke="currentColor"', f'stroke="{colour}"')
+    return re.sub(r'stroke-width="[^"]+"', f'stroke-width="{CREATURE_STROKE_WIDTH}"', group)
 
 
 def build_one(font: TTFont, master: Path, colour: str, suffix: str) -> Path:
