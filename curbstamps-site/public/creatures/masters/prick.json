@@ -14,6 +14,7 @@
     211.875,
     40.0
   ],
-  "pathCount": 13,
-  "removedLowCropFragments": 4
+  "pathCount": 14,
+  "removedLowCropFragments": 4,
+  "manualRepair": "restored clipped lower outline"
 }
