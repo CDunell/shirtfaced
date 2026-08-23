@@ -22,6 +22,17 @@ export const metadata: Metadata = {
   title: "Curb Stamps — little creatures on little clothes",
   description:
     "Kids tees, hoodies and caps stamped with 60 (and counting) little creatures. Toddler to teen. Screen-printed properly.",
+  manifest: "/site.webmanifest",
+  icons: {
+    icon: [
+      { url: "/brand-icon/16", sizes: "16x16", type: "image/png" },
+      { url: "/brand-icon/32", sizes: "32x32", type: "image/png" },
+      { url: "/brand-icon/48", sizes: "48x48", type: "image/png" },
+      { url: "/brand-icon/192", sizes: "192x192", type: "image/png" },
+      { url: "/brand-icon/512", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/brand-icon/180", sizes: "180x180", type: "image/png" }],
+  },
   openGraph: {
     title: "Curb Stamps",
     description: "Little creatures on little clothes.",
@@ -30,7 +41,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fbf6ec",
+  themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
