@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/wisp-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/wisp.png",
   "viewBox": [
     0,
     0,
@@ -15,5 +15,5 @@
     44.70588235294119
   ],
   "pathCount": 79,
-  "removedLowCropFragments": 6
+  "removedLowCropFragments": 0
 }

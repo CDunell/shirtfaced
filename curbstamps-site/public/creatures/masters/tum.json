@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/tum-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/tum.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 2.127659574468085,
+  "scale": 2.097902097902098,
   "offset": [
-    101.06382978723407,
-    39.36170212765958
+    82.86713286713287,
+    39.51048951048952
   ],
   "pathCount": 39,
   "removedLowCropFragments": 0

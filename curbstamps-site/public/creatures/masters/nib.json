@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/nib-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/nib.png",
   "viewBox": [
     0,
     0,
@@ -11,9 +11,9 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.6042780748663101,
   "offset": [
-    122.7272727272727,
+    109.89304812834223,
     43.58288770053477
   ],
   "pathCount": 27,
-  "removedLowCropFragments": 4
+  "removedLowCropFragments": 0
 }

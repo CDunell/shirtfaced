@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/plop-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/plop.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.3513513513513513,
+  "scale": 1.2552301255230125,
   "offset": [
-    181.08108108108112,
-    44.59459459459461
+    161.92468619246864,
+    43.72384937238493
   ],
   "pathCount": 6,
   "removedLowCropFragments": 0

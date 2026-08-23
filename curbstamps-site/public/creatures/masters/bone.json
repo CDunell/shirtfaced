@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/bone-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/bone.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.7704918032786885,
+  "scale": 1.542857142857143,
   "offset": [
-    52.91803278688525,
-    87.57377049180329
+    52.285714285714285,
+    60.37142857142857
   ],
-  "pathCount": 27,
+  "pathCount": 26,
   "removedLowCropFragments": 0
 }

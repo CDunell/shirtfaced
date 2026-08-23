@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/chit-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/chit.png",
   "viewBox": [
     0,
     0,
@@ -14,6 +14,6 @@
     173.19587628865978,
     43.814432989690715
   ],
-  "pathCount": 46,
-  "removedLowCropFragments": 1
+  "pathCount": 47,
+  "removedLowCropFragments": 0
 }

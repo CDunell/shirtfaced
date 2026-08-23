@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/loam-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/loam.png",
   "viewBox": [
     0,
     0,
@@ -11,7 +11,7 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.8120805369127517,
   "offset": [
-    49.127516778523486,
+    27.38255033557047,
     96.71140939597315
   ],
   "pathCount": 2,

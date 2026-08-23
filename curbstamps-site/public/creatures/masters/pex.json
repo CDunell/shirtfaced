@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/pex-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/pex.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.7045454545454546,
+  "scale": 1.7647058823529411,
   "offset": [
-    75.85227272727272,
-    41.47727272727272
+    56.47058823529407,
+    39.41176470588235
   ],
-  "pathCount": 24,
+  "pathCount": 22,
   "removedLowCropFragments": 0
 }

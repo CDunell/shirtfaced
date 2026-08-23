@@ -108,6 +108,13 @@ def trace_graph(skeleton: np.ndarray) -> list[list[tuple[int, int]]]:
     used: set[frozenset[tuple[int, int]]] = set()
     paths: list[list[tuple[int, int]]] = []
 
+    # A tiny filled feature such as a dot eye can skeletonise to one pixel.
+    # Preserve it as a zero-length round-capped stroke instead of silently
+    # dropping the character's eye.
+    for point, neighbours in graph.items():
+        if not neighbours:
+            paths.append([point, point])
+
     def walk(start: tuple[int, int], nxt: tuple[int, int]) -> list[tuple[int, int]]:
         path = [start, nxt]
         previous, current = start, nxt
@@ -176,7 +183,7 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     # The supplied extracted PNGs have fully opaque line cores but some carry
     # semi-transparent generation noise along the edges. Trace only the core.
-    parser.add_argument("--threshold", type=int, default=250)
+    parser.add_argument("--threshold", type=int, default=96)
     parser.add_argument("--simplify", type=float, default=1.15)
     args = parser.parse_args()
 

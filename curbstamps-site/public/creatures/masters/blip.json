@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blip-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/blip.png",
   "viewBox": [
     0,
     0,
@@ -11,8 +11,8 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.3100436681222707,
   "offset": [
-    208.9519650655022,
-    29.03930131004367
+    205.0218340611354,
+    26.419213973799145
   ],
   "pathCount": 24,
   "removedLowCropFragments": 0

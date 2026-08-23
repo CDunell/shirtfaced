@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/mug-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/mug.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.4285714285714286,
+  "scale": 1.4218009478672986,
   "offset": [
-    244.99999999999997,
-    41.428571428571416
+    229.6208530805687,
+    41.46919431279622
   ],
   "pathCount": 5,
   "removedLowCropFragments": 0

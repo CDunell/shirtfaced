@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/grub-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/grub.png",
   "viewBox": [
     0,
     0,
@@ -11,9 +11,9 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.2765957446808511,
   "offset": [
-    111.06382978723403,
-    21.914893617021278
+    107.23404255319147,
+    19.361702127659555
   ],
-  "pathCount": 28,
+  "pathCount": 29,
   "removedLowCropFragments": 0
 }

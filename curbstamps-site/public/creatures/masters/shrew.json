@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/shrew-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/shrew.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.7763157894736843,
+  "scale": 1.6265060240963856,
   "offset": [
-    51.118421052631575,
-    62.33552631578948
+    30.72289156626506,
+    60.12048192771084
   ],
-  "pathCount": 10,
+  "pathCount": 12,
   "removedLowCropFragments": 0
 }

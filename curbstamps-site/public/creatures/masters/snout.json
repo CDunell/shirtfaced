@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/snout-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/snout.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.761827079934747,
+  "scale": 1.44,
   "offset": [
-    54.71451876019576,
-    58.17292006525287
+    54.24,
+    58.16
   ],
-  "pathCount": 11,
+  "pathCount": 15,
   "removedLowCropFragments": 0
 }

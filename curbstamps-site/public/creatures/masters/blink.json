@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blink-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/blink.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.2765957446808511,
+  "scale": 1.6304347826086956,
   "offset": [
-    205.531914893617,
-    41.06382978723403
+    184.2391304347826,
+    40.21739130434784
   ],
-  "pathCount": 2,
+  "pathCount": 114,
   "removedLowCropFragments": 0
 }

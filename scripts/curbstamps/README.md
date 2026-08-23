@@ -7,6 +7,14 @@ caps and round joins. This equals a 0.8 mm line at 240 mm print width.
 The converter does not generate character art. It only traces geometry already
 present in the source alpha channel.
 
+When a supplied legacy lockup contains the creature above old lettering, first
+extract the complete creature run instead of masking the wordmark in place:
+
+```bash
+python scripts/curbstamps/extract_creature_sources.py \
+  path/to/legacy-lockups curbstamps-site/public/creatures/masters/sources
+```
+
 ```bash
 python scripts/curbstamps/vectorize_creature.py \
   curbstamps-site/public/creatures/blip-icon.png \

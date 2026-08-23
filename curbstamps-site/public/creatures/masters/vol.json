@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/vol-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/vol.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.530612244897959,
+  "scale": 1.5,
   "offset": [
-    127.04081632653063,
-    42.34693877551021
+    114.0,
+    42.5
   ],
   "pathCount": 11,
   "removedLowCropFragments": 0

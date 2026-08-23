@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/rex-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/rex.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,12 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 2.076923076923077,
+  "scale": 2.1951219512195124,
   "offset": [
-    51.69230769230769,
-    67.07692307692307
+    51.21951219512195,
+    67.1951219512195
   ],
-  "pathCount": 15,
-  "removedLowCropFragments": 0
+  "pathCount": 21,
+  "removedLowCropFragments": 0,
+  "manualRepair": "added missing source eye"
 }

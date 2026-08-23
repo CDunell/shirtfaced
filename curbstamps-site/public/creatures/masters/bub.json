@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/bub-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/bub.png",
   "viewBox": [
     0,
     0,
@@ -11,8 +11,8 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.5706806282722514,
   "offset": [
-    174.3455497382199,
-    28.010471204188462
+    169.63350785340313,
+    24.869109947643977
   ],
   "pathCount": 3,
   "removedLowCropFragments": 0

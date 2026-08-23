@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/nub-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/nub.png",
   "viewBox": [
     0,
     0,
@@ -11,7 +11,7 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.4851485148514851,
   "offset": [
-    211.63366336633663,
+    193.8118811881188,
     39.60396039603961
   ],
   "pathCount": 8,

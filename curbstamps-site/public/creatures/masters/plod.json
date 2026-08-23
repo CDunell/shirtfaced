@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/plod-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/plod.png",
   "viewBox": [
     0,
     0,
@@ -11,8 +11,8 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.0452961672473868,
   "offset": [
-    193.90243902439022,
-    34.32055749128918
+    190.76655052264806,
+    32.22996515679441
   ],
   "pathCount": 63,
   "removedLowCropFragments": 0

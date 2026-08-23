@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/dreg-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/dreg.png",
   "viewBox": [
     0,
     0,
@@ -11,8 +11,8 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.1070110701107012,
   "offset": [
-    151.660516605166,
-    30.073800738007378
+    149.4464944649446,
+    27.859778597785976
   ],
   "pathCount": 76,
   "removedLowCropFragments": 1

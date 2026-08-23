@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/murk-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/murk.png",
   "viewBox": [
     0,
     0,
@@ -11,8 +11,8 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.2244897959183674,
   "offset": [
-    42.85714285714286,
-    100.20408163265306
+    39.183673469387756,
+    97.75510204081633
   ],
   "pathCount": 8,
   "removedLowCropFragments": 0

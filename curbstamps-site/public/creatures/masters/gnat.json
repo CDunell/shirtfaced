@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/gnat-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/gnat.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.5873015873015872,
+  "scale": 1.6042780748663101,
   "offset": [
-    123.01587301587307,
-    40.47619047619048
+    109.09090909090908,
+    40.37433155080214
   ],
   "pathCount": 5,
   "removedLowCropFragments": 0

@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/crumb-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/crumb.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.76759410801964,
+  "scale": 1.6488549618320612,
   "offset": [
-    54.69721767594108,
-    63.89525368248772
+    33.61832061068702,
+    63.145038167938935
   ],
-  "pathCount": 7,
+  "pathCount": 16,
   "removedLowCropFragments": 0
 }

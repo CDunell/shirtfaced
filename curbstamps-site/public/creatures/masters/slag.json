@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/slag-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/slag.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.5544041450777202,
+  "scale": 1.5151515151515151,
   "offset": [
-    167.09844559585497,
-    34.4559585492228
+    159.84848484848482,
+    34.848484848484844
   ],
   "pathCount": 7,
   "removedLowCropFragments": 0

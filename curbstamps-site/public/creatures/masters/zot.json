@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/zot-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/zot.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.2048192771084338,
+  "scale": 1.1029411764705883,
   "offset": [
-    357.8313253012048,
-    43.97590361445782
+    344.11764705882354,
+    43.382352941176464
   ],
-  "pathCount": 57,
+  "pathCount": 81,
   "removedLowCropFragments": 0
 }

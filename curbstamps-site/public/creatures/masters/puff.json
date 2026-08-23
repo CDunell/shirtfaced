@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/puff-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/puff.png",
   "viewBox": [
     0,
     0,
@@ -9,12 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.1764705882352942,
+  "scale": 1.0,
   "offset": [
-    381.1764705882353,
-    45.29411764705881
+    374.5,
+    45.0
   ],
   "pathCount": 3,
-  "removedLowCropFragments": 1,
-  "manualRepair": "restored clipped lower outline"
+  "removedLowCropFragments": 0
 }

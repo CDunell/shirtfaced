@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/blob-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/blob.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.76759410801964,
+  "scale": 1.44,
   "offset": [
-    52.92962356792144,
-    76.2684124386252
+    54.24,
+    75.44
   ],
   "pathCount": 7,
   "removedLowCropFragments": 0

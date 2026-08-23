@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/mote-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/mote.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.761827079934747,
+  "scale": 1.4419225634178905,
   "offset": [
-    56.476345840130506,
-    105.74225122349102
+    55.67423230974633,
+    83.92523364485982
   ],
-  "pathCount": 21,
+  "pathCount": 61,
   "removedLowCropFragments": 0
 }

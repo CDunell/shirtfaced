@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/twig-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/twig.png",
   "viewBox": [
     0,
     0,
@@ -11,9 +11,9 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.0869565217391304,
   "offset": [
-    127.71739130434786,
-    35.86956521739131
+    124.45652173913047,
+    33.69565217391306
   ],
-  "pathCount": 102,
-  "removedLowCropFragments": 2
+  "pathCount": 106,
+  "removedLowCropFragments": 1
 }

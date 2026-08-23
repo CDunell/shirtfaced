@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/squib-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/squib.png",
   "viewBox": [
     0,
     0,
@@ -11,8 +11,8 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.2552301255230125,
   "offset": [
-    99.16317991631801,
-    31.171548117154828
+    96.65271966527199,
+    28.6610878661088
   ],
   "pathCount": 18,
   "removedLowCropFragments": 1

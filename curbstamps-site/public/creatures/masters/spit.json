@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/spit-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/spit.png",
   "viewBox": [
     0,
     0,
@@ -9,10 +9,10 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.6574585635359116,
+  "scale": 1.6483516483516483,
   "offset": [
-    88.67403314917125,
-    41.71270718232046
+    71.70329670329673,
+    41.75824175824175
   ],
   "pathCount": 23,
   "removedLowCropFragments": 0

@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/drake-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/drake.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.5544041450777202,
+  "scale": 1.639344262295082,
   "offset": [
-    188.08290155440417,
-    43.782383419689126
+    188.52459016393442,
+    43.44262295081967
   ],
-  "pathCount": 16,
+  "pathCount": 28,
   "removedLowCropFragments": 0
 }

@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/lod-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/lod.png",
   "viewBox": [
     0,
     0,
@@ -11,8 +11,8 @@
   "physicalStrokeMm": 0.8,
   "scale": 2.112676056338028,
   "offset": [
-    38.028169014084554,
-    18.309859154929597
+    33.802816901408505,
+    14.084507042253534
   ],
   "pathCount": 7,
   "removedLowCropFragments": 0

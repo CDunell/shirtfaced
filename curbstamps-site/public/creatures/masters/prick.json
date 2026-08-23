@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/prick-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/prick.png",
   "viewBox": [
     0,
     0,
@@ -9,12 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.25,
+  "scale": 1.2,
   "offset": [
-    211.875,
-    40.0
+    203.39999999999998,
+    39.20000000000002
   ],
-  "pathCount": 14,
-  "removedLowCropFragments": 4,
-  "manualRepair": "restored clipped lower outline"
+  "pathCount": 17,
+  "removedLowCropFragments": 0
 }

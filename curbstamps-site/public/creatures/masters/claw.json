@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/claw-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/claw.png",
   "viewBox": [
     0,
     0,
@@ -11,9 +11,9 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.6483516483516483,
   "offset": [
-    56.868131868131876,
-    25.274725274725284
+    51.923076923076934,
+    21.978021978021985
   ],
-  "pathCount": 124,
+  "pathCount": 126,
   "removedLowCropFragments": 1
 }

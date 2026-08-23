@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/boff-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/boff.png",
   "viewBox": [
     0,
     0,
@@ -11,7 +11,7 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.2987012987012987,
   "offset": [
-    252.59740259740263,
+    237.01298701298705,
     40.90909090909091
   ],
   "pathCount": 17,

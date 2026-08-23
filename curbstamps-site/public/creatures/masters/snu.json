@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/snu-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/snu.png",
   "viewBox": [
     0,
     0,
@@ -11,8 +11,8 @@
   "physicalStrokeMm": 0.8,
   "scale": 1.8090452261306533,
   "offset": [
-    32.8643216080402,
-    57.0854271356784
+    29.246231155778894,
+    53.467336683417074
   ],
   "pathCount": 35,
   "removedLowCropFragments": 0

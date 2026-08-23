@@ -1,5 +1,5 @@
 {
-  "source": "curbstamps-site/public/creatures/crux-icon.png",
+  "source": "curbstamps-site/public/creatures/masters/sources/crux.png",
   "viewBox": [
     0,
     0,
@@ -9,11 +9,11 @@
   "strokeWidth": 4,
   "printWidthMm": 240,
   "physicalStrokeMm": 0.8,
-  "scale": 1.5625,
+  "scale": 1.3888888888888888,
   "offset": [
-    121.875,
-    42.1875
+    314.58333333333337,
+    41.666666666666686
   ],
   "pathCount": 11,
-  "removedLowCropFragments": 6
+  "removedLowCropFragments": 0
 }
