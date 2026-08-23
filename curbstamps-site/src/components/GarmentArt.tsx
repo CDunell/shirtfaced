@@ -19,9 +19,13 @@ const SHAPES: Record<Category, { d: string; extra?: string }> = {
     extra:
       "M72 16 Q100 -14 128 16 Q116 40 100 40 Q84 40 72 16 Z M84 150 Q100 162 116 150 M96 108 L94 128 M104 108 L106 128",
   },
-  cap: {
-    d: "M42 96 Q42 30 100 30 Q158 30 158 96 Z",
-    extra: "M24 96 Q100 122 196 90 Q196 108 100 132 Q28 112 24 96 Z M100 26 L100 34",
+  crewneck: {
+    d: "M58 20 L84 8 Q100 20 116 8 L142 20 L180 54 L154 78 L142 66 L142 192 L58 192 L58 66 L46 78 L20 54 Z",
+    extra: "M50 70 L66 70 M134 70 L150 70 M70 184 L130 184",
+  },
+  "bucket-hat": {
+    d: "M50 100 Q50 30 100 30 Q150 30 150 100 Z",
+    extra: "M20 100 Q100 130 180 100 Q180 118 100 148 Q20 118 20 100 Z",
   },
 };
 
@@ -67,11 +71,13 @@ export function GarmentArt({
 
   const shape = SHAPES[category];
   const printBox =
-    category === "cap"
-      ? { left: "32%", top: "44%", width: "36%" }
+    category === "bucket-hat"
+      ? { left: "32%", top: "50%", width: "36%" }
       : category === "hoodie"
         ? { left: "26%", top: "46%", width: "48%" }
-        : { left: "26%", top: "38%", width: "48%" };
+        : category === "crewneck"
+          ? { left: "26%", top: "42%", width: "48%" }
+          : { left: "26%", top: "38%", width: "48%" };
   const printSrc = isLightColour(bodyColour) ? artDark : art;
 
   return (

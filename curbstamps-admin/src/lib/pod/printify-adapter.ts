@@ -76,7 +76,9 @@ async function fetchCatalog(): Promise<Catalog> {
 
     for (const raw of json.data) {
       const words = raw.title.toLowerCase().split(/\s+/);
-      const categoryIdx = words.findIndex((w) => w === "tee" || w === "hoodie" || w === "cap");
+      const categoryIdx = words.findIndex(
+        (w) => w === "tee" || w === "hoodie" || w === "crewneck" || w === "bucket"
+      );
       if (categoryIdx <= 0) continue;
       const creatureSlug = words.slice(0, categoryIdx).join("-");
 
@@ -93,9 +95,18 @@ async function fetchCatalog(): Promise<Catalog> {
 
       for (const v of raw.variants) {
         if (!v.is_enabled || !v.is_available) continue;
-        const [colourId, sizeId] = v.options;
-        const colourName = colourById.get(colourId);
-        const sizeName = sizeById.get(sizeId);
+        // v.options is positional, but which position is colour vs size
+        // varies by blueprint (confirmed: the hoodie blueprint puts size
+        // first even though its own options metadata lists colour first) —
+        // match by which map an id actually belongs to, not position.
+        let colourId: number | undefined;
+        let sizeId: number | undefined;
+        for (const id of v.options) {
+          if (colourById.has(id)) colourId = id;
+          else if (sizeById.has(id)) sizeId = id;
+        }
+        const colourName = colourId !== undefined ? colourById.get(colourId) : undefined;
+        const sizeName = sizeId !== undefined ? sizeById.get(sizeId) : undefined;
         if (!colourName || !sizeName) continue;
         let bySize = byColour.get(colourName);
         if (!bySize) {

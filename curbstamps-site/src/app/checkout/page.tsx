@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { money } from "@/lib/money";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/products";
+import { FREE_SHIPPING_THRESHOLD, categoryFromSlug } from "@/lib/products";
 import { SHIPPING_METHODS } from "@/lib/checkout-pricing";
 import { GarmentArt } from "@/components/GarmentArt";
 import { PaymentStep, type CheckoutRequest } from "./PaymentStep";
@@ -252,7 +252,7 @@ export default function CheckoutPage() {
             {lines.map((line) => (
               <li key={`${line.slug}-${line.size}-${line.colour}`} className="flex gap-3">
                 <GarmentArt
-                  category={line.slug.endsWith("hoodie") ? "hoodie" : line.slug.endsWith("cap") ? "cap" : "tee"}
+                  category={categoryFromSlug(line.slug)}
                   bodyColour={line.body}
                   art={line.art}
                   artDark={line.artDark}

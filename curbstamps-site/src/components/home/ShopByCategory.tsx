@@ -5,8 +5,8 @@ import { PlaceholderPhoto } from "./PlaceholderPhoto";
 const CATEGORIES = [
   { label: "Tees", href: "/shop?category=tee", icon: IconShirt, tone: "#d8ef6d" },
   { label: "Hoodies", href: "/shop?category=hoodie", icon: IconHoodie, tone: "#b9ddf3" },
-  { label: "Shorts", href: "/shop", icon: IconShorts, tone: "#f8b3c6" },
-  { label: "Hats", href: "/shop?category=cap", icon: IconCap, tone: "#ffd45c" },
+  { label: "Crewnecks", href: "/shop?category=crewneck", icon: IconShorts, tone: "#f8b3c6" },
+  { label: "Bucket Hats", href: "/shop?category=bucket-hat", icon: IconCap, tone: "#ffd45c" },
   { label: "Accessories", href: "/shop", icon: IconBag, tone: "#cabcf3" },
 ];
 

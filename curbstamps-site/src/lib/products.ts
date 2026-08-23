@@ -1,23 +1,25 @@
 import { CREATURES, creatureLockup, getCreature } from "./creatures";
-import { getPrintifyTeeData } from "./printify";
+import { getPrintifyProductData, type PrintifyCategory } from "./printify";
 
-export type Category = "tee" | "hoodie" | "cap";
+export type Category = PrintifyCategory;
 
 export const CATEGORY_LABEL: Record<Category, string> = {
   tee: "Tee",
   hoodie: "Hoodie",
-  cap: "Cap",
+  crewneck: "Crewneck",
+  "bucket-hat": "Bucket Hat",
 };
 
 export const CATEGORY_PRICE: Record<Category, number> = {
   tee: 34.95,
   hoodie: 64.95,
-  cap: 29.95,
+  crewneck: 44.95,
+  "bucket-hat": 29.95,
 };
 
 export const TODDLER_SIZES = ["2T", "3T", "4T", "5T"] as const;
 export const YOUTH_SIZES = ["XS (6/7)", "S (8)", "M (10/12)", "L (14/16)", "XL (18/20)"] as const;
-export const CAP_SIZES = ["Toddler", "Youth"] as const;
+export const ONE_SIZE = ["One size"] as const;
 
 export type Colourway = {
   name: string;
@@ -58,9 +60,10 @@ export type Product = {
 };
 
 function sizesFor(category: Category): readonly string[] {
-  if (category === "cap") return CAP_SIZES;
-  // Every tee/hoodie ships in both toddler and youth runs — one product,
-  // one size chart, same as how a real kids apparel SKU is usually cut.
+  if (category === "bucket-hat") return ONE_SIZE;
+  // Every tee/hoodie/crewneck ships in both toddler and youth runs — one
+  // product, one size chart, same as how a real kids apparel SKU is usually
+  // cut.
   return [...TODDLER_SIZES, ...YOUTH_SIZES];
 }
 
@@ -71,7 +74,7 @@ function buildProducts(): Product[] {
       ...BASE_COLOURWAYS,
       { name: creature.accent.name, swatch: creature.accent.hex, body: creature.accent.hex },
     ];
-    (["tee", "hoodie", "cap"] as const).forEach((category) => {
+    (["tee", "hoodie", "crewneck", "bucket-hat"] as const).forEach((category) => {
       out.push({
         slug: `${creature.slug}-${category}`,
         creature: creature.slug,
@@ -96,13 +99,22 @@ export function getProduct(slug: string) {
   return products.find((p) => p.slug === slug);
 }
 
+/** Cart/checkout lines only store the product slug, not its category — this
+ * recovers it from the `${creature}-${category}` slug shape buildProducts()
+ * uses, for picking the right GarmentArt stand-in shape. */
+export function categoryFromSlug(slug: string): Category {
+  if (slug.endsWith("bucket-hat")) return "bucket-hat";
+  if (slug.endsWith("crewneck")) return "crewneck";
+  if (slug.endsWith("hoodie")) return "hoodie";
+  return "tee";
+}
+
 /** Overlays live Printify data (real colours, sizes, price, mockup photos)
- * onto a tee product where the creature has a built Printify catalog entry.
- * Hoodie/cap, or a tee whose creature isn't built yet / whose fetch failed,
- * pass through unchanged — still the honest GarmentArt stand-in. */
+ * onto a product where the creature has a built Printify catalog entry for
+ * that category. Any category/creature combo not yet built, or a fetch
+ * failure, passes through unchanged — still the honest GarmentArt stand-in. */
 export async function withPrintifyData(product: Product): Promise<Product> {
-  if (product.category !== "tee") return product;
-  const live = await getPrintifyTeeData(product.creature);
+  const live = await getPrintifyProductData(product.category, product.creature);
   if (!live || live.colours.length === 0) return product;
 
   const photos: Record<string, string> = {};

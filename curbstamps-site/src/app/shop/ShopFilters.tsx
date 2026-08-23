@@ -7,7 +7,8 @@ const TABS: { key: Category | "all"; label: string }[] = [
   { key: "all", label: "All" },
   { key: "tee", label: CATEGORY_LABEL.tee },
   { key: "hoodie", label: CATEGORY_LABEL.hoodie },
-  { key: "cap", label: CATEGORY_LABEL.cap },
+  { key: "crewneck", label: CATEGORY_LABEL.crewneck },
+  { key: "bucket-hat", label: CATEGORY_LABEL["bucket-hat"] },
 ];
 
 export function ShopFilters({ active, creature }: { active: Category | "all"; creature?: string }) {

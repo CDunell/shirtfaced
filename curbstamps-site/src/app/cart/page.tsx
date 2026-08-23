@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCart } from "@/lib/cart-context";
 import { money } from "@/lib/money";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/products";
+import { FREE_SHIPPING_THRESHOLD, categoryFromSlug } from "@/lib/products";
 import { GarmentArt } from "@/components/GarmentArt";
 import { IconArrowRight, IconMinus, IconPlus } from "@/components/Icons";
 
@@ -55,7 +55,7 @@ export default function CartPage() {
         {lines.map((line) => (
           <li key={`${line.slug}-${line.size}-${line.colour}`} className="flex gap-3">
             <GarmentArt
-              category={line.slug.endsWith("hoodie") ? "hoodie" : line.slug.endsWith("cap") ? "cap" : "tee"}
+              category={categoryFromSlug(line.slug)}
               bodyColour={line.body}
               art={line.art}
               artDark={line.artDark}

@@ -24,7 +24,7 @@ export default async function ShopPage({
     <div className="mx-auto max-w-5xl px-4 pt-4 pb-16 sm:px-6">
       <h1 className="display text-[13vw] leading-[0.9] sm:text-[54px]">{activeCreature ? `${activeCreature.name}'s range` : "shop"}</h1>
       <p className="mt-3 max-w-[46ch] text-[15px] text-ink/70">
-        {activeCreature ? `${activeCreature.blurb} Find them on a tee, hoodie and cap.` : `${products.length} products across ${CREATURES.length} creatures. Every creature comes as a tee, a hoodie and a cap.`}
+        {activeCreature ? `${activeCreature.blurb} Find them on a tee, hoodie, crewneck or bucket hat.` : `${products.length} products across ${CREATURES.length} creatures. Every creature comes as a tee, a hoodie, a crewneck and a bucket hat.`}
       </p>
 
       <ShopFilters active={active} creature={activeCreature?.slug} />
