@@ -2,7 +2,7 @@
 
 import fs from "node:fs/promises";
 import path from "node:path";
-import sharp from "../node_modules/sharp/lib/index.js";
+import sharp from "sharp";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
 const LOCKUPS = path.join(ROOT, "public/creatures/lockups");
@@ -140,7 +140,21 @@ for (const { product: summary, slug } of cands) {
     continue;
   }
 
-  await api("PUT", `/shops/${SHOP_ID}/products/${product.id}.json`, { print_areas: printAreas });
+  // Printify rejects a PUT that includes a placeholder with an empty
+  // images array (e.g. an unused "back" slot) — "images field is
+  // required" — even though that's exactly what GET returns for one.
+  // Drop empty placeholders (and any print_area left with none) before
+  // sending them back.
+  const cleanedPrintAreas = printAreas
+    .map((area) => ({
+      ...area,
+      placeholders: (area.placeholders ?? []).filter(
+        (p) => Array.isArray(p.images) && p.images.length > 0
+      ),
+    }))
+    .filter((area) => area.placeholders.length > 0);
+
+  await api("PUT", `/shops/${SHOP_ID}/products/${product.id}.json`, { print_areas: cleanedPrintAreas });
   updatedCount += 1;
   console.log(`Updated ${product.title}`);
 }
