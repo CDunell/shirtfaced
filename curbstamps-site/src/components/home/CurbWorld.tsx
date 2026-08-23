@@ -105,7 +105,7 @@ export function CurbWorld() {
       <style jsx>{`
         .pip-drain {
           left: 57.65%;
-          top: 72.6%;
+          top: calc(72.6% + 5px);
           width: 14.45%;
           height: 9.4%;
         }
