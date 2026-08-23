@@ -24,6 +24,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Thicken creature SVG line art
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          roots = [
+              Path("curbstamps-site/public/creatures/masters"),
+              Path("curbstamps-site/public/creatures/lockups"),
+          ]
+          changed = 0
+          for root in roots:
+              for path in root.glob("*.svg"):
+                  if path.name.endswith("-qa-vector.svg"):
+                      continue
+                  text = path.read_text()
+                  updated = text.replace('stroke-width="4"', 'stroke-width="5"')
+                  if updated != text:
+                      path.write_text(updated)
+                      changed += 1
+
+          if changed == 0:
+              raise SystemExit("No creature SVG strokes were changed")
+          print(f"Thickened {changed} creature SVG assets from 4px to 5px")
+          PY
+
       - name: Set up deploy key
         run: |
           mkdir -p ~/.ssh
@@ -69,4 +94,6 @@ jobs:
           printf '%s' "$html" | grep -qi "pick your"
           printf '%s' "$html" | grep -qi "weirdo"
           printf '%s' "$html" | grep -qi "the whole curb crew"
+          svg=$(curl -fsS http://127.0.0.1:4100/creatures/lockups/blip-dark.svg)
+          printf '%s' "$svg" | grep -q 'stroke-width="5"'
           REMOTE
