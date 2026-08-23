@@ -10,12 +10,15 @@ const TABS: { key: Category | "all"; label: string }[] = [
   { key: "cap", label: CATEGORY_LABEL.cap },
 ];
 
-export function ShopFilters({ active }: { active: Category | "all" }) {
+export function ShopFilters({ active, creature }: { active: Category | "all"; creature?: string }) {
   return (
     <div className="no-scrollbar mt-6 flex gap-2 overflow-x-auto">
       {TABS.map((tab) => {
         const isActive = tab.key === active;
-        const href = tab.key === "all" ? "/shop" : `/shop?category=${tab.key}`;
+        const creatureQuery = creature ? `creature=${creature}` : "";
+        const categoryQuery = tab.key === "all" ? "" : `category=${tab.key}`;
+        const query = [creatureQuery, categoryQuery].filter(Boolean).join("&");
+        const href = query ? `/shop?${query}` : "/shop";
         return (
           <Link
             key={tab.key}

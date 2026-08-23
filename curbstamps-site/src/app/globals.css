@@ -161,6 +161,34 @@ body {
     drop-shadow(0 -1px 0 var(--color-ink));
 }
 
+@keyframes curb-arrive {
+  0% { transform: translate(-50%, 12px) rotate(-3deg); }
+  45% { transform: translate(-50%, -5px) rotate(2deg); }
+  100% { transform: translate(-50%, 0) rotate(0); }
+}
+
+@keyframes curb-door-open {
+  0%, 35% { transform: perspective(90px) rotateY(0); }
+  70%, 100% { transform: perspective(90px) rotateY(-38deg); }
+}
+
+@keyframes curb-cloud-drift {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-8px); }
+}
+
+@keyframes curb-smoke-pop {
+  0% { opacity: 0; transform: translateY(7px) scale(0.7); }
+  45% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(-10px) scale(1.12); }
+}
+
+.curb-plot.is-in-view .curb-creature { animation: curb-arrive 520ms var(--ease-bounce) both; }
+.curb-plot.is-in-view .curb-door { animation: curb-door-open 900ms 180ms var(--ease-out-natural) both; }
+.curb-plot.is-in-view .curb-cloud { animation: curb-cloud-drift 2.8s ease-in-out infinite; }
+.curb-plot.is-in-view .curb-smoke { animation: curb-smoke-pop 1.8s 350ms ease-out infinite; }
+.curb-plot.is-in-view .curb-plant { transform-origin: bottom center; animation: wiggle 1.8s 250ms ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
