@@ -113,7 +113,7 @@ export async function markOrderPaid(id: string): Promise<void> {
   const order = await db.transaction(async (tx) => {
     const found = await tx.query.orders.findFirst({
       where: eq(orders.id, id),
-      with: { items: true, customer: true },
+      with: { items: { with: { product: true } }, customer: true },
     });
     if (!found || found.status === "paid") return null;
 
@@ -138,7 +138,12 @@ export async function markOrderPaid(id: string): Promise<void> {
         country: "AU",
       },
       items: order.items.map((item) => ({
-        slug: item.productName,
+        // The real product slug (e.g. "blip-tee"), via the product this
+        // order item snapshot points at — falls back to the product-name
+        // snapshot only if that product's since been deleted, in which case
+        // no POD provider can resolve it either and this fails the same way
+        // an unmapped slug already does (caught below, recorded on notes).
+        slug: item.product?.slug ?? item.productName,
         productName: item.productName,
         colourName: item.colourName,
         size: item.size,
