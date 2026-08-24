@@ -26,7 +26,7 @@ export function Header() {
   }, [open]);
 
   return (
-    <header className="sticky top-0 z-50 border-b-2 border-paper/15 bg-ink text-paper">
+    <header className="site-header sticky top-0 z-50 bg-ink text-paper">
       <div className="mx-auto flex h-[66px] max-w-[1180px] items-center justify-between px-4 md:h-[74px] md:px-6 lg:h-[82px] lg:px-8 xl:px-0">
         <Link href="/" aria-label="Curb Stamps home" className="brand-sticker press flex h-[58px] w-[150px] items-center justify-center md:h-[66px] md:w-[172px] lg:h-[74px] lg:w-[190px]">
           <CurbStampsLogoTransparent className="brand-sticker-logo h-[48px] w-auto md:h-[54px] lg:h-[60px]" />
