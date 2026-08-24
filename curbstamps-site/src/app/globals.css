@@ -61,6 +61,26 @@ body {
   overscroll-behavior-y: none;
 }
 
+/* The brand sits on the loose paint mark from the approved board, not a box. */
+.brand-sticker {
+  position: relative;
+  isolation: isolate;
+}
+
+.brand-sticker::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -8px -12px;
+  background: url("/curbstamps/home-v2/splat-violet.webp") center / 100% 100% no-repeat;
+  transform: rotate(-2deg);
+}
+
+.brand-sticker-logo {
+  position: relative;
+  z-index: 1;
+}
+
 /* Display type: round, chunky, friendly. Always set as a block. */
 .display {
   font-family: var(--font-display);
@@ -130,7 +150,7 @@ body {
 
 .home-hero {
   position: relative;
-  min-height: 650px;
+  min-height: 0;
   isolation: isolate;
   border-bottom: 3px solid var(--color-ink);
 }
@@ -138,7 +158,7 @@ body {
 .hero-copy {
   position: relative;
   z-index: 6;
-  padding-top: 3rem;
+  padding-top: 2.25rem;
 }
 
 .hero-title {
@@ -179,12 +199,10 @@ body {
 }
 
 .hero-street {
-  position: absolute;
+  position: relative;
   z-index: 2;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  height: 335px;
+  height: 225px;
+  margin-top: 1.75rem;
   overflow: hidden;
 }
 
@@ -200,15 +218,13 @@ body {
 
 .street-creature { position: relative; display: block; color: var(--color-ink); }
 .street-creature img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-.street-creature-fill { z-index: 0; filter: brightness(0) invert(1) drop-shadow(0 0 1px #fff); }
-.street-creature-lines { z-index: 1; color: var(--color-ink); }
 
-.hero-creature { position: absolute; z-index: 4; bottom: 16%; width: 9rem; height: 4rem; }
+.hero-creature { position: absolute; z-index: 4; bottom: 16%; width: 4.4rem; height: 2.5rem; }
 .hero-creature-1 { left: 4%; transform: rotate(-2deg); }
-.hero-creature-2 { left: 28%; width: 7.5rem; }
-.hero-creature-3 { left: 49%; width: 6.7rem; height: 5.2rem; }
-.hero-creature-4 { left: 69%; width: 8rem; }
-.hero-creature-5 { right: -4%; width: 7.4rem; }
+.hero-creature-2 { left: 25%; width: 4rem; }
+.hero-creature-3 { left: 46%; width: 3.4rem; height: 3rem; }
+.hero-creature-4 { left: 66%; width: 4.2rem; }
+.hero-creature-5 { right: 2%; width: 4rem; }
 
 .favourites-band { padding: 2.75rem 0; background: var(--color-cream); border-bottom: 2px solid var(--color-ink); }
 .section-heading-row { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; }
@@ -235,7 +251,6 @@ body {
 .home-card-title { margin-top: 0.35rem; font-size: clamp(2.2rem, 7.5vw, 3.65rem); text-transform: uppercase; }
 .commerce-media { position: relative; min-width: 0; overflow: hidden; background: var(--color-paper-2); }
 .commerce-photo { width: 100%; height: 100%; object-fit: cover; }
-.commerce-creature { position: absolute; right: 0.7rem; bottom: 0.7rem; width: 5.5rem; height: 3rem; filter: drop-shadow(3px 3px 0 var(--color-ink)); }
 
 .adopt-strip { padding: 2.25rem 0; border-block: 2px solid var(--color-ink); background: var(--color-sage); color: var(--color-paper); }
 .adopt-inner { display: grid; gap: 1.5rem; align-items: center; }
@@ -295,7 +310,12 @@ body {
 @media (min-width: 640px) {
   .home-shell { width: min(100% - 48px, var(--page-max)); }
   .hero-stickers { right: 1rem; width: 16rem; }
-  .hero-creature { bottom: 15%; width: 11rem; height: 5rem; }
+  .hero-street { height: 270px; }
+  .hero-creature { bottom: 15%; width: 5rem; height: 3rem; }
+  .hero-creature-2 { width: 4.6rem; }
+  .hero-creature-3 { width: 4rem; height: 3.5rem; }
+  .hero-creature-4 { width: 4.8rem; }
+  .hero-creature-5 { width: 4.5rem; }
   .hero-creature-5 { right: 2%; }
   .favourites-scroll { margin-inline: 0; padding-inline: 0; }
   .commerce-grid, .category-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -309,10 +329,10 @@ body {
   .home-shell { width: min(100% - 48px, var(--page-max)); }
   .home-kicker { font-size: 0.74rem; }
   .home-button, .home-text-link { font-size: 0.78rem; }
-  .home-hero { min-height: 690px; }
+  .home-hero { min-height: 650px; }
   .hero-copy { padding-top: 4.5rem; }
   .hero-title { font-size: clamp(5.5rem, 11vw, 7.25rem); }
-  .hero-street { height: 390px; }
+  .hero-street { position: absolute; right: 0; bottom: 0; left: 0; height: 330px; margin-top: 0; }
   .hero-stickers { top: 2rem; right: 3vw; width: 18rem; }
   .hero-splat { top: -7rem; right: -8rem; width: 42rem; }
   .favourite-card { flex-basis: 114px; }
@@ -326,14 +346,18 @@ body {
 
 @media (min-width: 1024px) {
   .home-shell { width: min(100% - 64px, var(--page-max)); }
-  .home-hero { min-height: 720px; }
+  .home-hero { min-height: 680px; }
   .hero-copy { padding-top: 5rem; }
   .hero-title { font-size: clamp(6.2rem, 8vw, 7.8rem); }
   .hero-body { font-size: 1.05rem; }
-  .hero-street { height: 445px; }
+  .hero-street { height: 400px; }
   .hero-street-track { transform: translateX(-50%); }
   .hero-stickers { right: max(3rem, calc((100vw - var(--page-max)) / 2)); width: 20rem; }
-  .hero-creature { bottom: 16%; width: 13rem; height: 5.6rem; }
+  .hero-creature { bottom: 16%; width: 6rem; height: 3.5rem; }
+  .hero-creature-2 { width: 5.4rem; }
+  .hero-creature-3 { width: 4.8rem; height: 4rem; }
+  .hero-creature-4 { width: 5.8rem; }
+  .hero-creature-5 { width: 5.4rem; }
   .hero-creature-1 { left: 8%; }
   .hero-creature-2 { left: 31%; }
   .hero-creature-3 { left: 50%; }
@@ -354,7 +378,7 @@ body {
 
 @media (min-width: 1280px) {
   .hero-title { font-size: 8.1rem; }
-  .hero-street { height: 470px; }
+  .hero-street { height: 420px; }
   .home-card-title { font-size: 3.65rem; }
   .club-title { font-size: 8rem; }
 }
