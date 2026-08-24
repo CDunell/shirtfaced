@@ -124,7 +124,7 @@ export function CurbHomepage({ photos }: { photos: HomepagePhoto[] }) {
               <p className="home-kicker">Pick your local</p>
               <h2 id="favourites-title" className="display section-title">Who&apos;s your favourite?</h2>
             </div>
-            <Link href="/shop" className="home-text-link hidden md:inline-flex">See the whole crew →</Link>
+            <Link href="/shop" className="home-text-link favourites-all-link">See the whole crew →</Link>
           </div>
           <div className="favourites-scroll no-scrollbar">
             {FAVOURITES.map((creature, index) => (
