@@ -28,7 +28,7 @@ type Placement = {
 
 const PANEL_SCENES: Placement[][] = [
   [
-    { name: "blip", x: 13, y: 56, width: 18, motion: "peek", delay: -1.2, maskClip: "polygon(8% 69%, 34% 69%, 34% 100%, 8% 100%)" },
+    { name: "blip", x: 8.5, y: 69.5, width: 14, motion: "peek", delay: -1.2, maskClip: "polygon(4% 77.5%, 28% 77.5%, 28% 100%, 4% 100%)" },
     { name: "bub", x: 63, y: 60, width: 17, motion: "nose", delay: -3.1, maskClip: "polygon(58% 72%, 84% 72%, 84% 100%, 58% 100%)" },
   ],
   [
