@@ -229,8 +229,9 @@ export function CurbHomepage({ photos }: { photos: HomepagePhoto[] }) {
           <div className="adventure-grid">
             {["Play", "Explore", "Make", "Be weird"].map((label, index) => {
               const photo = adventurePhotos[index];
+              const creature = ["squib", "snu", "nub", "claw"][index];
               return (
-                <article key={label} className="adventure-card">
+                <Link key={label} href={`/products/tee?design=${creature}`} className="adventure-card">
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={photo.src} alt={photo.alt} />
@@ -238,7 +239,7 @@ export function CurbHomepage({ photos }: { photos: HomepagePhoto[] }) {
                     <div className="adventure-placeholder" />
                   )}
                   <h3 className="display">{label}</h3>
-                </article>
+                </Link>
               );
             })}
           </div>
@@ -274,6 +275,7 @@ export function CurbHomepage({ photos }: { photos: HomepagePhoto[] }) {
               <input id="club-email" name="email" type="email" required placeholder="Your email" />
               <button type="submit">Join up</button>
             </form>
+            <Link href="/shop" className="home-text-link club-shop-link">Shop the whole curb →</Link>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/curbstamps/home-v2/sticker-cluster.webp" alt="" className="club-stickers" aria-hidden="true" />
