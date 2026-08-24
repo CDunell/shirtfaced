@@ -83,9 +83,9 @@
 }
 
 @keyframes peek {
-  0%, 18%, 100% { transform: translateY(7%); }
-  28%, 66% { transform: translateY(0); }
-  74% { transform: translateY(3%); }
+  0%, 18%, 100% { transform: translateY(0); }
+  28%, 66% { transform: translateY(-7%); }
+  74% { transform: translateY(-3%); }
 }
 
 @keyframes creep {
