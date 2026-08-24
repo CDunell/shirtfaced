@@ -263,6 +263,7 @@ body {
 
 .crew-section { padding: 3.75rem 0; }
 .crew-heading { align-items: center; }
+.crew-bottom-link { display: flex; justify-content: flex-end; margin-top: 0.8rem; }
 
 .adventure-section { padding: 3.75rem 0; background: var(--color-cream); border-top: 2px solid var(--color-ink); }
 .adventure-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; margin-top: 1.5rem; }

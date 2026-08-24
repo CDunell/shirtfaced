@@ -219,6 +219,9 @@ export function CurbHomepage({ photos }: { photos: HomepagePhoto[] }) {
             <Link href="/shop" className="home-button home-button-acid">Shop the crew</Link>
           </div>
           <CurbWorld />
+          <div className="crew-bottom-link">
+            <Link href="/shop" className="home-text-link">Shop street locals →</Link>
+          </div>
         </div>
       </section>
 
