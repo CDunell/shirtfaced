@@ -140,14 +140,6 @@ export function CurbWorld() {
                           className={`${styles.creature} ${styles[placement.motion]}`}
                           style={creatureStyle}
                         />
-                        <img
-                          src={src}
-                          alt=""
-                          aria-hidden="true"
-                          draggable={false}
-                          className={styles.foregroundMask}
-                          style={{ clipPath: placement.maskClip }}
-                        />
                       </div>
                     );
                   })}
