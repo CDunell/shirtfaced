@@ -244,7 +244,7 @@ body {
 .favourites-band .home-shell { position: relative; z-index: 1; }
 .section-heading-row { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; }
 .section-title { margin-top: 0.25rem; font-size: clamp(2.5rem, 11vw, 4.5rem); text-transform: uppercase; }
-.section-title-large { font-size: clamp(3rem, 13vw, 5.5rem); }
+.section-title-large { font-size: clamp(2rem, 8.8vw, 5.5rem); white-space: nowrap; }
 .section-copy { max-width: 42rem; margin-top: 0.9rem; font-size: 0.95rem; font-weight: 720; line-height: 1.55; color: rgb(28 26 23 / 0.72); }
 
 .favourites-band .section-title { font-size: clamp(2.15rem, 9vw, 3rem); white-space: nowrap; }
