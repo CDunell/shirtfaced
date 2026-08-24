@@ -55,14 +55,14 @@ export function CurbWorld() {
   }
 
   return (
-    <div className="relative mt-5 overflow-hidden border-y-2 border-ink bg-cream sm:rounded-[22px] sm:border-2">
-      <div className="pointer-events-none absolute left-3 top-3 z-20 rounded-full border-2 border-ink bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] shadow-[3px_3px_0_#1c1a17]">
+    <div className="relative mt-6 overflow-hidden border-2 border-ink bg-cream md:mt-8 lg:mt-10">
+      <div className="pointer-events-none absolute left-3 top-3 z-20 border-2 border-ink bg-club px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] shadow-[3px_3px_0_#1c1a17] md:left-4 md:top-4 md:text-[11px]">
         Scroll → explore the curb
       </div>
 
-      <div className="absolute right-3 top-3 z-20 hidden gap-2 sm:flex">
-        <button type="button" onClick={() => move(-1)} aria-label="Explore left" className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white text-xl font-black">←</button>
-        <button type="button" onClick={() => move(1)} aria-label="Explore right" className="press grid h-11 w-11 place-items-center rounded-full border-2 border-ink bg-white text-xl font-black">→</button>
+      <div className="absolute right-4 top-4 z-20 hidden gap-2 md:flex">
+        <button type="button" onClick={() => move(-1)} aria-label="Explore left" className="press grid h-11 w-11 place-items-center border-2 border-ink bg-white text-xl font-black shadow-[3px_3px_0_#1c1a17]">←</button>
+        <button type="button" onClick={() => move(1)} aria-label="Explore right" className="press grid h-11 w-11 place-items-center border-2 border-ink bg-white text-xl font-black shadow-[3px_3px_0_#1c1a17]">→</button>
       </div>
 
       <div
@@ -73,7 +73,7 @@ export function CurbWorld() {
       >
         <div className="flex w-max">
           {LOOP_PANELS.map((src, index) => (
-            <div key={`${src}-${index}`} className="relative h-[420px] aspect-[951/576] shrink-0 sm:h-[500px]">
+            <div key={`${src}-${index}`} className="relative h-[350px] aspect-[951/576] shrink-0 md:h-[420px] lg:h-[480px] xl:h-[520px]">
               <img
                 data-world-panel
                 src={src}
