@@ -87,20 +87,6 @@ export function CurbWorld() {
 
   return (
     <div className={`${styles.frame} curb-world-frame relative mt-6 overflow-hidden bg-cream md:mt-8 lg:mt-10`}>
-      <svg aria-hidden="true" width="0" height="0" className="absolute">
-        <filter id="curb-world-blip-colour" colorInterpolationFilters="sRGB">
-          <feColorMatrix in="SourceGraphic" type="luminanceToAlpha" result="luminance" />
-          <feComponentTransfer in="luminance" result="whiteFill">
-            <feFuncA type="discrete" tableValues="0 0 0 0 0 0 0 0 0 1" />
-          </feComponentTransfer>
-          <feFlood floodColor="#7ed957" result="blipGreen" />
-          <feComposite in="blipGreen" in2="whiteFill" operator="in" result="greenFill" />
-          <feMerge>
-            <feMergeNode in="SourceGraphic" />
-            <feMergeNode in="greenFill" />
-          </feMerge>
-        </filter>
-      </svg>
       <div className="curb-world-badge pointer-events-none absolute left-3 top-3 z-20 bg-club px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.08em] shadow-[3px_3px_0_#1c1a17] md:left-4 md:top-4 md:px-4 md:py-2 md:text-[11px]">
         Scroll → explore the curb
       </div>
@@ -142,7 +128,6 @@ export function CurbWorld() {
                       top: `${placement.y}%`,
                       "--creature-width": `${placement.width}%`,
                       animationDelay: `${placement.delay}s`,
-                      filter: placement.name === "blip" ? "url(#curb-world-blip-colour)" : undefined,
                     } as CSSProperties;
 
                     return (
