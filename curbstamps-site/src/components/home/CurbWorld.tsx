@@ -29,44 +29,16 @@ type Placement = {
 const PANEL_SCENES: Placement[][] = [
   [
     { name: "blip", x: 8.5, y: 69.5, width: 14, motion: "peek", delay: -1.2, maskClip: "polygon(4% 77.5%, 28% 77.5%, 28% 100%, 4% 100%)" },
-    { name: "bub", x: 63, y: 60, width: 17, motion: "nose", delay: -3.1, maskClip: "polygon(58% 72%, 84% 72%, 84% 100%, 58% 100%)" },
   ],
-  [
-    { name: "claw", x: 18, y: 57, width: 18, motion: "edge", delay: -2.4, maskClip: "polygon(12% 70%, 39% 70%, 39% 100%, 12% 100%)" },
-    { name: "crumb", x: 69, y: 54, width: 16, motion: "duck", delay: -0.8, maskClip: "polygon(64% 68%, 89% 68%, 89% 100%, 64% 100%)" },
-  ],
-  [
-    { name: "flit", x: 9, y: 61, width: 15, motion: "scuttle", delay: -4.2, maskClip: "polygon(5% 73%, 28% 73%, 28% 100%, 5% 100%)" },
-    { name: "grit", x: 56, y: 55, width: 19, motion: "creep", delay: -1.7, maskClip: "polygon(50% 69%, 80% 69%, 80% 100%, 50% 100%)" },
-  ],
-  [
-    { name: "grub", x: 21, y: 54, width: 19, motion: "settle", delay: -3.6, maskClip: "polygon(15% 69%, 43% 69%, 43% 100%, 15% 100%)" },
-    { name: "lod", x: 73, y: 58, width: 13, motion: "peek", delay: -0.5, maskClip: "polygon(69% 71%, 90% 71%, 90% 100%, 69% 100%)" },
-  ],
-  [
-    { name: "murk", x: 12, y: 57, width: 17, motion: "sneak", delay: -2.8, maskClip: "polygon(7% 70%, 33% 70%, 33% 100%, 7% 100%)" },
-    { name: "nib", x: 60, y: 59, width: 17, motion: "duck", delay: -4.5, maskClip: "polygon(55% 72%, 81% 72%, 81% 100%, 55% 100%)" },
-  ],
-  [
-    { name: "pex", x: 17, y: 55, width: 17, motion: "nose", delay: -1.5, maskClip: "polygon(11% 69%, 38% 69%, 38% 100%, 11% 100%)" },
-    { name: "pip", x: 70, y: 56, width: 15, motion: "edge", delay: -3.9, maskClip: "polygon(65% 70%, 89% 70%, 89% 100%, 65% 100%)" },
-  ],
-  [
-    { name: "plod", x: 8, y: 54, width: 20, motion: "creep", delay: -0.9, maskClip: "polygon(3% 69%, 32% 69%, 32% 100%, 3% 100%)" },
-    { name: "slag", x: 58, y: 60, width: 17, motion: "scuttle", delay: -2.6, maskClip: "polygon(53% 72%, 79% 72%, 79% 100%, 53% 100%)" },
-  ],
-  [
-    { name: "snu", x: 19, y: 58, width: 16, motion: "peek", delay: -4.8, maskClip: "polygon(14% 71%, 39% 71%, 39% 100%, 14% 100%)" },
-    { name: "squib", x: 68, y: 54, width: 18, motion: "settle", delay: -1.9, maskClip: "polygon(62% 69%, 91% 69%, 91% 100%, 62% 100%)" },
-  ],
-  [
-    { name: "tum", x: 10, y: 59, width: 18, motion: "duck", delay: -3.4, maskClip: "polygon(5% 72%, 32% 72%, 32% 100%, 5% 100%)" },
-    { name: "twig", x: 57, y: 53, width: 20, motion: "sneak", delay: -0.3, maskClip: "polygon(51% 68%, 82% 68%, 82% 100%, 51% 100%)" },
-  ],
-  [
-    { name: "yip", x: 18, y: 55, width: 18, motion: "edge", delay: -2.1, maskClip: "polygon(12% 69%, 40% 69%, 40% 100%, 12% 100%)" },
-    { name: "zot", x: 69, y: 58, width: 18, motion: "peek", delay: -4.1, maskClip: "polygon(63% 71%, 92% 71%, 92% 100%, 63% 100%)" },
-  ],
+  [],
+  [],
+  [],
+  [],
+  [],
+  [],
+  [],
+  [],
+  [],
 ];
 
 export function CurbWorld() {
