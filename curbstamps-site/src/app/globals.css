@@ -201,16 +201,16 @@ body {
 .hero-street {
   position: relative;
   z-index: 2;
-  height: 225px;
-  margin-top: 1.75rem;
+  height: 132px;
+  margin-top: 0.75rem;
   overflow: hidden;
 }
 
 .hero-street-track {
   position: absolute;
-  inset: 0 auto 0 50%;
+  inset: -100px auto auto 50%;
   display: flex;
-  height: 100%;
+  height: 225px;
   transform: translateX(-42%);
 }
 
@@ -310,7 +310,8 @@ body {
 @media (min-width: 640px) {
   .home-shell { width: min(100% - 48px, var(--page-max)); }
   .hero-stickers { right: 1rem; width: 16rem; }
-  .hero-street { height: 270px; }
+  .hero-street { height: 155px; }
+  .hero-street-track { top: -115px; height: 270px; }
   .hero-creature { bottom: 15%; width: 5rem; height: 3rem; }
   .hero-creature-2 { width: 4.6rem; }
   .hero-creature-3 { width: 4rem; height: 3.5rem; }
@@ -333,6 +334,7 @@ body {
   .hero-copy { padding-top: 4.5rem; }
   .hero-title { font-size: clamp(5.5rem, 11vw, 7.25rem); }
   .hero-street { position: absolute; right: 0; bottom: 0; left: 0; height: 330px; margin-top: 0; }
+  .hero-street-track { inset: 0 auto 0 50%; height: 100%; }
   .hero-stickers { top: 2rem; right: 3vw; width: 18rem; }
   .hero-splat { top: -7rem; right: -8rem; width: 42rem; }
   .favourite-card { flex-basis: 114px; }
