@@ -24,7 +24,7 @@ export function HeroWeirdo() {
             </h1>
 
             <Link
-              href={`/products/${active.slug}-tee`}
+              href={`/products/tee?design=${active.slug}`}
               className="press mt-4 inline-flex min-h-11 items-center rounded-full px-5 py-3 text-[12px] font-black uppercase text-ink sm:mt-7 sm:min-h-12 sm:px-6 sm:text-[13px]"
               style={{ background: accent.hex }}
             >

@@ -194,6 +194,17 @@ export function getPrintifyCatalog(): Promise<Catalog> {
   return cachedCatalog;
 }
 
+/** Which creature slugs actually have a built Printify product for this
+ * category — used to filter the design picker so it never offers a design
+ * that isn't a real, orderable product (e.g. "dreg", dropped from the
+ * catalog entirely). Empty only means the whole catalog fetch failed/isn't
+ * configured, not "no designs exist" — callers should treat that as
+ * "unknown" rather than "nothing available". */
+export async function getAvailableCreatureSlugs(category: PrintifyCategory): Promise<Set<string>> {
+  const catalog = await getPrintifyCatalog();
+  return new Set(catalog[category].keys());
+}
+
 export async function getPrintifyProductData(
   category: PrintifyCategory,
   creatureSlug: string

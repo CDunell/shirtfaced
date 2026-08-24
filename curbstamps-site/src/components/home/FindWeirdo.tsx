@@ -38,7 +38,7 @@ export function FindWeirdo() {
           {picked !== null && !won && <p className="display text-[22px] uppercase text-[#ff9cbc]">nope — try again!</p>}
           {won && <div className="badge-pop flex flex-wrap justify-center gap-3">
             <button type="button" onClick={playAgain} className="press min-h-12 rounded-md bg-grit-green px-5 py-3 text-[12px] font-black uppercase text-ink">Next weirdo</button>
-            <Link href={`/products/${target.slug}-tee`} className="press min-h-12 rounded-md border-2 border-paper px-5 py-3 text-[12px] font-black uppercase text-paper">Shop {target.name}</Link>
+            <Link href={`/products/tee?design=${target.slug}`} className="press min-h-12 rounded-md border-2 border-paper px-5 py-3 text-[12px] font-black uppercase text-paper">Shop {target.name}</Link>
           </div>}
         </div>
         <div className="mt-5 flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-[0.12em] text-paper/55">

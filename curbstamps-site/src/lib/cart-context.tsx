@@ -42,18 +42,24 @@ const sameLine = (l: CartLine, slug: string, size: string, colour: string) =>
   l.slug === slug && l.size === size && l.colour === colour;
 
 /** Repairs a cart saved before a field was added, or referencing a product
- * that no longer exists — same reasoning as shirtfaced's cart-context.tsx. */
+ * that no longer exists — same reasoning as shirtfaced's cart-context.tsx.
+ *
+ * Trusts the stored colour/body verbatim rather than re-validating them
+ * against `products`' static synthetic colourways (Jet Black/Natural/accent)
+ * — the real colour a customer picked comes from live Printify data fetched
+ * per-request, which isn't available synchronously here. Re-validating
+ * against the wrong list silently corrupted every real selection back to
+ * "Jet Black" on any page reload. */
 function migrate(stored: unknown[]): CartLine[] {
   const out: CartLine[] = [];
   for (const raw of stored) {
     if (!raw || typeof raw !== "object") continue;
     const l = raw as Partial<CartLine>;
-    if (typeof l.slug !== "string" || typeof l.size !== "string") continue;
+    if (typeof l.slug !== "string" || typeof l.size !== "string" || typeof l.colour !== "string") continue;
 
     const product = products.find((p) => p.slug === l.slug);
     if (!product) continue;
 
-    const colour = product.colours.find((c) => c.name === l.colour) ?? product.colours[0];
     const quantity = typeof l.quantity === "number" && l.quantity > 0 ? Math.floor(l.quantity) : 1;
 
     out.push({
@@ -61,10 +67,10 @@ function migrate(stored: unknown[]): CartLine[] {
       name: product.name,
       price: product.price,
       size: l.size,
-      colour: colour.name,
+      colour: l.colour,
       art: product.art,
       artDark: product.artDark,
-      body: colour.body,
+      body: typeof l.body === "string" ? l.body : product.colours[0].body,
       quantity,
     });
   }

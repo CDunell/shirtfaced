@@ -1,5 +1,5 @@
 import { CREATURES, creatureLockup, getCreature } from "./creatures";
-import { getPrintifyProductData, type PrintifyCategory } from "./printify";
+import { getPrintifyProductData, getAvailableCreatureSlugs, type PrintifyCategory } from "./printify";
 
 export type Category = PrintifyCategory;
 
@@ -134,6 +134,19 @@ export async function withPrintifyData(product: Product): Promise<Product> {
     sizes: sizeTitles.length > 0 ? sizeTitles : product.sizes,
     photos,
   };
+}
+
+/** Creatures to show in a category's design picker — real Printify data
+ * only, so a customer never sees a design (e.g. "dreg", dropped from the
+ * catalog) that isn't actually a purchasable product. Falls back to every
+ * creature only if the catalog fetch itself came back completely empty
+ * (unconfigured env, or a real outage) — that's "unknown", not "nothing
+ * built", and showing the honest stand-in for all of them beats showing
+ * none at all. */
+export async function designsForCategory(category: Category) {
+  const available = await getAvailableCreatureSlugs(category);
+  if (available.size === 0) return CREATURES;
+  return CREATURES.filter((c) => available.has(c.slug));
 }
 
 export function productsForCreature(slug: string) {

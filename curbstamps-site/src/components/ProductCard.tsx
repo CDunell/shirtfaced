@@ -6,7 +6,7 @@ import { GarmentArt } from "./GarmentArt";
 export function ProductCard({ product }: { product: Product }) {
   const colour = product.colours[0];
   return (
-    <Link href={`/products/${product.slug}`} className="press group block">
+    <Link href={`/products/${product.category}?design=${product.creature}`} className="press group block">
       <GarmentArt
         category={product.category}
         bodyColour={colour.body}
