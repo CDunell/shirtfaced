@@ -128,6 +128,9 @@ export function CurbWorld() {
                       top: `${placement.y}%`,
                       "--creature-width": `${placement.width}%`,
                       animationDelay: `${placement.delay}s`,
+                      filter: placement.name === "blip"
+                        ? "invert(78%) sepia(89%) saturate(403%) hue-rotate(46deg) brightness(94%) contrast(87%)"
+                        : undefined,
                     } as CSSProperties;
 
                     return (
