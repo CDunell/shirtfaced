@@ -1,0 +1,160 @@
+.frame {
+  --world-stage-height: 250px;
+  --world-art-height: 320px;
+  --world-art-top: -48px;
+}
+
+.panel {
+  position: relative;
+  height: var(--world-stage-height);
+  width: calc(var(--world-art-height) * 951 / 576);
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.scene {
+  position: absolute;
+  top: var(--world-art-top);
+  left: 0;
+  height: var(--world-art-height);
+  aspect-ratio: 951 / 576;
+}
+
+.panelArt,
+.foregroundMask {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  pointer-events: none;
+}
+
+.panelArt {
+  z-index: 1;
+}
+
+.creature {
+  position: absolute;
+  z-index: 2;
+  width: var(--creature-width);
+  height: auto;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+}
+
+.foregroundMask {
+  z-index: 3;
+  object-fit: fill;
+}
+
+.peek {
+  animation: peek 4.8s cubic-bezier(.45, 0, .3, 1) infinite;
+}
+
+.creep {
+  animation: creep 6.2s cubic-bezier(.45, 0, .3, 1) infinite;
+}
+
+.scuttle {
+  animation: scuttle 5.6s cubic-bezier(.45, 0, .3, 1) infinite;
+}
+
+.duck {
+  animation: duck 5.1s cubic-bezier(.45, 0, .3, 1) infinite;
+}
+
+.nose {
+  animation: nose 4.4s cubic-bezier(.45, 0, .3, 1) infinite;
+}
+
+.edge {
+  animation: edge 6.8s cubic-bezier(.45, 0, .3, 1) infinite;
+}
+
+.sneak {
+  animation: sneak 7.2s cubic-bezier(.45, 0, .3, 1) infinite;
+}
+
+.settle {
+  animation: settle 5.9s cubic-bezier(.45, 0, .3, 1) infinite;
+}
+
+@keyframes peek {
+  0%, 18%, 100% { transform: translateY(7%); }
+  28%, 66% { transform: translateY(0); }
+  74% { transform: translateY(3%); }
+}
+
+@keyframes creep {
+  0%, 16%, 100% { transform: translateX(-3%); }
+  34%, 68% { transform: translateX(2%); }
+  78% { transform: translateX(0); }
+}
+
+@keyframes scuttle {
+  0%, 20%, 100% { transform: translateX(-4%); }
+  38%, 58% { transform: translateX(4%); }
+  72% { transform: translateX(1%); }
+}
+
+@keyframes duck {
+  0%, 22%, 100% { transform: translateY(0); }
+  34%, 48% { transform: translateY(6%); }
+  62% { transform: translateY(2%); }
+}
+
+@keyframes nose {
+  0%, 24%, 100% { transform: translateX(0) translateY(0); }
+  38% { transform: translateX(2.5%) translateY(1%); }
+  52% { transform: translateX(0) translateY(0); }
+  64% { transform: translateX(1.2%) translateY(.5%); }
+}
+
+@keyframes edge {
+  0%, 15%, 100% { transform: translateX(4%); }
+  30%, 62% { transform: translateX(0); }
+  74% { transform: translateX(2%); }
+}
+
+@keyframes sneak {
+  0%, 14%, 100% { transform: translateX(-2%) translateY(3%); }
+  36%, 64% { transform: translateX(2%) translateY(0); }
+  76% { transform: translateX(0) translateY(1%); }
+}
+
+@keyframes settle {
+  0%, 24%, 100% { transform: translateY(0); }
+  40% { transform: translateY(2%); }
+  56% { transform: translateY(.5%); }
+}
+
+@media (min-width: 768px) {
+  .frame {
+    --world-stage-height: 420px;
+    --world-art-height: 420px;
+    --world-art-top: 0px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .frame {
+    --world-stage-height: 480px;
+    --world-art-height: 480px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .frame {
+    --world-stage-height: 520px;
+    --world-art-height: 520px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .creature {
+    animation: none !important;
+  }
+}
