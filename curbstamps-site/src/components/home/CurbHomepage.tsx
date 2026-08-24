@@ -93,7 +93,7 @@ export function CurbHomepage({ photos }: { photos: HomepagePhoto[] }) {
         <div className="home-shell hero-copy">
           <p className="home-kicker">Little weirdos. Big personalities.</p>
           <h1 id="home-title" className="display hero-title">Welcome to<br />the curb.</h1>
-          <p className="hero-body">We found these weirdos outside. Now they live here with us.</p>
+          <p className="hero-body">We found these weirdos outside.<br />Now they live here with us.</p>
           <div className="hero-actions">
             <Link href="/shop" className="home-button home-button-ink">Shop the creatures</Link>
             <Link href="#crew" className="home-button home-button-acid">Meet them all</Link>
