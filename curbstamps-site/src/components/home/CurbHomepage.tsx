@@ -86,7 +86,7 @@ export function CurbHomepage({ photos }: { photos: HomepagePhoto[] }) {
   const [arrivalPhoto, wantedPhoto, ...adventurePhotos] = photos;
 
   return (
-    <div className="home-v2">
+    <div className="home-v2" data-home-version="curb-club-v1">
       <section className="home-grain home-hero" aria-labelledby="home-title">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/curbstamps/home-v2/splat-violet.webp" alt="" className="hero-splat" aria-hidden="true" />

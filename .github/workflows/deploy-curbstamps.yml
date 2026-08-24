@@ -77,9 +77,10 @@ jobs:
           set -euo pipefail
           systemctl is-active --quiet curbstamps-site
           html=$(curl -fsS http://127.0.0.1:4100/)
-          printf '%s' "$html" | grep -qi "pick your"
-          printf '%s' "$html" | grep -qi "weirdo"
-          printf '%s' "$html" | grep -qi "the whole curb crew"
+          printf '%s' "$html" | grep -qi "welcome to"
+          printf '%s' "$html" | grep -qi "shop the creatures"
+          printf '%s' "$html" | grep -qi "curb club"
+          curl -fsS http://127.0.0.1:4100/curbstamps/home-v2/paper-texture.webp > /dev/null
           master=$(curl -fsS http://127.0.0.1:4100/creatures/masters/blip.svg)
           lockup=$(curl -fsS http://127.0.0.1:4100/creatures/lockups/blip-dark.svg)
           printf '%s' "$master" | grep -q 'stroke-width="7"'
