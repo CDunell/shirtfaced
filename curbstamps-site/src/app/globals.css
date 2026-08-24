@@ -239,14 +239,17 @@ body {
 .hero-creature-4 { left: 66%; width: 4.2rem; }
 .hero-creature-5 { right: 2%; width: 4rem; }
 
-.favourites-band { padding: 2.75rem 0; background: var(--color-cream); border-bottom: 2px solid var(--color-ink); }
+.favourites-band { position: relative; overflow: hidden; padding: 1.75rem 0 2rem; background: #f3ebdc url("/curbstamps/home-v2/paper-texture.webp") repeat; background-size: 520px 520px; border-bottom: 2px solid var(--color-ink); }
+.favourites-band::before { content: ""; position: absolute; top: -5rem; right: -7rem; width: 20rem; height: 14rem; background: url("/curbstamps/home-v2/splat-violet.webp") center / contain no-repeat; opacity: 0.1; transform: rotate(13deg); pointer-events: none; }
+.favourites-band .home-shell { position: relative; z-index: 1; }
 .section-heading-row { display: flex; align-items: end; justify-content: space-between; gap: 1.5rem; }
 .section-title { margin-top: 0.25rem; font-size: clamp(2.5rem, 11vw, 4.5rem); text-transform: uppercase; }
 .section-title-large { font-size: clamp(3rem, 13vw, 5.5rem); }
 .section-copy { max-width: 42rem; margin-top: 0.9rem; font-size: 0.95rem; font-weight: 720; line-height: 1.55; color: rgb(28 26 23 / 0.72); }
 
-.favourites-scroll { display: flex; gap: 0.65rem; margin: 1.5rem -16px 0; padding: 0 16px 0.5rem; overflow-x: auto; }
-.favourite-card { flex: 0 0 104px; min-width: 0; }
+.favourites-band .section-title { font-size: clamp(2.15rem, 9vw, 3rem); white-space: nowrap; }
+.favourites-scroll { display: flex; gap: 0.65rem; margin: 1rem -16px 0; padding: 0 16px 0.35rem; overflow-x: auto; }
+.favourite-card { flex: 0 0 96px; min-width: 0; }
 .favourites-all-link { display: none; }
 .favourite-art { display: grid; width: 100%; aspect-ratio: 1.05; place-items: center; border: 0; border-radius: 47% 53% 45% 55% / 55% 44% 56% 45%; filter: drop-shadow(2px 3px 0 var(--color-ink)); }
 .favourite-art img { width: 82%; height: 64%; object-fit: contain; color: var(--color-ink); transition: transform 180ms var(--ease-bounce); }
@@ -356,6 +359,7 @@ body {
   .home-kicker { font-size: 0.74rem; }
   .home-button, .home-text-link { font-size: 0.78rem; }
   .favourites-all-link { display: inline-flex; }
+  .favourites-band .section-title { font-size: 4rem; }
   .home-hero { min-height: 650px; }
   .hero-copy { padding-top: 4.5rem; }
   .hero-title { font-size: clamp(5.5rem, 11vw, 7.25rem); }
@@ -392,8 +396,9 @@ body {
   .hero-creature-4 { left: 70%; }
   .hero-creature-5 { right: 4%; }
   .section-title { font-size: 4.8rem; }
+  .favourites-band .section-title { font-size: 4.8rem; }
   .section-title-large { font-size: 5.8rem; }
-  .favourites-band { padding: 4rem 0; }
+  .favourites-band { padding: 3rem 0; }
   .favourites-scroll { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); }
   .favourite-card { min-width: 0; }
   .commerce-section, .category-section, .crew-section, .adventure-section, .parents-section { padding-block: 5.5rem; }
