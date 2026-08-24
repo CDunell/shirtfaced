@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useRef } from "react";
 
-const PANELS = Array.from({ length: 10 }, (_, index) =>
-  `/curbstamps/world/panels/${String(index + 1).padStart(2, "0")}.webp?v=20260823b`,
+const PANEL_COUNT = 10;
+const PANEL_WIDTH = 951;
+const PANEL_HEIGHT = 576;
+const PANELS = Array.from({ length: PANEL_COUNT }, (_, index) =>
+  `/curbstamps/world/panels/${String(index + 1).padStart(2, "0")}.webp?v=20260824a`,
 );
-const LOOP_PANELS = [PANELS[9], ...PANELS, PANELS[0]];
+const LOOP_PANELS = [PANELS[PANEL_COUNT - 1], ...PANELS, PANELS[0]];
 
 export function CurbWorld() {
   const scroller = useRef<HTMLDivElement>(null);
@@ -17,7 +20,7 @@ export function CurbWorld() {
     const track = scroller.current;
     if (!track) return;
     panelWidth.current = image.getBoundingClientRect().width;
-    worldWidth.current = panelWidth.current * PANELS.length;
+    worldWidth.current = panelWidth.current * PANEL_COUNT;
     const mobileRevealOffset = window.innerWidth < 640 ? panelWidth.current * 0.42 : 0;
     track.scrollLeft = panelWidth.current + mobileRevealOffset;
   }, []);
@@ -54,7 +57,7 @@ export function CurbWorld() {
   return (
     <div className="relative mt-5 overflow-hidden border-y-2 border-ink bg-cream sm:rounded-[22px] sm:border-2">
       <div className="pointer-events-none absolute left-3 top-3 z-20 rounded-full border-2 border-ink bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] shadow-[3px_3px_0_#1c1a17]">
-        Scroll → keep exploring
+        Scroll → explore the curb
       </div>
 
       <div className="absolute right-3 top-3 z-20 hidden gap-2 sm:flex">
@@ -69,101 +72,23 @@ export function CurbWorld() {
         aria-label="Explore the illustrated Curb world"
       >
         <div className="flex w-max">
-          {LOOP_PANELS.map((src, index) => {
-            const isPanelOne = index === 1 || index === LOOP_PANELS.length - 1;
-
-            return (
-              <div key={`${src}-${index}`} className="relative h-[420px] aspect-[1428/576] shrink-0 sm:h-[500px]">
-                <img
-                  data-world-panel
-                  src={src}
-                  width={1428}
-                  height={576}
-                  alt={index === 1 ? "A very long illustrated curb filled with cracks, drains, weeds and discarded street objects" : ""}
-                  aria-hidden={index === 1 ? undefined : true}
-                  draggable={false}
-                  onLoad={index === 1 ? (event) => centreWorld(event.currentTarget) : undefined}
-                  className="absolute inset-0 h-full w-full select-none"
-                />
-
-                {isPanelOne && (
-                  <div className="pip-drain absolute overflow-hidden" aria-hidden="true">
-                    <img
-                      src="/curbstamps/world/creatures/pip.svg?v=20260823c"
-                      alt=""
-                      draggable={false}
-                      className="pip-drain-creature absolute h-full w-auto max-w-none select-none"
-                    />
-                  </div>
-                )}
-
-                {isPanelOne && (
-                  <div className="bub-wall-hole absolute overflow-hidden" aria-hidden="true">
-                    <img
-                      src="/curbstamps/world/creatures/bub.svg?v=20260823c"
-                      alt=""
-                      draggable={false}
-                      className="bub-wall-creature h-full w-full object-contain select-none"
-                    />
-                  </div>
-                )}
-              </div>
-            );
-          })}
+          {LOOP_PANELS.map((src, index) => (
+            <div key={`${src}-${index}`} className="relative h-[420px] aspect-[951/576] shrink-0 sm:h-[500px]">
+              <img
+                data-world-panel
+                src={src}
+                width={PANEL_WIDTH}
+                height={PANEL_HEIGHT}
+                alt={index === 1 ? "A long hand-drawn curb with weeds, drains, a cardboard shelter, skateboard and discarded street objects" : ""}
+                aria-hidden={index === 1 ? undefined : true}
+                draggable={false}
+                onLoad={index === 1 ? (event) => centreWorld(event.currentTarget) : undefined}
+                className="absolute inset-0 h-full w-full select-none"
+              />
+            </div>
+          ))}
         </div>
       </div>
-
-      <style jsx>{`
-        .pip-drain {
-          left: 57.65%;
-          top: calc(72.6% + 5px);
-          width: 14.45%;
-          height: 9.4%;
-        }
-
-        .pip-drain-creature {
-          left: 0;
-          top: 0;
-          animation: pip-peek 7.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-          will-change: transform;
-        }
-
-        .bub-wall-hole {
-          left: 66.5%;
-          top: 47.2%;
-          width: 4.65%;
-          height: 6.8%;
-        }
-
-        .bub-wall-creature {
-          animation: bub-peek 8.6s cubic-bezier(0.45, 0, 0.55, 1) -2.4s infinite;
-          will-change: transform;
-        }
-
-        @keyframes bub-peek {
-          0%, 22% { transform: translateX(112%); }
-          42%, 64% { transform: translateX(2%); }
-          84%, 100% { transform: translateX(112%); }
-        }
-
-        @keyframes pip-peek {
-          0%, 18% { transform: translateX(112%); }
-          38%, 62% { transform: translateX(8%); }
-          82%, 100% { transform: translateX(112%); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .pip-drain-creature {
-            animation: none;
-            transform: translateX(8%);
-          }
-
-          .bub-wall-creature {
-            animation: none;
-            transform: translateX(2%);
-          }
-        }
-      `}</style>
     </div>
   );
 }
