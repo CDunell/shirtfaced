@@ -55,8 +55,8 @@ export function CurbWorld() {
   }
 
   return (
-    <div className="relative mt-6 overflow-hidden border-2 border-ink bg-cream md:mt-8 lg:mt-10">
-      <div className="pointer-events-none absolute left-3 top-3 z-20 border-2 border-ink bg-club px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] shadow-[3px_3px_0_#1c1a17] md:left-4 md:top-4 md:text-[11px]">
+    <div className="curb-world-frame relative mt-6 overflow-hidden bg-cream md:mt-8 lg:mt-10">
+      <div className="curb-world-badge pointer-events-none absolute left-3 top-3 z-20 bg-club px-4 py-2 text-[10px] font-black uppercase tracking-[0.08em] shadow-[3px_3px_0_#1c1a17] md:left-4 md:top-4 md:text-[11px]">
         Scroll → explore the curb
       </div>
 
