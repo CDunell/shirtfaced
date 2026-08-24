@@ -49,7 +49,7 @@ const PANEL_SCENES: Placement[][] = [
   ],
   [
     { name: "pex", x: 17, y: 68, width: 17, motion: "nose", delay: -1.5, maskClip: "polygon(11% 69%, 38% 69%, 38% 100%, 11% 100%)" },
-    { name: "pip", x: 70, y: 34, width: 15, motion: "fly", delay: -3.9, maskClip: "polygon(65% 70%, 89% 70%, 89% 100%, 65% 100%)" },
+    { name: "pip", x: 70, y: 68, width: 15, motion: "edge", delay: -3.9, maskClip: "polygon(65% 70%, 89% 70%, 89% 100%, 65% 100%)" },
   ],
   [
     { name: "plod", x: 8, y: 67, width: 20, motion: "creep", delay: -0.9, maskClip: "polygon(3% 69%, 32% 69%, 32% 100%, 3% 100%)" },
@@ -65,7 +65,7 @@ const PANEL_SCENES: Placement[][] = [
   ],
   [
     { name: "yip", x: 18, y: 67, width: 18, motion: "edge", delay: -2.1, maskClip: "polygon(12% 69%, 40% 69%, 40% 100%, 12% 100%)" },
-    { name: "zot", x: 69, y: 30, width: 18, motion: "fly", delay: -4.1, maskClip: "polygon(63% 71%, 92% 71%, 92% 100%, 63% 100%)" },
+    { name: "zot", x: 69, y: 67, width: 18, motion: "peek", delay: -4.1, maskClip: "polygon(63% 71%, 92% 71%, 92% 100%, 63% 100%)" },
   ],
 ];
 
