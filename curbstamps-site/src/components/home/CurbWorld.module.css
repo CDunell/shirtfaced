@@ -1,7 +1,7 @@
 .frame {
-  --world-stage-height: 250px;
-  --world-art-height: 320px;
-  --world-art-top: -48px;
+  --world-stage-height: 230px;
+  --world-art-height: 330px;
+  --world-art-top: -68px;
 }
 
 .panel {
