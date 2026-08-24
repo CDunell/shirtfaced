@@ -82,6 +82,10 @@
   animation: settle 5.9s cubic-bezier(.45, 0, .3, 1) infinite;
 }
 
+.fly {
+  animation: fly 5.4s ease-in-out infinite;
+}
+
 @keyframes peek {
   0%, 18%, 100% { transform: translateY(0); }
   28%, 66% { transform: translateY(-7%); }
@@ -129,6 +133,13 @@
   0%, 24%, 100% { transform: translateY(0); }
   40% { transform: translateY(2%); }
   56% { transform: translateY(.5%); }
+}
+
+@keyframes fly {
+  0%, 100% { transform: translate(0, 0) rotate(-1deg); }
+  30% { transform: translate(5%, -7%) rotate(2deg); }
+  62% { transform: translate(-3%, -3%) rotate(0); }
+  82% { transform: translate(2%, -6%) rotate(1deg); }
 }
 
 @media (min-width: 768px) {
