@@ -107,11 +107,13 @@ export function CurbHomepage({ photos }: { photos: HomepagePhoto[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/curbstamps/world/panels/02.webp?v=20260824a" alt="" />
           </div>
-          <StreetCreature slug="blip" className="hero-creature hero-creature-1" />
-          <StreetCreature slug="squib" className="hero-creature hero-creature-2" />
-          <StreetCreature slug="bub" className="hero-creature hero-creature-3" />
-          <StreetCreature slug="lod" className="hero-creature hero-creature-4" />
-          <StreetCreature slug="snu" className="hero-creature hero-creature-5" />
+          <div className="home-shell hero-creature-layer">
+            <StreetCreature slug="blip" className="hero-creature hero-creature-1" />
+            <StreetCreature slug="squib" className="hero-creature hero-creature-2" />
+            <StreetCreature slug="bub" className="hero-creature hero-creature-3" />
+            <StreetCreature slug="lod" className="hero-creature hero-creature-4" />
+            <StreetCreature slug="snu" className="hero-creature hero-creature-5" />
+          </div>
         </div>
       </section>
 
