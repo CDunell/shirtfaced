@@ -27,9 +27,7 @@ function StreetCreature({ slug, className = "" }: { slug: string; className?: st
   return (
     <span className={`street-creature ${className}`} aria-hidden="true">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="street-creature-fill" src={`/curbstamps/creatures/${slug}-light.svg?v=20260824b`} alt="" />
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img className="street-creature-lines" src={creatureMaster(slug)} alt="" />
+      <img src={`/curbstamps/world/creatures/${slug}.svg?v=20260824c`} alt="" />
     </span>
   );
 }
@@ -76,7 +74,6 @@ function ProductFeature({
             className="h-full rounded-none border-0"
           />
         )}
-        <StreetCreature slug={creature} className="commerce-creature" />
       </div>
     </article>
   );
