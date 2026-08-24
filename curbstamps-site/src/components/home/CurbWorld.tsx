@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./CurbWorld.module.css";
 
 const PANEL_COUNT = 10;
@@ -29,19 +29,139 @@ type Placement = {
 const PANEL_SCENES: Placement[][] = [
   [
     { name: "blip", x: 8.5, y: 69.5, width: 14, motion: "peek", delay: -1.2, maskClip: "polygon(4% 77.5%, 28% 77.5%, 28% 100%, 4% 100%)" },
+    { name: "bub", x: 63, y: 60, width: 17, motion: "nose", delay: -3.1, maskClip: "polygon(58% 72%, 84% 72%, 84% 100%, 58% 100%)" },
   ],
-  [],
-  [],
-  [],
-  [],
-  [],
-  [],
-  [],
-  [],
-  [],
+  [
+    { name: "claw", x: 18, y: 57, width: 18, motion: "edge", delay: -2.4, maskClip: "polygon(12% 70%, 39% 70%, 39% 100%, 12% 100%)" },
+    { name: "crumb", x: 69, y: 54, width: 16, motion: "duck", delay: -0.8, maskClip: "polygon(64% 68%, 89% 68%, 89% 100%, 64% 100%)" },
+  ],
+  [
+    { name: "flit", x: 9, y: 61, width: 15, motion: "scuttle", delay: -4.2, maskClip: "polygon(5% 73%, 28% 73%, 28% 100%, 5% 100%)" },
+    { name: "grit", x: 56, y: 55, width: 19, motion: "creep", delay: -1.7, maskClip: "polygon(50% 69%, 80% 69%, 80% 100%, 50% 100%)" },
+  ],
+  [
+    { name: "grub", x: 21, y: 54, width: 19, motion: "settle", delay: -3.6, maskClip: "polygon(15% 69%, 43% 69%, 43% 100%, 15% 100%)" },
+    { name: "lod", x: 73, y: 58, width: 13, motion: "peek", delay: -0.5, maskClip: "polygon(69% 71%, 90% 71%, 90% 100%, 69% 100%)" },
+  ],
+  [
+    { name: "murk", x: 12, y: 57, width: 17, motion: "sneak", delay: -2.8, maskClip: "polygon(7% 70%, 33% 70%, 33% 100%, 7% 100%)" },
+    { name: "nib", x: 60, y: 59, width: 17, motion: "duck", delay: -4.5, maskClip: "polygon(55% 72%, 81% 72%, 81% 100%, 55% 100%)" },
+  ],
+  [
+    { name: "pex", x: 17, y: 55, width: 17, motion: "nose", delay: -1.5, maskClip: "polygon(11% 69%, 38% 69%, 38% 100%, 11% 100%)" },
+    { name: "pip", x: 70, y: 56, width: 15, motion: "edge", delay: -3.9, maskClip: "polygon(65% 70%, 89% 70%, 89% 100%, 65% 100%)" },
+  ],
+  [
+    { name: "plod", x: 8, y: 54, width: 20, motion: "creep", delay: -0.9, maskClip: "polygon(3% 69%, 32% 69%, 32% 100%, 3% 100%)" },
+    { name: "slag", x: 58, y: 60, width: 17, motion: "scuttle", delay: -2.6, maskClip: "polygon(53% 72%, 79% 72%, 79% 100%, 53% 100%)" },
+  ],
+  [
+    { name: "snu", x: 19, y: 58, width: 16, motion: "peek", delay: -4.8, maskClip: "polygon(14% 71%, 39% 71%, 39% 100%, 14% 100%)" },
+    { name: "squib", x: 68, y: 54, width: 18, motion: "settle", delay: -1.9, maskClip: "polygon(62% 69%, 91% 69%, 91% 100%, 62% 100%)" },
+  ],
+  [
+    { name: "tum", x: 10, y: 59, width: 18, motion: "duck", delay: -3.4, maskClip: "polygon(5% 72%, 32% 72%, 32% 100%, 5% 100%)" },
+    { name: "twig", x: 57, y: 53, width: 20, motion: "sneak", delay: -0.3, maskClip: "polygon(51% 68%, 82% 68%, 82% 100%, 51% 100%)" },
+  ],
+  [
+    { name: "yip", x: 18, y: 55, width: 18, motion: "edge", delay: -2.1, maskClip: "polygon(12% 69%, 40% 69%, 40% 100%, 12% 100%)" },
+    { name: "zot", x: 69, y: 58, width: 18, motion: "peek", delay: -4.1, maskClip: "polygon(63% 71%, 92% 71%, 92% 100%, 63% 100%)" },
+  ],
 ];
 
+const WHITE_FILL_CREATURES = [
+  "bub", "claw", "crumb", "flit", "grit", "grub", "lod", "murk", "nib",
+  "pex", "pip", "plod", "slag", "snu", "squib", "tum", "twig", "yip", "zot",
+] as const;
+
+function fillEnclosedBodyWhite(name: string): Promise<[string, string]> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1200;
+      canvas.height = 500;
+      const context = canvas.getContext("2d", { willReadFrequently: true });
+      if (!context) {
+        reject(new Error("Canvas is unavailable"));
+        return;
+      }
+
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const frame = context.getImageData(0, 0, canvas.width, canvas.height);
+      const pixels = frame.data;
+      const count = canvas.width * canvas.height;
+      const outside = new Uint8Array(count);
+      const queue = new Int32Array(count);
+      let head = 0;
+      let tail = 0;
+
+      const visit = (index: number) => {
+        if (outside[index] || pixels[index * 4 + 3] >= 24) return;
+        outside[index] = 1;
+        queue[tail++] = index;
+      };
+
+      for (let x = 0; x < canvas.width; x += 1) {
+        visit(x);
+        visit((canvas.height - 1) * canvas.width + x);
+      }
+      for (let y = 0; y < canvas.height; y += 1) {
+        visit(y * canvas.width);
+        visit(y * canvas.width + canvas.width - 1);
+      }
+
+      while (head < tail) {
+        const index = queue[head++];
+        const x = index % canvas.width;
+        const y = Math.floor(index / canvas.width);
+        if (x > 0) visit(index - 1);
+        if (x + 1 < canvas.width) visit(index + 1);
+        if (y > 0) visit(index - canvas.width);
+        if (y + 1 < canvas.height) visit(index + canvas.width);
+      }
+
+      for (let index = 0; index < count; index += 1) {
+        const alpha = index * 4 + 3;
+        if (!outside[index] && pixels[alpha] < 24) {
+          pixels[index * 4] = 255;
+          pixels[index * 4 + 1] = 255;
+          pixels[index * 4 + 2] = 255;
+          pixels[alpha] = 255;
+        }
+      }
+
+      context.putImageData(frame, 0, 0);
+      resolve([name, canvas.toDataURL("image/png")]);
+    };
+    image.onerror = () => reject(new Error(`Unable to load ${name}`));
+    image.src = `${CREATURE_ROOT}/${name}.svg`;
+  });
+}
+
+function useWhiteCreatureSources() {
+  const [sources, setSources] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all(WHITE_FILL_CREATURES.map(fillEnclosedBodyWhite))
+      .then((entries) => {
+        if (!cancelled) setSources(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (!cancelled) setSources({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return sources;
+}
+
 export function CurbWorld() {
+  const filledCreatureSources = useWhiteCreatureSources();
   const scroller = useRef<HTMLDivElement>(null);
   const worldWidth = useRef(0);
   const panelWidth = useRef(0);
@@ -145,7 +265,11 @@ export function CurbWorld() {
                             />
                           )}
                           <image
-                            href={`${CREATURE_ROOT}/${placement.name}.svg`}
+                            href={
+                              placement.name === "blip"
+                                ? `${CREATURE_ROOT}/${placement.name}.svg`
+                                : filledCreatureSources[placement.name]
+                            }
                             width="1200"
                             height="500"
                           />
