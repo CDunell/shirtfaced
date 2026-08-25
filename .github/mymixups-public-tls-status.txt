@@ -1,0 +1,9 @@
+repair=failure
+root_http=525
+www_http=525
+admin_http=000
+curb_http=200
+root_dns=104.21.3.156 172.67.130.232 
+www_dns=172.67.130.232 104.21.3.156 
+admin_dns=
+checked_at=2026-08-25T09:24:07Z
