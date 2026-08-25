@@ -1,0 +1,170 @@
+name: Fix My Mixups Public TLS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/fix-mymixups-public-tls.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Diagnose DNS and install trusted My Mixups certificate
+        run: |
+          set -euo pipefail
+          echo 'PUBLIC_DNS_BEFORE'
+          dig +short A mymixups.com || true
+          dig +short A www.mymixups.com || true
+          dig +short A admin.mymixups.com || true
+          curl -sSIk https://mymixups.com/ | head -n 8 || true
+
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          # Confirm My Mixups and Curb services before touching nginx.
+          curl -fsS http://127.0.0.1:4110/ >/dev/null
+          curl -fsS http://127.0.0.1:4310/login >/dev/null
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          curl -fsS http://127.0.0.1:4300/login >/dev/null
+
+          CONF=/etc/nginx/sites-available/mymixups
+          test -f "$CONF"
+          BACKUP="$CONF.bak.public-tls.$(date +%Y%m%d-%H%M%S)"
+          sudo cp "$CONF" "$BACKUP"
+
+          # Ensure ACME HTTP challenge can reach nginx while leaving app routing intact.
+          sudo mkdir -p /var/www/letsencrypt/.well-known/acme-challenge
+          sudo tee "$CONF" >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com admin.mymixups.com;
+              location ^~ /.well-known/acme-challenge/ {
+                  root /var/www/letsencrypt;
+                  default_type text/plain;
+              }
+              location / {
+                  if ($host = admin.mymixups.com) { proxy_pass http://127.0.0.1:4310; }
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              listen [::]:443 ssl;
+              server_name mymixups.com www.mymixups.com;
+              ssl_certificate /etc/nginx/tls/mymixups/origin.crt;
+              ssl_certificate_key /etc/nginx/tls/mymixups/origin.key;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto https;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              listen [::]:443 ssl;
+              server_name admin.mymixups.com;
+              ssl_certificate /etc/nginx/tls/mymixups/origin.crt;
+              ssl_certificate_key /etc/nginx/tls/mymixups/origin.key;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              location / {
+                  proxy_pass http://127.0.0.1:4310;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto https;
+              }
+          }
+          NGINX
+
+          if ! sudo nginx -t; then
+            sudo cp "$BACKUP" "$CONF"
+            sudo nginx -t
+            exit 1
+          fi
+          sudo systemctl reload nginx
+
+          if ! command -v certbot >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq certbot
+          fi
+
+          # Root and www already exist in public DNS. Issue a real trusted cert for them.
+          sudo certbot certonly --webroot -w /var/www/letsencrypt \
+            -d mymixups.com -d www.mymixups.com \
+            --non-interactive --agree-tos --register-unsafely-without-email \
+            --keep-until-expiring
+
+          CERT=/etc/letsencrypt/live/mymixups.com/fullchain.pem
+          KEY=/etc/letsencrypt/live/mymixups.com/privkey.pem
+          sudo test -s "$CERT"
+          sudo test -s "$KEY"
+          sudo sed -i "s#ssl_certificate /etc/nginx/tls/mymixups/origin.crt;#ssl_certificate $CERT;#g" "$CONF"
+          sudo sed -i "s#ssl_certificate_key /etc/nginx/tls/mymixups/origin.key;#ssl_certificate_key $KEY;#g" "$CONF"
+
+          if ! sudo nginx -t; then
+            sudo cp "$BACKUP" "$CONF"
+            sudo nginx -t
+            sudo systemctl reload nginx
+            exit 1
+          fi
+          sudo systemctl reload nginx
+
+          # Origin validation with SNI.
+          curl -fsS --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ >/dev/null
+          curl -fsS --resolve www.mymixups.com:443:127.0.0.1 https://www.mymixups.com/ >/dev/null
+
+          # Curb regression — read-only health checks.
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          curl -fsS http://127.0.0.1:4300/login >/dev/null
+          systemctl is-active --quiet curbstamps-site
+          systemctl is-active --quiet curbstamps-admin
+
+          echo MYMIXUPS_TRUSTED_ORIGIN_TLS_OK=true
+          echo CURBSTAMPS_REGRESSION_OK=true
+          REMOTE
+
+      - name: Verify live Cloudflare endpoints
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 18); do
+            root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+            www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
+            admin=$(curl -LsS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
+            curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+            echo "attempt=$i root=$root www=$www admin=$admin curb=$curb"
+            [[ "$curb" =~ ^(200|301|302|307|308)$ ]]
+            if [[ "$root" =~ ^(200|301|302|307|308)$ ]] && [[ "$www" =~ ^(200|301|302|307|308)$ ]]; then
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          test "$ok" = 1
+          echo MYMIXUPS_ROOT_WWW_PUBLIC_OK=true
+          echo "ADMIN_DNS=$(dig +short admin.mymixups.com | tr '\n' ' ')"
