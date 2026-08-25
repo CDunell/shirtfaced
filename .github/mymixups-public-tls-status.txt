@@ -1,4 +1,4 @@
-checked_at=2026-08-25T10:15:25Z
+checked_at=2026-08-25T10:17:11Z
 oracle_host_set=yes
 deploy_key_set=yes
 # 161.33.31.74:22 SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.16
@@ -16,10 +16,16 @@ curbstamps-site=active
 4110=200
 4100=200
 
+=== HOST FIREWALL BEFORE ===
+Status: inactive
+-P INPUT ACCEPT
+Rules updated
+Rules updated (v6)
+
 === WRITE MYMIXUPS HTTP VHOST ===
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
-host_http=200
+host_http=301
 
 === CERTBOT ATTEMPT ===
 Saving debug log to /var/log/letsencrypt/letsencrypt.log
@@ -28,11 +34,11 @@ Requesting a certificate for mymixups.com and www.mymixups.com
 Certbot failed to authenticate some domains (authenticator: nginx). The Certificate Authority reported these problems:
   Domain: mymixups.com
   Type:   unauthorized
-  Detail: 2606:4700:3037::ac43:82e8: Invalid response from http://mymixups.com/.well-known/acme-challenge/Dn_KKmUzAreiqx50u-7a_QF0w-8JWlWJ3kjtf_KTyuo: 403
+  Detail: 2606:4700:3037::ac43:82e8: Invalid response from http://mymixups.com/.well-known/acme-challenge/w36Gog9XFylQWuagJlLFRr45N6osbjgtSGY3u_ZsgpE: 520
 
   Domain: www.mymixups.com
   Type:   unauthorized
-  Detail: 2606:4700:3037::ac43:82e8: Invalid response from http://www.mymixups.com/.well-known/acme-challenge/fo6BXYgEHc2OOI4v2gtVfNRNunmtCLyEWAIF5DXi-94: 403
+  Detail: 2606:4700:3037::ac43:82e8: Invalid response from http://www.mymixups.com/.well-known/acme-challenge/_uwbGS_N63VWuzxeoD-zJm94IddNwbtqAgC94ksKSRs: 403
 
 Hint: The Certificate Authority failed to verify the temporary nginx configuration changes made by Certbot. Ensure the listed domains point to this nginx server and that it is accessible from the internet.
 
@@ -41,48 +47,28 @@ Ask for help or search for solutions at https://community.letsencrypt.org. See t
 certbot_exit=1
 
 === FALLBACK SELF-SIGNED ORIGIN TLS ===
-...+...+......+......+.+........+.+......+.....+..........+..+...+....+...+.....+.......+...........+....+....................+......+.......+.....+......+.+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.+..+...+..........+...........+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*..................+..............+...+...+....+.....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-..+.......+...+...........+.......+..+...+....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*..+..........+..+.+....................+................+........+.+.....+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*........+...+......+...+.+..+.......+......+.....+.......+..+...+.........+.+...+............+..+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+.+.+...+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.....+.+........+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*..+...............+...............+.+.........+...........+...+.......+..+......+.+.....+.+.........+......+.....+.........+...+......+......+.+........+.......+.....+....+...+........+...+.+...+.....+...+.......+.....+.+.....+......+...+.......+...+...+..............+......+............................+..+..................+......+................+.....+....+.....+...+......+....+..+....+...........+...+.+......+...+..+......+....+......+...+..+...+..........+......+.....+.........+.......+........+....+..................+.................+.+...............+..+....+.....+....+.....+......+....+..+...+.+...+..+..........+...+...............+......+..+..................+.......+...+..+.......+..+.+........+.+.....+......+..........+..+...+....+...+......+..+...+......+.............+.....+...+....+...+...+..+......+.+...+...+..+.................................+.......+..+.+...............+..+.+.........+......+..+...+.+...............+.....+.+..+.......+.........+.........+...+.....+....+.....+.+........................+........+.......+...+......+.........+.................+...+..........+..+.........+.+.....+.+...+.........+.....+............+...+.+.....+....+...+..+...+..........+..+.......+........+.+..+....+......+.....+....+.....+....+..+............+.+..+.......+.....+.......+...+........+....+.........+......+...........+...+....+........+...+..........+...................................+.+...+.....+...+...+.+...+...+...............+..+.+..+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+...+.....+.........+......+......+...+.+...........+.+..+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*..............+...........+..........+..+......+.......+.....+.......+..+.+..+.+..+.........+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*........+......+.+.....+...+.......+..+...............+......................+........+.+......+......+..+.......+........+.......+.........+..+...+....+.....+..........+...........+.+...+.....+.+..+...+....+...........+.........+.+..+..........+........+.+.....+.+...+..........................+......+...+.+...+........+.........+...+.............+.....+..........+..+...+.........+....+...........+..........+...+.....+.+..+...+..........+......+.....+.+.................+.+.........+..........................+....+.....+.+.........+........+..........+..+...+....+.....+...............+.+.........+...+...........+....+..+....+..............+...+....+.....+...+...+..........+..+.+..+...+......+...+.+.....+.......+...+.....+....+..+...+...+...+............+..........+..+.......+.....+......+....+......+..+...+..................+.......+..+.+.....+......+......+.......+......+.........+..+....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 -----
 
 === TLS AFTER ===
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
-LISTEN 0      511          0.0.0.0:443        0.0.0.0:*    users:(("nginx",pid=3521216,fd=10),("nginx",pid=3521215,fd=10),("nginx",pid=3521214,fd=10),("nginx",pid=3521213,fd=10),("nginx",pid=11259,fd=10))                                                                                                                
+LISTEN 0      511          0.0.0.0:443        0.0.0.0:*    users:(("nginx",pid=3524098,fd=18),("nginx",pid=3524097,fd=18),("nginx",pid=3524096,fd=18),("nginx",pid=3524095,fd=18),("nginx",pid=11259,fd=18))                                                                                                                
 LISTEN 0      511                *:4110             *:*    users:(("next-server (v1",pid=3381569,fd=18))                                                                                                                                                                                                                    
 LISTEN 0      511                *:4100             *:*    users:(("next-server (v1",pid=3443934,fd=18))                                                                                                                                                                                                                    
-LISTEN 0      511             [::]:443           [::]:*    users:(("nginx",pid=3521216,fd=11),("nginx",pid=3521215,fd=11),("nginx",pid=3521214,fd=11),("nginx",pid=3521213,fd=11),("nginx",pid=11259,fd=11))                                                                                                                
-depth=0 CN = mymixups.com
-verify error:num=18:self-signed certificate
-verify return:1
-depth=0 CN = mymixups.com
-verify return:1
-CONNECTED(00000003)
----
-Certificate chain
- 0 s:CN = mymixups.com
-   i:CN = mymixups.com
-   a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
-   v:NotBefore: Aug 25 10:15:40 2026 GMT; NotAfter: Aug 22 10:15:40 2036 GMT
----
-Server certificate
------BEGIN CERTIFICATE-----
-MIIDOjCCAiKgAwIBAgIUNhzs71SjkS5/KkapWNpbF9kFYyMwDQYJKoZIhvcNAQEL
-BQAwFzEVMBMGA1UEAwwMbXltaXh1cHMuY29tMB4XDTI2MDgyNTEwMTU0MFoXDTM2
-MDgyMjEwMTU0MFowFzEVMBMGA1UEAwwMbXltaXh1cHMuY29tMIIBIjANBgkqhkiG
-9w0BAQEFAAOCAQ8AMIIBCgKCAQEArazFhbhoRLW01B5W34EaV6CTSElAF8hS00fN
-EftVK2YlAS1RmY8x01Olm1FY08nwQemhP7fI6UQcwqK19ORfxT4FVvkT1AwedGK3
-mTuPxFXoMV4FguOSt8GQITMnvdym5OlkTKHRemR8Lw+7qwzdQQOe9fCGAr0BS63d
-hu0dgENr3jnADgccQG4X+O+c9MeInLuT64NhKW6WR4x3AH4u8ykogwzWwqnxe+TU
-p4KMhYxp5qFiPBNJxEMdSNSdThqcUhM3VhQT5ZG/nWgHb7P3YmCuDDq9WcNhpKMj
-mf6w1jzSuIvpanC9ZMQi7Mg8r1BWCx6lt3trfJ6y64mdxbMzjwIDAQABo34wfDAd
-BgNVHQ4EFgQUOjg8UCFdsylv4E/oSmL1SDqLkhIwHwYDVR0jBBgwFoAUOjg8UCFd
+LISTEN 0      511             [::]:443           [::]:*    users:(("nginx",pid=3524098,fd=19),("nginx",pid=3524097,fd=19),("nginx",pid=3524096,fd=19),("nginx",pid=3524095,fd=19),("nginx",pid=11259,fd=19))                                                                                                                
 local_origin_https=200
 
 === CURB REGRESSION ===
 curbstamps-site=active
 curb_4100=200
 ssh_exit=0
+=== RUNNER DIRECT ORIGIN TEST ===
+origin_443_tcp_exit=124
+curl: (28) Failed to connect to mymixups.com port 443 after 12002 ms: Timeout was reached
+origin_direct_https=000
+origin_direct_curl_exit=28
 root_http=525
 www_http=525
 curb_http=200
