@@ -67,24 +67,21 @@ jobs:
             fi
           }
 
-          # Web DNS. These are the only records pointed at Oracle.
           upsert mymixups.com A "$ORIGIN_IP" true
           upsert www.mymixups.com CNAME mymixups.com true
           upsert admin.mymixups.com A "$ORIGIN_IP" true
 
-          # Cloudflare edge TLS: Full mode + HTTPS redirect. This changes My Mixups only.
           curl -fsS -X PATCH "${auth[@]}" --data '{"value":"full"}' "$api/zones/$zone_id/settings/ssl" >/dev/null
           curl -fsS -X PATCH "${auth[@]}" --data '{"value":"on"}' "$api/zones/$zone_id/settings/always_use_https" >/dev/null
           curl -fsS -X PATCH "${auth[@]}" --data '{"value":"on"}' "$api/zones/$zone_id/settings/automatic_https_rewrites" >/dev/null
 
-          # Mail DNS: mirror Curb Stamps' existing mail-provider DNS into My Mixups.
-          # Curb Stamps is READ ONLY here: no PUT/PATCH/POST is ever sent to its zone.
+          # Mirror only Curb Stamps' mail-provider DNS. The Curb zone is read-only here.
           curb_zone_id=$(zone_id_for curbstamps.com)
           if [ -n "$curb_zone_id" ]; then
             records=$(curl -fsS "${auth[@]}" "$api/zones/$curb_zone_id/dns_records?per_page=500")
-            python3 - <<'PY' <<<"$records" > /tmp/mymixups-mail-records.tsv
-          import json,sys
-          d=json.load(sys.stdin)
+            RECORDS_JSON="$records" python3 - <<'PY' > /tmp/mymixups-mail-records.tsv
+          import json,os
+          d=json.loads(os.environ['RECORDS_JSON'])
           for r in d.get('result',[]):
               name=r.get('name','')
               typ=r.get('type','')
@@ -110,7 +107,7 @@ jobs:
           echo 'CLOUDFLARE_TLS_CONFIGURED=full+https'
           echo 'CURBSTAMPS_ZONE_MODIFIED=false'
 
-      - name: Verify public endpoints and DNS
+      - name: Verify public endpoints
         run: |
           set -euo pipefail
           for i in $(seq 1 18); do
