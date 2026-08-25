@@ -43,6 +43,14 @@ jobs:
           echo -n '4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/ 2>&1
 
           echo
+          echo '=== HOST FIREWALL BEFORE ==='
+          sudo ufw status verbose 2>&1 || true
+          sudo iptables -S INPUT 2>&1 | sed -n '1,80p' || true
+          if command -v ufw >/dev/null 2>&1; then
+            sudo ufw allow 443/tcp 2>&1 || true
+          fi
+
+          echo
           echo '=== WRITE MYMIXUPS HTTP VHOST ==='
           sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
           server {
@@ -120,7 +128,6 @@ jobs:
           sudo nginx -t 2>&1
           sudo systemctl reload nginx 2>&1
           sudo ss -ltnp 2>&1 | grep -E ':(443|4110|4100)\b' || true
-          echo | openssl s_client -connect 127.0.0.1:443 -servername mymixups.com 2>&1 | sed -n '1,25p'
           echo -n 'local_origin_https='; curl -k -sS -o /dev/null -w '%{http_code}\n' --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ 2>&1
           echo
           echo '=== CURB REGRESSION ==='
@@ -128,6 +135,12 @@ jobs:
           echo -n 'curb_4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/ 2>&1
           REMOTE
           echo "ssh_exit=$?" >> "$OUT"
+
+          echo '=== RUNNER DIRECT ORIGIN TEST ===' >> "$OUT"
+          timeout 12 bash -c "</dev/tcp/${{ secrets.ORACLE_HOST }}/443" 2>> "$OUT"
+          echo "origin_443_tcp_exit=$?" >> "$OUT"
+          curl -k -sS --connect-timeout 12 --resolve mymixups.com:443:${{ secrets.ORACLE_HOST }} -o /dev/null -w 'origin_direct_https=%{http_code}\n' https://mymixups.com/ >> "$OUT" 2>&1
+          echo "origin_direct_curl_exit=$?" >> "$OUT"
 
           sleep 5
           root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/)
