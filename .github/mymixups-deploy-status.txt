@@ -1,6 +1,72 @@
-checked_at=2026-08-25T10:26:00Z
-Cloning into '/tmp/mymixups-repo'...
-fatal: could not read Username for 'https://github.com': No such device or address
-clone_exit=128
+checked_at=2026-08-25T10:28:05Z
+source_commit=a59bff285d5408e834f681d7565d956bbde48af5
+=== BUILD ===
+npm warn deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+
+added 374 packages, and audited 375 packages in 37s
+
+149 packages are looking for funding
+  run `npm fund` for details
+
+3 high severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+> mymixups-site@0.1.0 build
+> next build
+
+▲ Next.js 16.2.12 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 13.4s
+  Running TypeScript ...
+  Finished TypeScript in 9.3s ...
+  Collecting page data using 3 workers ...
+⚠ Using edge runtime on a page currently disables static generation for that page
+  Generating static pages using 3 workers (0/22) ...
+  Generating static pages using 3 workers (5/22) 
+  Generating static pages using 3 workers (10/22) 
+  Generating static pages using 3 workers (16/22) 
+✓ Generating static pages using 3 workers (22/22) in 1325ms
+  Finalizing page optimization ...
+
+Route (app)                     Revalidate  Expire
+┌ ○ /
+├ ○ /_not-found
+├ ○ /about
+├ ƒ /api/create-payment-intent
+├ ƒ /api/stripe-webhook
+├ ƒ /brand-icon/[size]
+├ ○ /cart
+├ ○ /checkout
+├ ƒ /checkout/success
+├ ○ /contact
+├ ○ /faq
+├ ○ /play
+├ ○ /privacy
+├ ƒ /products/[category]
+├ ○ /returns
+├ ○ /shipping
+├ ○ /shop                               5m      1y
+├ ○ /size-guide
+└ ○ /terms
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+build_exit=0
+service=active
+local_4110=200
+=== CONTENT CHECK ===
+WHAT HAPPENS
+=== CURB REGRESSION ===
+curbstamps-site=active
+curb_4100=200
+ssh_deploy_exit=0
 root_http=525
 curb_http=200
