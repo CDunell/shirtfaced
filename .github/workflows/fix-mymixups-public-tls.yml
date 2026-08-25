@@ -16,29 +16,44 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Oracle SSH
+      - name: Repair and diagnose My Mixups origin
+        shell: bash
         run: |
+          set +e
           mkdir -p ~/.ssh
-          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          OUT=.github/mymixups-public-tls-status.txt
+          : > "$OUT"
+          echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
+          echo "oracle_host_set=$([ -n '${{ secrets.ORACLE_HOST }}' ] && echo yes || echo no)" >> "$OUT"
+          echo "deploy_key_set=$([ -n '${{ secrets.ORACLE_DEPLOY_KEY }}' ] && echo yes || echo no)" >> "$OUT"
+          printf '%s\n' '${{ secrets.ORACLE_DEPLOY_KEY }}' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 10 -H '${{ secrets.ORACLE_HOST }}' >> ~/.ssh/known_hosts 2>> "$OUT"
+          echo "ssh_keyscan_exit=$?" >> "$OUT"
 
-      - name: Repair My Mixups origin HTTP and TLS
-        run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
-          set -euo pipefail
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/deploy_key ubuntu@'${{ secrets.ORACLE_HOST }}' 'bash -s' >> "$OUT" 2>&1 <<'REMOTE'
+          set +e
+          echo '=== ORACLE CONNECTED ==='
+          hostname
+          echo
+          echo '=== SERVICES BEFORE ==='
+          echo -n 'mymixups-site='; systemctl is-active mymixups-site 2>&1
+          echo -n 'curbstamps-site='; systemctl is-active curbstamps-site 2>&1
+          echo -n '4110='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4110/ 2>&1
+          echo -n '4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/ 2>&1
 
-          echo 'Checking My Mixups app on 4110'
-          systemctl is-active --quiet mymixups-site
-          curl -fsS http://127.0.0.1:4110/ >/dev/null
+          echo
+          echo '=== NGINX BEFORE ==='
+          sudo nginx -t 2>&1
+          sudo ss -ltnp 2>&1 | grep -E ':(80|443|4110|4100)\b' || true
 
-          echo 'Writing isolated My Mixups nginx HTTP vhost'
+          echo
+          echo '=== WRITE MYMIXUPS HTTP VHOST ==='
           sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
           server {
               listen 80;
               listen [::]:80;
               server_name mymixups.com www.mymixups.com;
-
               location / {
                   proxy_pass http://127.0.0.1:4110;
                   proxy_http_version 1.1;
@@ -52,53 +67,40 @@ jobs:
           }
           NGINX
           sudo ln -sfn /etc/nginx/sites-available/mymixups /etc/nginx/sites-enabled/mymixups
-          sudo nginx -t
-          sudo systemctl reload nginx
-          curl -fsS -H 'Host: mymixups.com' http://127.0.0.1/ >/dev/null
+          sudo nginx -t 2>&1
+          echo "nginx_http_config_exit=$?"
+          sudo systemctl reload nginx 2>&1
+          echo "nginx_reload_exit=$?"
+          echo -n 'host_http='; curl -sS -o /dev/null -w '%{http_code}\n' -H 'Host: mymixups.com' http://127.0.0.1/ 2>&1
 
+          echo
+          echo '=== CERTBOT ==='
           if ! command -v certbot >/dev/null 2>&1; then
-            sudo apt-get update
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx
+            sudo apt-get update 2>&1
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx 2>&1
           fi
+          sudo certbot --nginx -d mymixups.com -d www.mymixups.com --non-interactive --agree-tos --register-unsafely-without-email --redirect 2>&1
+          echo "certbot_exit=$?"
 
-          echo 'Issuing/repairing certificate for My Mixups only'
-          sudo certbot --nginx \
-            -d mymixups.com -d www.mymixups.com \
-            --non-interactive --agree-tos --register-unsafely-without-email \
-            --redirect
-
-          sudo nginx -t
-          sudo systemctl reload nginx
-
-          echo 'Verifying local origin TLS'
-          curl -kfsS --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ >/dev/null
-          echo | openssl s_client -connect 127.0.0.1:443 -servername mymixups.com 2>/dev/null | openssl x509 -noout -subject -issuer -dates
-
-          echo 'Regression check: Curb Stamps remains live locally'
-          systemctl is-active --quiet curbstamps-site
-          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          echo
+          echo '=== TLS AFTER ==='
+          sudo nginx -t 2>&1
+          sudo systemctl reload nginx 2>&1
+          echo | openssl s_client -connect 127.0.0.1:443 -servername mymixups.com 2>&1 | sed -n '1,25p'
+          echo -n 'local_origin_https='; curl -k -sS -o /dev/null -w '%{http_code}\n' --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ 2>&1
+          echo
+          echo '=== CURB REGRESSION ==='
+          echo -n 'curbstamps-site='; systemctl is-active curbstamps-site 2>&1
+          echo -n 'curb_4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/ 2>&1
           REMOTE
+          echo "ssh_exit=$?" >> "$OUT"
 
-      - name: Record public state
-        if: always()
-        shell: bash
-        run: |
-          set +e
           root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/)
-          root_exit=$?
+          echo "root_http=$root" >> "$OUT"
           www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/)
-          www_exit=$?
+          echo "www_http=$www" >> "$OUT"
           curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/)
-          curb_exit=$?
-          {
-            echo "root_http=$root"
-            echo "root_curl_exit=$root_exit"
-            echo "www_http=$www"
-            echo "www_curl_exit=$www_exit"
-            echo "curb_http=$curb"
-            echo "curb_curl_exit=$curb_exit"
-            echo "checked_at=$(date -u +%FT%TZ)"
-          } > .github/mymixups-public-tls-status.txt
+          echo "curb_http=$curb" >> "$OUT"
 
       - name: Publish result
         if: always()
@@ -107,6 +109,6 @@ jobs:
           git config user.email github-actions@github.com
           git add .github/mymixups-public-tls-status.txt
           if ! git diff --cached --quiet; then
-            git commit -m "Record My Mixups public TLS status"
+            git commit -m "Record My Mixups TLS repair diagnostics"
             git push
           fi
