@@ -1,0 +1,6 @@
+checked_at=2026-08-25T10:26:00Z
+Cloning into '/tmp/mymixups-repo'...
+fatal: could not read Username for 'https://github.com': No such device or address
+clone_exit=128
+root_http=525
+curb_http=200
