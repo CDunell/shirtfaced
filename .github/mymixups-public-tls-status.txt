@@ -1,4 +1,4 @@
-checked_at=2026-08-25T10:11:27Z
+checked_at=2026-08-25T10:15:25Z
 oracle_host_set=yes
 deploy_key_set=yes
 # 161.33.31.74:22 SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.16
@@ -16,151 +16,23 @@ curbstamps-site=active
 4110=200
 4100=200
 
-=== NGINX BEFORE ===
-nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
-nginx: configuration file /etc/nginx/nginx.conf test is successful
-LISTEN 0      511          0.0.0.0:80         0.0.0.0:*    users:(("nginx",pid=3508991,fd=16),("nginx",pid=3508987,fd=16),("nginx",pid=3508986,fd=16),("nginx",pid=3508985,fd=16),("nginx",pid=11259,fd=16))
-LISTEN 0      511                *:4110             *:*    users:(("next-server (v1",pid=3381569,fd=18))                                                                                                    
-LISTEN 0      511                *:4100             *:*    users:(("next-server (v1",pid=3443934,fd=18))                                                                                                    
-LISTEN 0      511             [::]:80            [::]:*    users:(("nginx",pid=3508991,fd=17),("nginx",pid=3508987,fd=17),("nginx",pid=3508986,fd=17),("nginx",pid=3508985,fd=17),("nginx",pid=11259,fd=17))
-
 === WRITE MYMIXUPS HTTP VHOST ===
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
-nginx_http_config_exit=0
-nginx_reload_exit=0
 host_http=200
 
-=== CERTBOT ===
-Hit:1 https://deb.nodesource.com/node_20.x nodistro InRelease
-Hit:2 https://apt.postgresql.org/pub/repos/apt jammy-pgdg InRelease
-Hit:3 http://ports.ubuntu.com/ubuntu-ports jammy-security InRelease
-Hit:4 http://ap-osaka-1-ad-1.clouds.ports.ubuntu.com/ubuntu-ports jammy InRelease
-Hit:5 http://ap-osaka-1-ad-1.clouds.ports.ubuntu.com/ubuntu-ports jammy-updates InRelease
-Hit:6 http://ap-osaka-1-ad-1.clouds.ports.ubuntu.com/ubuntu-ports jammy-backports InRelease
-Hit:7 https://ppa.launchpadcontent.net/deadsnakes/ppa/ubuntu jammy InRelease
-Reading package lists...
-Reading package lists...
-Building dependency tree...
-Reading state information...
-certbot is already the newest version (1.21.0-1build1).
-The following package was automatically installed and is no longer required:
-  libllvm14
-Use 'sudo apt autoremove' to remove it.
-Suggested packages:
-  python-certbot-nginx-doc
-The following NEW packages will be installed:
-  python3-certbot-nginx
-0 upgraded, 1 newly installed, 0 to remove and 22 not upgraded.
-Need to get 35.4 kB of archives.
-After this operation, 162 kB of additional disk space will be used.
-Get:1 http://ap-osaka-1-ad-1.clouds.ports.ubuntu.com/ubuntu-ports jammy/universe arm64 python3-certbot-nginx all 1.21.0-1 [35.4 kB]
-Fetched 35.4 kB in 1s (40.8 kB/s)
-Selecting previously unselected package python3-certbot-nginx.
-(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 151000 files and directories currently installed.)
-Preparing to unpack .../python3-certbot-nginx_1.21.0-1_all.deb ...
-Unpacking python3-certbot-nginx (1.21.0-1) ...
-Setting up python3-certbot-nginx (1.21.0-1) ...
-
-Pending kernel upgrade!
-
-Running kernel version:
-  6.8.0-1049-oracle
-
-Diagnostics:
-  The currently running kernel version is not the expected kernel version 6.8.0-1059-oracle.
-
-Restarting the system to load the new kernel will not be handled automatically, so you should consider rebooting. [Return]
-
-Services to be restarted:
- systemctl restart clamav-daemon.service
- systemctl restart clamav-freshclam.service
- systemctl restart cliniix-admin-api.service
- systemctl restart cliniix-corpus-api.service
- systemctl restart cliniix-spike.service
- systemctl restart cron.service
- systemctl restart cta-atom-daemon.service
- systemctl restart cta-black-box-mexc.service
- systemctl restart cta-command-reconciler.service
- systemctl restart cta-contract-hunter.service
- systemctl restart cta-email-daemon.service
- systemctl restart cta-hasher-daemon.service
- systemctl restart cta-hl-deposit-watcher.service
- systemctl restart cta-macro-intelligence-daemon.service
- systemctl restart cta-macro-regime-daemon.service
- systemctl restart cta-market-health-daemon.service
- systemctl restart cta-market-intelligence-daemon.service
- systemctl restart cta-msip-daemon.service
- systemctl restart cta-news-sentiment-daemon.service
- systemctl restart cta-ohlcv-writer.service
- systemctl restart cta-regime-affinity-daemon.service
- systemctl restart cta-regime-snapshot-daemon.service
- systemctl restart cta-run-connector.service
- systemctl restart cta-signal-candidates-writer.service
- systemctl restart cta-signal-materializer.service
- systemctl restart cta-signal-pruner.service
- systemctl restart cta-universal-ws-connector.service
- systemctl restart flip-hunter.service
- systemctl restart grant-hunter.service
- systemctl restart irqbalance.service
- systemctl restart iscsid.service
- systemctl restart multipathd.service
- systemctl restart packagekit.service
- systemctl restart polkit.service
- systemctl restart postgresql@14-cliniix.service
- systemctl restart postgresql@14-main.service
- systemctl restart redis-server.service
- systemctl restart rpcbind.service
- systemctl restart rsyslog.service
- systemctl restart serial-getty@ttyAMA0.service
- systemctl restart snap.oracle-cloud-agent.oracle-cloud-agent.service
- systemctl restart ssh.service
- systemctl restart think-responses.service
- systemctl restart udisks2.service
- systemctl restart uuidd.service
-
-Service restarts being deferred:
- /etc/needrestart/restart.d/dbus.service
- systemctl restart getty@tty1.service
- systemctl restart networkd-dispatcher.service
- systemctl restart systemd-logind.service
- systemctl restart unattended-upgrades.service
- systemctl restart user@1001.service
-
-No containers need to be restarted.
-
-No user sessions are running outdated binaries.
-
-No VM guests are running outdated hypervisor (qemu) binaries on this host.
-Saving debug log to /var/log/letsencrypt/letsencrypt.log
-
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-* nginx
-Description: Nginx Web Server plugin
-Interfaces: Installer, Authenticator, Plugin
-Entry point: nginx = certbot_nginx._internal.configurator:NginxConfigurator
-
-* standalone
-Description: Spin up a temporary webserver
-Interfaces: Authenticator, Plugin
-Entry point: standalone = certbot._internal.plugins.standalone:Authenticator
-
-* webroot
-Description: Place files in webroot directory
-Interfaces: Authenticator, Plugin
-Entry point: webroot = certbot._internal.plugins.webroot:Authenticator
-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+=== CERTBOT ATTEMPT ===
 Saving debug log to /var/log/letsencrypt/letsencrypt.log
 Requesting a certificate for mymixups.com and www.mymixups.com
 
 Certbot failed to authenticate some domains (authenticator: nginx). The Certificate Authority reported these problems:
   Domain: mymixups.com
   Type:   unauthorized
-  Detail: 2606:4700:3031::6815:39c: Invalid response from http://mymixups.com/.well-known/acme-challenge/4kA8c8ww8ExRI10UHGQqBhB_UXrthX6sJyAMCIw9CC0: 403
+  Detail: 2606:4700:3037::ac43:82e8: Invalid response from http://mymixups.com/.well-known/acme-challenge/Dn_KKmUzAreiqx50u-7a_QF0w-8JWlWJ3kjtf_KTyuo: 403
 
   Domain: www.mymixups.com
   Type:   unauthorized
-  Detail: 2606:4700:3031::6815:39c: Invalid response from http://www.mymixups.com/.well-known/acme-challenge/eRW6A3OpGzTzQBIGWZ6SlJVV9DhosCFggzko4tnwrEM: 403
+  Detail: 2606:4700:3037::ac43:82e8: Invalid response from http://www.mymixups.com/.well-known/acme-challenge/fo6BXYgEHc2OOI4v2gtVfNRNunmtCLyEWAIF5DXi-94: 403
 
 Hint: The Certificate Authority failed to verify the temporary nginx configuration changes made by Certbot. Ensure the listed domains point to this nginx server and that it is accessible from the internet.
 
@@ -168,14 +40,44 @@ Some challenges have failed.
 Ask for help or search for solutions at https://community.letsencrypt.org. See the logfile /var/log/letsencrypt/letsencrypt.log or re-run Certbot with -v for more details.
 certbot_exit=1
 
+=== FALLBACK SELF-SIGNED ORIGIN TLS ===
+...+...+......+......+.+........+.+......+.....+..........+..+...+....+...+.....+.......+...........+....+....................+......+.......+.....+......+.+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*.+..+...+..........+...........+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*..................+..............+...+...+....+.....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+..+.......+...+...........+.......+..+...+....+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*..+..........+..+.+....................+................+........+.+.....+......+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*........+...+......+...+.+..+.......+......+.....+.......+..+...+.........+.+...+............+..+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+-----
+
 === TLS AFTER ===
 nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
 nginx: configuration file /etc/nginx/nginx.conf test is successful
-201028FFFCF30000:error:8000006F:system library:BIO_connect:Connection refused:../crypto/bio/bio_sock2.c:125:calling connect()
-201028FFFCF30000:error:10000067:BIO routines:BIO_connect:connect error:../crypto/bio/bio_sock2.c:127:
-connect:errno=111
-local_origin_https=curl: (7) Failed to connect to mymixups.com port 443 after 0 ms: Connection refused
-000
+LISTEN 0      511          0.0.0.0:443        0.0.0.0:*    users:(("nginx",pid=3521216,fd=10),("nginx",pid=3521215,fd=10),("nginx",pid=3521214,fd=10),("nginx",pid=3521213,fd=10),("nginx",pid=11259,fd=10))                                                                                                                
+LISTEN 0      511                *:4110             *:*    users:(("next-server (v1",pid=3381569,fd=18))                                                                                                                                                                                                                    
+LISTEN 0      511                *:4100             *:*    users:(("next-server (v1",pid=3443934,fd=18))                                                                                                                                                                                                                    
+LISTEN 0      511             [::]:443           [::]:*    users:(("nginx",pid=3521216,fd=11),("nginx",pid=3521215,fd=11),("nginx",pid=3521214,fd=11),("nginx",pid=3521213,fd=11),("nginx",pid=11259,fd=11))                                                                                                                
+depth=0 CN = mymixups.com
+verify error:num=18:self-signed certificate
+verify return:1
+depth=0 CN = mymixups.com
+verify return:1
+CONNECTED(00000003)
+---
+Certificate chain
+ 0 s:CN = mymixups.com
+   i:CN = mymixups.com
+   a:PKEY: rsaEncryption, 2048 (bit); sigalg: RSA-SHA256
+   v:NotBefore: Aug 25 10:15:40 2026 GMT; NotAfter: Aug 22 10:15:40 2036 GMT
+---
+Server certificate
+-----BEGIN CERTIFICATE-----
+MIIDOjCCAiKgAwIBAgIUNhzs71SjkS5/KkapWNpbF9kFYyMwDQYJKoZIhvcNAQEL
+BQAwFzEVMBMGA1UEAwwMbXltaXh1cHMuY29tMB4XDTI2MDgyNTEwMTU0MFoXDTM2
+MDgyMjEwMTU0MFowFzEVMBMGA1UEAwwMbXltaXh1cHMuY29tMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEArazFhbhoRLW01B5W34EaV6CTSElAF8hS00fN
+EftVK2YlAS1RmY8x01Olm1FY08nwQemhP7fI6UQcwqK19ORfxT4FVvkT1AwedGK3
+mTuPxFXoMV4FguOSt8GQITMnvdym5OlkTKHRemR8Lw+7qwzdQQOe9fCGAr0BS63d
+hu0dgENr3jnADgccQG4X+O+c9MeInLuT64NhKW6WR4x3AH4u8ykogwzWwqnxe+TU
+p4KMhYxp5qFiPBNJxEMdSNSdThqcUhM3VhQT5ZG/nWgHb7P3YmCuDDq9WcNhpKMj
+mf6w1jzSuIvpanC9ZMQi7Mg8r1BWCx6lt3trfJ6y64mdxbMzjwIDAQABo34wfDAd
+BgNVHQ4EFgQUOjg8UCFdsylv4E/oSmL1SDqLkhIwHwYDVR0jBBgwFoAUOjg8UCFd
+local_origin_https=200
 
 === CURB REGRESSION ===
 curbstamps-site=active
