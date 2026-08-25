@@ -75,10 +75,11 @@ jobs:
 
           echo
           echo '=== CERTBOT ==='
-          if ! command -v certbot >/dev/null 2>&1; then
+          if ! command -v certbot >/dev/null 2>&1 || ! sudo certbot plugins 2>/dev/null | grep -q 'nginx'; then
             sudo apt-get update 2>&1
             sudo DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx 2>&1
           fi
+          sudo certbot plugins 2>&1 | sed -n '1,80p'
           sudo certbot --nginx -d mymixups.com -d www.mymixups.com --non-interactive --agree-tos --register-unsafely-without-email --redirect 2>&1
           echo "certbot_exit=$?"
 
