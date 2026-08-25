@@ -1,6 +1,7 @@
 root_http=525
+root_curl_exit=0
 www_http=525
-admin_http=000
+www_curl_exit=0
 curb_http=200
-admin_dns=
-checked_at=2026-08-25T09:32:23Z
+curb_curl_exit=0
+checked_at=2026-08-25T10:09:38Z
