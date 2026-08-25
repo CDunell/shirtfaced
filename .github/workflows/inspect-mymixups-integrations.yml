@@ -20,15 +20,67 @@ jobs:
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
-      - name: Inspect available integration credential names only
+
+      - name: Inspect DNS mail and integrations without exposing secrets
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
           set -euo pipefail
-          echo '--- candidate env key names ---'
-          grep -RhoE '^(CLOUDFLARE|CF_|PRINTIFY|STRIPE|RESEND|SENDGRID|MAILGUN|POSTMARK|SMTP|MAIL)[A-Z0-9_]*=' /home/ubuntu --include='.env' --include='*.env' --include='*.conf' 2>/dev/null | sed 's/=.*$/=PRESENT/' | sort -u || true
-          echo '--- cloudflare files/commands ---'
-          find /home/ubuntu -maxdepth 4 -type f \( -iname '*cloudflare*' -o -iname '*cloudflared*' \) -print 2>/dev/null | head -30 || true
-          command -v cloudflared || true
-          echo '--- nginx public address hint ---'
-          curl -4 -fsS --max-time 5 https://api.ipify.org 2>/dev/null | sed 's/.*/PUBLIC_IP_AVAILABLE/' || true
+
+          echo '--- PUBLIC DNS ---'
+          for h in mymixups.com www.mymixups.com admin.mymixups.com; do
+            echo "HOST=$h"
+            dig +short A "$h" || true
+            dig +short CNAME "$h" || true
+          done
+
+          echo '--- CURB MAIL DNS REFERENCE ---'
+          echo 'MX:'
+          dig +short MX curbstamps.com || true
+          echo 'TXT ROOT:'
+          dig +short TXT curbstamps.com || true
+          echo 'DMARC:'
+          dig +short TXT _dmarc.curbstamps.com || true
+          echo 'DKIM CANDIDATES:'
+          for s in default google selector1 selector2 resend k1 k2 smtpapi; do
+            v=$(dig +short TXT "$s._domainkey.curbstamps.com" || true)
+            if [ -n "$v" ]; then echo "$s._domainkey=$v"; fi
+            c=$(dig +short CNAME "$s._domainkey.curbstamps.com" || true)
+            if [ -n "$c" ]; then echo "$s._domainkey CNAME=$c"; fi
+          done
+
+          echo '--- MYMIXUPS MAIL CURRENT ---'
+          dig +short MX mymixups.com || true
+          dig +short TXT mymixups.com || true
+          dig +short TXT _dmarc.mymixups.com || true
+
+          echo '--- INTEGRATION KEY PRESENCE ---'
+          for f in /home/ubuntu/curbstamps-admin/.env /home/ubuntu/curbstamps-site/.env /home/ubuntu/mymixups-admin/.env /home/ubuntu/mymixups-site/.env; do
+            [ -f "$f" ] || continue
+            echo "FILE=$f"
+            for k in PRINTIFY_API_TOKEN PRINTIFY_SHOP_ID POD_WEBHOOK_SECRET STRIPE_WEBHOOK_SECRET RESEND_API_KEY SENDGRID_API_KEY MAILGUN_API_KEY POSTMARK_API_TOKEN SMTP_HOST SMTP_USER; do
+              if grep -q "^$k=.." "$f"; then echo "$k=SET"; else echo "$k=EMPTY_OR_MISSING"; fi
+            done
+          done
+
+          echo '--- PRINTIFY SHOPS USING EXISTING CURB ACCOUNT TOKEN ---'
+          token=$(sed -n 's/^PRINTIFY_API_TOKEN=//p' /home/ubuntu/curbstamps-admin/.env | head -1)
+          if [ -z "$token" ]; then
+            token=$(sed -n 's/^PRINTIFY_API_TOKEN=//p' /home/ubuntu/curbstamps-site/.env | head -1)
+          fi
+          if [ -n "$token" ]; then
+            curl -fsS -H "Authorization: Bearer $token" https://api.printify.com/v1/shops.json | python3 -c 'import json,sys; d=json.load(sys.stdin); [print("PRINTIFY_SHOP id=%s title=%s channel=%s"%(x.get("id"),x.get("title"),x.get("sales_channel"))) for x in d]'
+          else
+            echo 'PRINTIFY_TOKEN_NOT_AVAILABLE_ON_ORACLE'
+          fi
+
+          echo '--- SERVICE ISOLATION ---'
+          systemctl is-active mymixups-site
+          systemctl is-active mymixups-admin
+          systemctl is-active curbstamps-site
+          systemctl is-active curbstamps-admin
+          curl -fsS http://127.0.0.1:4110/ >/dev/null && echo MYMIXUPS_SITE_LOCAL_OK
+          curl -fsS http://127.0.0.1:4310/login >/dev/null && echo MYMIXUPS_ADMIN_LOCAL_OK
+          curl -fsS http://127.0.0.1:4100/ >/dev/null && echo CURB_SITE_LOCAL_OK
+          curl -fsS http://127.0.0.1:4300/login >/dev/null && echo CURB_ADMIN_LOCAL_OK
+          sudo -u postgres psql -p 5432 -Atc "select datname from pg_database where datname in ('curbstamps_shop','mymixups_shop') order by 1;"
           REMOTE
