@@ -63,7 +63,6 @@ jobs:
           PY
 
           TOKEN=''
-          TOKEN_SOURCE=''
           while IFS=$'\t' read -r path key value; do
             [ -n "$value" ] || continue
             case "$key" in
@@ -76,7 +75,6 @@ jobs:
               zid=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("result",[{}])[0].get("id","") if d.get("success") and d.get("result") else "")' <<<"$zones" 2>/dev/null || true)
               if [ -n "$zid" ]; then
                 TOKEN="$value"
-                TOKEN_SOURCE="$path:$key"
                 ZONE_ID="$zid"
                 break
               fi
@@ -110,16 +108,14 @@ jobs:
             fi
           }
 
-          # Match the working direct-origin shape already used by the live root record.
           upsert A mymixups.com "$ORIGIN_IP" true
           upsert CNAME www.mymixups.com mymixups.com true
           upsert A admin.mymixups.com "$ORIGIN_IP" true
 
-          # Create a Cloudflare Origin CA certificate for all My Mixups web hosts.
           TLS_DIR=/etc/nginx/tls/mymixups-cloudflare
           sudo mkdir -p "$TLS_DIR"
-          sudo openssl genrsa -out "$WORK/origin.key" 2048 >/dev/null 2>&1
-          sudo openssl req -new -key "$WORK/origin.key" -out "$WORK/origin.csr" \
+          openssl genrsa -out "$WORK/origin.key" 2048 >/dev/null 2>&1
+          openssl req -new -key "$WORK/origin.key" -out "$WORK/origin.csr" \
             -subj '/CN=mymixups.com' \
             -addext 'subjectAltName=DNS:mymixups.com,DNS:www.mymixups.com,DNS:admin.mymixups.com'
 
@@ -197,11 +193,9 @@ jobs:
           fi
           sudo systemctl reload nginx
 
-          # Full (strict) is now safe because the origin presents Cloudflare Origin CA.
           curl -fsS -X PATCH "${auth[@]}" --data '{"value":"strict"}' "$api/zones/$ZONE_ID/settings/ssl" >/dev/null
           curl -fsS -X PATCH "${auth[@]}" --data '{"value":"on"}' "$api/zones/$ZONE_ID/settings/always_use_https" >/dev/null
 
-          # Local app + Curb regression checks.
           curl -kfsS --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ >/dev/null
           curl -kfsS --resolve admin.mymixups.com:443:127.0.0.1 https://admin.mymixups.com/login >/dev/null
           curl -fsS http://127.0.0.1:4100/ >/dev/null
@@ -250,3 +244,5 @@ jobs:
             git commit -m "Record My Mixups Cloudflare repair status"
             git push
           fi
+
+# Triggered by My Mixups UI deployment repair on 2026-08-25.
