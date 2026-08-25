@@ -1,0 +1,49 @@
+checked_at=2026-08-25T10:22:47Z
+=== CLOUDFLARED ===
+config_exists=yes
+service=active
+tunnel_id_present=yes
+INGRESS_EXISTS=mymixups.com
+INGRESS_EXISTS=www.mymixups.com
+INGRESS_EXISTS=admin.mymixups.com
+=== INGRESS VALIDATION ===
+Incorrect Usage: flag provided but not defined: -config
+
+NAME:
+   cloudflared tunnel ingress validate - Validate the ingress configuration 
+
+USAGE:
+   cloudflared tunnel [--config FILEPATH] ingress validate
+
+DESCRIPTION:
+   Validates the configuration file, ensuring your ingress rules are OK.
+
+OPTIONS:
+   --json value, -j value  Accepts data in the form of json as an input rather than read from a file [$TUNNEL_INGRESS_VALIDATE_JSON]
+   --help, -h              show help (default: false)
+   
+ingress_validate_exit=0
+cloudflared_after=active
+origin_cert_present=yes
+=== DNS ROUTES ===
+2026-08-25T10:22:54Z ERR Configuration file /root/.cloudflared/config.yml was empty
+2026-08-25T10:22:56Z INF mymixups.com.tradeninja.au is already configured to route to your tunnel tunnelID=be826f3d-e8a5-4e7c-94bb-d547079fa529
+DNS_ROUTE_EXIT[mymixups.com]=0
+2026-08-25T10:22:56Z ERR Configuration file /root/.cloudflared/config.yml was empty
+2026-08-25T10:22:57Z INF www.mymixups.com.tradeninja.au is already configured to route to your tunnel tunnelID=be826f3d-e8a5-4e7c-94bb-d547079fa529
+DNS_ROUTE_EXIT[www.mymixups.com]=0
+2026-08-25T10:22:57Z ERR Configuration file /root/.cloudflared/config.yml was empty
+2026-08-25T10:22:58Z INF admin.mymixups.com.tradeninja.au is already configured to route to your tunnel tunnelID=be826f3d-e8a5-4e7c-94bb-d547079fa529
+DNS_ROUTE_EXIT[admin.mymixups.com]=0
+=== LOCAL REGRESSION ===
+mymixups_4110=200
+mymixups_admin_4310=200
+curb_4100=200
+curb_admin_4300=200
+wire_complete=true
+ssh_exit=0
+=== PUBLIC ===
+root_http=525
+www_http=525
+admin_http=000
+curb_http=200
