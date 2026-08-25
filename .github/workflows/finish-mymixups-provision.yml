@@ -1,0 +1,131 @@
+name: Finish My Mixups Provision
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/finish-mymixups-provision.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Oracle SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Finish isolated Oracle provisioning
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /tmp
+          DB_PORT=5432
+          NEW_DB_PASS=$(openssl rand -hex 24)
+
+          if sudo -u postgres psql -p "$DB_PORT" -tAc "SELECT 1 FROM pg_roles WHERE rolname='mymixups'" | grep -q 1; then
+            sudo -u postgres psql -p "$DB_PORT" -v ON_ERROR_STOP=1 -c "ALTER ROLE mymixups WITH LOGIN PASSWORD '$NEW_DB_PASS';"
+          else
+            sudo -u postgres psql -p "$DB_PORT" -v ON_ERROR_STOP=1 -c "CREATE ROLE mymixups LOGIN PASSWORD '$NEW_DB_PASS';"
+          fi
+
+          if ! sudo -u postgres psql -p "$DB_PORT" -tAc "SELECT 1 FROM pg_database WHERE datname='mymixups_shop'" | grep -q 1; then
+            sudo -u postgres createdb -p "$DB_PORT" -O mymixups mymixups_shop
+          fi
+
+          # Recreate only the My Mixups schema from the current Curb schema. Curb data is never copied.
+          sudo -u postgres psql -p "$DB_PORT" -d mymixups_shop -v ON_ERROR_STOP=1 -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public AUTHORIZATION mymixups;'
+          sudo -u postgres pg_dump -p "$DB_PORT" --schema-only --no-owner --no-privileges curbstamps_shop | sudo -u postgres psql -p "$DB_PORT" -d mymixups_shop >/dev/null
+          sudo -u postgres psql -p "$DB_PORT" -d mymixups_shop -v ON_ERROR_STOP=1 -c 'ALTER SCHEMA public OWNER TO mymixups; GRANT ALL ON SCHEMA public TO mymixups; GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO mymixups; GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO mymixups; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO mymixups; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO mymixups;' >/dev/null
+
+          INTERNAL_KEY=$(openssl rand -hex 32)
+          SESSION_SECRET=$(openssl rand -hex 32)
+          POD_SECRET=$(openssl rand -hex 32)
+
+          cp /home/ubuntu/curbstamps-admin/.env /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^CURBSTAMPS_DATABASE_URL=.*/MYMIXUPS_DATABASE_URL=postgresql:\/\/mymixups:'"$NEW_DB_PASS"'@127.0.0.1:5432\/mymixups_shop/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^ADMIN_EMAIL=.*/ADMIN_EMAIL=admin@mymixups.com/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^SESSION_SECRET=.*/SESSION_SECRET='"$SESSION_SECRET"'/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^INTERNAL_API_KEY=.*/INTERNAL_API_KEY='"$INTERNAL_KEY"'/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^POD_PROVIDER=.*/POD_PROVIDER=mock/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^PRINTIFY_API_TOKEN=.*/PRINTIFY_API_TOKEN=/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^PRINTIFY_SHOP_ID=.*/PRINTIFY_SHOP_ID=/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^POD_WEBHOOK_SECRET=.*/POD_WEBHOOK_SECRET='"$POD_SECRET"'/' /home/ubuntu/mymixups-admin/.env
+
+          cp /home/ubuntu/curbstamps-site/.env /home/ubuntu/mymixups-site/.env
+          sed -i 's#^ADMIN_API_URL=.*#ADMIN_API_URL=http://127.0.0.1:4310#' /home/ubuntu/mymixups-site/.env
+          sed -i 's/^ADMIN_INTERNAL_API_KEY=.*/ADMIN_INTERNAL_API_KEY='"$INTERNAL_KEY"'/' /home/ubuntu/mymixups-site/.env
+          sed -i 's/^PRINTIFY_API_TOKEN=.*/PRINTIFY_API_TOKEN=/' /home/ubuntu/mymixups-site/.env
+          sed -i 's/^PRINTIFY_SHOP_ID=.*/PRINTIFY_SHOP_ID=/' /home/ubuntu/mymixups-site/.env
+          sed -i 's/^STRIPE_WEBHOOK_SECRET=.*/STRIPE_WEBHOOK_SECRET=/' /home/ubuntu/mymixups-site/.env
+
+          sudo cp /home/ubuntu/mymixups-site/deploy/mymixups-site.service /etc/systemd/system/mymixups-site.service
+          sudo cp /home/ubuntu/mymixups-admin/deploy/mymixups-admin.service /etc/systemd/system/mymixups-admin.service
+          sudo systemctl daemon-reload
+          sudo systemctl enable mymixups-site mymixups-admin >/dev/null
+
+          sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name admin.mymixups.com;
+              location / {
+                  proxy_pass http://127.0.0.1:4310;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+          NGINX
+          sudo ln -sfn /etc/nginx/sites-available/mymixups /etc/nginx/sites-enabled/mymixups
+          sudo nginx -t
+          sudo systemctl reload nginx
+
+          cd /home/ubuntu/mymixups-admin
+          npm ci
+          npm run build
+          npx --yes drizzle-kit migrate
+          sudo systemctl restart mymixups-admin
+
+          cd /home/ubuntu/mymixups-site
+          npm ci
+          rm -rf .next
+          npm run build
+          sudo systemctl restart mymixups-site
+
+          systemctl is-active --quiet mymixups-site
+          systemctl is-active --quiet mymixups-admin
+          systemctl is-active --quiet curbstamps-site
+          systemctl is-active --quiet curbstamps-admin
+          curl -fsS http://127.0.0.1:4110/ >/dev/null
+          curl -fsS http://127.0.0.1:4310/login >/dev/null
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          curl -fsS http://127.0.0.1:4300/login >/dev/null
+
+          echo 'MYMIXUPS_SITE_OK=4110'
+          echo 'MYMIXUPS_ADMIN_OK=4310'
+          echo 'CURB_SITE_REGRESSION_OK=4100'
+          echo 'CURB_ADMIN_REGRESSION_OK=4300'
+          echo 'MYMIXUPS_DB_OK=mymixups_shop'
+          REMOTE
