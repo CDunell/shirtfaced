@@ -1,0 +1,128 @@
+name: Wire My Mixups Cloudflare Tunnel
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/wire-mymixups-tunnel.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Oracle SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Wire My Mixups into existing Cloudflare tunnel
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          CONFIG=/etc/cloudflared/config.yml
+          test -f "$CONFIG"
+
+          echo 'CLOUDFLARED_ACTIVE='$(systemctl is-active cloudflared)
+          TUNNEL=$(sudo awk '/^tunnel:/ {print $2; exit}' "$CONFIG")
+          test -n "$TUNNEL"
+          echo "TUNNEL_ID=$TUNNEL"
+
+          # Back up shared tunnel config first. Curb Stamps entries are never edited or removed.
+          BACKUP="$CONFIG.bak.mymixups.$(date +%Y%m%d-%H%M%S)"
+          sudo cp "$CONFIG" "$BACKUP"
+
+          add_ingress() {
+            host="$1" service="$2"
+            if sudo grep -q "hostname: $host" "$CONFIG"; then
+              echo "INGRESS_EXISTS=$host"
+              return
+            fi
+            tmp=$(mktemp)
+            sudo awk -v h="$host" -v s="$service" '
+              !done && /^[[:space:]]*-[[:space:]]*service:[[:space:]]*http_status:404/ {
+                match($0,/^[[:space:]]*/); indent=substr($0,1,RLENGTH)
+                print indent "- hostname: " h
+                print indent "  service: " s
+                done=1
+              }
+              { print }
+            ' "$CONFIG" > "$tmp"
+            sudo cp "$tmp" "$CONFIG"
+            rm -f "$tmp"
+          }
+
+          add_ingress mymixups.com http://127.0.0.1:4110
+          add_ingress www.mymixups.com http://127.0.0.1:4110
+          add_ingress admin.mymixups.com http://127.0.0.1:4310
+
+          if ! sudo cloudflared tunnel ingress validate --config "$CONFIG"; then
+            sudo cp "$BACKUP" "$CONFIG"
+            echo 'INGRESS_VALIDATION_FAILED'
+            exit 1
+          fi
+
+          sudo systemctl restart cloudflared
+          sleep 3
+          systemctl is-active --quiet cloudflared || {
+            sudo cp "$BACKUP" "$CONFIG"
+            sudo systemctl restart cloudflared
+            echo 'CLOUDFLARED_RESTART_FAILED'
+            exit 1
+          }
+
+          # Use the Cloudflare credentials already installed on the Oracle host.
+          # This adds only My Mixups DNS routes; it does not alter Curb Stamps.
+          CERT=''
+          for f in /root/.cloudflared/cert.pem /home/ubuntu/.cloudflared/cert.pem /etc/cloudflared/cert.pem; do
+            if sudo test -f "$f"; then CERT="$f"; break; fi
+          done
+          if [ -z "$CERT" ]; then
+            echo 'CLOUDFLARE_CERT_NOT_FOUND'
+            exit 42
+          fi
+
+          route_dns() {
+            host="$1"
+            if sudo cloudflared --origincert "$CERT" tunnel route dns --overwrite-dns "$TUNNEL" "$host"; then
+              echo "DNS_ROUTE_OK=$host"
+            else
+              echo "DNS_ROUTE_FAILED=$host"
+              exit 1
+            fi
+          }
+          route_dns mymixups.com
+          route_dns www.mymixups.com
+          route_dns admin.mymixups.com
+
+          # Local regression checks: both products remain alive on their own ports.
+          curl -fsS http://127.0.0.1:4110/ >/dev/null
+          curl -fsS http://127.0.0.1:4310/login >/dev/null
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          curl -fsS http://127.0.0.1:4300/login >/dev/null
+          echo 'MYMIXUPS_LOCAL_OK=true'
+          echo 'CURBSTAMPS_LOCAL_OK=true'
+          REMOTE
+
+      - name: Verify public My Mixups endpoints
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 18); do
+            site=$(curl -LksS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+            www=$(curl -LksS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
+            admin=$(curl -LksS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
+            curb=$(curl -LksS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+            echo "attempt=$i site=$site www=$www admin=$admin curb=$curb"
+            if [[ "$site" =~ ^(200|301|302|307|308)$ ]] && [[ "$www" =~ ^(200|301|302|307|308)$ ]] && [[ "$admin" =~ ^(200|301|302|307|308)$ ]] && [[ "$curb" =~ ^(200|301|302|307|308)$ ]]; then
+              echo 'MYMIXUPS_PUBLIC_OK=true'
+              echo 'CURBSTAMPS_PUBLIC_REGRESSION_OK=true'
+              exit 0
+            fi
+            sleep 10
+          done
+          exit 1
