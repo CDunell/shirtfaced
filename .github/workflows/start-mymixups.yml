@@ -1,0 +1,55 @@
+name: Start and Verify My Mixups
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/start-mymixups.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Oracle SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Build start and verify both stacks
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/mymixups-admin
+          npm ci
+          npm run build
+          sudo systemctl restart mymixups-admin
+
+          cd /home/ubuntu/mymixups-site
+          npm ci
+          rm -rf .next
+          npm run build
+          sudo systemctl restart mymixups-site
+
+          sleep 2
+          systemctl is-active --quiet mymixups-site
+          systemctl is-active --quiet mymixups-admin
+          systemctl is-active --quiet curbstamps-site
+          systemctl is-active --quiet curbstamps-admin
+          curl -fsS http://127.0.0.1:4110/ >/dev/null
+          curl -fsS http://127.0.0.1:4310/login >/dev/null
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          curl -fsS http://127.0.0.1:4300/login >/dev/null
+          sudo nginx -t
+          sudo -u postgres psql -p 5432 -d mymixups_shop -Atc "select count(*) from information_schema.tables where table_schema='public';" | awk '{if ($1 < 1) exit 1; print "MYMIXUPS_DB_TABLES=" $1}'
+          sudo -u postgres psql -p 5432 -Atc "select 1 from pg_database where datname='mymixups_shop';" | grep -q 1
+          echo 'MYMIXUPS_SITE_OK=4110'
+          echo 'MYMIXUPS_ADMIN_OK=4310'
+          echo 'CURB_SITE_REGRESSION_OK=4100'
+          echo 'CURB_ADMIN_REGRESSION_OK=4300'
+          REMOTE
