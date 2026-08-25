@@ -51,11 +51,8 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
           set -euo pipefail
-          CURB_URL=$(grep '^CURBSTAMPS_DATABASE_URL=' /home/ubuntu/curbstamps-admin/.env | cut -d= -f2-)
-          DB_PORT=$(python3 -c 'import os,urllib.parse; print(urllib.parse.urlparse(os.environ["U"]).port or 5432)' U="$CURB_URL" 2>/dev/null || true)
-          if [ -z "${DB_PORT:-}" ]; then DB_PORT=55432; fi
+          DB_PORT=5432
           echo "Using local PostgreSQL on port $DB_PORT"
-          command -v psql >/dev/null
           sudo -u postgres psql -p "$DB_PORT" -tAc 'select 1' >/dev/null
 
           NEW_DB_PASS=$(openssl rand -hex 24)
@@ -70,7 +67,7 @@ jobs:
           SESSION_SECRET=$(openssl rand -hex 32)
           POD_SECRET=$(openssl rand -hex 32)
           cp /home/ubuntu/curbstamps-admin/.env /home/ubuntu/mymixups-admin/.env
-          sed -i 's/^CURBSTAMPS_DATABASE_URL=.*/MYMIXUPS_DATABASE_URL=postgresql:\/\/mymixups:'"$NEW_DB_PASS"'@127.0.0.1:'"$DB_PORT"'\/mymixups_shop/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^CURBSTAMPS_DATABASE_URL=.*/MYMIXUPS_DATABASE_URL=postgresql:\/\/mymixups:'"$NEW_DB_PASS"'@127.0.0.1:5432\/mymixups_shop/' /home/ubuntu/mymixups-admin/.env
           sed -i 's/^ADMIN_EMAIL=.*/ADMIN_EMAIL=admin@mymixups.com/' /home/ubuntu/mymixups-admin/.env
           sed -i 's/^SESSION_SECRET=.*/SESSION_SECRET='"$SESSION_SECRET"'/' /home/ubuntu/mymixups-admin/.env
           sed -i 's/^INTERNAL_API_KEY=.*/INTERNAL_API_KEY='"$INTERNAL_KEY"'/' /home/ubuntu/mymixups-admin/.env
