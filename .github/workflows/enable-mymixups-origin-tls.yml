@@ -1,0 +1,140 @@
+name: Enable My Mixups Origin TLS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/enable-mymixups-origin-tls.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tls:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Configure isolated origin TLS for My Mixups
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          TLS_DIR=/etc/nginx/tls/mymixups
+          CONF=/etc/nginx/sites-available/mymixups
+          BACKUP="$CONF.bak.tls.$(date +%Y%m%d-%H%M%S)"
+          sudo mkdir -p "$TLS_DIR"
+
+          if [ ! -f "$TLS_DIR/origin.crt" ] || [ ! -f "$TLS_DIR/origin.key" ]; then
+            sudo openssl req -x509 -nodes -newkey rsa:2048 -days 825 \
+              -keyout "$TLS_DIR/origin.key" \
+              -out "$TLS_DIR/origin.crt" \
+              -subj '/CN=mymixups.com' \
+              -addext 'subjectAltName=DNS:mymixups.com,DNS:www.mymixups.com,DNS:admin.mymixups.com'
+            sudo chmod 600 "$TLS_DIR/origin.key"
+          fi
+
+          sudo cp "$CONF" "$BACKUP"
+          sudo tee "$CONF" >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              listen [::]:443 ssl;
+              server_name mymixups.com www.mymixups.com;
+              ssl_certificate /etc/nginx/tls/mymixups/origin.crt;
+              ssl_certificate_key /etc/nginx/tls/mymixups/origin.key;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto https;
+              }
+          }
+
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name admin.mymixups.com;
+              location / {
+                  proxy_pass http://127.0.0.1:4310;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+
+          server {
+              listen 443 ssl;
+              listen [::]:443 ssl;
+              server_name admin.mymixups.com;
+              ssl_certificate /etc/nginx/tls/mymixups/origin.crt;
+              ssl_certificate_key /etc/nginx/tls/mymixups/origin.key;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              location / {
+                  proxy_pass http://127.0.0.1:4310;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto https;
+              }
+          }
+          NGINX
+
+          if ! sudo nginx -t; then
+            sudo cp "$BACKUP" "$CONF"
+            sudo nginx -t
+            echo MYMIXUPS_NGINX_TLS_VALIDATION_FAILED
+            exit 1
+          fi
+          sudo systemctl reload nginx
+
+          # Verify TLS at origin directly using Host/SNI; self-signed is expected.
+          curl -kfsS --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ >/dev/null
+          curl -kfsS --resolve admin.mymixups.com:443:127.0.0.1 https://admin.mymixups.com/login >/dev/null
+
+          # Curb remains healthy and its config is not edited.
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          curl -fsS http://127.0.0.1:4300/login >/dev/null
+          systemctl is-active --quiet curbstamps-site
+          systemctl is-active --quiet curbstamps-admin
+
+          echo MYMIXUPS_ORIGIN_TLS_OK=true
+          echo CURBSTAMPS_REGRESSION_OK=true
+          REMOTE
+
+      - name: Verify public root and www through Cloudflare
+        run: |
+          set -euo pipefail
+          for h in mymixups.com www.mymixups.com; do
+            code=$(curl -LksS -o /dev/null -w '%{http_code}' "https://$h/" || true)
+            echo "$h=$code"
+            [[ "$code" =~ ^(200|301|302|307|308)$ ]]
+          done
+          curb=$(curl -LksS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+          echo "curbstamps.com=$curb"
+          [[ "$curb" =~ ^(200|301|302|307|308)$ ]]
