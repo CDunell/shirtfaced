@@ -1,0 +1,190 @@
+name: Open My Mixups HTTPS Ingress
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/open-mymixups-https-ingress.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  open-ingress:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Oracle SSH
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' '${{ secrets.ORACLE_DEPLOY_KEY }}' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -T 10 -H '${{ secrets.ORACLE_HOST }}' >> ~/.ssh/known_hosts
+
+      - name: Open OCI ingress and verify
+        id: repair
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          OUT=.github/mymixups-oci-ingress-status.txt
+          : > "$OUT"
+          echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
+
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/deploy_key ubuntu@'${{ secrets.ORACLE_HOST }}' 'bash -s' >> "$OUT" 2>&1 <<'REMOTE'
+          set +e
+          echo '=== ORACLE NETWORK REPAIR ==='
+          echo -n 'local_443_listener='; sudo ss -ltn | grep -q ':443 ' && echo yes || echo no
+          echo -n 'local_https='; curl -k -sS -o /dev/null -w '%{http_code}\n' --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/
+
+          echo
+          echo '=== OCI METADATA ==='
+          curl -fsS -H 'Authorization: Bearer Oracle' http://169.254.169.254/opc/v2/vnics/ > /tmp/vnics.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('/tmp/vnics.json'))
+          print('vnic_count='+str(len(d)))
+          if d:
+              print('has_vnic_id='+str(bool(d[0].get('vnicId'))).lower())
+              print('has_subnet_id='+str(bool(d[0].get('subnetOcid'))).lower())
+          PY
+
+          echo
+          echo '=== OCI SDK ==='
+          if ! python3 -c 'import oci' >/dev/null 2>&1; then
+            python3 -m pip install --user --quiet oci
+          fi
+          python3 - <<'PY'
+          import json, os, sys, traceback
+          import oci
+
+          result = {'auth':'none','changed':False,'path':'none'}
+          vnics=json.load(open('/tmp/vnics.json'))
+          if not vnics:
+              print('oci_error=no_vnic_metadata')
+              sys.exit(20)
+          vnic_id=vnics[0].get('vnicId')
+          subnet_id=vnics[0].get('subnetOcid')
+
+          client=None
+          try:
+              signer=oci.auth.signers.InstancePrincipalsSecurityTokenSigner()
+              client=oci.core.VirtualNetworkClient(config={}, signer=signer)
+              client.get_vnic(vnic_id)
+              result['auth']='instance_principal'
+          except Exception as e:
+              print('instance_principal_unavailable='+type(e).__name__)
+              try:
+                  cfg_path='/home/ubuntu/.oci/config'
+                  if os.path.exists(cfg_path):
+                      cfg=oci.config.from_file(cfg_path)
+                      client=oci.core.VirtualNetworkClient(cfg)
+                      client.get_vnic(vnic_id)
+                      result['auth']='oci_config'
+              except Exception as e2:
+                  print('oci_config_unavailable='+type(e2).__name__)
+
+          if client is None:
+              print('oci_auth=none')
+              sys.exit(21)
+
+          print('oci_auth='+result['auth'])
+          vnic=client.get_vnic(vnic_id).data
+          nsg_ids=list(vnic.nsg_ids or [])
+          print('nsg_count='+str(len(nsg_ids)))
+
+          def rule_has_443(rule):
+              if str(getattr(rule,'protocol','')) != '6':
+                  return False
+              tcp=getattr(rule,'tcp_options',None)
+              rng=getattr(tcp,'destination_port_range',None) if tcp else None
+              if not rng:
+                  return False
+              lo=getattr(rng,'min',None); hi=getattr(rng,'max',None)
+              return lo is not None and hi is not None and int(lo) <= 443 <= int(hi)
+
+          new_rule = oci.core.models.IngressSecurityRule(
+              protocol='6', source='0.0.0.0/0', source_type='CIDR_BLOCK', is_stateless=False,
+              tcp_options=oci.core.models.TcpOptions(
+                  destination_port_range=oci.core.models.PortRange(min=443,max=443)
+              ),
+              description='My Mixups HTTPS'
+          )
+
+          if nsg_ids:
+              # NSG rules are additive; one matching ingress rule is sufficient.
+              nsg_id=nsg_ids[0]
+              existing=client.list_network_security_group_security_rules(nsg_id, direction='INGRESS').data
+              if not any(rule_has_443(r) for r in existing):
+                  add=oci.core.models.AddNetworkSecurityGroupSecurityRulesDetails(
+                      security_rules=[oci.core.models.AddSecurityRuleDetails(
+                          direction='INGRESS', protocol='6', source='0.0.0.0/0', source_type='CIDR_BLOCK',
+                          is_stateless=False,
+                          tcp_options=oci.core.models.TcpOptions(
+                              destination_port_range=oci.core.models.PortRange(min=443,max=443)
+                          ), description='My Mixups HTTPS'
+                      )]
+                  )
+                  client.add_network_security_group_security_rules(nsg_id, add)
+                  result['changed']=True
+              result['path']='nsg'
+          else:
+              subnet=client.get_subnet(subnet_id).data
+              sl_ids=list(subnet.security_list_ids or [])
+              print('security_list_count='+str(len(sl_ids)))
+              if not sl_ids:
+                  print('oci_error=no_security_list')
+                  sys.exit(22)
+              # Security-list rules are additive across all lists attached to the subnet.
+              sl_id=sl_ids[0]
+              sl=client.get_security_list(sl_id).data
+              rules=list(sl.ingress_security_rules or [])
+              if not any(rule_has_443(r) for r in rules):
+                  rules.append(new_rule)
+                  details=oci.core.models.UpdateSecurityListDetails(
+                      display_name=sl.display_name,
+                      egress_security_rules=sl.egress_security_rules,
+                      ingress_security_rules=rules
+                  )
+                  client.update_security_list(sl_id, details)
+                  result['changed']=True
+              result['path']='security_list'
+
+          print('oci_path='+result['path'])
+          print('oci_changed='+str(result['changed']).lower())
+          PY
+          OCI_EXIT=$?
+          echo "oci_repair_exit=$OCI_EXIT"
+
+          echo
+          echo '=== CURB REGRESSION ==='
+          echo -n 'curbstamps-site='; systemctl is-active curbstamps-site
+          echo -n 'curb_4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/
+          REMOTE
+          echo "ssh_exit=$?" >> "$OUT"
+
+          echo '=== RUNNER EXTERNAL TEST ===' >> "$OUT"
+          timeout 12 bash -c "</dev/tcp/${{ secrets.ORACLE_HOST }}/443" 2>> "$OUT"
+          echo "origin_443_tcp_exit=$?" >> "$OUT"
+          curl -k -sS --connect-timeout 12 --resolve mymixups.com:443:${{ secrets.ORACLE_HOST }} -o /dev/null -w 'origin_direct_https=%{http_code}\n' https://mymixups.com/ >> "$OUT" 2>&1
+          echo "origin_direct_curl_exit=$?" >> "$OUT"
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+          www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
+          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+          echo "root_http=$root" >> "$OUT"
+          echo "www_http=$www" >> "$OUT"
+          echo "curb_http=$curb" >> "$OUT"
+
+      - name: Publish result
+        if: always()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .github/mymixups-oci-ingress-status.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record My Mixups OCI ingress repair"
+            git push
+          fi
