@@ -1,0 +1,34 @@
+name: Inspect My Mixups Integrations
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-mymixups-integrations.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Inspect available integration credential names only
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          echo '--- candidate env key names ---'
+          grep -RhoE '^(CLOUDFLARE|CF_|PRINTIFY|STRIPE|RESEND|SENDGRID|MAILGUN|POSTMARK|SMTP|MAIL)[A-Z0-9_]*=' /home/ubuntu --include='.env' --include='*.env' --include='*.conf' 2>/dev/null | sed 's/=.*$/=PRESENT/' | sort -u || true
+          echo '--- cloudflare files/commands ---'
+          find /home/ubuntu -maxdepth 4 -type f \( -iname '*cloudflare*' -o -iname '*cloudflared*' \) -print 2>/dev/null | head -30 || true
+          command -v cloudflared || true
+          echo '--- nginx public address hint ---'
+          curl -4 -fsS --max-time 5 https://api.ipify.org 2>/dev/null | sed 's/.*/PUBLIC_IP_AVAILABLE/' || true
+          REMOTE
