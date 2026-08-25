@@ -1,0 +1,39 @@
+name: Inspect My Mixups DB Path
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/inspect-mymixups-db.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+      - name: Inspect database connectivity safely
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          set -a
+          . /home/ubuntu/curbstamps-admin/.env
+          set +a
+          echo '--- listeners ---'
+          sudo ss -ltnp | grep -E '(:55432|:5432)' || true
+          echo '--- postgres-related services ---'
+          systemctl list-units --type=service --all | grep -Ei 'postgres|tunnel|ssh' | head -30 || true
+          echo '--- postgres-related processes ---'
+          ps -ef | grep -Ei '[p]ostgres|[s]sh.*55432|[s]ocat.*55432' | sed -E 's/(postgresql:\/\/)[^ ]+/@REDACTED@/g' | head -30 || true
+          echo '--- direct Curb DB connection ---'
+          psql "$CURBSTAMPS_DATABASE_URL" -Atc "select current_user || '|createdb=' || rolcreatedb || '|createrole=' || rolcreaterole || '|super=' || rolsuper from pg_roles where rolname=current_user;"
+          psql "$CURBSTAMPS_DATABASE_URL" -Atc "select current_database();"
+          REMOTE
