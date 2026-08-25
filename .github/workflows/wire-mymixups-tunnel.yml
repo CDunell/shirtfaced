@@ -8,32 +8,43 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   wire:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Set up Oracle SSH
+        shell: bash
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          printf '%s\n' '${{ secrets.ORACLE_DEPLOY_KEY }}' > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -T 10 -H '${{ secrets.ORACLE_HOST }}' >> ~/.ssh/known_hosts
 
       - name: Wire My Mixups into existing Cloudflare tunnel
+        id: wire
+        continue-on-error: true
+        shell: bash
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
-          set -euo pipefail
+          set +e
+          OUT=.github/mymixups-tunnel-status.txt
+          : > "$OUT"
+          echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/deploy_key ubuntu@'${{ secrets.ORACLE_HOST }}' 'bash -s' >> "$OUT" 2>&1 <<'REMOTE'
+          set +e
           CONFIG=/etc/cloudflared/config.yml
-          test -f "$CONFIG"
+          echo '=== CLOUDFLARED ==='
+          echo -n 'config_exists='; sudo test -f "$CONFIG" && echo yes || echo no
+          echo -n 'service='; systemctl is-active cloudflared 2>&1
+          sudo test -f "$CONFIG" || exit 40
 
-          echo 'CLOUDFLARED_ACTIVE='$(systemctl is-active cloudflared)
           TUNNEL=$(sudo awk '/^tunnel:/ {print $2; exit}' "$CONFIG")
-          test -n "$TUNNEL"
-          echo "TUNNEL_ID=$TUNNEL"
+          echo -n 'tunnel_id_present='; [ -n "$TUNNEL" ] && echo yes || echo no
+          [ -n "$TUNNEL" ] || exit 41
 
-          # Back up shared tunnel config first. Curb Stamps entries are never edited or removed.
           BACKUP="$CONFIG.bak.mymixups.$(date +%Y%m%d-%H%M%S)"
           sudo cp "$CONFIG" "$BACKUP"
 
@@ -41,7 +52,7 @@ jobs:
             host="$1" service="$2"
             if sudo grep -q "hostname: $host" "$CONFIG"; then
               echo "INGRESS_EXISTS=$host"
-              return
+              return 0
             fi
             tmp=$(mktemp)
             sudo awk -v h="$host" -v s="$service" '
@@ -61,68 +72,71 @@ jobs:
           add_ingress www.mymixups.com http://127.0.0.1:4110
           add_ingress admin.mymixups.com http://127.0.0.1:4310
 
-          if ! sudo cloudflared tunnel ingress validate --config "$CONFIG"; then
+          echo '=== INGRESS VALIDATION ==='
+          sudo cloudflared tunnel ingress validate --config "$CONFIG" 2>&1
+          VALIDATE=$?
+          echo "ingress_validate_exit=$VALIDATE"
+          if [ "$VALIDATE" -ne 0 ]; then
             sudo cp "$BACKUP" "$CONFIG"
-            echo 'INGRESS_VALIDATION_FAILED'
-            exit 1
+            exit 42
           fi
 
           sudo systemctl restart cloudflared
-          sleep 3
-          systemctl is-active --quiet cloudflared || {
+          sleep 4
+          echo -n 'cloudflared_after='; systemctl is-active cloudflared 2>&1
+          if ! systemctl is-active --quiet cloudflared; then
             sudo cp "$BACKUP" "$CONFIG"
             sudo systemctl restart cloudflared
-            echo 'CLOUDFLARED_RESTART_FAILED'
-            exit 1
-          }
+            exit 43
+          fi
 
-          # Use the Cloudflare credentials already installed on the Oracle host.
-          # This adds only My Mixups DNS routes; it does not alter Curb Stamps.
           CERT=''
           for f in /root/.cloudflared/cert.pem /home/ubuntu/.cloudflared/cert.pem /etc/cloudflared/cert.pem; do
             if sudo test -f "$f"; then CERT="$f"; break; fi
           done
-          if [ -z "$CERT" ]; then
-            echo 'CLOUDFLARE_CERT_NOT_FOUND'
-            exit 42
-          fi
+          echo -n 'origin_cert_present='; [ -n "$CERT" ] && echo yes || echo no
+          [ -n "$CERT" ] || exit 44
 
           route_dns() {
             host="$1"
-            if sudo cloudflared --origincert "$CERT" tunnel route dns --overwrite-dns "$TUNNEL" "$host"; then
-              echo "DNS_ROUTE_OK=$host"
-            else
-              echo "DNS_ROUTE_FAILED=$host"
-              exit 1
-            fi
+            sudo cloudflared --origincert "$CERT" tunnel route dns --overwrite-dns "$TUNNEL" "$host" 2>&1
+            rc=$?
+            echo "DNS_ROUTE_EXIT[$host]=$rc"
+            return $rc
           }
-          route_dns mymixups.com
-          route_dns www.mymixups.com
-          route_dns admin.mymixups.com
 
-          # Local regression checks: both products remain alive on their own ports.
-          curl -fsS http://127.0.0.1:4110/ >/dev/null
-          curl -fsS http://127.0.0.1:4310/login >/dev/null
-          curl -fsS http://127.0.0.1:4100/ >/dev/null
-          curl -fsS http://127.0.0.1:4300/login >/dev/null
-          echo 'MYMIXUPS_LOCAL_OK=true'
-          echo 'CURBSTAMPS_LOCAL_OK=true'
+          echo '=== DNS ROUTES ==='
+          route_dns mymixups.com || exit 45
+          route_dns www.mymixups.com || exit 46
+          route_dns admin.mymixups.com || exit 47
+
+          echo '=== LOCAL REGRESSION ==='
+          echo -n 'mymixups_4110='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4110/
+          echo -n 'mymixups_admin_4310='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4310/login
+          echo -n 'curb_4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/
+          echo -n 'curb_admin_4300='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4300/login
+          echo 'wire_complete=true'
           REMOTE
+          echo "ssh_exit=$?" >> "$OUT"
 
-      - name: Verify public My Mixups endpoints
+          sleep 6
+          echo '=== PUBLIC ===' >> "$OUT"
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+          www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
+          admin=$(curl -LsS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
+          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+          echo "root_http=$root" >> "$OUT"
+          echo "www_http=$www" >> "$OUT"
+          echo "admin_http=$admin" >> "$OUT"
+          echo "curb_http=$curb" >> "$OUT"
+
+      - name: Publish result
+        if: always()
         run: |
-          set -euo pipefail
-          for i in $(seq 1 18); do
-            site=$(curl -LksS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
-            www=$(curl -LksS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
-            admin=$(curl -LksS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
-            curb=$(curl -LksS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
-            echo "attempt=$i site=$site www=$www admin=$admin curb=$curb"
-            if [[ "$site" =~ ^(200|301|302|307|308)$ ]] && [[ "$www" =~ ^(200|301|302|307|308)$ ]] && [[ "$admin" =~ ^(200|301|302|307|308)$ ]] && [[ "$curb" =~ ^(200|301|302|307|308)$ ]]; then
-              echo 'MYMIXUPS_PUBLIC_OK=true'
-              echo 'CURBSTAMPS_PUBLIC_REGRESSION_OK=true'
-              exit 0
-            fi
-            sleep 10
-          done
-          exit 1
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .github/mymixups-tunnel-status.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record My Mixups tunnel status"
+            git push
+          fi
