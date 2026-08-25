@@ -1,0 +1,54 @@
+name: Configure My Mixups Cloudflare DNS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/configure-mymixups-cloudflare.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN_A: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_TOKEN_B: ${{ secrets.CF_API_TOKEN }}
+      ORACLE_HOST_VALUE: ${{ secrets.ORACLE_HOST }}
+    steps:
+      - name: Configure DNS if existing Cloudflare API token is available
+        run: |
+          set -euo pipefail
+          TOKEN="${CF_TOKEN_A:-${CF_TOKEN_B:-}}"
+          if [ -z "$TOKEN" ]; then
+            echo 'NO_CLOUDFLARE_API_TOKEN_AVAILABLE'
+            exit 42
+          fi
+          ORIGIN_IP=$(python3 - <<'PY'
+          import os,socket
+          h=os.environ['ORACLE_HOST_VALUE']
+          print(socket.gethostbyname(h))
+          PY
+          )
+          api='https://api.cloudflare.com/client/v4'
+          auth=(-H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json')
+          zone_json=$(curl -fsS "${auth[@]}" "$api/zones?name=mymixups.com&status=active")
+          zone_id=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("success") and d.get("result") else "")' <<<"$zone_json")
+          test -n "$zone_id"
+          upsert() {
+            name="$1"; type="$2"; content="$3"; proxied="$4"
+            existing=$(curl -fsS "${auth[@]}" "$api/zones/$zone_id/dns_records?type=$type&name=$name")
+            rid=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("result") else "")' <<<"$existing")
+            payload=$(python3 -c 'import json,sys; print(json.dumps({"type":sys.argv[1],"name":sys.argv[2],"content":sys.argv[3],"ttl":1,"proxied":sys.argv[4].lower()=="true"}))' "$type" "$name" "$content" "$proxied")
+            if [ -n "$rid" ]; then
+              curl -fsS -X PUT "${auth[@]}" --data "$payload" "$api/zones/$zone_id/dns_records/$rid" >/dev/null
+            else
+              curl -fsS -X POST "${auth[@]}" --data "$payload" "$api/zones/$zone_id/dns_records" >/dev/null
+            fi
+          }
+          upsert mymixups.com A "$ORIGIN_IP" true
+          upsert www.mymixups.com CNAME mymixups.com true
+          upsert admin.mymixups.com A "$ORIGIN_IP" true
+          echo 'CLOUDFLARE_DNS_CONFIGURED'
