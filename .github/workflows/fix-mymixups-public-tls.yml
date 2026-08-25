@@ -11,80 +11,92 @@ permissions:
   contents: write
 
 jobs:
-  discover:
+  fix:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Set up SSH
+
+      - name: Set up Oracle SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Discover usable Cloudflare credential without exposing it
-        id: discover
-        continue-on-error: true
+      - name: Repair My Mixups origin HTTP and TLS
         run: |
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE' > /tmp/discovery.txt
-          set +e
-          python3 - <<'PY'
-          import os,re,subprocess,json
-          roots=['/home/ubuntu','/etc/cloudflared','/etc/systemd/system']
-          rx=re.compile(r'^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$')
-          wanted=re.compile(r'(CLOUDFLARE|CF_(?:API|TOKEN|KEY)|ORIGIN_CA)',re.I)
-          found=[]
-          for root in roots:
-              if not os.path.exists(root): continue
-              for dp,dns,fns in os.walk(root):
-                  dns[:] = [d for d in dns if d not in {'.git','node_modules','.next','cache','logs'}]
-                  for fn in fns:
-                      p=os.path.join(dp,fn)
-                      try:
-                          if os.path.getsize(p)>1048576: continue
-                          for line in open(p,'r',errors='ignore'):
-                              m=rx.match(line)
-                              if not m or not wanted.search(m.group(1)): continue
-                              key=m.group(1); val=m.group(2).strip().strip('"\'')
-                              if not val or '$' in val: continue
-                              found.append((p,key,val))
-                      except Exception: pass
-          print('candidate_count='+str(len(found)))
-          usable=False
-          for p,key,val in found:
-              print('candidate='+p+':'+key)
-              if 'SERVICE' in key.upper() or 'ORIGIN' in key.upper():
-                  continue
-              try:
-                  out=subprocess.check_output(['curl','-sS','-H','Authorization: Bearer '+val,'https://api.cloudflare.com/client/v4/zones?name=mymixups.com'],text=True,timeout=12)
-                  d=json.loads(out)
-                  if d.get('success') and d.get('result'):
-                      print('usable_token=true')
-                      print('usable_source='+p+':'+key)
-                      print('zone_id_available=true')
-                      usable=True
-                      break
-              except Exception:
-                  pass
-          if not usable:
-              print('usable_token=false')
-          PY
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          echo 'Checking My Mixups app on 4110'
+          systemctl is-active --quiet mymixups-site
+          curl -fsS http://127.0.0.1:4110/ >/dev/null
+
+          echo 'Writing isolated My Mixups nginx HTTP vhost'
+          sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com;
+
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection "upgrade";
+              }
+          }
+          NGINX
+          sudo ln -sfn /etc/nginx/sites-available/mymixups /etc/nginx/sites-enabled/mymixups
+          sudo nginx -t
+          sudo systemctl reload nginx
+          curl -fsS -H 'Host: mymixups.com' http://127.0.0.1/ >/dev/null
+
+          if ! command -v certbot >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx
+          fi
+
+          echo 'Issuing/repairing certificate for My Mixups only'
+          sudo certbot --nginx \
+            -d mymixups.com -d www.mymixups.com \
+            --non-interactive --agree-tos --register-unsafely-without-email \
+            --redirect
+
+          sudo nginx -t
+          sudo systemctl reload nginx
+
+          echo 'Verifying local origin TLS'
+          curl -kfsS --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ >/dev/null
+          echo | openssl s_client -connect 127.0.0.1:443 -servername mymixups.com 2>/dev/null | openssl x509 -noout -subject -issuer -dates
+
+          echo 'Regression check: Curb Stamps remains live locally'
+          systemctl is-active --quiet curbstamps-site
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
           REMOTE
 
-      - name: Record live state
+      - name: Record public state
         if: always()
+        shell: bash
         run: |
-          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
-          www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
-          admin=$(curl -LsS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
-          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+          set +e
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/)
+          root_exit=$?
+          www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/)
+          www_exit=$?
+          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/)
+          curb_exit=$?
           {
-            cat /tmp/discovery.txt 2>/dev/null || true
             echo "root_http=$root"
+            echo "root_curl_exit=$root_exit"
             echo "www_http=$www"
-            echo "admin_http=$admin"
+            echo "www_curl_exit=$www_exit"
             echo "curb_http=$curb"
-            echo "admin_dns=$(dig +short admin.mymixups.com | tr '\n' ' ')"
+            echo "curb_curl_exit=$curb_exit"
             echo "checked_at=$(date -u +%FT%TZ)"
           } > .github/mymixups-public-tls-status.txt
 
@@ -95,6 +107,6 @@ jobs:
           git config user.email github-actions@github.com
           git add .github/mymixups-public-tls-status.txt
           if ! git diff --cached --quiet; then
-            git commit -m "Record Cloudflare credential discovery"
+            git commit -m "Record My Mixups public TLS status"
             git push
           fi
