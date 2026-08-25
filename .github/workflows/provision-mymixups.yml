@@ -1,0 +1,172 @@
+name: Provision My Mixups on Oracle
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/provision-mymixups.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  provision:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: provision-mymixups
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare isolated My Mixups source
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/mymixups-site /tmp/mymixups-admin
+          cp -a curbstamps-site /tmp/mymixups-site
+          cp -a curbstamps-admin /tmp/mymixups-admin
+          find /tmp/mymixups-site /tmp/mymixups-admin -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.js' -o -name '*.mjs' -o -name '*.json' -o -name '*.md' -o -name '*.sh' -o -name '*.example' -o -name '*.service' \) -print0 | \
+            xargs -0 perl -pi -e 's/curbstamps-site/mymixups-site/g; s/curbstamps-admin/mymixups-admin/g; s/CURBSTAMPS_/MYMIXUPS_/g; s/curbstamps_shop/mymixups_shop/g; s/curbstamps\.com/mymixups.com/g'
+          mv /tmp/mymixups-site/deploy/curbstamps-site.service /tmp/mymixups-site/deploy/mymixups-site.service
+          mv /tmp/mymixups-site/deploy/deploy-curbstamps-site.sh /tmp/mymixups-site/deploy/deploy-mymixups-site.sh
+          mv /tmp/mymixups-admin/deploy/curbstamps-admin.service /tmp/mymixups-admin/deploy/mymixups-admin.service
+          mv /tmp/mymixups-admin/deploy/deploy-curbstamps-admin.sh /tmp/mymixups-admin/deploy/deploy-mymixups-admin.sh
+          sed -i 's/-p 4100/-p 4110/g; s/Curb Stamps/My Mixups/g' /tmp/mymixups-site/deploy/mymixups-site.service
+          sed -i 's/-p 4300/-p 4310/g; s/Curb Stamps/My Mixups/g' /tmp/mymixups-admin/deploy/mymixups-admin.service
+          sed -i 's/systemctl restart mymixups-site/systemctl restart mymixups-site/g' /tmp/mymixups-site/deploy/deploy-mymixups-site.sh
+          sed -i 's/systemctl restart mymixups-admin/systemctl restart mymixups-admin/g' /tmp/mymixups-admin/deploy/deploy-mymixups-admin.sh
+
+      - name: Set up Oracle SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync isolated application folders
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'mkdir -p /home/ubuntu/mymixups-site /home/ubuntu/mymixups-admin'
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=node_modules --exclude=.next --exclude=.env /tmp/mymixups-site/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/mymixups-site/
+          rsync -az --delete -e "ssh -i ~/.ssh/deploy_key" --exclude=node_modules --exclude=.next --exclude=.env /tmp/mymixups-admin/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/mymixups-admin/
+
+      - name: Provision database, envs, services and reverse proxy
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+
+          echo "== Discovering PostgreSQL =="
+          DB_CONTAINER=$(sudo docker ps --format '{{.Names}} {{.Ports}} {{.Image}}' 2>/dev/null | awk '/55432|postgres/{print $1; exit}') || true
+          if [ -z "${DB_CONTAINER:-}" ]; then
+            echo "No docker postgres container discovered"
+            sudo docker ps --format '{{.Names}} {{.Ports}} {{.Image}}' || true
+            exit 20
+          fi
+          echo "Postgres container: $DB_CONTAINER"
+
+          NEW_DB_PASS=$(openssl rand -hex 24)
+          sudo docker exec "$DB_CONTAINER" psql -U postgres -v ON_ERROR_STOP=1 -c "DO \\$\\$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='mymixups') THEN CREATE ROLE mymixups LOGIN PASSWORD '$NEW_DB_PASS'; ELSE ALTER ROLE mymixups WITH LOGIN PASSWORD '$NEW_DB_PASS'; END IF; END \\$\\$;"
+          if ! sudo docker exec "$DB_CONTAINER" psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname='mymixups_shop'" | grep -q 1; then
+            sudo docker exec "$DB_CONTAINER" createdb -U postgres -O mymixups mymixups_shop
+          fi
+
+          # Clone schema only. No Curb orders/customers/session data cross into My Mixups.
+          sudo docker exec "$DB_CONTAINER" pg_dump -U postgres --schema-only --no-owner --no-privileges curbstamps_shop | sudo docker exec -i "$DB_CONTAINER" psql -U postgres -d mymixups_shop >/dev/null
+          sudo docker exec "$DB_CONTAINER" psql -U postgres -d mymixups_shop -c 'GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO mymixups; GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO mymixups; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO mymixups; ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO mymixups;' >/dev/null
+
+          INTERNAL_KEY=$(openssl rand -hex 32)
+          SESSION_SECRET=$(openssl rand -hex 32)
+          POD_SECRET=$(openssl rand -hex 32)
+
+          # Build My Mixups admin env from Curb's working env, then sever identity-specific dependencies.
+          sudo cp /home/ubuntu/curbstamps-admin/.env /home/ubuntu/mymixups-admin/.env
+          sudo chown ubuntu:ubuntu /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^CURBSTAMPS_DATABASE_URL=.*/MYMIXUPS_DATABASE_URL=postgresql:\/\/mymixups:'"$NEW_DB_PASS"'@127.0.0.1:55432\/mymixups_shop/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^ADMIN_EMAIL=.*/ADMIN_EMAIL=admin@mymixups.com/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^SESSION_SECRET=.*/SESSION_SECRET='"$SESSION_SECRET"'/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^INTERNAL_API_KEY=.*/INTERNAL_API_KEY='"$INTERNAL_KEY"'/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^POD_PROVIDER=.*/POD_PROVIDER=mock/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^PRINTIFY_API_TOKEN=.*/PRINTIFY_API_TOKEN=/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^PRINTIFY_SHOP_ID=.*/PRINTIFY_SHOP_ID=/' /home/ubuntu/mymixups-admin/.env
+          sed -i 's/^POD_WEBHOOK_SECRET=.*/POD_WEBHOOK_SECRET='"$POD_SECRET"'/' /home/ubuntu/mymixups-admin/.env
+
+          sudo cp /home/ubuntu/curbstamps-site/.env /home/ubuntu/mymixups-site/.env
+          sudo chown ubuntu:ubuntu /home/ubuntu/mymixups-site/.env
+          sed -i 's#^ADMIN_API_URL=.*#ADMIN_API_URL=http://127.0.0.1:4310#' /home/ubuntu/mymixups-site/.env
+          sed -i 's/^ADMIN_INTERNAL_API_KEY=.*/ADMIN_INTERNAL_API_KEY='"$INTERNAL_KEY"'/' /home/ubuntu/mymixups-site/.env
+          sed -i 's/^PRINTIFY_API_TOKEN=.*/PRINTIFY_API_TOKEN=/' /home/ubuntu/mymixups-site/.env
+          sed -i 's/^PRINTIFY_SHOP_ID=.*/PRINTIFY_SHOP_ID=/' /home/ubuntu/mymixups-site/.env
+          sed -i 's/^STRIPE_WEBHOOK_SECRET=.*/STRIPE_WEBHOOK_SECRET=/' /home/ubuntu/mymixups-site/.env
+
+          sudo cp /home/ubuntu/mymixups-site/deploy/mymixups-site.service /etc/systemd/system/mymixups-site.service
+          sudo cp /home/ubuntu/mymixups-admin/deploy/mymixups-admin.service /etc/systemd/system/mymixups-admin.service
+          sudo systemctl daemon-reload
+          sudo systemctl enable mymixups-site mymixups-admin >/dev/null
+
+          # Plain HTTP origin vhost. Cloudflare can proxy this immediately once A/CNAME records point here.
+          sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name admin.mymixups.com;
+              location / {
+                  proxy_pass http://127.0.0.1:4310;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+              }
+          }
+          NGINX
+          sudo ln -sfn /etc/nginx/sites-available/mymixups /etc/nginx/sites-enabled/mymixups
+          sudo nginx -t
+          sudo systemctl reload nginx
+          REMOTE
+
+      - name: Build and start My Mixups apps
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          cd /home/ubuntu/mymixups-admin
+          npm ci
+          npm run build
+          npx --yes drizzle-kit migrate
+          sudo systemctl restart mymixups-admin
+          cd /home/ubuntu/mymixups-site
+          npm ci
+          rm -rf .next
+          npm run build
+          sudo systemctl restart mymixups-site
+          REMOTE
+
+      - name: Verify both independent stacks
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          systemctl is-active --quiet mymixups-site
+          systemctl is-active --quiet mymixups-admin
+          systemctl is-active --quiet curbstamps-site
+          systemctl is-active --quiet curbstamps-admin
+          curl -fsS http://127.0.0.1:4110/ >/dev/null
+          curl -fsS http://127.0.0.1:4310/login >/dev/null
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          echo "My Mixups storefront: OK :4110"
+          echo "My Mixups admin: OK :4310"
+          echo "Curb storefront regression: OK :4100"
+          echo "Curb admin regression: OK :4300"
+          echo "Oracle public endpoint: ${{ secrets.ORACLE_HOST }}"
+          REMOTE
