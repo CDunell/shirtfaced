@@ -1,0 +1,101 @@
+name: Deploy My Mixups From Dedicated Repo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-mymixups-from-repo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Oracle SSH
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' '${{ secrets.ORACLE_DEPLOY_KEY }}' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -T 10 -H '${{ secrets.ORACLE_HOST }}' >> ~/.ssh/known_hosts
+
+      - name: Fetch dedicated My Mixups repository
+        id: fetch
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          OUT=.github/mymixups-deploy-status.txt
+          : > "$OUT"
+          echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
+          rm -rf /tmp/mymixups-repo
+          git clone --depth 1 https://github.com/CDunell/mymixups.git /tmp/mymixups-repo >> "$OUT" 2>&1
+          rc=$?
+          echo "clone_exit=$rc" >> "$OUT"
+          if [ "$rc" -eq 0 ]; then
+            cd /tmp/mymixups-repo
+            echo "source_commit=$(git rev-parse HEAD)" >> "$GITHUB_WORKSPACE/$OUT"
+          fi
+          exit $rc
+
+      - name: Sync, build and restart isolated storefront
+        id: deploy
+        if: steps.fetch.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          OUT=.github/mymixups-deploy-status.txt
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/deploy_key" \
+            --exclude=node_modules --exclude=.next --exclude=.env --exclude=out \
+            /tmp/mymixups-repo/mymixups-site/ \
+            ubuntu@'${{ secrets.ORACLE_HOST }}':/home/ubuntu/mymixups-site/ >> "$OUT" 2>&1
+          echo "rsync_exit=$?" >> "$OUT"
+
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/deploy_key ubuntu@'${{ secrets.ORACLE_HOST }}' 'bash -s' >> "$OUT" 2>&1 <<'REMOTE'
+          set +e
+          cd /home/ubuntu/mymixups-site || exit 20
+          echo '=== BUILD ==='
+          npm ci
+          echo "npm_ci_exit=$?"
+          rm -rf .next
+          npm run build
+          BUILD=$?
+          echo "build_exit=$BUILD"
+          if [ "$BUILD" -ne 0 ]; then exit "$BUILD"; fi
+          sudo cp deploy/mymixups-site.service /etc/systemd/system/mymixups-site.service
+          sudo systemctl daemon-reload
+          sudo systemctl enable mymixups-site >/dev/null 2>&1
+          sudo systemctl restart mymixups-site
+          sleep 3
+          echo -n 'service='; systemctl is-active mymixups-site
+          echo -n 'local_4110='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4110/
+          echo '=== CURB REGRESSION ==='
+          echo -n 'curbstamps-site='; systemctl is-active curbstamps-site
+          echo -n 'curb_4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/
+          REMOTE
+          echo "ssh_deploy_exit=$?" >> "$OUT"
+
+      - name: Verify public and publish status
+        if: always()
+        shell: bash
+        run: |
+          OUT=.github/mymixups-deploy-status.txt
+          touch "$OUT"
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+          echo "root_http=$root" >> "$OUT"
+          echo "curb_http=$curb" >> "$OUT"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add "$OUT"
+          if ! git diff --cached --quiet; then
+            git commit -m "Record My Mixups deploy status"
+            git push
+          fi
