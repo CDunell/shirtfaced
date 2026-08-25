@@ -43,11 +43,6 @@ jobs:
           echo -n '4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/ 2>&1
 
           echo
-          echo '=== NGINX BEFORE ==='
-          sudo nginx -t 2>&1
-          sudo ss -ltnp 2>&1 | grep -E ':(80|443|4110|4100)\b' || true
-
-          echo
           echo '=== WRITE MYMIXUPS HTTP VHOST ==='
           sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
           server {
@@ -68,25 +63,63 @@ jobs:
           NGINX
           sudo ln -sfn /etc/nginx/sites-available/mymixups /etc/nginx/sites-enabled/mymixups
           sudo nginx -t 2>&1
-          echo "nginx_http_config_exit=$?"
           sudo systemctl reload nginx 2>&1
-          echo "nginx_reload_exit=$?"
           echo -n 'host_http='; curl -sS -o /dev/null -w '%{http_code}\n' -H 'Host: mymixups.com' http://127.0.0.1/ 2>&1
 
           echo
-          echo '=== CERTBOT ==='
+          echo '=== CERTBOT ATTEMPT ==='
           if ! command -v certbot >/dev/null 2>&1 || ! sudo certbot plugins 2>/dev/null | grep -q 'nginx'; then
             sudo apt-get update 2>&1
             sudo DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx 2>&1
           fi
-          sudo certbot plugins 2>&1 | sed -n '1,80p'
           sudo certbot --nginx -d mymixups.com -d www.mymixups.com --non-interactive --agree-tos --register-unsafely-without-email --redirect 2>&1
-          echo "certbot_exit=$?"
+          CERTBOT_EXIT=$?
+          echo "certbot_exit=$CERTBOT_EXIT"
+
+          if [ "$CERTBOT_EXIT" -ne 0 ]; then
+            echo
+            echo '=== FALLBACK SELF-SIGNED ORIGIN TLS ==='
+            TLS_DIR=/etc/nginx/tls/mymixups-selfsigned
+            sudo mkdir -p "$TLS_DIR"
+            sudo openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
+              -keyout "$TLS_DIR/origin.key" \
+              -out "$TLS_DIR/origin.crt" \
+              -subj '/CN=mymixups.com' \
+              -addext 'subjectAltName=DNS:mymixups.com,DNS:www.mymixups.com' 2>&1
+            sudo chmod 600 "$TLS_DIR/origin.key"
+            sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com;
+              return 301 https://$host$request_uri;
+          }
+          server {
+              listen 443 ssl;
+              listen [::]:443 ssl;
+              server_name mymixups.com www.mymixups.com;
+              ssl_certificate /etc/nginx/tls/mymixups-selfsigned/origin.crt;
+              ssl_certificate_key /etc/nginx/tls/mymixups-selfsigned/origin.key;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto https;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection "upgrade";
+              }
+          }
+          NGINX
+          fi
 
           echo
           echo '=== TLS AFTER ==='
           sudo nginx -t 2>&1
           sudo systemctl reload nginx 2>&1
+          sudo ss -ltnp 2>&1 | grep -E ':(443|4110|4100)\b' || true
           echo | openssl s_client -connect 127.0.0.1:443 -servername mymixups.com 2>&1 | sed -n '1,25p'
           echo -n 'local_origin_https='; curl -k -sS -o /dev/null -w '%{http_code}\n' --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ 2>&1
           echo
@@ -96,6 +129,7 @@ jobs:
           REMOTE
           echo "ssh_exit=$?" >> "$OUT"
 
+          sleep 5
           root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/)
           echo "root_http=$root" >> "$OUT"
           www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/)
