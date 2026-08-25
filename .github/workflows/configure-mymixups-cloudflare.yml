@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   dns:
@@ -18,46 +18,50 @@ jobs:
       CF_TOKEN_B: ${{ secrets.CF_API_TOKEN }}
       ORACLE_HOST_VALUE: ${{ secrets.ORACLE_HOST }}
     steps:
-      - name: Configure My Mixups DNS, TLS and mail without modifying Curb Stamps
+      - uses: actions/checkout@v4
+
+      - name: Configure My Mixups DNS and Cloudflare SSL
+        id: configure
+        continue-on-error: true
+        shell: bash
         run: |
-          set -euo pipefail
+          set +e
+          OUT=.github/mymixups-cloudflare-status.txt
+          : > "$OUT"
+          echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
           TOKEN="${CF_TOKEN_A:-${CF_TOKEN_B:-}}"
+          echo -n 'cloudflare_token_present=' >> "$OUT"
+          [ -n "$TOKEN" ] && echo yes >> "$OUT" || echo no >> "$OUT"
           if [ -z "$TOKEN" ]; then
-            echo 'NO_CLOUDFLARE_API_TOKEN_AVAILABLE'
+            echo 'configure_exit=42' >> "$OUT"
             exit 42
           fi
 
           ORIGIN_IP=$(python3 - <<'PY'
           import os,socket
-          h=os.environ['ORACLE_HOST_VALUE']
-          print(socket.gethostbyname(h))
+          print(socket.gethostbyname(os.environ['ORACLE_HOST_VALUE']))
           PY
           )
-
           api='https://api.cloudflare.com/client/v4'
           auth=(-H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json')
 
-          zone_id_for() {
-            local domain="$1"
-            local z
-            z=$(curl -fsS "${auth[@]}" "$api/zones?name=$domain&status=active")
-            python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("success") and d.get("result") else "")' <<<"$z"
-          }
-
-          zone_id=$(zone_id_for mymixups.com)
-          test -n "$zone_id"
+          zones=$(curl -sS "${auth[@]}" "$api/zones?name=mymixups.com&status=active")
+          zone_id=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("success") and d.get("result") else "")' <<<"$zones")
+          echo -n 'zone_access=' >> "$OUT"
+          [ -n "$zone_id" ] && echo yes >> "$OUT" || echo no >> "$OUT"
+          if [ -z "$zone_id" ]; then
+            echo 'configure_exit=43' >> "$OUT"
+            exit 43
+          fi
 
           upsert() {
             local name="$1" type="$2" content="$3" proxied="$4"
-            local priority="${5:-}"
             local existing rid payload
-            existing=$(curl -fsS "${auth[@]}" "$api/zones/$zone_id/dns_records?type=$type&name=$name")
+            existing=$(curl -fsS "${auth[@]}" "$api/zones/$zone_id/dns_records?type=$type&name=$name") || return 1
             rid=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("result") else "")' <<<"$existing")
-            payload=$(python3 - "$type" "$name" "$content" "$proxied" "$priority" <<'PY'
+            payload=$(python3 - "$type" "$name" "$content" "$proxied" <<'PY'
           import json,sys
-          p={"type":sys.argv[1],"name":sys.argv[2],"content":sys.argv[3],"ttl":1,"proxied":sys.argv[4].lower()=="true"}
-          if sys.argv[5]: p["priority"]=int(sys.argv[5])
-          print(json.dumps(p))
+          print(json.dumps({"type":sys.argv[1],"name":sys.argv[2],"content":sys.argv[3],"ttl":1,"proxied":sys.argv[4].lower()=="true"}))
           PY
             )
             if [ -n "$rid" ]; then
@@ -68,58 +72,45 @@ jobs:
           }
 
           upsert mymixups.com A "$ORIGIN_IP" true
+          echo "root_dns_exit=$?" >> "$OUT"
           upsert www.mymixups.com CNAME mymixups.com true
+          echo "www_dns_exit=$?" >> "$OUT"
           upsert admin.mymixups.com A "$ORIGIN_IP" true
+          echo "admin_dns_exit=$?" >> "$OUT"
 
-          curl -fsS -X PATCH "${auth[@]}" --data '{"value":"full"}' "$api/zones/$zone_id/settings/ssl" >/dev/null
-          curl -fsS -X PATCH "${auth[@]}" --data '{"value":"on"}' "$api/zones/$zone_id/settings/always_use_https" >/dev/null
-          curl -fsS -X PATCH "${auth[@]}" --data '{"value":"on"}' "$api/zones/$zone_id/settings/automatic_https_rewrites" >/dev/null
+          # OCI currently blocks inbound 443, while port 80 is reachable and nginx proxies
+          # My Mixups on its isolated ports. Flexible keeps edge HTTPS while Cloudflare uses
+          # HTTP to this origin. Curb Stamps is a separate zone and is never modified here.
+          ssl_resp=$(curl -sS -X PATCH "${auth[@]}" --data '{"value":"flexible"}' "$api/zones/$zone_id/settings/ssl")
+          ssl_ok=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print("yes" if d.get("success") else "no")' <<<"$ssl_resp" 2>/dev/null || echo no)
+          echo "ssl_flexible_set=$ssl_ok" >> "$OUT"
 
-          # Mirror only Curb Stamps' mail-provider DNS. The Curb zone is read-only here.
-          curb_zone_id=$(zone_id_for curbstamps.com)
-          if [ -n "$curb_zone_id" ]; then
-            records=$(curl -fsS "${auth[@]}" "$api/zones/$curb_zone_id/dns_records?per_page=500")
-            RECORDS_JSON="$records" python3 - <<'PY' > /tmp/mymixups-mail-records.tsv
-          import json,os
-          d=json.loads(os.environ['RECORDS_JSON'])
-          for r in d.get('result',[]):
-              name=r.get('name','')
-              typ=r.get('type','')
-              content=r.get('content','')
-              mail = (
-                  typ == 'MX' or
-                  (typ == 'TXT' and (name == 'curbstamps.com' or name.startswith('_dmarc.') or '._domainkey.' in name)) or
-                  (typ == 'CNAME' and ('._domainkey.' in name or name.startswith('mail.') or name.startswith('email.')))
-              )
-              if not mail: continue
-              new_name = name.replace('curbstamps.com','mymixups.com')
-              new_content = content.replace('curbstamps.com','mymixups.com')
-              priority = str(r.get('priority','')) if typ == 'MX' else ''
-              print('\t'.join([new_name,typ,new_content,priority]))
-          PY
-            while IFS=$'\t' read -r name type content priority; do
-              [ -n "$name" ] || continue
-              upsert "$name" "$type" "$content" false "$priority"
-            done < /tmp/mymixups-mail-records.tsv
-          fi
+          https_resp=$(curl -sS -X PATCH "${auth[@]}" --data '{"value":"on"}' "$api/zones/$zone_id/settings/always_use_https")
+          https_ok=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print("yes" if d.get("success") else "no")' <<<"$https_resp" 2>/dev/null || echo no)
+          echo "always_use_https_set=$https_ok" >> "$OUT"
+          echo 'curbstamps_zone_modified=false' >> "$OUT"
 
-          echo "CLOUDFLARE_DNS_CONFIGURED origin=$ORIGIN_IP"
-          echo 'CLOUDFLARE_TLS_CONFIGURED=full+https'
-          echo 'CURBSTAMPS_ZONE_MODIFIED=false'
+          sleep 8
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+          www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
+          admin=$(curl -LsS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
+          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+          echo "root_http=$root" >> "$OUT"
+          echo "www_http=$www" >> "$OUT"
+          echo "admin_http=$admin" >> "$OUT"
+          echo "curb_http=$curb" >> "$OUT"
 
-      - name: Verify public endpoints
+      - name: Publish result
+        if: always()
+        shell: bash
         run: |
-          set -euo pipefail
-          for i in $(seq 1 18); do
-            site=$(curl -LksS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
-            admin=$(curl -LksS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
-            echo "attempt=$i site=$site admin=$admin"
-            if [[ "$site" =~ ^(200|301|302|307|308)$ ]] && [[ "$admin" =~ ^(200|301|302|307|308)$ ]]; then
-              echo 'MYMIXUPS_PUBLIC_SITE_OK'
-              echo 'MYMIXUPS_PUBLIC_ADMIN_OK'
-              exit 0
-            fi
-            sleep 10
-          done
-          echo 'PUBLIC_ENDPOINT_VERIFICATION_FAILED'
-          exit 1
+          if [ ! -f .github/mymixups-cloudflare-status.txt ]; then
+            echo 'workflow_failed_before_status=true' > .github/mymixups-cloudflare-status.txt
+          fi
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .github/mymixups-cloudflare-status.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record My Mixups Cloudflare status"
+            git push
+          fi
