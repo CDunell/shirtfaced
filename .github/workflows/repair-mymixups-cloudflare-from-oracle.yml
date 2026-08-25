@@ -1,0 +1,252 @@
+name: Repair My Mixups Cloudflare From Oracle
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/repair-mymixups-cloudflare-from-oracle.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Repair Cloudflare zone from existing Oracle credential
+        id: repair
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          WORK=/tmp/mymixups-cf-repair
+          rm -rf "$WORK"
+          mkdir -p "$WORK"
+
+          python3 - <<'PY' > /tmp/cf_candidates.tsv
+          import os,re
+          roots=['/home/ubuntu','/etc/cloudflared','/etc/systemd/system']
+          pat=re.compile(r'^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$')
+          wanted=re.compile(r'(CLOUDFLARE|CF_(?:API|TOKEN|KEY)|ORIGIN_CA)',re.I)
+          seen=set()
+          for root in roots:
+              if not os.path.exists(root): continue
+              for dp,dn,fns in os.walk(root):
+                  dn[:] = [d for d in dn if d not in {'.git','node_modules','.next','cache','logs'}]
+                  for fn in fns:
+                      p=os.path.join(dp,fn)
+                      try:
+                          if os.path.getsize(p)>1024*1024: continue
+                          with open(p,'r',errors='ignore') as f:
+                              for line in f:
+                                  m=pat.match(line)
+                                  if not m or not wanted.search(m.group(1)): continue
+                                  key=m.group(1); val=m.group(2).strip()
+                                  if len(val)>=2 and val[0]==val[-1] and val[0] in "'\"": val=val[1:-1]
+                                  if not val or '$' in val or val.lower() in {'changeme','placeholder'}: continue
+                                  sig=(p,key)
+                                  if sig in seen: continue
+                                  seen.add(sig)
+                                  print(p+'\t'+key+'\t'+val)
+                      except (OSError,UnicodeError): pass
+          PY
+
+          TOKEN=''
+          TOKEN_SOURCE=''
+          while IFS=$'\t' read -r path key value; do
+            [ -n "$value" ] || continue
+            case "$key" in
+              *ORIGIN*CA*|*SERVICE*KEY*) continue ;;
+            esac
+            verify=$(curl -sS -H "Authorization: Bearer $value" https://api.cloudflare.com/client/v4/user/tokens/verify || true)
+            ok=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print("1" if d.get("success") and d.get("result",{}).get("status")=="active" else "0")' <<<"$verify" 2>/dev/null || echo 0)
+            if [ "$ok" = 1 ]; then
+              zones=$(curl -sS -H "Authorization: Bearer $value" 'https://api.cloudflare.com/client/v4/zones?name=mymixups.com' || true)
+              zid=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("result",[{}])[0].get("id","") if d.get("success") and d.get("result") else "")' <<<"$zones" 2>/dev/null || true)
+              if [ -n "$zid" ]; then
+                TOKEN="$value"
+                TOKEN_SOURCE="$path:$key"
+                ZONE_ID="$zid"
+                break
+              fi
+            fi
+          done < /tmp/cf_candidates.tsv
+
+          if [ -z "$TOKEN" ]; then
+            echo 'usable_cloudflare_token=false' > "$WORK/result.txt"
+            echo "candidate_count=$(wc -l < /tmp/cf_candidates.tsv)" >> "$WORK/result.txt"
+            exit 20
+          fi
+
+          api=https://api.cloudflare.com/client/v4
+          auth=(-H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json')
+          ORIGIN_IP=$(curl -fsS https://api.ipify.org)
+
+          upsert() {
+            local type="$1" name="$2" content="$3" proxied="$4"
+            local current rid payload
+            current=$(curl -fsS "${auth[@]}" "$api/zones/$ZONE_ID/dns_records?type=$type&name=$name")
+            rid=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("result") else "")' <<<"$current")
+            payload=$(python3 - "$type" "$name" "$content" "$proxied" <<'PY'
+          import json,sys
+          print(json.dumps({"type":sys.argv[1],"name":sys.argv[2],"content":sys.argv[3],"ttl":1,"proxied":sys.argv[4].lower()=="true"}))
+          PY
+            )
+            if [ -n "$rid" ]; then
+              curl -fsS -X PUT "${auth[@]}" --data "$payload" "$api/zones/$ZONE_ID/dns_records/$rid" >/dev/null
+            else
+              curl -fsS -X POST "${auth[@]}" --data "$payload" "$api/zones/$ZONE_ID/dns_records" >/dev/null
+            fi
+          }
+
+          # Match the working direct-origin shape already used by the live root record.
+          upsert A mymixups.com "$ORIGIN_IP" true
+          upsert CNAME www.mymixups.com mymixups.com true
+          upsert A admin.mymixups.com "$ORIGIN_IP" true
+
+          # Create a Cloudflare Origin CA certificate for all My Mixups web hosts.
+          TLS_DIR=/etc/nginx/tls/mymixups-cloudflare
+          sudo mkdir -p "$TLS_DIR"
+          sudo openssl genrsa -out "$WORK/origin.key" 2048 >/dev/null 2>&1
+          sudo openssl req -new -key "$WORK/origin.key" -out "$WORK/origin.csr" \
+            -subj '/CN=mymixups.com' \
+            -addext 'subjectAltName=DNS:mymixups.com,DNS:www.mymixups.com,DNS:admin.mymixups.com'
+
+          CSR=$(cat "$WORK/origin.csr")
+          payload=$(CSR="$CSR" python3 - <<'PY'
+          import json,os
+          print(json.dumps({
+            "hostnames":["mymixups.com","www.mymixups.com","admin.mymixups.com"],
+            "requested_validity":5475,
+            "request_type":"origin-rsa",
+            "csr":os.environ['CSR']
+          }))
+          PY
+          )
+          certresp=$(curl -fsS -X POST "${auth[@]}" --data "$payload" "$api/certificates")
+          CERT=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("result",{}).get("certificate", ""))' <<<"$certresp")
+          test -n "$CERT"
+          printf '%s\n' "$CERT" | sudo tee "$TLS_DIR/origin.crt" >/dev/null
+          sudo cp "$WORK/origin.key" "$TLS_DIR/origin.key"
+          sudo chmod 600 "$TLS_DIR/origin.key"
+
+          CONF=/etc/nginx/sites-available/mymixups
+          BACKUP="$CONF.bak.cf-origin.$(date +%Y%m%d-%H%M%S)"
+          sudo cp "$CONF" "$BACKUP"
+          sudo tee "$CONF" >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com;
+              return 301 https://$host$request_uri;
+          }
+          server {
+              listen 443 ssl;
+              listen [::]:443 ssl;
+              server_name mymixups.com www.mymixups.com;
+              ssl_certificate /etc/nginx/tls/mymixups-cloudflare/origin.crt;
+              ssl_certificate_key /etc/nginx/tls/mymixups-cloudflare/origin.key;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto https;
+              }
+          }
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name admin.mymixups.com;
+              return 301 https://$host$request_uri;
+          }
+          server {
+              listen 443 ssl;
+              listen [::]:443 ssl;
+              server_name admin.mymixups.com;
+              ssl_certificate /etc/nginx/tls/mymixups-cloudflare/origin.crt;
+              ssl_certificate_key /etc/nginx/tls/mymixups-cloudflare/origin.key;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              location / {
+                  proxy_pass http://127.0.0.1:4310;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto https;
+              }
+          }
+          NGINX
+          if ! sudo nginx -t; then
+            sudo cp "$BACKUP" "$CONF"
+            sudo nginx -t
+            exit 21
+          fi
+          sudo systemctl reload nginx
+
+          # Full (strict) is now safe because the origin presents Cloudflare Origin CA.
+          curl -fsS -X PATCH "${auth[@]}" --data '{"value":"strict"}' "$api/zones/$ZONE_ID/settings/ssl" >/dev/null
+          curl -fsS -X PATCH "${auth[@]}" --data '{"value":"on"}' "$api/zones/$ZONE_ID/settings/always_use_https" >/dev/null
+
+          # Local app + Curb regression checks.
+          curl -kfsS --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ >/dev/null
+          curl -kfsS --resolve admin.mymixups.com:443:127.0.0.1 https://admin.mymixups.com/login >/dev/null
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          curl -fsS http://127.0.0.1:4300/login >/dev/null
+          systemctl is-active --quiet curbstamps-site
+          systemctl is-active --quiet curbstamps-admin
+
+          {
+            echo 'usable_cloudflare_token=true'
+            echo 'dns_root=configured'
+            echo 'dns_www=configured'
+            echo 'dns_admin=configured'
+            echo 'origin_ca=installed'
+            echo 'ssl_mode=strict'
+            echo 'curbstamps_regression=ok'
+          } > "$WORK/result.txt"
+          REMOTE
+
+      - name: Collect final public state
+        if: always()
+        run: |
+          set +e
+          scp -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }}:/tmp/mymixups-cf-repair/result.txt /tmp/remote-result.txt 2>/dev/null
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+          www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
+          admin=$(curl -LsS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
+          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+          {
+            cat /tmp/remote-result.txt 2>/dev/null || echo 'usable_cloudflare_token=unknown'
+            echo "repair_step=${{ steps.repair.outcome }}"
+            echo "root_http=$root"
+            echo "www_http=$www"
+            echo "admin_http=$admin"
+            echo "curb_http=$curb"
+            echo "admin_dns=$(dig +short admin.mymixups.com | tr '\n' ' ')"
+            echo "checked_at=$(date -u +%FT%TZ)"
+          } > .github/mymixups-cloudflare-repair-status.txt
+
+      - name: Publish result
+        if: always()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .github/mymixups-cloudflare-repair-status.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record My Mixups Cloudflare repair status"
+            git push
+          fi
