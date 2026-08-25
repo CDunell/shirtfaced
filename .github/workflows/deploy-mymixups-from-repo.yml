@@ -24,8 +24,8 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -T 10 -H '${{ secrets.ORACLE_HOST }}' >> ~/.ssh/known_hosts
 
-      - name: Fetch dedicated My Mixups repository
-        id: fetch
+      - name: Install My Mixups homepage into isolated storefront
+        id: deploy
         continue-on-error: true
         shell: bash
         run: |
@@ -33,49 +33,83 @@ jobs:
           OUT=.github/mymixups-deploy-status.txt
           : > "$OUT"
           echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
-          rm -rf /tmp/mymixups-repo
-          git clone --depth 1 https://github.com/CDunell/mymixups.git /tmp/mymixups-repo >> "$OUT" 2>&1
-          rc=$?
-          echo "clone_exit=$rc" >> "$OUT"
-          if [ "$rc" -eq 0 ]; then
-            cd /tmp/mymixups-repo
-            echo "source_commit=$(git rev-parse HEAD)" >> "$GITHUB_WORKSPACE/$OUT"
-          fi
-          exit $rc
-
-      - name: Sync, build and restart isolated storefront
-        id: deploy
-        if: steps.fetch.outcome == 'success'
-        continue-on-error: true
-        shell: bash
-        run: |
-          set +e
-          OUT=.github/mymixups-deploy-status.txt
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/deploy_key" \
-            --exclude=node_modules --exclude=.next --exclude=.env --exclude=out \
-            /tmp/mymixups-repo/mymixups-site/ \
-            ubuntu@'${{ secrets.ORACLE_HOST }}':/home/ubuntu/mymixups-site/ >> "$OUT" 2>&1
-          echo "rsync_exit=$?" >> "$OUT"
+          echo "source_commit=a59bff285d5408e834f681d7565d956bbde48af5" >> "$OUT"
 
           ssh -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/deploy_key ubuntu@'${{ secrets.ORACLE_HOST }}' 'bash -s' >> "$OUT" 2>&1 <<'REMOTE'
-          set +e
-          cd /home/ubuntu/mymixups-site || exit 20
+          set -e
+          cd /home/ubuntu/mymixups-site
+          mkdir -p src/components/home src/app
+
+          cat > src/app/page.tsx <<'EOF_PAGE'
+          import { MixupsHomepage } from "@/components/home/MixupsHomepage";
+          import "./mixups-home.css";
+
+          export default function HomePage() {
+            return <MixupsHomepage />;
+          }
+          EOF_PAGE
+          sed -i 's/^          //' src/app/page.tsx
+
+          cat > src/components/home/MixupsHomepage.tsx <<'EOF_TSX'
+          import Link from "next/link";
+
+          const MIXUPS = [
+            { name: "PLATY-CRAB", mix: "Platypus × Crab", slug: "claw", tone: "yellow" },
+            { name: "BAT-AT", mix: "Bat × Rat", slug: "blink", tone: "pink" },
+            { name: "SPIKE-MOUSE", mix: "Echidna × Mouse", slug: "nub", tone: "green" },
+            { name: "DUCK-TAIL", mix: "Duck × Something", slug: "bub", tone: "blue" },
+          ];
+
+          const art = (slug: string) => `/creatures/${slug}-logo-dark.png`;
+
+          export function MixupsHomepage() {
+            return <main className="mix-home">
+              <section className="mix-hero">
+                <div className="mix-shell mix-hero-grid">
+                  <div className="mix-hero-copy">
+                    <p className="mix-brand-mobile">MY<br/>MIXUPS</p>
+                    <h1>WHAT HAPPENS<br/>WHEN NATURE<br/>GETS CONFUSED?</h1>
+                    <div className="mix-actions"><Link href="/shop" className="mix-btn dark">SHOP THE MIXUPS</Link><a href="#how" className="mix-link">SEE HOW IT WORKS →</a></div>
+                  </div>
+                  <div className="mix-hero-art"><span className="mix-star">✳</span><img src={art("blink")} alt="A strange My Mixups creature" /></div>
+                </div>
+              </section>
+
+              <section className="mix-popular"><div className="mix-shell"><h2>✦ POPULAR MIXUPS</h2><div className="mix-card-row">
+                {MIXUPS.map((m) => <Link href="/shop" key={m.name} className={`mix-card ${m.tone}`}><img src={art(m.slug)} alt=""/><strong>{m.name}</strong><small>{m.mix}</small></Link>)}
+              </div></div></section>
+
+              <section id="how" className="mix-machine-band"><div className="mix-shell machine-grid"><div><h2>MIX IT. LAUGH. WEAR IT.</h2><div className="mix-formula"><span>①<br/><b>🐇</b><small>PICK A HEAD</small></span><i>+</i><span>②<br/><b>🦗</b><small>PICK A BODY</small></span><i>→</i><span>③<br/><img src={art("blink")} alt=""/><small>WEAR IT PROUD</small></span></div></div><div className="machine-box"><div className="machine-screen">?</div><b>THE MIX MACHINE</b></div></div></section>
+
+              <section className="mix-wear"><div className="mix-shell wear-grid"><div><p className="mix-kicker">MADE FOR LITTLE WEIRDOS</p><h2>WEAR YOUR<br/>MIXUP.</h2><p>Soft tees. Comfy hoodies.<br/>Serious adventures.</p><Link href="/shop" className="mix-btn dark">SHOP NOW</Link></div><div className="wear-art"><img src={art("claw")} alt="My Mixups creature"/><span>YOUR NEW<br/>FAVOURITE<br/>WEIRDO.</span></div></div></section>
+
+              <section className="mix-all"><div className="mix-shell"><h2>MEET ALL THE MIXUPS</h2><p>A growing collection of totally made-up animals.</p><div className="mix-parade">{["blink","claw","nub","bub","boff","chit","blob"].map(s=><img key={s} src={art(s)} alt=""/>)}</div><Link href="/shop" className="mix-link">VIEW THE COLLECTION →</Link></div></section>
+
+              <footer className="mix-footer"><div className="mix-shell footer-grid"><h2>MY<br/>MIXUPS</h2><div><b>SHOP</b><Link href="/shop">All Mixups</Link><Link href="/products/tee">Tees</Link><Link href="/products/hoodie">Hoodies</Link></div><div><b>INFO</b><Link href="/about">About</Link><Link href="/size-guide">Size guide</Link><Link href="/shipping">Shipping</Link></div><div><b>JOIN THE MIX</b><p>Get new creatures, drops & weird updates.</p><div className="join-box">Email address <span>→</span></div></div></div></footer>
+            </main>;
+          }
+          EOF_TSX
+          sed -i 's/^          //' src/components/home/MixupsHomepage.tsx
+
+          cat > src/app/mixups-home.css <<'EOF_CSS'
+          .mix-home{background:#f8f5ed;color:#111;font-family:Arial,Helvetica,sans-serif}.mix-shell{width:min(1180px,calc(100% - 32px));margin:auto}.mix-hero{padding:36px 0 26px;background:#f8f5ed}.mix-hero-grid{display:grid;grid-template-columns:.9fr 1.1fr;align-items:center;min-height:500px}.mix-hero h1,.mix-home h2,.mix-footer h2,.mix-brand-mobile{font-family:Impact,'Arial Black',sans-serif;letter-spacing:-.025em;line-height:.94}.mix-hero h1{font-size:clamp(3.3rem,6vw,6.3rem);margin:0}.mix-brand-mobile{display:none}.mix-actions{display:flex;align-items:center;gap:24px;margin-top:30px}.mix-btn{display:inline-flex;padding:15px 22px;font-weight:900;font-size:.78rem;text-decoration:none}.mix-btn.dark{background:#111;color:white}.mix-link{color:#111;font-weight:900;font-size:.76rem;text-decoration:none}.mix-hero-art{position:relative;display:grid;place-items:center;min-height:430px}.mix-hero-art img{width:min(100%,600px);max-height:420px;object-fit:contain;filter:contrast(1.2)}.mix-star{position:absolute;right:4%;top:5%;font-size:4rem;color:#ff6f9c}.mix-popular{padding:34px 0 42px;border-top:1px solid #ccc}.mix-popular h2{font-size:2.1rem;margin:0 0 22px}.mix-card-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.mix-card{min-height:260px;padding:18px;display:flex;flex-direction:column;color:#111;text-decoration:none;text-align:center}.mix-card img{width:100%;height:175px;object-fit:contain;mix-blend-mode:multiply}.mix-card strong{font-family:Impact,'Arial Black',sans-serif;font-size:1.35rem}.mix-card small{margin-top:4px}.yellow{background:#ffd33d}.pink{background:#f38aab}.green{background:#b9cf42}.blue{background:#8fb8df}.mix-machine-band{background:#d9ef31;padding:38px 0}.machine-grid{display:grid;grid-template-columns:1.4fr .6fr;align-items:center;gap:30px}.machine-grid h2{font-size:3rem;margin:0 0 28px}.mix-formula{display:flex;align-items:center;gap:24px}.mix-formula span{display:grid;text-align:center;gap:5px;font-weight:900}.mix-formula b{font-size:2.2rem}.mix-formula i{font-size:2.2rem;font-style:normal;font-weight:900}.mix-formula small{font-size:.65rem}.mix-formula img{width:100px;height:60px;object-fit:contain;mix-blend-mode:multiply}.machine-box{height:220px;border:5px solid #111;border-radius:28px;display:grid;place-items:center;background:#eee0b9;box-shadow:10px 10px 0 #111;text-align:center}.machine-screen{display:grid;place-items:center;width:100px;height:95px;background:#111;color:white;border-radius:16px;font-size:4rem;font-weight:900}.mix-wear{padding:48px 0}.wear-grid{display:grid;grid-template-columns:.75fr 1.25fr;align-items:stretch;min-height:390px}.mix-kicker{font-weight:900}.mix-wear h2{font-size:5rem;margin:12px 0}.mix-wear p{font-weight:700;line-height:1.5}.mix-wear .mix-btn{margin-top:18px}.wear-art{position:relative;background:#9dc4e4;display:grid;place-items:center;overflow:hidden}.wear-art img{width:70%;height:280px;object-fit:contain;mix-blend-mode:multiply}.wear-art span{position:absolute;right:20px;bottom:20px;background:#ff6f9c;padding:12px;font-family:Impact,'Arial Black',sans-serif;font-size:1.3rem;transform:rotate(-3deg)}.mix-all{background:#9dc4e4;text-align:center;padding:40px 0}.mix-all h2{font-size:3rem;margin:0}.mix-all p{font-weight:700}.mix-parade{display:flex;justify-content:center;align-items:center;gap:10px;margin:24px 0}.mix-parade img{width:13%;height:85px;object-fit:contain;mix-blend-mode:multiply}.mix-footer{background:#111;color:#f8f5ed;padding:45px 0}.footer-grid{display:grid;grid-template-columns:1.5fr .6fr .6fr 1.2fr;gap:35px}.mix-footer h2{font-size:4rem;margin:0}.mix-footer b{font-size:.72rem}.mix-footer a{display:block;color:#f8f5ed;text-decoration:none;margin-top:8px;font-size:.8rem}.mix-footer p{font-size:.8rem}.join-box{border:1px solid #777;padding:12px;display:flex;justify-content:space-between}.join-box span{background:#d9ef31;color:#111;padding:0 8px}@media(max-width:700px){.mix-shell{width:min(100% - 24px,520px)}.mix-hero{background:#d9ef31;padding:18px 0 26px}.mix-hero-grid{display:flex;flex-direction:column;min-height:0}.mix-hero-copy{width:100%}.mix-brand-mobile{display:block;font-size:3.4rem;margin:0}.mix-hero h1{font-size:2rem;margin-top:16px}.mix-hero-art{order:-1;min-height:220px;width:100%;margin-top:64px}.mix-hero-art img{height:220px}.mix-star{font-size:2.5rem}.mix-actions{margin-top:16px;display:grid;width:100%;gap:10px}.mix-btn,.mix-link{justify-content:center;text-align:center}.mix-popular{padding:26px 0}.mix-popular h2{font-size:1.8rem}.mix-card-row{display:flex;overflow-x:auto;margin-right:-12px;gap:10px}.mix-card{flex:0 0 66%;min-height:230px}.mix-card img{height:150px}.machine-grid{grid-template-columns:1fr}.machine-grid h2{font-size:2.35rem}.mix-formula{gap:10px;justify-content:space-between}.mix-formula img{width:70px}.machine-box{height:170px}.wear-grid{grid-template-columns:1fr}.mix-wear h2{font-size:3.8rem}.wear-art{min-height:300px;margin-top:30px}.mix-all h2{font-size:2.2rem}.mix-parade{overflow:hidden;justify-content:flex-start}.mix-parade img{min-width:90px}.footer-grid{grid-template-columns:1fr 1fr}.mix-footer h2{grid-column:1/-1}.footer-grid>div:last-child{grid-column:1/-1}}
+          EOF_CSS
+          sed -i 's/^          //' src/app/mixups-home.css
+
           echo '=== BUILD ==='
           npm ci
-          echo "npm_ci_exit=$?"
           rm -rf .next
           npm run build
           BUILD=$?
           echo "build_exit=$BUILD"
-          if [ "$BUILD" -ne 0 ]; then exit "$BUILD"; fi
-          sudo cp deploy/mymixups-site.service /etc/systemd/system/mymixups-site.service
-          sudo systemctl daemon-reload
-          sudo systemctl enable mymixups-site >/dev/null 2>&1
+          [ "$BUILD" -eq 0 ]
+
           sudo systemctl restart mymixups-site
-          sleep 3
+          sleep 4
           echo -n 'service='; systemctl is-active mymixups-site
           echo -n 'local_4110='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4110/
+          echo '=== CONTENT CHECK ==='
+          curl -sS http://127.0.0.1:4110/ | grep -o 'WHAT HAPPENS' | head -1 || true
           echo '=== CURB REGRESSION ==='
           echo -n 'curbstamps-site='; systemctl is-active curbstamps-site
           echo -n 'curb_4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/
