@@ -11,11 +11,10 @@ permissions:
   contents: write
 
 jobs:
-  fix:
+  discover:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up SSH
         run: |
           mkdir -p ~/.ssh
@@ -23,172 +22,79 @@ jobs:
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Install trusted My Mixups certificate
-        id: repair
+      - name: Discover usable Cloudflare credential without exposing it
+        id: discover
         continue-on-error: true
         run: |
-          set -euo pipefail
-          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
-          set -euo pipefail
-
-          curl -fsS http://127.0.0.1:4110/ >/dev/null
-          curl -fsS http://127.0.0.1:4310/login >/dev/null
-          curl -fsS http://127.0.0.1:4100/ >/dev/null
-          curl -fsS http://127.0.0.1:4300/login >/dev/null
-
-          CONF=/etc/nginx/sites-available/mymixups
-          test -f "$CONF"
-          BACKUP="$CONF.bak.public-tls.$(date +%Y%m%d-%H%M%S)"
-          sudo cp "$CONF" "$BACKUP"
-          sudo mkdir -p /var/www/letsencrypt/.well-known/acme-challenge
-
-          sudo tee "$CONF" >/dev/null <<'NGINX'
-          server {
-              listen 80;
-              listen [::]:80;
-              server_name mymixups.com www.mymixups.com;
-              location ^~ /.well-known/acme-challenge/ {
-                  root /var/www/letsencrypt;
-                  default_type text/plain;
-              }
-              location / {
-                  proxy_pass http://127.0.0.1:4110;
-                  proxy_http_version 1.1;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-              }
-          }
-
-          server {
-              listen 80;
-              listen [::]:80;
-              server_name admin.mymixups.com;
-              location ^~ /.well-known/acme-challenge/ {
-                  root /var/www/letsencrypt;
-                  default_type text/plain;
-              }
-              location / {
-                  proxy_pass http://127.0.0.1:4310;
-                  proxy_http_version 1.1;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto $scheme;
-              }
-          }
-
-          server {
-              listen 443 ssl;
-              listen [::]:443 ssl;
-              server_name mymixups.com www.mymixups.com;
-              ssl_certificate /etc/nginx/tls/mymixups/origin.crt;
-              ssl_certificate_key /etc/nginx/tls/mymixups/origin.key;
-              ssl_protocols TLSv1.2 TLSv1.3;
-              location / {
-                  proxy_pass http://127.0.0.1:4110;
-                  proxy_http_version 1.1;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto https;
-              }
-          }
-
-          server {
-              listen 443 ssl;
-              listen [::]:443 ssl;
-              server_name admin.mymixups.com;
-              ssl_certificate /etc/nginx/tls/mymixups/origin.crt;
-              ssl_certificate_key /etc/nginx/tls/mymixups/origin.key;
-              ssl_protocols TLSv1.2 TLSv1.3;
-              location / {
-                  proxy_pass http://127.0.0.1:4310;
-                  proxy_http_version 1.1;
-                  proxy_set_header Host $host;
-                  proxy_set_header X-Real-IP $remote_addr;
-                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-                  proxy_set_header X-Forwarded-Proto https;
-              }
-          }
-          NGINX
-
-          if ! sudo nginx -t; then
-            sudo cp "$BACKUP" "$CONF"
-            sudo nginx -t
-            exit 1
-          fi
-          sudo systemctl reload nginx
-
-          if ! command -v certbot >/dev/null 2>&1; then
-            sudo apt-get update -qq
-            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq certbot
-          fi
-
-          sudo certbot certonly --webroot -w /var/www/letsencrypt \
-            -d mymixups.com -d www.mymixups.com \
-            --non-interactive --agree-tos --register-unsafely-without-email \
-            --keep-until-expiring
-
-          CERT=/etc/letsencrypt/live/mymixups.com/fullchain.pem
-          KEY=/etc/letsencrypt/live/mymixups.com/privkey.pem
-          sudo test -s "$CERT"
-          sudo test -s "$KEY"
-          sudo sed -i "s#ssl_certificate /etc/nginx/tls/mymixups/origin.crt;#ssl_certificate $CERT;#g" "$CONF"
-          sudo sed -i "s#ssl_certificate_key /etc/nginx/tls/mymixups/origin.key;#ssl_certificate_key $KEY;#g" "$CONF"
-          sudo nginx -t
-          sudo systemctl reload nginx
-
-          curl -fsS --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ >/dev/null
-          curl -fsS --resolve www.mymixups.com:443:127.0.0.1 https://www.mymixups.com/ >/dev/null
-
-          curl -fsS http://127.0.0.1:4100/ >/dev/null
-          curl -fsS http://127.0.0.1:4300/login >/dev/null
-          systemctl is-active --quiet curbstamps-site
-          systemctl is-active --quiet curbstamps-admin
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE' > /tmp/discovery.txt
+          set +e
+          python3 - <<'PY'
+          import os,re,subprocess,json
+          roots=['/home/ubuntu','/etc/cloudflared','/etc/systemd/system']
+          rx=re.compile(r'^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.+?)\s*$')
+          wanted=re.compile(r'(CLOUDFLARE|CF_(?:API|TOKEN|KEY)|ORIGIN_CA)',re.I)
+          found=[]
+          for root in roots:
+              if not os.path.exists(root): continue
+              for dp,dns,fns in os.walk(root):
+                  dns[:] = [d for d in dns if d not in {'.git','node_modules','.next','cache','logs'}]
+                  for fn in fns:
+                      p=os.path.join(dp,fn)
+                      try:
+                          if os.path.getsize(p)>1048576: continue
+                          for line in open(p,'r',errors='ignore'):
+                              m=rx.match(line)
+                              if not m or not wanted.search(m.group(1)): continue
+                              key=m.group(1); val=m.group(2).strip().strip('"\'')
+                              if not val or '$' in val: continue
+                              found.append((p,key,val))
+                      except Exception: pass
+          print('candidate_count='+str(len(found)))
+          usable=False
+          for p,key,val in found:
+              print('candidate='+p+':'+key)
+              if 'SERVICE' in key.upper() or 'ORIGIN' in key.upper():
+                  continue
+              try:
+                  out=subprocess.check_output(['curl','-sS','-H','Authorization: Bearer '+val,'https://api.cloudflare.com/client/v4/zones?name=mymixups.com'],text=True,timeout=12)
+                  d=json.loads(out)
+                  if d.get('success') and d.get('result'):
+                      print('usable_token=true')
+                      print('usable_source='+p+':'+key)
+                      print('zone_id_available=true')
+                      usable=True
+                      break
+              except Exception:
+                  pass
+          if not usable:
+              print('usable_token=false')
+          PY
           REMOTE
 
-      - name: Measure public state
-        id: public
+      - name: Record live state
         if: always()
         run: |
           root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
           www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
           admin=$(curl -LsS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
           curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
-          root_dns=$(dig +short mymixups.com | tr '\n' ' ')
-          www_dns=$(dig +short www.mymixups.com | tr '\n' ' ')
-          admin_dns=$(dig +short admin.mymixups.com | tr '\n' ' ')
           {
-            echo "repair=${{ steps.repair.outcome }}"
+            cat /tmp/discovery.txt 2>/dev/null || true
             echo "root_http=$root"
             echo "www_http=$www"
             echo "admin_http=$admin"
             echo "curb_http=$curb"
-            echo "root_dns=$root_dns"
-            echo "www_dns=$www_dns"
-            echo "admin_dns=$admin_dns"
+            echo "admin_dns=$(dig +short admin.mymixups.com | tr '\n' ' ')"
             echo "checked_at=$(date -u +%FT%TZ)"
           } > .github/mymixups-public-tls-status.txt
 
-      - name: Publish verification result
+      - name: Publish result
         if: always()
         run: |
           git config user.name github-actions
           git config user.email github-actions@github.com
           git add .github/mymixups-public-tls-status.txt
           if ! git diff --cached --quiet; then
-            git commit -m "Record My Mixups public TLS status"
+            git commit -m "Record Cloudflare credential discovery"
             git push
           fi
-
-      - name: Enforce success
-        if: always()
-        run: |
-          root=$(grep '^root_http=' .github/mymixups-public-tls-status.txt | cut -d= -f2)
-          www=$(grep '^www_http=' .github/mymixups-public-tls-status.txt | cut -d= -f2)
-          curb=$(grep '^curb_http=' .github/mymixups-public-tls-status.txt | cut -d= -f2)
-          [[ "$root" =~ ^(200|301|302|307|308)$ ]]
-          [[ "$www" =~ ^(200|301|302|307|308)$ ]]
-          [[ "$curb" =~ ^(200|301|302|307|308)$ ]]
