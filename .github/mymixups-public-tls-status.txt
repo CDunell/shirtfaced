@@ -1,7 +1,54 @@
+checked_at=2026-08-25T10:10:32Z
+oracle_host_set=yes
+deploy_key_set=yes
+# 161.33.31.74:22 SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.16
+# 161.33.31.74:22 SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.16
+# 161.33.31.74:22 SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.16
+# 161.33.31.74:22 SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.16
+# 161.33.31.74:22 SSH-2.0-OpenSSH_8.9p1 Ubuntu-3ubuntu0.16
+ssh_keyscan_exit=0
+=== ORACLE CONNECTED ===
+instance-20260615-2316
+
+=== SERVICES BEFORE ===
+mymixups-site=active
+curbstamps-site=active
+4110=200
+4100=200
+
+=== NGINX BEFORE ===
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+LISTEN 0      511          0.0.0.0:80         0.0.0.0:*    users:(("nginx",pid=3506528,fd=16),("nginx",pid=3506527,fd=16),("nginx",pid=3506525,fd=16),("nginx",pid=3506524,fd=16),("nginx",pid=11259,fd=16))
+LISTEN 0      511                *:4110             *:*    users:(("next-server (v1",pid=3381569,fd=18))                                                                                                    
+LISTEN 0      511                *:4100             *:*    users:(("next-server (v1",pid=3443934,fd=18))                                                                                                    
+LISTEN 0      511             [::]:80            [::]:*    users:(("nginx",pid=3506528,fd=17),("nginx",pid=3506527,fd=17),("nginx",pid=3506525,fd=17),("nginx",pid=3506524,fd=17),("nginx",pid=11259,fd=17))
+
+=== WRITE MYMIXUPS HTTP VHOST ===
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+nginx_http_config_exit=0
+nginx_reload_exit=0
+host_http=200
+
+=== CERTBOT ===
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+The requested nginx plugin does not appear to be installed
+certbot_exit=1
+
+=== TLS AFTER ===
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+203004D942E70000:error:8000006F:system library:BIO_connect:Connection refused:../crypto/bio/bio_sock2.c:125:calling connect()
+203004D942E70000:error:10000067:BIO routines:BIO_connect:connect error:../crypto/bio/bio_sock2.c:127:
+connect:errno=111
+local_origin_https=curl: (7) Failed to connect to mymixups.com port 443 after 0 ms: Connection refused
+000
+
+=== CURB REGRESSION ===
+curbstamps-site=active
+curb_4100=200
+ssh_exit=0
 root_http=525
-root_curl_exit=0
 www_http=525
-www_curl_exit=0
 curb_http=200
-curb_curl_exit=0
-checked_at=2026-08-25T10:09:38Z
