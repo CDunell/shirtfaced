@@ -100,10 +100,34 @@ Default exploration board: **25 completely new creatures in a 5 × 5 grid**.
 - No palette legend unless explicitly requested.
 - No repeated or near-repeated creatures from previous boards.
 
+## Render archive — mandatory
+
+Every generated development board must be committed to this Git repository immediately after the render. Do not wait for selection or approval.
+
+Archive each board under:
+
+`mymixups-artwork/development-boards/`
+
+Use sequential immutable filenames:
+
+`board-001.png`, `board-002.png`, `board-003.png`, etc.
+
+Never overwrite an earlier board. Before generating a new board, inspect the archived development boards so the novelty rule is based on the actual visual history rather than chat memory.
+
+Each render cycle is therefore:
+
+1. Read this authority file from `main`.
+2. Inspect all archived My Mixups development boards needed to establish prior visual territory.
+3. Generate 25 new creatures that obey the novelty rule.
+4. Commit the rendered board PNG to `mymixups-artwork/development-boards/` using the next sequential filename.
+5. Only then present/continue evaluation of the new board.
+
+The archive is the persistent visual memory of the collection across chats.
+
 ## Selection and master development
 
 Development boards are concept exploration only. Once a creature is selected, preserve its identity and develop that specific creature rather than regenerating a vaguely similar substitute. Final artwork should retain the selected silhouette, anatomy and character while being cleaned only as necessary for production.
 
 ## One-line generation authority
 
-> Generate 25 entirely new deadpan animal Mixups in the established hand-drawn My Mixups visual system, using dusty muted natural colouring that treats each impossible hybrid as one completely ordinary animal, while repeating neither creatures nor near-equivalent silhouettes from any previous board.
+> Generate 25 entirely new deadpan animal Mixups in the established hand-drawn My Mixups visual system, using dusty muted natural colouring that treats each impossible hybrid as one completely ordinary animal, while repeating neither creatures nor near-equivalent silhouettes from any previous board. After every render, archive the board PNG in Git under `mymixups-artwork/development-boards/` using the next sequential immutable filename.
