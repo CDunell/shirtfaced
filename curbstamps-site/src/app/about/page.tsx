@@ -1,39 +1,37 @@
 import { PageShell, Prose, Section } from "@/components/PageShell";
 import { CREATURES } from "@/lib/creatures";
 
-export const metadata = { title: "About — Curb Stamps" };
+export const metadata = { title: "About — My Mixups" };
 
 export default function AboutPage() {
   return (
-    <PageShell title="about" intro="Little creatures, found on the curb, stamped on your kid.">
+    <PageShell title="about" intro="A growing crew of weird little creatures made for kids to wear their favourite.">
       <Prose>
         <p>
-          Curb Stamps started as a bunch of doodles of the little things you actually see on
-          a footpath — bugs, bandicoots, the odd unexplainable devil — and turned into a
-          collection of 60 characters, one at a time. Twelve are out in the world so far.
+          My Mixups started with a bunch of odd little creature doodles and kept growing.
+          Some look almost familiar. Some definitely don&apos;t. Each one has its own shape,
+          name and personality — and kids get to decide which one is theirs.
         </p>
         <p>
-          Every creature gets a tee, a hoodie and a cap, sized from 2T right through to a
-          teen&apos;s XL, so a kid can wear the same little guy from toddler years to
-          actual-opinions-about-clothes years.
+          The crew lives on tees, hoodies and caps made for everyday kid life: playgrounds,
+          daycare, school, weekends, spills, dirt and whatever else happens before dinner.
         </p>
       </Prose>
 
-      <Section heading="How it's made">
+      <Section heading="Made to be worn">
         <Prose>
           <p>
-            Every print is screen-printed, not vinyl, not a heat-press sticker that cracks
-            after three washes. Thick ink, one line-art colour, made to survive a kid — and
-            to get handed down to the next one.
+            The creatures are simple on purpose: bold, clean artwork that reads properly on
+            a garment without turning kids&apos; clothes into a walking billboard. Good basics,
+            good prints and weird little characters doing the heavy lifting.
           </p>
         </Prose>
       </Section>
 
-      <Section heading="The crew, one at a time">
+      <Section heading="The crew keeps growing">
         <Prose>
           <p>
-            New creatures ship as the art&apos;s finished, not on a schedule. What&apos;s live
-            today:
+            New Mixups join the range as they&apos;re ready. What&apos;s live today:
           </p>
         </Prose>
         <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-[14px] font-bold sm:grid-cols-3">
@@ -45,7 +43,10 @@ export default function AboutPage() {
 
       <Section heading="Who's behind it">
         <Prose>
-          <p>Curb Stamps is a small, independent kids&apos; label. No factory minimums we can&apos;t meet honestly, no drop we can&apos;t actually fulfil.</p>
+          <p>
+            My Mixups is an independent Australian kids&apos; label built around one simple idea:
+            make fun clothes kids actually want to pick for themselves.
+          </p>
         </Prose>
       </Section>
     </PageShell>
