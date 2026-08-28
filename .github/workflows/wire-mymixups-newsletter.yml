@@ -1,0 +1,279 @@
+name: Wire My Mixups Newsletter
+
+# Ports the working newsletter capture (curbstamps-site/curbstamps-admin as of
+# migration 0001) onto the isolated My Mixups apps on the Oracle box, which were
+# seeded from the curbstamps apps before that change existed. Idempotent: safe
+# to re-run. The on-box patch is deliberately self-contained (raw SQL insert in
+# the admin route, no schema-file edits) — the proper shared implementation
+# arrives if/when mymixups-site and mymixups-admin are brought into this repo.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/wire-mymixups-newsletter.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Oracle SSH
+        shell: bash
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' '${{ secrets.ORACLE_DEPLOY_KEY }}' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -T 10 -H '${{ secrets.ORACLE_HOST }}' >> ~/.ssh/known_hosts
+
+      - name: Wire newsletter capture on My Mixups apps
+        id: wire
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          OUT=.github/mymixups-newsletter-status.txt
+          : > "$OUT"
+          echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
+
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/deploy_key ubuntu@'${{ secrets.ORACLE_HOST }}' 'bash -s' >> "$OUT" 2>&1 <<'REMOTE'
+          set -e
+          SITE=/home/ubuntu/mymixups-site
+          ADMIN=/home/ubuntu/mymixups-admin
+
+          echo '=== PREFLIGHT ==='
+          [ -d "$SITE" ] || { echo "missing_dir=$SITE"; exit 1; }
+          [ -d "$ADMIN" ] || { echo "missing_dir=$ADMIN"; exit 1; }
+          INTERNAL_KEY=$(sed -n 's/^INTERNAL_API_KEY=//p' "$ADMIN/.env" | head -1)
+          [ -n "$INTERNAL_KEY" ] || { echo "admin_internal_api_key=missing"; exit 1; }
+          echo "admin_internal_api_key=present"
+          BACKUP=/home/ubuntu/backups/newsletter-$(date -u +%Y%m%dT%H%M%SZ)
+          mkdir -p "$BACKUP"
+          cp "$SITE/src/components/home/MixupsHomepage.tsx" "$BACKUP/" 2>/dev/null || true
+          cp "$SITE/.env" "$BACKUP/site.env"
+          echo "backup=$BACKUP"
+
+          echo '=== DB TABLE ==='
+          sudo -u postgres psql -d mymixups_shop -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE TABLE IF NOT EXISTS "newsletter_subscribers" (
+            "id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+            "email" text NOT NULL,
+            "source" text DEFAULT 'storefront' NOT NULL,
+            "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+            CONSTRAINT "newsletter_subscribers_email_unique" UNIQUE("email")
+          );
+          ALTER TABLE "newsletter_subscribers" OWNER TO mymixups;
+          SQL
+          echo "table=ready"
+
+          echo '=== ADMIN ROUTE ==='
+          mkdir -p "$ADMIN/src/app/api/internal/newsletter"
+          cat > "$ADMIN/src/app/api/internal/newsletter/route.ts" <<'EOF_ADMIN'
+          import { NextResponse } from "next/server";
+          import postgres from "postgres";
+          import { verifyInternalRequest } from "@/lib/internal-auth";
+
+          /**
+           * Called by mymixups-site's homepage signup form — the storefront has
+           * no direct database access, so this is the only door in, same as
+           * /api/internal/orders. Self-contained (raw SQL, own short-lived
+           * connection) because this app's Drizzle schema predates the
+           * newsletter_subscribers table; volume is homepage-signup scale.
+           */
+          const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+          export async function POST(request: Request) {
+            if (!verifyInternalRequest(request)) {
+              return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+            }
+            const connectionString =
+              process.env.MYMIXUPS_DATABASE_URL ?? process.env.CURBSTAMPS_DATABASE_URL;
+            if (!connectionString) {
+              return NextResponse.json({ error: "database not configured" }, { status: 503 });
+            }
+            const json = await request.json().catch(() => null);
+            const record = json && typeof json === "object" ? (json as Record<string, unknown>) : {};
+            const email = typeof record.email === "string" ? record.email.trim().toLowerCase() : "";
+            const source =
+              typeof record.source === "string" && record.source.length > 0 && record.source.length <= 64
+                ? record.source
+                : "storefront";
+            if (!EMAIL_PATTERN.test(email)) {
+              return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
+            }
+            const sql = postgres(connectionString, { max: 1 });
+            try {
+              await sql`INSERT INTO newsletter_subscribers (email, source) VALUES (${email}, ${source}) ON CONFLICT (email) DO NOTHING`;
+            } finally {
+              await sql.end();
+            }
+            return NextResponse.json({ ok: true }, { status: 201 });
+          }
+          EOF_ADMIN
+          sed -i 's/^          //' "$ADMIN/src/app/api/internal/newsletter/route.ts"
+          echo "admin_route=written"
+
+          echo '=== SITE ROUTE ==='
+          mkdir -p "$SITE/src/app/api/newsletter"
+          cat > "$SITE/src/app/api/newsletter/route.ts" <<'EOF_SITE'
+          import { NextResponse } from "next/server";
+
+          /**
+           * Called from the homepage "JOIN THE MIX" form. Forwards the address
+           * to mymixups-admin's internal API (this app has no direct DB access).
+           */
+          const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+          export async function POST(request: Request) {
+            const adminApiUrl = process.env.ADMIN_API_URL;
+            const adminApiKey = process.env.ADMIN_INTERNAL_API_KEY;
+            if (!adminApiUrl || !adminApiKey) {
+              return NextResponse.json({ error: "Signups aren't connected yet.", notConfigured: true }, { status: 503 });
+            }
+            const json = await request.json().catch(() => null);
+            const email = json && typeof json === "object" ? (json as Record<string, unknown>).email : null;
+            if (typeof email !== "string" || !EMAIL_PATTERN.test(email.trim())) {
+              return NextResponse.json({ error: "That doesn't look like an email address." }, { status: 400 });
+            }
+            const adminResponse = await fetch(`${adminApiUrl}/api/internal/newsletter`, {
+              method: "POST",
+              headers: { "content-type": "application/json", "x-internal-api-key": adminApiKey },
+              body: JSON.stringify({ email: email.trim(), source: "storefront-home" }),
+            }).catch(() => null);
+            if (!adminResponse || !adminResponse.ok) {
+              return NextResponse.json({ error: "Couldn't save that just now. Try again in a moment." }, { status: 502 });
+            }
+            return NextResponse.json({ ok: true });
+          }
+          EOF_SITE
+          sed -i 's/^          //' "$SITE/src/app/api/newsletter/route.ts"
+          echo "site_route=written"
+
+          echo '=== SITE ENV ==='
+          upsert_env() { grep -q "^$2=" "$1" && sed -i "s|^$2=.*|$2=$3|" "$1" || echo "$2=$3" >> "$1"; }
+          upsert_env "$SITE/.env" ADMIN_API_URL "http://127.0.0.1:4310"
+          upsert_env "$SITE/.env" ADMIN_INTERNAL_API_KEY "$INTERNAL_KEY"
+          echo "site_env=updated"
+
+          echo '=== FOOTER FORM ==='
+          cat > "$SITE/src/components/home/JoinTheMix.tsx" <<'EOF_JOIN'
+          "use client";
+
+          import { useState } from "react";
+
+          export function JoinTheMix() {
+            const [email, setEmail] = useState("");
+            const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+            async function handleSubmit(e: React.FormEvent) {
+              e.preventDefault();
+              if (status === "sending") return;
+              setStatus("sending");
+              try {
+                const response = await fetch("/api/newsletter", {
+                  method: "POST",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ email }),
+                });
+                setStatus(response.ok ? "sent" : "error");
+              } catch {
+                setStatus("error");
+              }
+            }
+
+            if (status === "sent") {
+              return <div className="join-box">You&apos;re in the mix. <span>&#10003;</span></div>;
+            }
+            return (
+              <form className="join-box" onSubmit={handleSubmit}>
+                <input
+                  type="email"
+                  required
+                  aria-label="Email address"
+                  placeholder={status === "error" ? "That didn't save — try again" : "Email address"}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  style={{ flex: 1, minWidth: 0, background: "transparent", border: 0, color: "inherit", font: "inherit", outline: "none" }}
+                />
+                <button type="submit" style={{ background: "#d9ef31", color: "#111", border: 0, padding: "0 8px", font: "inherit", fontWeight: 900, cursor: "pointer" }}>
+                  {status === "sending" ? "..." : "→"}
+                </button>
+              </form>
+            );
+          }
+          EOF_JOIN
+          sed -i 's/^          //' "$SITE/src/components/home/JoinTheMix.tsx"
+
+          python3 - "$SITE/src/components/home/MixupsHomepage.tsx" <<'EOF_PY'
+          import sys, pathlib
+          p = pathlib.Path(sys.argv[1])
+          s = p.read_text()
+          old = '<div className="join-box">Email address <span>→</span></div>'
+          if "<JoinTheMix />" in s:
+              print("homepage=already_patched")
+          elif old not in s:
+              raise SystemExit("homepage join-box marker not found; aborting before build")
+          else:
+              s = s.replace(old, "<JoinTheMix />")
+              s = s.replace(
+                  'import Link from "next/link";',
+                  'import Link from "next/link";\nimport { JoinTheMix } from "@/components/home/JoinTheMix";',
+                  1,
+              )
+              p.write_text(s)
+              print("homepage=patched")
+          EOF_PY
+
+          echo '=== BUILD ADMIN ==='
+          cd "$ADMIN"
+          npm run build
+          echo "admin_build_exit=$?"
+          sudo systemctl restart mymixups-admin
+          sleep 3
+          echo -n 'mymixups-admin='; systemctl is-active mymixups-admin
+
+          echo '=== BUILD SITE ==='
+          cd "$SITE"
+          npm run build
+          echo "site_build_exit=$?"
+          sudo systemctl restart mymixups-site
+          sleep 4
+          echo -n 'mymixups-site='; systemctl is-active mymixups-site
+
+          echo '=== VERIFY ==='
+          TEST_EMAIL="wf-test-$(date +%s)@example.com"
+          echo -n 'signup_valid='; curl -sS -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:4110/api/newsletter -H 'content-type: application/json' -d "{\"email\":\"$TEST_EMAIL\"}"
+          echo -n 'signup_invalid='; curl -sS -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:4110/api/newsletter -H 'content-type: application/json' -d '{"email":"not-an-email"}'
+          echo -n 'admin_unauthed='; curl -sS -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:4310/api/internal/newsletter -H 'content-type: application/json' -d '{"email":"sneaky@example.com"}'
+          echo -n 'row_saved='; sudo -u postgres psql -d mymixups_shop -Atc "SELECT count(*) FROM newsletter_subscribers WHERE email='$TEST_EMAIL'"
+          sudo -u postgres psql -d mymixups_shop -Atc "DELETE FROM newsletter_subscribers WHERE email='$TEST_EMAIL'" >/dev/null
+          echo 'test_row=cleaned'
+
+          echo '=== REGRESSION ==='
+          echo -n 'mymixups_4110='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4110/
+          echo -n 'mymixups_admin_4310='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4310/login
+          echo -n 'curbstamps-site='; systemctl is-active curbstamps-site
+          echo -n 'curb_4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/
+          REMOTE
+          echo "ssh_wire_exit=$?" >> "$OUT"
+
+      - name: Publish status
+        if: always()
+        shell: bash
+        run: |
+          OUT=.github/mymixups-newsletter-status.txt
+          touch "$OUT"
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+          echo "root_http=$root" >> "$OUT"
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add "$OUT"
+          if ! git diff --cached --quiet; then
+            git commit -m "Record My Mixups newsletter wiring status"
+            git push
+          fi
