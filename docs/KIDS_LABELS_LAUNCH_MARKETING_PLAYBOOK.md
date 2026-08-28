@@ -218,7 +218,7 @@ assume the gap exists there until shown otherwise. These block everything in §7
 
 | Gap | Where verified | Why it blocks |
 |---|---|---|
-| **Newsletter form is a stub** — submit sets local state; the email is discarded | `curbstamps-site/src/components/home/NewsletterJoin.tsx` (check the live My Mixups equivalent) | The entire playbook funnels to an email list. Wire it to a real ESP (Klaviyo/Mailerlite) or at minimum a captures table in the brand's admin Postgres. |
+| ~~Newsletter form is a stub~~ **Wired 28 Aug 2026**: the form posts to `curbstamps-site` `/api/newsletter`, which forwards to `curbstamps-admin`'s internal API and persists to a `newsletter_subscribers` table (migration 0001). Still to do: deploy it, apply the migration in production, port the same wiring to the live My Mixups storefront, and connect an ESP (Klaviyo/Mailerlite) when sending starts. | `curbstamps-site/src/app/api/newsletter/route.ts`, `curbstamps-admin/src/app/api/internal/newsletter/route.ts` | The entire playbook funnels to an email list. |
 | **Social icons are decorative spans** — no links, and no accounts exist | same component | Handles must be registered before anything is published; icons then link out. |
 | No Instagram/TikTok/Facebook accounts for either brand | — | Register `@mymixups` and `@curbstamps` (or nearest) on all three + Pinterest defensively, professional/public from day one. **One set of accounts per brand — never shared** (see §8). |
 | No drop mechanic on-site | `curbstamps-site` | §7 needs at minimum a "new creature" flag and a coming-soon slot; the `NewDropStrip` component is a start. |
