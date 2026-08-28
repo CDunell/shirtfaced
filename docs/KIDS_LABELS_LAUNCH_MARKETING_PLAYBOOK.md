@@ -1,4 +1,4 @@
-# MY MIXUPS — KIDS BRAND LAUNCH MARKETING PLAYBOOK
+# KIDS LABELS — LAUNCH MARKETING PLAYBOOK (MY MIXUPS · CURB STAMPS)
 
 Status: PLAN / CONCEPT — research-backed proposal. Per the governance rule in
 `docs/launch-research/README.md`, nothing in this document is a project rule until the
@@ -6,11 +6,18 @@ owner explicitly approves it. Compliance items in §5 are TECHNICAL / LEGAL REQU
 and apply regardless.
 
 Date: 28 August 2026
-Scope: My Mixups first (live at mymixups.com, Printify fulfilment). §8 generalises the
-launchpad so it can be reused for Curb Stamps or any future label built on this engine.
-This document governs channel and campaign activity for the kids labels only — it does
-not touch Shirtfaced's Systems A/B/C, and nothing in it changes creature artwork rules
-(`MYMIXUPS_CREATURE_DESIGN_SYSTEM.md` remains the sole authority there).
+Scope: two sibling kids labels, each its own brand with its own site and infrastructure:
+
+- **My Mixups** — live at mymixups.com (own storefront deployment, Printify wired);
+  impossible-animal-hybrid creatures per `MYMIXUPS_CREATURE_DESIGN_SYSTEM.md`.
+- **Curb Stamps** — its own brand and storefront (`curbstamps-site/` +
+  `curbstamps-admin/` in this repo, per `docs/curbstamps/CURB_STAMPS_SPEC.md`), built
+  around the Curb Crew; the build is not finished yet (POD stubbed, no live vendor).
+
+§7 is the My Mixups launchpad (it's live first); §8 is the Curb Stamps launchpad and
+the reusable template for any future label. This document governs channel and campaign
+activity for the kids labels only — it does not touch Shirtfaced's Systems A/B/C, and
+nothing in it changes creature artwork rules (each brand's design authority stands).
 
 ## Evidence labels
 
@@ -204,16 +211,20 @@ These are not proposals.
 
 # 6. Phase 0 — infrastructure the launch is currently missing
 
-Verified against the codebase, 28 August 2026. These block everything in §7.
+Verified against this repo, 28 August 2026. The Curb Stamps rows are read directly from
+`curbstamps-site/`; My Mixups' deployed storefront was seeded from the same code
+lineage, so each row should be re-verified against the live mymixups.com deployment —
+assume the gap exists there until shown otherwise. These block everything in §7/§8.
 
-| Gap | Where | Why it blocks |
+| Gap | Where verified | Why it blocks |
 |---|---|---|
-| **Newsletter form is a stub** — submit sets local state; the email is discarded | `curbstamps-site/src/components/home/NewsletterJoin.tsx` | The entire playbook funnels to an email list. Wire it to a real ESP (Klaviyo/Mailerlite) or at minimum a captures table in `curbstamps-admin`'s Postgres. |
-| **Social icons are decorative spans** — no links, and no accounts exist | same component | Handles must be registered (Instagram, TikTok, Facebook page) before anything is published; icons then link out. |
-| No Instagram/TikTok/Facebook accounts | — | Register `@mymixups` (or nearest) on all three + Pinterest defensively, professional/public from day one. |
+| **Newsletter form is a stub** — submit sets local state; the email is discarded | `curbstamps-site/src/components/home/NewsletterJoin.tsx` (check the live My Mixups equivalent) | The entire playbook funnels to an email list. Wire it to a real ESP (Klaviyo/Mailerlite) or at minimum a captures table in the brand's admin Postgres. |
+| **Social icons are decorative spans** — no links, and no accounts exist | same component | Handles must be registered before anything is published; icons then link out. |
+| No Instagram/TikTok/Facebook accounts for either brand | — | Register `@mymixups` and `@curbstamps` (or nearest) on all three + Pinterest defensively, professional/public from day one. **One set of accounts per brand — never shared** (see §8). |
 | No drop mechanic on-site | `curbstamps-site` | §7 needs at minimum a "new creature" flag and a coming-soon slot; the `NewDropStrip` component is a start. |
 | No discount codes | spec §7 | Rep codes need them eventually; not needed for week 1. |
 | Ad attribution deliberately absent | spec §2.1 | Correct for now — build only when §7 Phase 3 triggers. |
+| Curb Stamps store unfinished — no POD vendor account, `SYNC_VARIANT_MAP` empty, placeholder garment art | spec §4 | Blocks Curb Stamps *selling*, not Curb Stamps *audience-building* — see §8. |
 
 ---
 
@@ -272,9 +283,43 @@ packed on camera when volume allows · drop emails only when there's a drop (no 
 
 ---
 
-# 8. The reusable launchpad — for Curb Stamps and future labels
+# 8. The Curb Stamps launchpad, and the reusable template
 
-The template, abstracted. A new label launches by filling in eight blanks; if a blank
+## 8.1 Curb Stamps — pre-launch runway (proposal)
+
+Curb Stamps is its own brand with its own storefront and backend already built; what's
+missing is the commerce tail (POD vendor, real garment photography, live deployment —
+spec §4 and §8). That ordering is normal in this category: **every case-study brand
+built its audience before or alongside its store**, and waitlist-first launches are the
+standard pre-launch pattern (§2, MHI pre-launch evidence in §3.3). So the unfinished
+store is not a reason to wait on marketing — it defines the marketing phase:
+
+1. **Start the audience build now, sell later.** A single waitlist landing page (the
+   built site can serve it, with a working email capture) + Instagram/TikTok accounts
+   in Curb Stamps' own voice. Content is character introductions — the Curb Crew's
+   names and one-line personalities are already authored, 12 creatures deep, which is
+   a 12-week introduction calendar without drawing anything new.
+2. **Use pre-launch scarcity honestly**: "the first drop" is a real event for a store
+   that has never sold anything. Founding-member framing (first 100 on the list get X)
+   converts a waitlist better than a bare signup.
+3. **Launch when the store is real**: POD vendor picked and wired (spec §4's to-go-live
+   checklist), real garment photography replacing `GarmentArt.tsx`'s placeholder, and
+   then the §7 Phase 2 drop loop applies verbatim with the waitlist as day-one demand.
+4. **Distinct positioning, so the two labels don't cannibalise**: Curb Stamps is the
+   bright, loud sticker-book crew ("a little universe of little guys"); My Mixups is
+   the dry, deadpan hybrid label. Different registers, different grids, potentially
+   different parent segments — run them as Rylee + Cru runs its sub-brands: **separate
+   accounts, separate email lists, separate rep programs**, shared operating playbook
+   (this document) behind the scenes. Cross-promotion is fine at the packing-slip and
+   founder-story level, not at the account level.
+5. Sequencing (owner's call): the shared operating cost is content cadence, and two
+   simultaneous full launches means two content calendars. The low-risk default is My
+   Mixups full playbook now (it can take orders), Curb Stamps in waitlist/audience
+   mode until its store is finished, then a full launch with an existing list.
+
+## 8.2 The reusable template — any future label
+
+The template, abstracted. A new label launches by filling in nine blanks; if a blank
 can't be filled, that's a brand problem, not a marketing problem.
 
 1. **Story** — who makes this and why, retellable by a parent in two sentences.
@@ -289,11 +334,8 @@ can't be filled, that's a brand problem, not a marketing problem.
 9. **Register check** — AU evidence says funny and un-precious beats twee; §5 applies
    verbatim to every label.
 
-Curb Stamps specifics, should it re-emerge as a separate label: the bright-accent Curb
-Crew and the muted Mixups hybrids must not share accounts or a grid — one Instagram per
-label, per every case in §2 (Rylee + Cru runs three sub-brands as three brands). The
-Halcyon Nights museum/gallery-shop channel is worth a dedicated look for whichever label
-skews more art-object.
+One standing note for the portfolio: the Halcyon Nights museum/gallery-shop channel
+(§2) is worth a dedicated look for whichever label skews more art-object.
 
 ---
 
