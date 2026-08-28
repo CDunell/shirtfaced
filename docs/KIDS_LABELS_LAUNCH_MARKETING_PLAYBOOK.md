@@ -15,7 +15,9 @@ Scope: two sibling kids labels, each its own brand with its own site and infrast
   around the Curb Crew; the build is not finished yet (POD stubbed, no live vendor).
 
 §7 is the My Mixups launchpad (it's live first); §8 is the Curb Stamps launchpad and
-the reusable template for any future label. This document governs channel and campaign
+the reusable template for any future label. Ready-to-post example content for both —
+bios, first-month calendars with captions, Reel/TikTok scripts, drop sequences, emails,
+rep callouts — lives in `docs/social-launch-content/`. This document governs channel and campaign
 activity for the kids labels only — it does not touch Shirtfaced's Systems A/B/C, and
 nothing in it changes creature artwork rules (each brand's design authority stands).
 
