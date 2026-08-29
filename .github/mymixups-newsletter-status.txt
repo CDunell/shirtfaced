@@ -1,10 +1,11 @@
-checked_at=2026-08-29T13:13:51Z
+checked_at=2026-08-29T13:22:18Z
 === PREFLIGHT ===
 admin_internal_api_key=present
-backup=/home/ubuntu/backups/newsletter-20260829T131353Z
+backup=/home/ubuntu/backups/newsletter-20260829T132221Z
 === DB TABLE ===
 could not change directory to "/home/ubuntu": Permission denied
 CREATE TABLE
+NOTICE:  relation "newsletter_subscribers" already exists, skipping
 ALTER TABLE
 table=ready
 === ADMIN ROUTE ===
@@ -14,6 +15,9 @@ site_route=written
 === SITE ENV ===
 site_env=updated
 === FOOTER FORM ===
-homepage join-box marker not found; aborting before build
+homepage_joinbox_context:
+  <section className="mobile-board-join"><div><h2>JOIN THE MIXUPS</h2><p>New drops. Secret stuff.<br/>No boring emails.</p></div><form><input aria-label="Your email" type="email" placeholder="YOUR EMAIL"/><button>JOIN</button></form><PatternCreatureImage src={art("flarg")} alt="Flarg"/></section>
+  <section className="mix-join desktop-home-section"><div className="mix-shell join"><PatternCreatureImage src={art("flarg")} alt="Flarg"/><div><h2>JOIN THE MIXUPS</h2><p>New drops. Secret stuff. No boring emails.</p></div><form><input aria-label="Your email" type="email" placeholder="YOUR EMAIL"/><bu
+homepage join-box element not found; aborting before build
 ssh_wire_exit=1
 root_http=200
