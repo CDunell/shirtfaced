@@ -180,28 +180,30 @@ jobs:
                   headers: { "content-type": "application/json" },
                   body: JSON.stringify({ email }),
                 });
-                setStatus(response.ok ? "sent" : "error");
+                if (response.ok) {
+                  setStatus("sent");
+                  setEmail("");
+                } else {
+                  setStatus("error");
+                }
               } catch {
                 setStatus("error");
               }
             }
 
-            if (status === "sent") {
-              return <div className="join-box">You&apos;re in the mix. <span>&#10003;</span></div>;
-            }
             return (
-              <form className="join-box" onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit}>
                 <input
+                  aria-label="Your email"
                   type="email"
                   required
-                  aria-label="Email address"
-                  placeholder={status === "error" ? "That didn't save — try again" : "Email address"}
+                  disabled={status === "sent"}
+                  placeholder={status === "sent" ? "YOU'RE IN." : status === "error" ? "TRY AGAIN" : "YOUR EMAIL"}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ flex: 1, minWidth: 0, background: "transparent", border: 0, color: "inherit", font: "inherit", outline: "none" }}
                 />
-                <button type="submit" style={{ background: "#d9ef31", color: "#111", border: 0, padding: "0 8px", font: "inherit", fontWeight: 900, cursor: "pointer" }}>
-                  {status === "sending" ? "..." : "→"}
+                <button type="submit" disabled={status === "sending" || status === "sent"}>
+                  {status === "sent" ? "IN ✓" : status === "sending" ? "..." : "JOIN"}
                 </button>
               </form>
             );
@@ -216,13 +218,15 @@ jobs:
           if "<JoinTheMix />" in s:
               print("homepage=already_patched")
               raise SystemExit(0)
-          new, n = re.subn(r'<div className="join-box">.*?</div>', "<JoinTheMix />", s, count=1, flags=re.S)
+          new, n = re.subn(r'<form><input aria-label="Your email".*?</form>', "<JoinTheMix />", s, flags=re.S)
           if n == 0:
-              print("homepage_joinbox_context:")
+              new, n = re.subn(r'<div className="join-box">.*?</div>', "<JoinTheMix />", s, count=1, flags=re.S)
+          if n == 0:
+              print("homepage_signup_context:")
               for line in s.splitlines():
-                  if "join-box" in line or "JOIN THE MIX" in line:
+                  if "join-box" in line or "JOIN THE MIX" in line or "Your email" in line:
                       print("  " + line.strip()[:300])
-              raise SystemExit("homepage join-box element not found; aborting before build")
+              raise SystemExit("homepage signup form not found; aborting before build")
           if "import { JoinTheMix }" not in new:
               if 'import Link from "next/link";' in new:
                   new = new.replace(
@@ -231,9 +235,13 @@ jobs:
                       1,
                   )
               else:
-                  new = 'import { JoinTheMix } from "@/components/home/JoinTheMix";\n' + new
+                  m = re.match(r'\s*(["\x27]use client["\x27];?\s*\n)', new)
+                  if m:
+                      new = new[:m.end()] + 'import { JoinTheMix } from "@/components/home/JoinTheMix";\n' + new[m.end():]
+                  else:
+                      new = 'import { JoinTheMix } from "@/components/home/JoinTheMix";\n' + new
           p.write_text(new)
-          print("homepage=patched")
+          print("homepage=patched forms=" + str(n))
           EOF_PY
 
           echo '=== BUILD ADMIN ==='
