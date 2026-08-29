@@ -1,7 +1,7 @@
-checked_at=2026-08-29T13:22:18Z
+checked_at=2026-08-29T13:31:36Z
 === PREFLIGHT ===
 admin_internal_api_key=present
-backup=/home/ubuntu/backups/newsletter-20260829T132221Z
+backup=/home/ubuntu/backups/newsletter-20260829T133137Z
 === DB TABLE ===
 could not change directory to "/home/ubuntu": Permission denied
 CREATE TABLE
@@ -15,9 +15,133 @@ site_route=written
 === SITE ENV ===
 site_env=updated
 === FOOTER FORM ===
-homepage_joinbox_context:
-  <section className="mobile-board-join"><div><h2>JOIN THE MIXUPS</h2><p>New drops. Secret stuff.<br/>No boring emails.</p></div><form><input aria-label="Your email" type="email" placeholder="YOUR EMAIL"/><button>JOIN</button></form><PatternCreatureImage src={art("flarg")} alt="Flarg"/></section>
-  <section className="mix-join desktop-home-section"><div className="mix-shell join"><PatternCreatureImage src={art("flarg")} alt="Flarg"/><div><h2>JOIN THE MIXUPS</h2><p>New drops. Secret stuff. No boring emails.</p></div><form><input aria-label="Your email" type="email" placeholder="YOUR EMAIL"/><bu
-homepage join-box element not found; aborting before build
-ssh_wire_exit=1
+homepage=patched forms=2
+=== BUILD ADMIN ===
+
+> mymixups-admin@0.1.0 build
+> next build
+
+▲ Next.js 16.2.12 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+Turbopack build encountered 1 warnings:
+./next.config.ts
+Encountered unexpected file in NFT list
+A file was traced that indicates that the whole project was traced unintentionally. Somewhere in the import trace below, there are:
+- filesystem operations (like path.join, path.resolve or fs.readFile), or
+- very dynamic requires (like require('./' + foo)).
+To resolve this, you can
+- remove them if possible, or
+- only use them in development, or
+- make sure they are statically scoped to some subfolder: path.join(process.cwd(), 'data', bar), or
+- add ignore comments: path.join(/*turbopackIgnore: true*/ process.cwd(), bar)
+
+Import trace:
+  App Route:
+    ./next.config.ts
+    ./src/lib/blanks.ts
+    ./src/app/api/placement/route.ts
+
+
+✓ Compiled successfully in 10.2s
+  Running TypeScript ...
+  Finished TypeScript in 9.5s ...
+  Collecting page data using 3 workers ...
+◇ injected env (13) from .env // tip: ◈ encrypted .env [www.dotenvx.com]
+◇ injected env (13) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+◇ injected env (13) from .env // tip: ⌘ override existing { override: true }
+◇ injected env (13) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+  Generating static pages using 3 workers (0/9) ...
+◇ injected env (13) from .env // tip: ⌘ override existing { override: true }
+  Generating static pages using 3 workers (2/9) 
+  Generating static pages using 3 workers (4/9) 
+  Generating static pages using 3 workers (6/9) 
+✓ Generating static pages using 3 workers (9/9) in 417ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ƒ /
+├ ƒ /_not-found
+├ ƒ /api/internal/mockups
+├ ƒ /api/internal/newsletter
+├ ƒ /api/internal/orders
+├ ƒ /api/internal/orders/[id]
+├ ƒ /api/placement
+├ ƒ /api/pod/webhook
+├ ƒ /login
+├ ƒ /orders
+├ ƒ /orders/[id]
+└ ƒ /placement
+
+
+ƒ Proxy (Middleware)
+
+ƒ  (Dynamic)  server-rendered on demand
+
+admin_build_exit=0
+mymixups-admin=active
+=== BUILD SITE ===
+
+> mymixups-site@0.1.0 build
+> next build
+
+▲ Next.js 16.2.12 (Turbopack)
+- Environments: .env
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 8.9s
+  Running TypeScript ...
+  Finished TypeScript in 9.0s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/25) ...
+  Generating static pages using 3 workers (6/25) 
+  Generating static pages using 3 workers (12/25) 
+  Generating static pages using 3 workers (18/25) 
+✓ Generating static pages using 3 workers (25/25) in 653ms
+  Finalizing page optimization ...
+
+Route (app)                       Revalidate  Expire
+┌ ○ /
+├ ○ /_not-found
+├ ○ /about
+├ ƒ /api/create-payment-intent
+├ ƒ /api/mockup/[blank]/[design]
+├ ƒ /api/newsletter
+├ ƒ /api/stripe-webhook
+├ ○ /apple-icon.png
+├ ○ /cart
+├ ○ /checkout
+├ ƒ /checkout/success
+├ ○ /contact
+├ ○ /faq
+├ ○ /icon.png
+├ ○ /privacy
+├ ƒ /products/[category]
+├ ○ /returns
+├ ○ /shipping
+├ ○ /shop                                 5m      1y
+├ ○ /size-guide
+└ ○ /terms
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+site_build_exit=0
+mymixups-site=active
+=== VERIFY ===
+signup_valid=200
+signup_invalid=400
+admin_unauthed=401
+row_saved=could not change directory to "/home/ubuntu/mymixups-site": Permission denied
+1
+could not change directory to "/home/ubuntu/mymixups-site": Permission denied
+test_row=cleaned
+=== REGRESSION ===
+mymixups_4110=200
+mymixups_admin_4310=200
+curbstamps-site=active
+curb_4100=200
+ssh_wire_exit=0
 root_http=200
