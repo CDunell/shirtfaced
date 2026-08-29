@@ -1,0 +1,19 @@
+checked_at=2026-08-29T13:13:51Z
+=== PREFLIGHT ===
+admin_internal_api_key=present
+backup=/home/ubuntu/backups/newsletter-20260829T131353Z
+=== DB TABLE ===
+could not change directory to "/home/ubuntu": Permission denied
+CREATE TABLE
+ALTER TABLE
+table=ready
+=== ADMIN ROUTE ===
+admin_route=written
+=== SITE ROUTE ===
+site_route=written
+=== SITE ENV ===
+site_env=updated
+=== FOOTER FORM ===
+homepage join-box marker not found; aborting before build
+ssh_wire_exit=1
+root_http=200
