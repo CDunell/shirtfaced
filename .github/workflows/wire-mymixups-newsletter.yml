@@ -210,23 +210,30 @@ jobs:
           sed -i 's/^          //' "$SITE/src/components/home/JoinTheMix.tsx"
 
           python3 - "$SITE/src/components/home/MixupsHomepage.tsx" <<'EOF_PY'
-          import sys, pathlib
+          import re, sys, pathlib
           p = pathlib.Path(sys.argv[1])
           s = p.read_text()
-          old = '<div className="join-box">Email address <span>→</span></div>'
           if "<JoinTheMix />" in s:
               print("homepage=already_patched")
-          elif old not in s:
-              raise SystemExit("homepage join-box marker not found; aborting before build")
-          else:
-              s = s.replace(old, "<JoinTheMix />")
-              s = s.replace(
-                  'import Link from "next/link";',
-                  'import Link from "next/link";\nimport { JoinTheMix } from "@/components/home/JoinTheMix";',
-                  1,
-              )
-              p.write_text(s)
-              print("homepage=patched")
+              raise SystemExit(0)
+          new, n = re.subn(r'<div className="join-box">.*?</div>', "<JoinTheMix />", s, count=1, flags=re.S)
+          if n == 0:
+              print("homepage_joinbox_context:")
+              for line in s.splitlines():
+                  if "join-box" in line or "JOIN THE MIX" in line:
+                      print("  " + line.strip()[:300])
+              raise SystemExit("homepage join-box element not found; aborting before build")
+          if "import { JoinTheMix }" not in new:
+              if 'import Link from "next/link";' in new:
+                  new = new.replace(
+                      'import Link from "next/link";',
+                      'import Link from "next/link";\nimport { JoinTheMix } from "@/components/home/JoinTheMix";',
+                      1,
+                  )
+              else:
+                  new = 'import { JoinTheMix } from "@/components/home/JoinTheMix";\n' + new
+          p.write_text(new)
+          print("homepage=patched")
           EOF_PY
 
           echo '=== BUILD ADMIN ==='
