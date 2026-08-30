@@ -52,6 +52,7 @@ far has been caught by that one question, asked too late.
 |---|---|
 | The design engine | `studio/docs/DESIGN_ENGINE_ADAPTATION.md` — the architecture, agreed before the build |
 | Anything about the corpus | `studio/docs/DESIGN_CORPUS_SCHEMA.md`, and `studio/var/design_corpus/` itself |
+| Market / competitor demand evidence | `studio/docs/MARKET_INTELLIGENCE_LAYER.md` — external commercial signals may rank structural treatment only; source copy and subject matter never become creative direction |
 | A brief for supplied assets | `studio/docs/ASSET_SPECIFICATION.md` — and audit `assets/` before asking for anything |
 | What the brand is | `docs/foundations/POSITIONING.md`, `BRAND_VOICE.md` |
 | Product design rules | `docs/research/SHIRTFACED_PRODUCT_DESIGN_CONSTITUTION.md` |
@@ -83,6 +84,11 @@ Australiana was ruled out. It does not set a design direction. Reading its
 medians as an instruction to make type-led work is the same category error as
 reading "Australian" as an instruction to draw kangaroos.
 
+**Market evidence has the same boundary.** Marketplace demand can strengthen or weaken
+confidence in a layout, type treatment, integration pattern or other structural choice.
+It never supplies the joke, phrase, depicted subject or creative direction. Source copy
+is evidence to retain, not prompt material. See `studio/docs/MARKET_INTELLIGENCE_LAYER.md`.
+
 **Look at it before saying it works.** Rendering has caught what the numbers
 called fine five times: a ute's wheels, an EPS gradient burying six hundred
 shapes, an ink the same colour as the garment, a design laid out at 756 pixels
@@ -110,6 +116,11 @@ doing it.
   queue is Studio PostgreSQL (`design_concepts` → `approved_designs`, migration 0026).
   Import with `python -m app.cli import-design-concepts`; numbering is permanent and
   the importer never renumbers or deletes. See ADR-015 in `studio/docs/DECISIONS.md`.
+- **Market intelligence:** `studio/var/design_corpus_market/` is the local external-demand
+  evidence cache. Import exports with `scripts/import_market_intelligence.py`, reuse the
+  existing visual pass via `scripts/market_visual_queue.py`, then rank structural evidence
+  with `scripts/score_market_intelligence.py`. Governing contract:
+  `studio/docs/MARKET_INTELLIGENCE_LAYER.md`.
 - **The kill filter:** `docs/research/DESIGN_REVIEW_SCORECARD.md` — 12 hard-fails plus a
   weighted 100-point rubric. Nothing has been scored through it yet.
 - **Compositing:** `studio/app/services/compositing.py` — designs are printed onto blank
