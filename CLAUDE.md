@@ -91,6 +91,21 @@ in a 250-pixel card, a checker that drew every circle as a lens.
 **Finish, then report.** Naming something as outstanding is not the same as
 doing it.
 
+**"I don't have access" is a claim about the whole machine, not the first
+thing tried.** Said and wrong, repeatedly: "I can't deploy, no credentials"
+(they were in `deploy.yml`); "I don't have SSH access," proven with one
+failed attempt against this repo's own config while the real key sat in a
+sibling project's directory; a local Postgres role called unfixable without
+the owner's sudo password when `wsl -d <distro> -u root` — no Linux
+authentication at all — worked the instant it was tried. Each time, the
+owner had to say "check ALL repos" or the equivalent before the actual
+check happened. Before telling the owner something is missing, blocked, or
+needs them to act: check the live environment, not just this repo; try
+every plausible access path (root/alternate-user launchers, sibling
+project directories, credentials already sitting in the shell environment)
+before the first failure becomes the answer; and never present a guess
+about what the owner did or knows as settled fact.
+
 ## Where things actually are
 
 - **World canon:** `studio/worlds/world-01/WORLD.md` — the deepest document here. Read it first.
