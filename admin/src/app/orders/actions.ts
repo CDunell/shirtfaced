@@ -50,7 +50,9 @@ export async function createOrderAction(
 
   let id: string;
   try {
-    id = await queries.createOrder(result.data);
+    // Never has attribution — this is staff entering an order by hand, not
+    // a real storefront checkout with a tracked visitor behind it.
+    id = await queries.createOrder({ ...result.data, attribution: null });
   } catch {
     return { error: "That didn't save. Try again." };
   }

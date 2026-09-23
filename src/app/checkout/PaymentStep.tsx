@@ -14,6 +14,7 @@ import { money } from "@/lib/money";
 import { IconLock } from "@/components/Icons";
 import type { CartLineInput } from "@/lib/checkout-pricing";
 import { trackPurchase, markPurchaseTracked } from "@/lib/analytics";
+import type { Attribution } from "@/lib/attribution";
 
 const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 let stripePromise: Promise<StripeJs | null> | null = null;
@@ -27,6 +28,10 @@ export type CheckoutRequest = {
   contact: { email: string; name: string };
   address: { line1: string; suburb: string; state: string; postcode: string };
   discountCode: string | null;
+  /** Read from localStorage at submit time (see src/lib/attribution.ts) —
+   * null for a visitor with no tracked touch (direct traffic, or
+   * localStorage unavailable). */
+  attribution: Attribution | null;
 };
 
 /** Same "no card form here" honesty as before, now shown only when payments

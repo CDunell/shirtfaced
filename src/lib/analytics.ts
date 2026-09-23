@@ -11,6 +11,9 @@
  * into one conversion instead of counting the sale twice.
  */
 
+const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
+const GOOGLE_ADS_PURCHASE_LABEL = process.env.NEXT_PUBLIC_GOOGLE_ADS_PURCHASE_LABEL;
+
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
@@ -55,6 +58,19 @@ export function trackPurchase(purchase: Purchase) {
       quantity: item.quantity,
     })),
   });
+
+  // Google Ads' own Purchase conversion action — separate from the GA4
+  // 'purchase' event above, and only fires if both id and label are set
+  // (Ads needs its own conversion action configured, GA4 config alone
+  // doesn't cover this).
+  if (GOOGLE_ADS_ID && GOOGLE_ADS_PURCHASE_LABEL) {
+    window.gtag?.("event", "conversion", {
+      send_to: `${GOOGLE_ADS_ID}/${GOOGLE_ADS_PURCHASE_LABEL}`,
+      value: purchase.value,
+      currency: purchase.currency,
+      transaction_id: purchase.transactionId,
+    });
+  }
 
   window.fbq?.(
     "track",

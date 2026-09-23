@@ -9,6 +9,7 @@ import { SHIPPING_METHODS } from "@/lib/checkout-pricing";
 import { ProductMedia } from "@/components/ProductMedia";
 import { TeeArt } from "@/components/TeeArt";
 import { PaymentStep, type CheckoutRequest } from "./PaymentStep";
+import { getAttribution } from "@/lib/attribution";
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -471,6 +472,7 @@ export default function CheckoutPage() {
                 postcode: form.postcode,
               },
               discountCode: discount?.code ?? null,
+              attribution: getAttribution(),
             } satisfies CheckoutRequest}
             total={total}
           />

@@ -1,4 +1,4 @@
-import { and, eq, isNull, lt, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, isNull, lt, sql } from "drizzle-orm";
 import { db } from "./client";
 import {
   colourStock,
@@ -18,6 +18,7 @@ import {
   sendOrderConfirmationEmail,
   sendShippingConfirmationEmail,
 } from "../lib/email";
+import { channelFromAttribution, type Attribution } from "../lib/attribution";
 
 /* ---------------------------------------------------------------------------
    Customers
@@ -197,6 +198,81 @@ export function getOrder(id: string) {
   });
 }
 
+/* ------------------------------------------------------------------------
+   Real revenue by channel — the analytics dashboard's cross-check against
+   what each ad platform's own API claims (see lib/analytics-reporting.ts):
+   this is what customers actually paid, grouped by the first-touch channel
+   captured at checkout (src/lib/attribution.ts in the root app), not what
+   an ad platform's own attribution model credits itself with.
+
+   Aggregated in JS rather than SQL jsonb path queries — order volume here
+   is small enough that pulling the (already small) date-filtered row set
+   and reducing it in one place keeps this using the exact same
+   channelFromAttribution logic as the order detail page, instead of a
+   second, SQL-shaped reimplementation of the same rule that could drift
+   from it.
+   ------------------------------------------------------------------------ */
+
+export const UNATTRIBUTED_CHANNEL = "Direct / unattributed";
+
+// Only real, paid sales count as revenue — same statuses the storefront's
+// own churn/revenue logic elsewhere in this app treats as "actually sold".
+const REVENUE_ORDER_STATUSES: OrderStatus[] = ["paid", "fulfilled"];
+
+export type ChannelRevenue = { channel: string; revenueCents: number; orders: number };
+export type ChannelRevenueDaily = { date: string; channel: string; revenueCents: number };
+
+export async function getChannelRevenue(
+  days: number,
+): Promise<{ totals: ChannelRevenue[]; daily: ChannelRevenueDaily[] }> {
+  const since = new Date(Date.now() - days * 86_400_000);
+  const rows = await db
+    .select({
+      createdAt: orders.createdAt,
+      totalCents: orders.totalCents,
+      attribution: orders.attribution,
+    })
+    .from(orders)
+    .where(and(gte(orders.createdAt, since), inArray(orders.status, REVENUE_ORDER_STATUSES)));
+
+  const totalsByChannel = new Map<string, ChannelRevenue>();
+  const dailyByKey = new Map<string, ChannelRevenueDaily>();
+
+  for (const row of rows) {
+    const channel = channelFromAttribution(row.attribution) ?? UNATTRIBUTED_CHANNEL;
+    const date = row.createdAt.toISOString().slice(0, 10);
+
+    const total = totalsByChannel.get(channel) ?? { channel, revenueCents: 0, orders: 0 };
+    total.revenueCents += row.totalCents;
+    total.orders += 1;
+    totalsByChannel.set(channel, total);
+
+    const key = `${date}|${channel}`;
+    const point = dailyByKey.get(key) ?? { date, channel, revenueCents: 0 };
+    point.revenueCents += row.totalCents;
+    dailyByKey.set(key, point);
+  }
+
+  return {
+    totals: [...totalsByChannel.values()].sort((a, b) => b.revenueCents - a.revenueCents),
+    daily: [...dailyByKey.values()],
+  };
+}
+
+/** Real orders for one exact channel string in range — the drill-down
+ * page's order list. Same channel derivation as getChannelRevenue, so a
+ * channel picked from that summary always finds the orders that made it up. */
+export async function getOrdersByChannel(channel: string, days: number) {
+  const since = new Date(Date.now() - days * 86_400_000);
+  const rows = await db.query.orders.findMany({
+    where: and(gte(orders.createdAt, since), inArray(orders.status, REVENUE_ORDER_STATUSES)),
+    with: { customer: true },
+    orderBy: (o, { desc: d }) => d(o.createdAt),
+  });
+
+  return rows.filter((row) => (channelFromAttribution(row.attribution) ?? UNATTRIBUTED_CHANNEL) === channel);
+}
+
 /** SF-1000 -> 1, the inverse of orderReference below. Null for anything that
  * doesn't parse — callers treat that the same as "not found" rather than a
  * 500, since it's just as likely to be a customer mistyping as an attack. */
@@ -242,6 +318,7 @@ export interface OrderInput {
   shippingCents: number;
   shippingAddress: string | null;
   notes: string | null;
+  attribution: Attribution | null;
   items: OrderItemInput[];
 }
 
@@ -277,6 +354,7 @@ export async function createOrder(data: OrderInput) {
         discountId: data.discountId,
         shippingAddress: data.shippingAddress,
         notes: data.notes,
+        attribution: data.attribution,
       })
       .returning({ id: orders.id });
 

@@ -1,22 +1,29 @@
 import Script from "next/script";
 
 const GA4_ID = process.env.NEXT_PUBLIC_GA4_MEASUREMENT_ID;
+const GOOGLE_ADS_ID = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID;
 const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 const TIKTOK_PIXEL_ID = process.env.NEXT_PUBLIC_TIKTOK_PIXEL_ID;
 
+// gtag.js is one script shared by GA4 and Google Ads — it doesn't matter
+// which id it's loaded with, only that it loads before either gtag('config', ...)
+// call below runs. Either id alone is enough to load it.
+const GTAG_LOADER_ID = GA4_ID || GOOGLE_ADS_ID;
+
 /**
- * GA4 + Meta Pixel + TikTok Pixel, each gated on its own env var — same
- * "unset means quietly absent" convention as Stripe in PaymentStep.tsx.
- * Purchase-time conversion events fire from src/lib/analytics.ts; this
- * component only gets the base pageview/session scripts on the page.
+ * GA4 + Google Ads + Meta Pixel + TikTok Pixel, each gated on its own env
+ * var — same "unset means quietly absent" convention as Stripe in
+ * PaymentStep.tsx. Purchase-time conversion events fire from
+ * src/lib/analytics.ts; this component only gets the base pageview/session
+ * scripts on the page.
  */
 export function Analytics() {
   return (
     <>
-      {GA4_ID && (
+      {GTAG_LOADER_ID && (
         <>
           <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${GA4_ID}`}
+            src={`https://www.googletagmanager.com/gtag/js?id=${GTAG_LOADER_ID}`}
             strategy="afterInteractive"
           />
           <Script id="ga4-init" strategy="afterInteractive">
@@ -24,7 +31,8 @@ export function Analytics() {
               function gtag(){dataLayer.push(arguments);}
               window.gtag = gtag;
               gtag('js', new Date());
-              gtag('config', '${GA4_ID}');`}
+              ${GA4_ID ? `gtag('config', '${GA4_ID}');` : ""}
+              ${GOOGLE_ADS_ID ? `gtag('config', '${GOOGLE_ADS_ID}');` : ""}`}
           </Script>
         </>
       )}

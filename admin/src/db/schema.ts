@@ -6,8 +6,10 @@ import {
   boolean,
   timestamp,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import type { Attribution } from "@/lib/attribution";
 
 export const CATEGORIES = [
   "tees",
@@ -377,6 +379,11 @@ export const orders = pgTable("orders", {
      order that goes on to pay never needs it and the notify script only
      ever selects status = "pending" rows anyway. */
   abandonedEmailSentAt: timestamp("abandoned_email_sent_at", { withTimezone: true }),
+  /* First-party UTM/click-id capture from the storefront (see
+     src/lib/attribution.ts there), sent at checkout and stored verbatim.
+     Null for an order with no tracked touch (direct traffic, localStorage
+     unavailable, or an order entered by hand from /orders/new). */
+  attribution: jsonb("attribution").$type<Attribution>(),
   /* Staff-facing only, never shown to the customer. */
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true })

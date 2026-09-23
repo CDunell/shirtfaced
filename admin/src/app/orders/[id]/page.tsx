@@ -5,6 +5,7 @@ import { OrderStatusControl } from "@/components/OrderStatusControl";
 import { TrackingControl } from "@/components/TrackingControl";
 import { Card } from "@/components/ui";
 import { formatCents } from "@/lib/money";
+import { channelFromAttribution } from "@/lib/attribution";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,8 @@ export default async function OrderDetailPage({
   const { id } = await params;
   const order = await getOrder(id);
   if (!order) notFound();
+
+  const channel = channelFromAttribution(order.attribution);
 
   return (
     <div className="flex flex-col gap-6">
@@ -43,6 +46,14 @@ export default async function OrderDetailPage({
             {order.shippingAddress ?? "—"}
           </p>
         </div>
+        {channel && (
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-wide text-ink/50">
+              Source
+            </p>
+            <p className="text-ink/80">{channel}</p>
+          </div>
+        )}
         {order.discount && (
           <div>
             <p className="text-[11px] font-bold uppercase tracking-wide text-ink/50">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { priceCart, CheckoutPricingError, type CartLineInput } from "@/lib/checkout-pricing";
 import { extractRequestMatchData } from "@/lib/server-analytics";
+import type { Attribution } from "@/lib/attribution";
 
 /**
  * Called from the checkout page once the customer reaches the review step.
@@ -18,6 +19,7 @@ type RequestBody = {
   contact: { email: string; name: string };
   address: { line1: string; suburb: string; state: string; postcode: string };
   discountCode: string | null;
+  attribution: Attribution | null;
 };
 
 function isRequestBody(value: unknown): value is RequestBody {
@@ -34,7 +36,8 @@ function isRequestBody(value: unknown): value is RequestBody {
     typeof (v.address as Record<string, unknown>).suburb === "string" &&
     typeof (v.address as Record<string, unknown>).state === "string" &&
     typeof (v.address as Record<string, unknown>).postcode === "string" &&
-    (v.discountCode === null || typeof v.discountCode === "string")
+    (v.discountCode === null || typeof v.discountCode === "string") &&
+    (v.attribution === null || v.attribution === undefined || typeof v.attribution === "object")
   );
 }
 
@@ -81,6 +84,7 @@ export async function POST(request: Request) {
       shippingCents: priced.shippingCents,
       shippingAddress,
       discountCode: json.discountCode,
+      attribution: json.attribution ?? null,
       items: priced.lines.map((line) => ({
         slug: line.slug,
         productName: line.name,

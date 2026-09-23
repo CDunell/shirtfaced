@@ -7,6 +7,7 @@ import {
   redeemDiscountByCode,
   upsertCustomerByEmail,
 } from "@/db/store-queries";
+import type { Attribution } from "@/lib/attribution";
 
 /**
  * Called by the storefront's checkout — see
@@ -40,6 +41,10 @@ const bodySchema = z.object({
   shippingCents: z.number().int().nonnegative(),
   shippingAddress: z.string().min(1),
   discountCode: z.string().min(1).nullable(),
+  // Not validated deeper than "an object or null" — this is opaque UTM/
+  // click-id data the storefront captured, not something this route makes
+  // decisions on, so there's nothing here worth a stricter schema over.
+  attribution: z.record(z.string(), z.unknown()).nullable().optional(),
   items: z.array(itemSchema).min(1),
 });
 
@@ -99,6 +104,7 @@ export async function POST(request: Request) {
     shippingCents: body.shippingCents,
     shippingAddress: body.shippingAddress,
     notes: "Created from storefront checkout.",
+    attribution: (body.attribution as Attribution | null | undefined) ?? null,
     items,
   });
 

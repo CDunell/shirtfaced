@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Anton, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import { Analytics } from "@/components/Analytics";
+import { AttributionCapture } from "@/components/AttributionCapture";
 import { Header } from "@/components/Header";
 import { PaperGrain } from "@/components/Texture";
 import { LINE_THREE, TAGLINES } from "@/lib/taglines";
@@ -69,6 +71,9 @@ export default function RootLayout({
       </head>
       <body className="min-h-full bg-paper text-ink">
         <Analytics />
+        <Suspense fallback={null}>
+          <AttributionCapture />
+        </Suspense>
         <PaperGrain />
         <CartProvider>
           <a
