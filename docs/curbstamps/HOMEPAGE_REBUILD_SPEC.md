@@ -21,7 +21,15 @@ direction.
 
 ---
 
-## 1. Blocking prerequisite — get the boards into the repo
+## 1. Approved references in the repo
+
+**Resolved 2026-08-24.** The two references that now govern the build are:
+
+- `assets/curbstamps/boards/board-02-structure.webp` — structure and illustrated curb world.
+- `assets/curbstamps/boards/approved-homepage-direction.webp` — owner-approved full treatment.
+
+The latter is the explicit owner decision and supersedes the earlier four-board
+ambiguity described below.
 
 The approved direction lives in **four design board images** that currently
 exist **only as chat attachments**. They are not in the repository, not in
@@ -45,7 +53,7 @@ colour value in §4 is an eyeball estimate and must be treated as unverified.
 
 ## 2. Direction — and the conflict you must resolve
 
-**Owner decision, 2026-08-24: board 2's design with board 4's colours.**
+**Owner decision, 2026-08-24: board 2's design with board 4's full treatment.**
 Boards 2 and 4 are the owner's favourites. Board 1 is superseded.
 
 **This directly contradicts the document that currently governs the site.**
@@ -59,14 +67,11 @@ the next person to open the repo will revert you. **Update
 sign-off to supersede it.** Direction is the owner's; the documentation just
 has to catch up.
 
-One distinction worth putting to the owner before building, because it
-materially changes the work:
+The earlier distinction is resolved:
 
-> Board 4's *palette* (violet / acid green / tan on black+cream) is separable
-> from board 4's *treatment* (paint splats, sticker badges, distressed paper
-> texture, cut-out photography, a condensed streetwear display face instead of
-> the current rounded Baloo). "Colours of 4" plainly means the palette. Whether
-> the treatment comes with it is **unresolved and should be asked, not assumed.**
+> Use the palette **and** the full treatment: paint splats, sticker badges,
+> distressed paper texture, cut-out photography and a condensed streetwear
+> display face. Owner response: **"second all the way"**.
 
 ---
 
@@ -180,9 +185,8 @@ SLEEPING and LOVE FAST all render the same cyan.
 ### 4.2 Typography
 
 Current display face is Baloo (rounded, friendly) — correct for board 1.
-Board 4's display is condensed and streetwear-leaning; board 2's is closer to
-current. **This is an open decision — see §2.** If the face changes, it is a
-site-wide change, not a homepage one.
+Board 4's condensed streetwear-leaning display treatment is approved. This is
+a site-wide display-face change, while the friendly sans remains for body copy.
 
 Sizes, regardless of face:
 
@@ -249,11 +253,9 @@ of full-width colour whose only function is to advertise another page.
    scene is tappable. Either make the creatures real links to their products,
    or change the copy. Currently it is the second module a visitor hits.
 
-2. **The crew scene art is off-direction.** It renders as a dark, detailed,
-   photoreal grimy-alley image (`public/curbstamps/world/curb-world-*.webp`).
-   Board 1 specifies *"a children's book spread, not a detailed
-   environment"*; board 2's equivalent is light line-art on cream. Live is
-   neither. For a 2–10 brand it reads closest to the streetwear concepts.
+2. **Resolved 2026-08-24:** the photoreal crew scene was replaced by ten
+   seamless light cream-and-black illustrated panels at
+   `public/curbstamps/world/panels/01.webp` through `10.webp`.
 
 3. **`WeirdoMatch` tile colour collision** — see §4.1.
 
@@ -315,7 +317,9 @@ Measurable. Run these; do not eyeball them alone.
 - [ ] `CurbWorld` copy and behaviour agree — creatures are links, or the copy
       changes.
 - [ ] Six visually distinct tile colours in `WeirdoMatch`.
-- [ ] No horizontal scroll at 320, 390, 768, 1024, 1440, 1920.
+- [ ] No unintended document-level horizontal overflow at 320, 390, 768,
+      1024, 1440, 1920. `CurbWorld` and the mobile creature picker intentionally
+      scroll inside their own bounded containers.
 - [ ] Tap targets ≥ 44px throughout.
 - [ ] Reduced-motion respected.
 - [ ] WCAG AA on body copy and controls — check violet and acid green against

@@ -6,11 +6,22 @@ import { CREATURES, creatureMaster } from "@/lib/creatures";
 
 export function NewsletterJoin() {
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSent(true);
+    if (status === "sending") return;
+    setStatus("sending");
+    try {
+      const response = await fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setStatus(response.ok ? "sent" : "error");
+    } catch {
+      setStatus("error");
+    }
   }
 
   return (
@@ -37,9 +48,12 @@ export function NewsletterJoin() {
             onChange={(e) => setEmail(e.target.value)}
             className="h-12 min-w-0 flex-1 bg-transparent px-4 text-[13px] text-ink outline-none placeholder:text-ink/45"
           />
-          <button type="submit" className="press bg-grit-green px-4 text-[10px] font-black uppercase text-ink sm:text-[12px]">Let&apos;s go!</button>
+          <button type="submit" disabled={status === "sending"} className="press bg-grit-green px-4 text-[10px] font-black uppercase text-ink disabled:opacity-60 sm:text-[12px]">
+            {status === "sending" ? "One sec..." : "Let's go!"}
+          </button>
         </form>
-        {sent && <p className="mt-2 text-[10px] font-bold text-paper/55">You&apos;re on the list.</p>}
+        {status === "sent" && <p className="mt-2 text-[10px] font-bold text-paper/55">You&apos;re on the list.</p>}
+        {status === "error" && <p className="mt-2 text-[10px] font-bold text-paper/55">That didn&apos;t save — give it another go.</p>}
 
         <div className="my-6 flex items-center justify-between border-y border-paper/12 py-4">
           <p className="text-[10px] font-black uppercase tracking-[0.08em]">Follow along</p>

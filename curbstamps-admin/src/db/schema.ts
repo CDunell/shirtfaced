@@ -86,6 +86,17 @@ export const orderItems = pgTable("order_items", {
   unitPriceCents: integer("unit_price_cents").notNull(),
 });
 
+/* Homepage "Join the curb!" signups, reached only through
+   app/api/internal/newsletter — the same one-door pattern as orders. No
+   unsubscribe or consent-state machinery yet: nothing sends email today, so
+   the honest schema is just who asked, from where, when. */
+export const newsletterSubscribers = pgTable("newsletter_subscribers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull().unique(),
+  source: text("source").notNull().default("storefront"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const customersRelations = relations(customers, ({ many }) => ({
   orders: many(orders),
 }));

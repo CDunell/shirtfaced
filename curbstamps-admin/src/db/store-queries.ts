@@ -1,6 +1,6 @@
 import { eq, desc, and } from "drizzle-orm";
 import { db } from "./client";
-import { customers, orders, orderItems, products, type OrderStatus } from "./schema";
+import { customers, newsletterSubscribers, orders, orderItems, products, type OrderStatus } from "./schema";
 import { getPodProvider, PodError } from "../lib/pod";
 
 export async function findProductIdBySlug(slug: string): Promise<string | null> {
@@ -16,6 +16,14 @@ export async function upsertCustomerByEmail(email: string, name: string): Promis
     .onConflictDoUpdate({ target: customers.email, set: { name } })
     .returning({ id: customers.id });
   return id;
+}
+
+/** Idempotent: signing up twice is a no-op, not an error. */
+export async function addNewsletterSubscriber(email: string, source: string): Promise<void> {
+  await db
+    .insert(newsletterSubscribers)
+    .values({ email: email.trim().toLowerCase(), source })
+    .onConflictDoNothing({ target: newsletterSubscribers.email });
 }
 
 /* ---------------------------------------------------------------------------

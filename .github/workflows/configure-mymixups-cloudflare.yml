@@ -1,0 +1,116 @@
+name: Configure My Mixups Cloudflare DNS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/configure-mymixups-cloudflare.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+    env:
+      CF_TOKEN_A: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CF_TOKEN_B: ${{ secrets.CF_API_TOKEN }}
+      ORACLE_HOST_VALUE: ${{ secrets.ORACLE_HOST }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure My Mixups DNS and Cloudflare SSL
+        id: configure
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          OUT=.github/mymixups-cloudflare-status.txt
+          : > "$OUT"
+          echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
+          TOKEN="${CF_TOKEN_A:-${CF_TOKEN_B:-}}"
+          echo -n 'cloudflare_token_present=' >> "$OUT"
+          [ -n "$TOKEN" ] && echo yes >> "$OUT" || echo no >> "$OUT"
+          if [ -z "$TOKEN" ]; then
+            echo 'configure_exit=42' >> "$OUT"
+            exit 42
+          fi
+
+          ORIGIN_IP=$(python3 - <<'PY'
+          import os,socket
+          print(socket.gethostbyname(os.environ['ORACLE_HOST_VALUE']))
+          PY
+          )
+          api='https://api.cloudflare.com/client/v4'
+          auth=(-H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json')
+
+          zones=$(curl -sS "${auth[@]}" "$api/zones?name=mymixups.com&status=active")
+          zone_id=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("success") and d.get("result") else "")' <<<"$zones")
+          echo -n 'zone_access=' >> "$OUT"
+          [ -n "$zone_id" ] && echo yes >> "$OUT" || echo no >> "$OUT"
+          if [ -z "$zone_id" ]; then
+            echo 'configure_exit=43' >> "$OUT"
+            exit 43
+          fi
+
+          upsert() {
+            local name="$1" type="$2" content="$3" proxied="$4"
+            local existing rid payload
+            existing=$(curl -fsS "${auth[@]}" "$api/zones/$zone_id/dns_records?type=$type&name=$name") || return 1
+            rid=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["result"][0]["id"] if d.get("result") else "")' <<<"$existing")
+            payload=$(python3 - "$type" "$name" "$content" "$proxied" <<'PY'
+          import json,sys
+          print(json.dumps({"type":sys.argv[1],"name":sys.argv[2],"content":sys.argv[3],"ttl":1,"proxied":sys.argv[4].lower()=="true"}))
+          PY
+            )
+            if [ -n "$rid" ]; then
+              curl -fsS -X PUT "${auth[@]}" --data "$payload" "$api/zones/$zone_id/dns_records/$rid" >/dev/null
+            else
+              curl -fsS -X POST "${auth[@]}" --data "$payload" "$api/zones/$zone_id/dns_records" >/dev/null
+            fi
+          }
+
+          upsert mymixups.com A "$ORIGIN_IP" true
+          echo "root_dns_exit=$?" >> "$OUT"
+          upsert www.mymixups.com CNAME mymixups.com true
+          echo "www_dns_exit=$?" >> "$OUT"
+          upsert admin.mymixups.com A "$ORIGIN_IP" true
+          echo "admin_dns_exit=$?" >> "$OUT"
+
+          # OCI currently blocks inbound 443, while port 80 is reachable and nginx proxies
+          # My Mixups on its isolated ports. Flexible keeps edge HTTPS while Cloudflare uses
+          # HTTP to this origin. Curb Stamps is a separate zone and is never modified here.
+          ssl_resp=$(curl -sS -X PATCH "${auth[@]}" --data '{"value":"flexible"}' "$api/zones/$zone_id/settings/ssl")
+          ssl_ok=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print("yes" if d.get("success") else "no")' <<<"$ssl_resp" 2>/dev/null || echo no)
+          echo "ssl_flexible_set=$ssl_ok" >> "$OUT"
+
+          https_resp=$(curl -sS -X PATCH "${auth[@]}" --data '{"value":"on"}' "$api/zones/$zone_id/settings/always_use_https")
+          https_ok=$(python3 -c 'import json,sys; d=json.load(sys.stdin); print("yes" if d.get("success") else "no")' <<<"$https_resp" 2>/dev/null || echo no)
+          echo "always_use_https_set=$https_ok" >> "$OUT"
+          echo 'curbstamps_zone_modified=false' >> "$OUT"
+
+          sleep 8
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/ || true)
+          www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/ || true)
+          admin=$(curl -LsS -o /dev/null -w '%{http_code}' https://admin.mymixups.com/login || true)
+          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/ || true)
+          echo "root_http=$root" >> "$OUT"
+          echo "www_http=$www" >> "$OUT"
+          echo "admin_http=$admin" >> "$OUT"
+          echo "curb_http=$curb" >> "$OUT"
+
+      - name: Publish result
+        if: always()
+        shell: bash
+        run: |
+          if [ ! -f .github/mymixups-cloudflare-status.txt ]; then
+            echo 'workflow_failed_before_status=true' > .github/mymixups-cloudflare-status.txt
+          fi
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .github/mymixups-cloudflare-status.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record My Mixups Cloudflare status"
+            git push
+          fi

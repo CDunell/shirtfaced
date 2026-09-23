@@ -1,0 +1,113 @@
+name: Wire My Mixups Printify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/wire-mymixups-printify.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wire:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Wire isolated My Mixups Printify shop and webhooks
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} 'bash -s' <<'REMOTE'
+          set -euo pipefail
+          SHOP_ID=28702904
+          ADMIN_ENV=/home/ubuntu/mymixups-admin/.env
+          SITE_ENV=/home/ubuntu/mymixups-site/.env
+          CURB_ADMIN_ENV=/home/ubuntu/curbstamps-admin/.env
+          CURB_SITE_ENV=/home/ubuntu/curbstamps-site/.env
+
+          token=$(sed -n 's/^PRINTIFY_API_TOKEN=//p' "$CURB_ADMIN_ENV" | head -1)
+          [ -n "$token" ] || token=$(sed -n 's/^PRINTIFY_API_TOKEN=//p' "$CURB_SITE_ENV" | head -1)
+          [ -n "$token" ] || { echo PRINTIFY_TOKEN_MISSING; exit 1; }
+
+          # Guard against accidentally pointing My Mixups at the Curb shop.
+          curb_shop=$(sed -n 's/^PRINTIFY_SHOP_ID=//p' "$CURB_ADMIN_ENV" | head -1)
+          [ "$SHOP_ID" != "$curb_shop" ] || { echo SHOP_ID_COLLISION_WITH_CURB; exit 1; }
+
+          upsert_env() {
+            file="$1" key="$2" value="$3"
+            if grep -q "^${key}=" "$file"; then
+              sed -i "s#^${key}=.*#${key}=${value}#" "$file"
+            else
+              printf '\n%s=%s\n' "$key" "$value" >> "$file"
+            fi
+          }
+
+          upsert_env "$ADMIN_ENV" PRINTIFY_API_TOKEN "$token"
+          upsert_env "$ADMIN_ENV" PRINTIFY_SHOP_ID "$SHOP_ID"
+          upsert_env "$ADMIN_ENV" POD_PROVIDER printify
+          upsert_env "$SITE_ENV" PRINTIFY_API_TOKEN "$token"
+          upsert_env "$SITE_ENV" PRINTIFY_SHOP_ID "$SHOP_ID"
+
+          secret=$(sed -n 's/^POD_WEBHOOK_SECRET=//p' "$ADMIN_ENV" | head -1)
+          [ -n "$secret" ] || { secret=$(openssl rand -hex 32); upsert_env "$ADMIN_ENV" POD_WEBHOOK_SECRET "$secret"; }
+
+          # Verify the shop is the intended MyMixups custom integration.
+          shop_json=$(curl -fsS -H "Authorization: Bearer $token" https://api.printify.com/v1/shops.json)
+          SHOP_JSON="$shop_json" SHOP_ID="$SHOP_ID" python3 - <<'PY'
+          import json,os,sys
+          shops=json.loads(os.environ['SHOP_JSON'])
+          sid=int(os.environ['SHOP_ID'])
+          m=[s for s in shops if s.get('id')==sid]
+          if not m: raise SystemExit('MYMIXUPS_PRINTIFY_SHOP_NOT_FOUND')
+          s=m[0]
+          print(f"PRINTIFY_TARGET title={s.get('title')} channel={s.get('sales_channel')}")
+          if s.get('title')!='MyMixups': raise SystemExit('UNEXPECTED_PRINTIFY_SHOP_TITLE')
+          PY
+
+          # Register only My Mixups webhooks. Do not touch the Curb shop.
+          endpoint='https://admin.mymixups.com/api/pod/webhook'
+          hooks=$(curl -fsS -H "Authorization: Bearer $token" "https://api.printify.com/v1/shops/$SHOP_ID/webhooks.json")
+          for topic in order:updated order:sent-to-production order:shipment:created order:shipment:delivered; do
+            exists=$(HOOKS="$hooks" TOPIC="$topic" URL="$endpoint" python3 - <<'PY'
+          import json,os
+          h=json.loads(os.environ['HOOKS'])
+          print('yes' if any(x.get('topic')==os.environ['TOPIC'] and x.get('url')==os.environ['URL'] for x in h) else 'no')
+          PY
+            )
+            if [ "$exists" = yes ]; then
+              echo "WEBHOOK_EXISTS=$topic"
+            else
+              payload=$(TOPIC="$topic" URL="$endpoint" SECRET="$secret" python3 - <<'PY'
+          import json,os
+          print(json.dumps({'topic':os.environ['TOPIC'],'url':os.environ['URL'],'secret':os.environ['SECRET']}))
+          PY
+              )
+              curl -fsS -X POST -H "Authorization: Bearer $token" -H 'Content-Type: application/json' --data "$payload" "https://api.printify.com/v1/shops/$SHOP_ID/webhooks.json" >/dev/null
+              echo "WEBHOOK_CREATED=$topic"
+            fi
+          done
+
+          sudo systemctl restart mymixups-admin mymixups-site
+          sleep 2
+          systemctl is-active --quiet mymixups-admin
+          systemctl is-active --quiet mymixups-site
+          curl -fsS http://127.0.0.1:4310/login >/dev/null
+          curl -fsS http://127.0.0.1:4110/ >/dev/null
+
+          # Curb regression and isolation checks.
+          systemctl is-active --quiet curbstamps-admin
+          systemctl is-active --quiet curbstamps-site
+          curl -fsS http://127.0.0.1:4300/login >/dev/null
+          curl -fsS http://127.0.0.1:4100/ >/dev/null
+          current_curb_shop=$(sed -n 's/^PRINTIFY_SHOP_ID=//p' "$CURB_ADMIN_ENV" | head -1)
+          [ "$current_curb_shop" = "$curb_shop" ]
+
+          echo MYMIXUPS_PRINTIFY_OK=true
+          echo CURBSTAMPS_PRINTIFY_UNCHANGED=true
+          REMOTE

@@ -1,0 +1,162 @@
+name: Fix My Mixups Public TLS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/fix-mymixups-public-tls.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Repair and diagnose My Mixups origin
+        shell: bash
+        run: |
+          set +e
+          mkdir -p ~/.ssh
+          OUT=.github/mymixups-public-tls-status.txt
+          : > "$OUT"
+          echo "checked_at=$(date -u +%FT%TZ)" >> "$OUT"
+          echo "oracle_host_set=$([ -n '${{ secrets.ORACLE_HOST }}' ] && echo yes || echo no)" >> "$OUT"
+          echo "deploy_key_set=$([ -n '${{ secrets.ORACLE_DEPLOY_KEY }}' ] && echo yes || echo no)" >> "$OUT"
+          printf '%s\n' '${{ secrets.ORACLE_DEPLOY_KEY }}' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -T 10 -H '${{ secrets.ORACLE_HOST }}' >> ~/.ssh/known_hosts 2>> "$OUT"
+          echo "ssh_keyscan_exit=$?" >> "$OUT"
+
+          ssh -o BatchMode=yes -o ConnectTimeout=15 -i ~/.ssh/deploy_key ubuntu@'${{ secrets.ORACLE_HOST }}' 'bash -s' >> "$OUT" 2>&1 <<'REMOTE'
+          set +e
+          echo '=== ORACLE CONNECTED ==='
+          hostname
+          echo
+          echo '=== SERVICES BEFORE ==='
+          echo -n 'mymixups-site='; systemctl is-active mymixups-site 2>&1
+          echo -n 'curbstamps-site='; systemctl is-active curbstamps-site 2>&1
+          echo -n '4110='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4110/ 2>&1
+          echo -n '4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/ 2>&1
+
+          echo
+          echo '=== HOST FIREWALL BEFORE ==='
+          sudo ufw status verbose 2>&1 || true
+          sudo iptables -S INPUT 2>&1 | sed -n '1,80p' || true
+          if command -v ufw >/dev/null 2>&1; then
+            sudo ufw allow 443/tcp 2>&1 || true
+          fi
+
+          echo
+          echo '=== WRITE MYMIXUPS HTTP VHOST ==='
+          sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto $scheme;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection "upgrade";
+              }
+          }
+          NGINX
+          sudo ln -sfn /etc/nginx/sites-available/mymixups /etc/nginx/sites-enabled/mymixups
+          sudo nginx -t 2>&1
+          sudo systemctl reload nginx 2>&1
+          echo -n 'host_http='; curl -sS -o /dev/null -w '%{http_code}\n' -H 'Host: mymixups.com' http://127.0.0.1/ 2>&1
+
+          echo
+          echo '=== CERTBOT ATTEMPT ==='
+          if ! command -v certbot >/dev/null 2>&1 || ! sudo certbot plugins 2>/dev/null | grep -q 'nginx'; then
+            sudo apt-get update 2>&1
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx 2>&1
+          fi
+          sudo certbot --nginx -d mymixups.com -d www.mymixups.com --non-interactive --agree-tos --register-unsafely-without-email --redirect 2>&1
+          CERTBOT_EXIT=$?
+          echo "certbot_exit=$CERTBOT_EXIT"
+
+          if [ "$CERTBOT_EXIT" -ne 0 ]; then
+            echo
+            echo '=== FALLBACK SELF-SIGNED ORIGIN TLS ==='
+            TLS_DIR=/etc/nginx/tls/mymixups-selfsigned
+            sudo mkdir -p "$TLS_DIR"
+            sudo openssl req -x509 -nodes -newkey rsa:2048 -days 3650 \
+              -keyout "$TLS_DIR/origin.key" \
+              -out "$TLS_DIR/origin.crt" \
+              -subj '/CN=mymixups.com' \
+              -addext 'subjectAltName=DNS:mymixups.com,DNS:www.mymixups.com' 2>&1
+            sudo chmod 600 "$TLS_DIR/origin.key"
+            sudo tee /etc/nginx/sites-available/mymixups >/dev/null <<'NGINX'
+          server {
+              listen 80;
+              listen [::]:80;
+              server_name mymixups.com www.mymixups.com;
+              return 301 https://$host$request_uri;
+          }
+          server {
+              listen 443 ssl;
+              listen [::]:443 ssl;
+              server_name mymixups.com www.mymixups.com;
+              ssl_certificate /etc/nginx/tls/mymixups-selfsigned/origin.crt;
+              ssl_certificate_key /etc/nginx/tls/mymixups-selfsigned/origin.key;
+              ssl_protocols TLSv1.2 TLSv1.3;
+              location / {
+                  proxy_pass http://127.0.0.1:4110;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto https;
+                  proxy_set_header Upgrade $http_upgrade;
+                  proxy_set_header Connection "upgrade";
+              }
+          }
+          NGINX
+          fi
+
+          echo
+          echo '=== TLS AFTER ==='
+          sudo nginx -t 2>&1
+          sudo systemctl reload nginx 2>&1
+          sudo ss -ltnp 2>&1 | grep -E ':(443|4110|4100)\b' || true
+          echo -n 'local_origin_https='; curl -k -sS -o /dev/null -w '%{http_code}\n' --resolve mymixups.com:443:127.0.0.1 https://mymixups.com/ 2>&1
+          echo
+          echo '=== CURB REGRESSION ==='
+          echo -n 'curbstamps-site='; systemctl is-active curbstamps-site 2>&1
+          echo -n 'curb_4100='; curl -sS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:4100/ 2>&1
+          REMOTE
+          echo "ssh_exit=$?" >> "$OUT"
+
+          echo '=== RUNNER DIRECT ORIGIN TEST ===' >> "$OUT"
+          timeout 12 bash -c "</dev/tcp/${{ secrets.ORACLE_HOST }}/443" 2>> "$OUT"
+          echo "origin_443_tcp_exit=$?" >> "$OUT"
+          curl -k -sS --connect-timeout 12 --resolve mymixups.com:443:${{ secrets.ORACLE_HOST }} -o /dev/null -w 'origin_direct_https=%{http_code}\n' https://mymixups.com/ >> "$OUT" 2>&1
+          echo "origin_direct_curl_exit=$?" >> "$OUT"
+
+          sleep 5
+          root=$(curl -LsS -o /dev/null -w '%{http_code}' https://mymixups.com/)
+          echo "root_http=$root" >> "$OUT"
+          www=$(curl -LsS -o /dev/null -w '%{http_code}' https://www.mymixups.com/)
+          echo "www_http=$www" >> "$OUT"
+          curb=$(curl -LsS -o /dev/null -w '%{http_code}' https://curbstamps.com/)
+          echo "curb_http=$curb" >> "$OUT"
+
+      - name: Publish result
+        if: always()
+        run: |
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add .github/mymixups-public-tls-status.txt
+          if ! git diff --cached --quiet; then
+            git commit -m "Record My Mixups TLS repair diagnostics"
+            git push
+          fi

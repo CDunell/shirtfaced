@@ -1,5 +1,27 @@
 # CURB STAMPS — Website Design Handoff
 
+## 2026-08-24 direction reset — current authority
+
+The eight-module bright picture-book direction below is superseded for the
+homepage presentation layer. The owner approved:
+
+**Board 2's structure with board 4's full treatment.** This means black and
+cream remain the base, with violet, acid green and tan used in controlled
+blocks; the condensed display face, painterly splats, sticker/ticket elements,
+distressed paper texture and cut-out editorial treatment are all included.
+
+Authoritative visual references:
+
+- `../assets/curbstamps/boards/board-02-structure.webp`
+- `../assets/curbstamps/boards/approved-homepage-direction.webp`
+
+Implementation and measurable acceptance criteria:
+`../docs/curbstamps/HOMEPAGE_REBUILD_SPEC.md`.
+
+The commerce, Printify, cart and checkout systems are not part of this visual
+reset. The historical direction below remains only as a record and must not be
+used to revert the approved homepage.
+
 Status: APPROVED VISUAL DIRECTION
 Branch: `claude/curb-stamps-kids-shop-sas8gu`
 App: `curbstamps-site/`

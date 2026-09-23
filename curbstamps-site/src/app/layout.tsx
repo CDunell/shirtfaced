@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2, Nunito } from "next/font/google";
+import { Barlow_Condensed, Baloo_2, Nunito } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/lib/cart-context";
 import { Header } from "@/components/Header";
@@ -15,6 +15,13 @@ const baloo = Baloo_2({
 const nunito = Nunito({
   variable: "--font-nunito",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const condensed = Barlow_Condensed({
+  variable: "--font-condensed",
+  subsets: ["latin"],
+  weight: ["700", "800", "900"],
   display: "swap",
 });
 
@@ -49,7 +56,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en-AU" className={`${baloo.variable} ${nunito.variable} h-full`}>
+    <html lang="en-AU" className={`${baloo.variable} ${nunito.variable} ${condensed.variable} h-full`}>
       <body className="min-h-full bg-paper text-ink">
         <CartProvider>
           <a

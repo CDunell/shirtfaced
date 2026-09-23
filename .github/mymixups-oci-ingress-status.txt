@@ -1,0 +1,46 @@
+checked_at=2026-08-25T10:20:17Z
+=== ORACLE NETWORK REPAIR ===
+local_443_listener=yes
+local_https=200
+
+=== OCI METADATA ===
+vnic_count=1
+has_vnic_id=true
+has_subnet_id=false
+
+=== OCI SDK ===
+  WARNING: The script crc32c is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+  WARNING: The script cffi-gen-src is installed in '/home/ubuntu/.local/bin' which is not on PATH.
+  Consider adding this directory to PATH or, if you prefer to suppress this warning, use --no-warn-script-location.
+instance_principal_unavailable=ServiceError
+oci_auth=none
+Traceback (most recent call last):
+  File "<stdin>", line 35, in <module>
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/oci/core/virtual_network_client.py", line 18277, in get_vnic
+    return self.base_client.call_api(
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/oci/base_client.py", line 840, in call_api
+    return self.request(request, allow_control_chars, operation_name, api_reference_link)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/circuitbreaker.py", line 146, in wrapper
+    return self.call(function, *args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/circuitbreaker.py", line 188, in call
+    return func(*args, **kwargs)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/oci/base_client.py", line 1230, in request
+    self.raise_service_error(request, response, service_code, message, operation_name, api_reference_link, target_service, request_endpoint, client_version, timestamp, deserialized_data)
+  File "/home/ubuntu/.local/lib/python3.10/site-packages/oci/base_client.py", line 1416, in raise_service_error
+    raise exceptions.ServiceError(
+oci.exceptions.ServiceError: {'target_service': 'virtual_network', 'status': 404, 'code': 'NotAuthorizedOrNotFound', 'opc-request-id': '56D8009B162A4E8490F6D974E5E39FE3/A8A32289A95F9D5E936C8D6A4B4958D1/743504808CCD3AE415153572A962E237', 'message': 'Authorization failed or requested resource not found.', 'operation_name': 'get_vnic', 'timestamp': '2026-08-25T10:21:07.886240+00:00', 'client_version': 'Oracle-PythonSDK/2.185.0', 'request_endpoint': 'GET https://iaas.ap-osaka-1.oraclecloud.com/20160918/vnics/ocid1.vnic.oc1.ap-osaka-1.abvwsljrl3e4eityn2j3y5ayhfjq7pfq4iaz67cggrihadniypny6gfdqvzq', 'logging_tips': 'To get more info on the failing request, refer to https://docs.oracle.com/en-us/iaas/tools/python/latest/logging.html for ways to log the request/response details.', 'troubleshooting_tips': "See https://docs.oracle.com/iaas/Content/API/References/apierrors.htm#apierrors_404__404_notauthorizedornotfound for more information about resolving this error. Also see https://docs.oracle.com/iaas/api/#/en/iaas/20160918/Vnic/GetVnic for details on this operation's requirements. If you are unable to resolve this virtual_network issue, please contact Oracle support and provide them this full error message."}
+oci_repair_exit=1
+
+=== CURB REGRESSION ===
+curbstamps-site=active
+curb_4100=200
+ssh_exit=0
+=== RUNNER EXTERNAL TEST ===
+origin_443_tcp_exit=124
+curl: (28) Failed to connect to mymixups.com port 443 after 12002 ms: Timeout was reached
+origin_direct_https=000
+origin_direct_curl_exit=28
+root_http=525
+www_http=525
+curb_http=200
