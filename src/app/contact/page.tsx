@@ -4,6 +4,7 @@ import { contact } from "@/lib/content-data.generated";
 export const metadata = {
   title: "Contact — shirtfaced",
   description: "Talk to a human. Usually within one business day.",
+  alternates: { canonical: "/contact" },
 };
 
 export default function ContactPage() {

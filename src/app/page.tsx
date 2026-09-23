@@ -5,6 +5,8 @@ import { home } from "@/lib/content-data.generated";
 import { LINE_THREE, LINE_THREE_SIZE, TAGLINES } from "@/lib/taglines";
 import { IconArrowRight } from "@/components/Icons";
 
+export const metadata = { alternates: { canonical: "/" } };
+
 /* One line, no icons — the old four-column version wrapped to uneven heights
    and repeated its icons. But clean shouldn't mean neutered: each claim still
    has to sound like us. Nothing here jokes about whether checkout is actually

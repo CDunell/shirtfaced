@@ -5,6 +5,7 @@ export const metadata = {
   title: "About — shirtfaced",
   description:
     "Graphic tees for people with questionable judgement and excellent taste. Designed in Australia.",
+  alternates: { canonical: "/about" },
 };
 
 export default function AboutPage() {

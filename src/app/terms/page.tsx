@@ -4,6 +4,7 @@ import { PageShell, Prose, Section } from "@/components/PageShell";
 export const metadata = {
   title: "Terms & conditions — shirtfaced",
   description: "The boring page. Read it once, then never think about it again.",
+  alternates: { canonical: "/terms" },
 };
 
 export default function TermsPage() {

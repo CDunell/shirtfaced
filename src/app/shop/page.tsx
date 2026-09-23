@@ -4,6 +4,7 @@ import { ShopGrid } from "./ShopGrid";
 export const metadata = {
   title: "Shop — shirtfaced",
   description: "Every tee. Good times. Bad decisions. Zero regrets.",
+  alternates: { canonical: "/shop" },
 };
 
 function GridSkeleton() {

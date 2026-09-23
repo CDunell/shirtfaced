@@ -28,6 +28,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://shirtfaced.wtf"),
   title: `shirtfaced — ${REFERENCE_LINE}`,
   description:
     "Graphic tees for people with questionable judgement and excellent taste. Designed in Australia. Printed properly.",

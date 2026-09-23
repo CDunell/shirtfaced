@@ -4,6 +4,7 @@ import { garmentCare } from "@/lib/content-data.generated";
 export const metadata = {
   title: "Garment care — shirtfaced",
   description: "How to wash it without wrecking it.",
+  alternates: { canonical: "/garment-care" },
 };
 
 export default function GarmentCarePage() {

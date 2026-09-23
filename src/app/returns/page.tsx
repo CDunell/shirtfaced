@@ -3,6 +3,7 @@ import { PageShell, Prose, Section } from "@/components/PageShell";
 export const metadata = {
   title: "Returns — shirtfaced",
   description: "Change of mind? Yeah nah. If we fucked it up, we'll fix it.",
+  alternates: { canonical: "/returns" },
 };
 
 export default function ReturnsPage() {

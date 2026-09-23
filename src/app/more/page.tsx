@@ -2,7 +2,7 @@ import Link from "next/link";
 import { IconArrowRight } from "@/components/Icons";
 import { more } from "@/lib/content-data.generated";
 
-export const metadata = { title: "More — shirtfaced" };
+export const metadata = { title: "More — shirtfaced", alternates: { canonical: "/more" } };
 
 const LINKS = [
   { href: "/about", label: "About", note: "Who's behind this" },

@@ -4,6 +4,7 @@ import { sizeGuide } from "@/lib/content-data.generated";
 export const metadata = {
   title: "Size guide — shirtfaced",
   description: "Measurements for every shirtfaced tee. Boxy fit, sized honestly.",
+  alternates: { canonical: "/size-guide" },
 };
 
 const SIZES = Object.entries(sizeGuide.chart);

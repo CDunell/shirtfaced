@@ -3,6 +3,7 @@ import { PageShell, Prose, Section } from "@/components/PageShell";
 export const metadata = {
   title: "Privacy — shirtfaced",
   description: "What we collect, why, and the short list of things we won't do with it.",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
