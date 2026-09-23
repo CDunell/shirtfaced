@@ -17,6 +17,7 @@
     "notify:abandoned-orders": "tsx src/db/notify-abandoned-orders.ts"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.75.2",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.44.6",
     "next": "16.2.12",
