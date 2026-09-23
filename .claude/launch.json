@@ -8,6 +8,12 @@
       "port": 3000
     },
     {
+      "name": "shirtfaced-admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "admin", "run", "dev", "--", "-p", "4200"],
+      "port": 4200
+    },
+    {
       "name": "shirtfaced-studio-web",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],

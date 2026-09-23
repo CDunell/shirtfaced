@@ -85,6 +85,27 @@ const products = await sql`
   ORDER BY created_at
 `;
 
+/**
+ * The reachable() guard above only catches a DB that can't be connected to
+ * at all. A DB that connects fine but is genuinely empty — a fresh local
+ * Postgres with no seeded rows, the ordinary case right after setting up a
+ * new dev database — sailed straight through it and overwrote the committed
+ * 17-product snapshot with an empty array. Same "loud fallback beats silent
+ * and wrong" reasoning as the unreachable case, but only in dev: production
+ * still writes whatever the real database says, empty or not, because there
+ * unlike here an empty result is real information, not a not-yet-seeded
+ * local DB.
+ */
+if (products.length === 0 && process.env.NODE_ENV !== "production" && !process.env.CI) {
+  console.log(
+    `${SCRIPT}: connected, but the shop database has no published products — ` +
+      "using the committed snapshot as-is rather than overwriting it with an " +
+      "empty catalogue. Seed real product rows first if you want a live sync.",
+  );
+  await sql.end({ timeout: 1 });
+  process.exit(0);
+}
+
 const colours = await sql`
   SELECT id, product_id, name, swatch, body, ink, images
   FROM product_colours

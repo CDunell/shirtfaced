@@ -91,6 +91,30 @@ const [faq] = await sql`SELECT * FROM faq_content WHERE id = 1`;
 const faqItemRows =
   await sql`SELECT * FROM faq_items ORDER BY sort_order ASC`;
 
+/**
+ * Same gap as sync-products.mjs, worse consequences here: these are all
+ * single-row `WHERE id = 1` lookups, so a reachable-but-empty database (a
+ * fresh local Postgres with no seeded content rows) doesn't overwrite the
+ * snapshot with something wrong — it destructures `undefined` and hard-
+ * crashes on the first `about.intro` access below, taking `npm run dev`
+ * down over a database that was never supposed to be authoritative on this
+ * machine. Same fix: fall back to the committed snapshot in dev, same as
+ * an unreachable database; production still gets whatever's really there.
+ */
+const requiredRows = [
+  about, shipping, returns, contact, sizeGuide,
+  home, more, productPage, account, garmentCare, faq,
+];
+if (requiredRows.some((row) => !row) && process.env.NODE_ENV !== "production" && !process.env.CI) {
+  console.log(
+    `${SCRIPT}: connected, but the shop database has no seeded content rows — ` +
+      "using the committed snapshot as-is rather than crashing on missing data. " +
+      "Seed real content rows first if you want a live sync.",
+  );
+  await sql.end({ timeout: 1 });
+  process.exit(0);
+}
+
 await sql.end();
 
 const content = {
