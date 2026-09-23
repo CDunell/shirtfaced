@@ -1,0 +1,32 @@
+# Keyword harvest seeds — tools/seo/harvest.py expands each of these via a
+# real SERP pull (People Also Ask, related searches, top-10 titles).
+#
+# Sourced from what's actually decided, not invented: catalogue vocabulary
+# (only "tees" — tanks/hoodies/hats/accessories are nav entries with no real
+# stock yet, per docs/pre-golive.md) and docs/foundations/POSITIONING.md's
+# owner-recorded register ("the quality Australian surf/skate streetwear
+# continuum of the mid-to-late 90s — the same world as Globe, Mooks,
+# Billabong, Quiksilver"). Those four brand names are the owner's own
+# comparison, not a competitor set I invented.
+
+catalogue:
+  - graphic tees australia
+  - australian graphic tees
+  - oversized graphic tee australia
+  - boxy fit t-shirt australia
+  - premium graphic tees australia
+
+positioning:
+  - australian streetwear brand
+  - high end streetwear australia
+  - australian surf streetwear
+  - funny t-shirts australia
+  - australian humour t-shirts
+  - streetwear like globe mooks billabong quiksilver
+  - AS Colour graphic tee
+
+intent:
+  - best australian streetwear brands
+  - australian made graphic tees
+  - streetwear tee brands australia
+  - independent streetwear label australia

@@ -17,7 +17,9 @@
     "@sentry/nextjs": "^10.75.2",
     "@stripe/react-stripe-js": "^6.8.2",
     "@stripe/stripe-js": "^9.14.0",
+    "gray-matter": "^4.0.3",
     "next": "16.2.12",
+    "next-mdx-remote": "^6.0.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "stripe": "^22.5.0"

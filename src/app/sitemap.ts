@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { products } from "@/lib/products";
+import { getApprovedPosts } from "@/lib/blog";
 
 const SITE_URL = "https://shirtfaced.wtf";
 
@@ -16,6 +17,7 @@ const STATIC_ROUTES = [
   "/shipping",
   "/size-guide",
   "/terms",
+  "/blog",
 ];
 
 /**
@@ -36,5 +38,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.8,
   }));
 
-  return [...staticEntries, ...productEntries];
+  const postEntries: MetadataRoute.Sitemap = getApprovedPosts().map((post) => ({
+    url: `${SITE_URL}/blog/${post.slug}`,
+    lastModified: post.date,
+    changeFrequency: "monthly",
+    priority: 0.6,
+  }));
+
+  return [...staticEntries, ...productEntries, ...postEntries];
 }

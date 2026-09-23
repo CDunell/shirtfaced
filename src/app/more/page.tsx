@@ -6,6 +6,7 @@ export const metadata = { title: "More — shirtfaced", alternates: { canonical:
 
 const LINKS = [
   { href: "/about", label: "About", note: "Who's behind this" },
+  { href: "/blog", label: "Blog", note: "Notes and bad decisions" },
   { href: "/faq", label: "FAQ", note: "The quick answers" },
   { href: "/size-guide", label: "Size guide", note: "Measurements, honestly" },
   { href: "/shipping", label: "Shipping", note: "Where and how fast" },
