@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -38,8 +39,13 @@ import sys
 from datetime import date
 from pathlib import Path
 
+# Live progress regardless of how this is invoked, same reasoning as
+# harvest.py.
+sys.stdout.reconfigure(line_buffering=True)
+
 ROOT = Path(__file__).resolve().parents[2]
 KEYWORDS_PATH = Path(__file__).parent / "data" / "keywords.json"
+JSONL_PATH = Path(__file__).parent / "data" / "performance.jsonl"
 OUT_PATH = Path(__file__).parent / "data" / "performance.json"
 
 BDATA_BIN = shutil.which("bdata")
@@ -68,26 +74,65 @@ def our_rank(query: str, domain: str = "shirtfaced.wtf") -> int | None:
     return None
 
 
+def _done_queries() -> set[str]:
+    """Resume support, same shape as harvest.py -- a killed or crashed run
+    should never mean starting over from zero real API calls."""
+    if not JSONL_PATH.exists():
+        return set()
+    done = set()
+    for line in JSONL_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            done.add(json.loads(line)["query"])
+        except (json.JSONDecodeError, KeyError):
+            continue
+    return done
+
+
 def run_ranks() -> None:
     if not KEYWORDS_PATH.exists():
         sys.exit(f"{KEYWORDS_PATH} doesn't exist -- run harvest.py first.")
     rows = json.loads(KEYWORDS_PATH.read_text(encoding="utf-8"))
 
-    results = []
+    done = _done_queries()
+    if done:
+        print(f"[performance] resuming -- {len(done)} queries already checked today, skipping those")
+
+    JSONL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    count = 0
     for row in rows:
         query = row["query"]
+        if query in done:
+            continue
         rank = our_rank(query)
         print(f"[performance] {query!r}: {'not in top 10' if rank is None else f'#{rank}'}")
-        results.append({
+        result = {
             "query": query,
             "checked": date.today().isoformat(),
             "rank": rank,
             "mapped_url": row.get("mapped_url"),
-        })
+        }
+        # Appended and flushed immediately, same durability guarantee as
+        # harvest.py -- see that file's docstring for why this isn't
+        # optional for a run this long.
+        with JSONL_PATH.open("a", encoding="utf-8") as f:
+            f.write(json.dumps(result, ensure_ascii=False) + "\n")
+            f.flush()
+            os.fsync(f.fileno())
+        count += 1
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(results, indent=2) + "\n", encoding="utf-8")
-    print(f"[performance] wrote {len(results)} rows to {OUT_PATH}")
+    all_results = []
+    for line in JSONL_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if line:
+            try:
+                all_results.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    OUT_PATH.write_text(json.dumps(all_results, indent=2) + "\n", encoding="utf-8")
+    print(f"[performance] {count} new checks this run, {len(all_results)} total rows in {OUT_PATH}")
 
 
 def run_console() -> None:

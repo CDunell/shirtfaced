@@ -49,3 +49,7 @@ next-env.d.ts
 
 # local Claude permissions
 /.claude/settings.local.json
+
+# python
+__pycache__/
+*.pyc

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Keyword harvest — seeds.yaml -> tools/seo/data/keywords.json.
+"""Keyword harvest — seeds.yaml -> tools/seo/data/keywords.jsonl.
 
 For each seed, pulls a real AU-localised SERP (via the `bdata` CLI, Bright
 Data's SERP API), harvests People Also Ask questions and related searches as
@@ -14,55 +14,71 @@ API doesn't provide search volume, and pretending otherwise would be the
 same fabrication problem as an invented size chart. Weakness is the
 observable proxy, same choice mymixups' own harvest made.
 
+CRASH SAFETY: every row is appended to keywords.jsonl and flushed to disk
+the moment it's scored -- not batched in memory and written once at the end.
+A run that's killed, times out, or loses its terminal partway through keeps
+every row it already paid for. Re-running the script skips queries already
+present in keywords.jsonl rather than re-harvesting them (delete the file,
+or a specific line, to force a re-harvest of something).
+
 Run: python tools/seo/harvest.py
 Needs: `bdata` CLI on PATH, already authenticated (see brightdata-plugin).
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
 import sys
-from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 
 import yaml
 
+# Unbuffered stdout regardless of how this is invoked (piped to a file,
+# backgrounded, etc.) -- progress should be visible live, not sitting in a
+# buffer until the process exits. That silence previously looked identical
+# to a hang from the outside.
+sys.stdout.reconfigure(line_buffering=True)
+
 ROOT = Path(__file__).resolve().parents[2]
 SEEDS_PATH = Path(__file__).parent / "seeds.yaml"
-OUT_PATH = Path(__file__).parent / "data" / "keywords.json"
+JSONL_PATH = Path(__file__).parent / "data" / "keywords.jsonl"
+JSON_PATH = Path(__file__).parent / "data" / "keywords.json"
 
-# subprocess.run's default resolver can't find a Windows npm global's .cmd
-# shim from a plain ["bdata", ...] argv the way a real shell would -- resolve
-# the actual executable path once up front instead.
 BDATA_BIN = shutil.which("bdata")
 if not BDATA_BIN:
     sys.exit("bdata CLI not found on PATH -- see brightdata-plugin setup.")
 
-# A SERP result on one of these domains doesn't compete with a brand page --
-# counting it as "weak" is what makes weakness score mean something instead
-# of just echoing how well-known the query is.
 WEAK_DOMAINS = (
     "reddit.com", "quora.com", "pinterest.", "facebook.com", "instagram.com",
     "amazon.", "ebay.", "etsy.com", "youtube.com", "tiktok.com",
     "marketplace", "forum", "wikipedia.org",
 )
 
-# Real, sellable surface today -- only tees exist as actual stock (see
-# docs/pre-golive.md: tanks/hoodies/hats/accessories are nav entries with
-# nothing behind them). A transactional query maps to /shop only when it's
-# plausibly about the thing that's actually for sale.
-TRANSACTIONAL_HINTS = ("buy", "shop", "tee", "tees", "t-shirt", "t-shirts", "shirt")
+# A query word alone was the bug: "Why are graphic tees so expensive?" has
+# "tees" in it and is not transactional. Direct commercial intent (buy it,
+# find it cheap, find a seller near you) overrides everything else, even a
+# question form -- "where can I buy graphic tees" is still transactional.
+COMMERCIAL_INTENT = (
+    "buy", "shop", "for sale", "price", "prices", "cheap", "cheapest",
+    "discount", "deal", "near me", "shipping", "delivery", "order",
+)
+# A question mark or a leading interrogative/auxiliary word marks a query as
+# asking something, not shopping for something -- checked only after the
+# commercial-intent override above, so it can't relabel "where to buy X" as
+# informational just because it starts with "where".
+QUESTION_STARTERS = (
+    "why", "how", "what", "who", "when", "where", "which", "is", "are",
+    "can", "do", "does", "should", "will", "was", "were",
+)
 PRODUCT_TERMS = ("tee", "tees", "t-shirt", "t-shirts", "shirt", "graphic tee", "graphic tees")
 
 
 def run_search(query: str, retries: int = 2) -> dict | None:
-    """One real SERP call. Returns None (not a fabricated empty result) if
-    every attempt fails -- a caller must handle that explicitly, not treat
-    it as a zero-result query. mymixups' own harvest lost 31/113 rows to
-    exactly this shortcut (a failed call parsed as if it had succeeded)."""
     for attempt in range(retries + 1):
         try:
             proc = subprocess.run(
@@ -74,9 +90,6 @@ def run_search(query: str, retries: int = 2) -> dict | None:
             continue
         if proc.returncode != 0:
             continue
-        # The CLI's first stdout line is the JSON payload; a trailing
-        # "Searching..." status line or blank line can follow it, so only
-        # the first line is ever parsed here.
         stdout = proc.stdout or ""
         first_line = stdout.strip().splitlines()[0] if stdout.strip() else ""
         if not first_line:
@@ -85,9 +98,6 @@ def run_search(query: str, retries: int = 2) -> dict | None:
             data = json.loads(first_line)
         except json.JSONDecodeError:
             continue
-        # A call that "succeeded" with zero organic results is the exact
-        # silent-failure shape mymixups hit -- treat it as a failed attempt,
-        # not a real empty SERP, and retry rather than record it as weak=10.
         if not data.get("organic"):
             continue
         return data
@@ -99,9 +109,6 @@ def domain_of(url: str) -> str:
 
 
 def title_match_strength(query: str, titles: list[str]) -> float:
-    """Fraction of the query's significant words (len > 2) that appear in at
-    least one of the top-10 titles -- a proxy for how directly the current
-    results address this exact query, not just the topic generally."""
     words = [w for w in re.findall(r"[a-z]+", query.lower()) if len(w) > 2]
     if not words:
         return 0.0
@@ -111,9 +118,6 @@ def title_match_strength(query: str, titles: list[str]) -> float:
 
 
 def score_weakness(serp: dict) -> int:
-    """0 (dominated by strong brand results) to 10 (wide open) -- observable
-    from the SERP itself, not a volume/competition number nobody here has
-    access to."""
     organic = serp.get("organic", [])[:10]
     if not organic:
         return 0
@@ -125,15 +129,31 @@ def score_weakness(serp: dict) -> int:
     shopping_pack = bool(serp.get("popular_products"))
 
     score = 0
-    score += round((weak_count / len(organic)) * 5)  # up to 5 for forum/marketplace clutter
-    score += round((1 - match) * 3)  # up to 3 for weak title-match
-    score += 0 if shopping_pack else 2  # +2 if nothing's already claimed the transactional slot
+    score += round((weak_count / len(organic)) * 5)
+    score += round((1 - match) * 3)
+    score += 0 if shopping_pack else 2
     return max(0, min(10, score))
 
 
 def classify_intent(query: str, serp: dict) -> str:
-    q = query.lower()
-    if serp.get("popular_products") or any(h in q for h in TRANSACTIONAL_HINTS):
+    """Priority order, each step only reached if the one above didn't decide:
+    1. A shopping pack on the SERP or explicit commercial-intent wording
+       ("buy", "price", "near me", ...) -> transactional, even in question
+       form ("where can I buy graphic tees" is still transactional).
+    2. A question mark or a leading interrogative/auxiliary word -> the
+       query is asking something, not shopping -- informational.
+    3. A short query containing a product term with no question form -> a
+       category/navigational query ("graphic tees australia") -> transactional.
+    4. Otherwise informational -- the safer default when genuinely unsure,
+       so an uncertain row doesn't get pointed at /shop it may not belong on.
+    """
+    q = query.lower().strip()
+    if serp.get("popular_products") or any(h in q for h in COMMERCIAL_INTENT):
+        return "transactional"
+    first_word = re.split(r"\s+", q, maxsplit=1)[0] if q else ""
+    if q.endswith("?") or first_word in QUESTION_STARTERS:
+        return "informational"
+    if any(t in q for t in PRODUCT_TERMS):
         return "transactional"
     return "informational"
 
@@ -164,10 +184,45 @@ class Row:
         }
 
 
+def score_query(query: str, source_seed: str, serp: dict, today: str) -> Row:
+    intent = classify_intent(query, serp)
+    return Row(
+        query=query,
+        source_seed=source_seed,
+        serp_snapshot_date=today,
+        weakness_score=score_weakness(serp),
+        intent=intent,
+        mapped_url=mapped_url(query, intent),
+    )
+
+
+def append_row(row: Row) -> None:
+    """Append-and-flush -- the durability guarantee this whole script exists
+    to provide. json.dumps + write + flush + os.fsync, not buffered I/O left
+    to the OS's own discretion about when it actually hits disk."""
+    JSONL_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with JSONL_PATH.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row.to_dict(), ensure_ascii=False) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
+
+
+def load_done_queries() -> set[str]:
+    if not JSONL_PATH.exists():
+        return set()
+    done = set()
+    for line in JSONL_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            done.add(json.loads(line)["query"].lower())
+        except (json.JSONDecodeError, KeyError):
+            continue  # a truncated last line from a killed run -- ignore, don't crash on it
+    return done
+
+
 def expand_seed(seed: str) -> tuple[dict | None, list[str]]:
-    """Seed's own SERP, plus every People-Also-Ask question and related-
-    search phrase as further candidate queries -- deduplicated, seed itself
-    excluded."""
     serp = run_search(seed)
     if serp is None:
         return None, []
@@ -189,54 +244,72 @@ def expand_seed(seed: str) -> tuple[dict | None, list[str]]:
     return serp, deduped
 
 
+def consolidate_json() -> int:
+    """keywords.json is a convenience snapshot regenerated from the real
+    source of truth (the .jsonl) -- never written to directly, so it's never
+    the thing that's at risk of a partial write."""
+    rows = []
+    if JSONL_PATH.exists():
+        for line in JSONL_PATH.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+    JSON_PATH.write_text(json.dumps(rows, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return len(rows)
+
+
 def main() -> int:
     seeds_doc = yaml.safe_load(SEEDS_PATH.read_text(encoding="utf-8"))
     all_seeds = [s for group in seeds_doc.values() for s in group]
-
     today = date.today().isoformat()
-    rows: list[Row] = []
+
+    done = load_done_queries()
+    if done:
+        print(f"[harvest] resuming -- {len(done)} queries already in {JSONL_PATH.name}, skipping those")
+
     failures: list[str] = []
 
     for seed in all_seeds:
-        print(f"[harvest] seed: {seed}")
+        seed_done = seed.lower() in done
+        print(f"[harvest] seed: {seed}" + (" (already scored, checking its expansions)" if seed_done else ""))
+
+        # Re-derive the expansion list even for an already-scored seed --
+        # a run killed after the seed but partway through its expansions
+        # would otherwise orphan whatever expansions hadn't been reached
+        # yet, since the expansion list itself is never persisted, only
+        # each row that resulted from one. One redundant SERP call for an
+        # already-done seed is a small, worthwhile price for never silently
+        # leaving expansions unprocessed.
         seed_serp, expansions = expand_seed(seed)
         if seed_serp is None:
             print(f"  FAILED after retries -- skipping seed and its expansions")
             failures.append(seed)
             continue
 
-        rows.append(Row(
-            query=seed,
-            source_seed=seed,
-            serp_snapshot_date=today,
-            weakness_score=score_weakness(seed_serp),
-            intent=classify_intent(seed, seed_serp),
-            mapped_url=mapped_url(seed, classify_intent(seed, seed_serp)),
-        ))
+        if not seed_done:
+            row = score_query(seed, seed, seed_serp, today)
+            append_row(row)
+            done.add(seed.lower())
+            print(f"  seed scored (weakness={row.weakness_score}, {row.intent})")
 
         for expansion in expansions:
+            if expansion.lower() in done:
+                continue
             exp_serp = run_search(expansion)
             if exp_serp is None:
                 failures.append(expansion)
                 print(f"  expansion FAILED: {expansion}")
                 continue
-            intent = classify_intent(expansion, exp_serp)
-            rows.append(Row(
-                query=expansion,
-                source_seed=seed,
-                serp_snapshot_date=today,
-                weakness_score=score_weakness(exp_serp),
-                intent=intent,
-                mapped_url=mapped_url(expansion, intent),
-            ))
-            print(f"  + {expansion}  (weakness={rows[-1].weakness_score}, {intent})")
+            exp_row = score_query(expansion, seed, exp_serp, today)
+            append_row(exp_row)
+            done.add(expansion.lower())
+            print(f"  + {expansion}  (weakness={exp_row.weakness_score}, {exp_row.intent})")
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(
-        json.dumps([r.to_dict() for r in rows], indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-    print(f"\n[harvest] wrote {len(rows)} rows to {OUT_PATH}")
+    total = consolidate_json()
+    print(f"\n[harvest] {total} total rows in {JSON_PATH} (source of truth: {JSONL_PATH.name})")
     if failures:
         print(f"[harvest] {len(failures)} queries failed after retries and were skipped, not recorded as zero-result: {failures}")
     return 0
