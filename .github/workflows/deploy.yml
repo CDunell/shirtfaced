@@ -97,6 +97,38 @@ jobs:
             echo "Social sources unchanged but the box is missing rasterised assets: rebuilding Social assets."
           fi
 
+      # Curb Stamps also has its own dedicated workflow (deploy-curbstamps.yml)
+      # that the paths-ignore block above already defers to for a curbstamps-
+      # only push. That block can't help a *mixed* push (this one touched both
+      # shirtfaced and curbstamps files), and the steps below it had no
+      # conditional at all -- every run of this job rebuilt curbstamps-admin
+      # and curbstamps-site regardless of whether anything in them changed.
+      # Same detection pattern as "Detect Social asset changes" above.
+      - name: Detect Curb Stamps changes
+        id: curbstamps
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Manual deploy: Curb Stamps will be rebuilt."
+            exit 0
+          fi
+
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "No usable previous commit: treating Curb Stamps as changed."
+            exit 0
+          fi
+
+          if git diff --quiet "$before" "$GITHUB_SHA" -- curbstamps-admin/ curbstamps-site/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No Curb Stamps changes in this push: skipping its deploy steps."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Curb Stamps changed: rebuilding it."
+          fi
+
       - name: Sync admin app
         run: |
           rsync -az --delete \
@@ -340,6 +372,7 @@ jobs:
       # ---------------------------------------------------------------------
 
       - name: Sync curbstamps-admin app
+        if: steps.curbstamps.outputs.changed == 'true'
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
@@ -347,18 +380,24 @@ jobs:
             curbstamps-admin/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-admin/
 
       - name: Build and restart curbstamps-admin app
+        if: steps.curbstamps.outputs.changed == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/curbstamps-admin/deploy/deploy-curbstamps-admin.sh'
 
-      # Same reasoning as the shirtfaced-admin migration step above: safe to
-      # run every deploy regardless of whether this build changed the schema.
+      # Idempotent (drizzle-kit migrate skips anything already applied), same
+      # as the shirtfaced-admin migration step above -- gated on the same
+      # change detection as the rest of this section rather than running
+      # unconditionally, since there's no reason to even connect to the box
+      # for this when nothing in curbstamps-admin changed.
       - name: Run curbstamps-admin database migrations
+        if: steps.curbstamps.outputs.changed == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'cd /home/ubuntu/curbstamps-admin && npx --yes drizzle-kit migrate'
 
       - name: Sync curbstamps-site
+        if: steps.curbstamps.outputs.changed == 'true'
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
@@ -366,6 +405,7 @@ jobs:
             curbstamps-site/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/curbstamps-site/
 
       - name: Build and restart curbstamps-site
+        if: steps.curbstamps.outputs.changed == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/curbstamps-site/deploy/deploy-curbstamps-site.sh'
