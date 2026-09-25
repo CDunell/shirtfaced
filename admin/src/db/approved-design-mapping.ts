@@ -42,3 +42,19 @@ export function garmentColourFor(productionSpec: Record<string, unknown> | null 
   const colour = productionSpec?.garment_colour;
   return typeof colour === "string" && /^#[0-9a-fA-F]{6}$/.test(colour) ? colour : "#1c1c1a";
 }
+
+/**
+ * A kept generation sample has no author-assigned slug (unlike a concept
+ * library entry) -- just a tradition and a long scene description. Slug on
+ * the tradition plus a short id fragment for uniqueness; the human renames
+ * it, same as they set the real price and photography.
+ */
+export function slugForGeneration(tradition: string, sampleId: string): string {
+  const base = tradition.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return `studio-gen-${base || "design"}-${sampleId.slice(0, 8)}`;
+}
+
+export function nameForGeneration(tradition: string, sampleId: string): string {
+  const label = tradition.charAt(0).toUpperCase() + tradition.slice(1);
+  return `${label} design ${sampleId.slice(0, 8)}`;
+}

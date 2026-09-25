@@ -1,6 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { categoryFor, firstSentence, slugFor, garmentColourFor } from "./approved-design-mapping";
+import {
+  categoryFor,
+  firstSentence,
+  slugFor,
+  garmentColourFor,
+  slugForGeneration,
+  nameForGeneration,
+} from "./approved-design-mapping";
 
 test("categoryFor maps known garments case-insensitively", () => {
   assert.equal(categoryFor(["Hoodie"]), "hoodies");
@@ -51,4 +58,23 @@ test("garmentColourFor falls back on missing or malformed values", () => {
   assert.equal(garmentColourFor({}), "#1c1c1a");
   assert.equal(garmentColourFor({ garment_colour: "not-a-colour" }), "#1c1c1a");
   assert.equal(garmentColourFor({ garment_colour: 42 }), "#1c1c1a");
+});
+
+test("slugForGeneration lowercases the tradition and appends a short id fragment", () => {
+  assert.equal(
+    slugForGeneration("Esports", "1234abcd-5678-90ef-0000-000000000000"),
+    "studio-gen-esports-1234abcd",
+  );
+});
+
+test("slugForGeneration strips characters a slug can't carry", () => {
+  assert.equal(slugForGeneration("90's Skate!", "abcd1234"), "studio-gen-90-s-skate-abcd1234");
+});
+
+test("slugForGeneration falls back when the tradition has nothing sluggable", () => {
+  assert.equal(slugForGeneration("!!!", "abcd1234"), "studio-gen-design-abcd1234");
+});
+
+test("nameForGeneration title-cases the tradition and appends a short id fragment", () => {
+  assert.equal(nameForGeneration("esports", "1234abcd-rest"), "Esports design 1234abcd");
 });

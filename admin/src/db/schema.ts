@@ -43,6 +43,11 @@ export const products = pgTable("products", {
      products created by hand in this admin, which is most of them today. */
   studioConceptId: uuid("studio_concept_id"),
   studioApprovedDesignId: uuid("studio_approved_design_id").unique(),
+  /* Same traceability, for a design approved through the corpus-driven
+     generation queue (Studio's Gallery) rather than the concept-library
+     pipeline above. The two are separate id spaces in Studio's own database,
+     so this needs its own column rather than reusing studioApprovedDesignId. */
+  studioGenerationSampleId: uuid("studio_generation_sample_id").unique(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

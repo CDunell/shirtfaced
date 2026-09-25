@@ -229,6 +229,50 @@ export function PasteButton({
   );
 }
 
+export type StepState = "done" | "active" | "upcoming";
+
+/**
+ * "Do this, now do this, now do this" -- a numbered rail showing where you are
+ * on a multi-stage screen. Purely a status display: the page still owns its
+ * own gating logic and decides each step's state.
+ */
+export function Stepper({
+  steps,
+  className,
+}: {
+  steps: { label: string; state: StepState }[];
+  className?: string;
+}): React.JSX.Element {
+  return (
+    <ol className={cx("mb-7 flex flex-wrap items-center gap-x-1.5 gap-y-3", className)}>
+      {steps.map((step, index) => (
+        <li key={step.label} className="flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className={cx(
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold",
+              step.state === "upcoming" ? "bg-paper-2 text-ink/40" : "bg-ink text-paper",
+            )}
+          >
+            {step.state === "done" ? "✓" : index + 1}
+          </span>
+          <span
+            className={cx(
+              "text-[12px] font-semibold tracking-wide uppercase",
+              step.state === "upcoming" ? "text-ink/40" : "text-ink",
+            )}
+          >
+            {step.label}
+          </span>
+          {index < steps.length - 1 ? (
+            <span aria-hidden="true" className="mx-1.5 h-px w-4 shrink-0 bg-ink/15" />
+          ) : null}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 /** A section that is closed until asked for, and mounts nothing until it opens.
  *
  * Phase 5 folds Compose and Score into Designs. Rendering both eagerly would

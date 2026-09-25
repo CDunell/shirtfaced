@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Button, cx, LabelXSmall, ParagraphSmall, ParagraphXSmall, Select } from "./ui";
+import { Button, cx, LabelXSmall, Notification, ParagraphSmall, ParagraphXSmall, Select } from "./ui";
 
 import {
+  decideGeneration,
   fetchGenerations,
   generationImageUrl,
   type GenerationSample,
@@ -33,9 +34,10 @@ function useIsDesktop(): boolean {
 }
 
 const STATUS_OPTIONS: { value: GenerationStatus | ""; label: string }[] = [
-  { value: "", label: "All statuses" },
+  { value: "pending", label: "Needs review" },
   { value: "kept", label: "Kept" },
   { value: "dropped", label: "Dropped" },
+  { value: "", label: "All statuses" },
 ];
 
 export function DesignGalleryBench(): React.JSX.Element {
@@ -43,12 +45,18 @@ export function DesignGalleryBench(): React.JSX.Element {
   const pageSize = isDesktop ? DESKTOP_PAGE_SIZE : MOBILE_PAGE_SIZE;
   const [page, setPage] = useState(1);
   const [tradition, setTradition] = useState("");
-  const [statusFilter, setStatusFilter] = useState<GenerationStatus | "">("");
+  // Opens on the review queue, not everything ever rendered -- this is the
+  // one screen the approve/reject loop lives on now.
+  const [statusFilter, setStatusFilter] = useState<GenerationStatus | "">("pending");
   const [items, setItems] = useState<GenerationSample[]>([]);
   const [total, setTotal] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [deciding, setDeciding] = useState(false);
+  // Bumped after a decision so the effect below refetches without the page,
+  // tradition or status filter having actually changed.
+  const [reloadToken, setReloadToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -70,7 +78,7 @@ export function DesignGalleryBench(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [page, pageSize, tradition, statusFilter]);
+  }, [page, pageSize, tradition, statusFilter, reloadToken]);
 
   useEffect(() => {
     setPage(1);
@@ -89,17 +97,35 @@ export function DesignGalleryBench(): React.JSX.Element {
     };
   }, [lightboxIndex, items.length]);
 
+  const decide = (sample: GenerationSample, decision: "kept" | "dropped"): void => {
+    setDeciding(true);
+    setError("");
+    decideGeneration(sample.id, decision)
+      .then(() => {
+        setReloadToken((token) => token + 1);
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : "Couldn't save that decision.");
+      })
+      .finally(() => {
+        setDeciding(false);
+      });
+  };
+
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const traditions = Array.from(new Set(items.map((i) => i.tradition))).sort();
-  const active = lightboxIndex !== null ? items[lightboxIndex] : null;
+  // A decision can remove the active item from whatever filter is showing --
+  // approving or rejecting something out of "Needs review", most often. When
+  // the index still points at something, that's the item that slid into its
+  // place; past the end of a shorter list, there's nothing left to show.
+  const active = lightboxIndex !== null && lightboxIndex < items.length ? items[lightboxIndex] : null;
 
   return (
     <div>
       <PageTitle>Gallery</PageTitle>
       <ParagraphSmall className="mt-0 text-ink/60">
-        Every batch-pool concept that's actually been rendered and looked at — the image and
-        the exact prompt that produced it, kept whether or not the concept made the cut.
-        Reference material, not a live feed.
+        What the engine rendered from your evidence. Open one and say kept or dropped — that's
+        the whole job.
       </ParagraphSmall>
 
       <div className="mt-3 mb-5 flex flex-wrap items-center gap-4">
@@ -130,7 +156,11 @@ export function DesignGalleryBench(): React.JSX.Element {
         </ParagraphXSmall>
       </div>
 
-      {error ? <ParagraphSmall className="text-coral">{error}</ParagraphSmall> : null}
+      {error ? (
+        <Notification kind="negative" className="mb-4">
+          {error}
+        </Notification>
+      ) : null}
 
       <div
         className="grid gap-3.5 transition-opacity duration-[120ms]"
@@ -144,7 +174,11 @@ export function DesignGalleryBench(): React.JSX.Element {
             }}
             className={cx(
               "flex appearance-none flex-col overflow-hidden rounded-[6px] border bg-paper-2 p-0 text-left cursor-pointer",
-              item.status === "dropped" ? "border-coral" : "border-transparent",
+              item.status === "dropped"
+                ? "border-coral"
+                : item.status === "pending"
+                  ? "border-lime"
+                  : "border-transparent",
             )}
           >
             <img
@@ -160,6 +194,8 @@ export function DesignGalleryBench(): React.JSX.Element {
                 </LabelXSmall>
                 {item.status === "dropped" ? (
                   <LabelXSmall className="text-[10px] text-coral uppercase">dropped</LabelXSmall>
+                ) : item.status === "pending" ? (
+                  <LabelXSmall className="text-[10px] text-ink uppercase">review</LabelXSmall>
                 ) : null}
               </div>
             </div>
@@ -239,6 +275,29 @@ export function DesignGalleryBench(): React.JSX.Element {
                 <div className="max-h-[220px] overflow-auto rounded-[4px] bg-paper-2 p-2.5 font-mono text-[12px] leading-[1.5] whitespace-pre-wrap">
                   {active.prompt}
                 </div>
+                {active.status === "pending" ? (
+                  <div className="flex gap-2.5">
+                    <Button
+                      size="compact"
+                      disabled={deciding}
+                      onClick={() => {
+                        decide(active, "kept");
+                      }}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="compact"
+                      variant="secondary"
+                      disabled={deciding}
+                      onClick={() => {
+                        decide(active, "dropped");
+                      }}
+                    >
+                      Reject
+                    </Button>
+                  </div>
+                ) : null}
                 <div className="flex gap-2.5">
                   <CopyButton text={active.prompt} label="Copy prompt" />
                   <Button size="compact" variant="ghost" onClick={() => setLightboxIndex(null)}>

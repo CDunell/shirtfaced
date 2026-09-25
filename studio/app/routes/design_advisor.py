@@ -12,10 +12,12 @@ every recommendation is a marked default until the corpus is measured.
 
 from __future__ import annotations
 
+import io
 import uuid
 from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Response, UploadFile, status
+from PIL import Image
 from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -31,6 +33,9 @@ router = APIRouter(prefix="/api/design", tags=["design"])
 
 SessionDependency = Annotated[Session, Depends(get_db_session)]
 SettingsDependency = Annotated[Settings, Depends(get_settings)]
+
+MAX_GENERATION_UPLOAD_BYTES = 32 * 1024 * 1024
+THUMB_WIDTH = 480
 
 
 class AdviseRequest(BaseModel):
@@ -177,8 +182,12 @@ def retire_concept(concept_id: str, session: SessionDependency) -> RetireRespons
 # --- Gallery: every concept that was actually rendered and looked at -------
 #
 # The concept pool holds ideas; ``design_generation_samples`` holds proof one
-# was tested -- the image and the exact prompt that produced it. Written by
-# the batch-eval harness (``scripts/eval_concept_batch.py``), read here.
+# was tested -- the image and the exact prompt that produced it. Rows arrive
+# via ``POST /generations`` (a session driving a real ChatGPT/Gemini login --
+# no metered API, see ADR against in-app generation) as ``status="pending"``,
+# and leave "pending" only through ``POST /generations/{id}/decision`` -- a
+# person (or a session on their behalf) looking at the image and saying kept
+# or dropped. Nothing defaults to kept any more; that was the bug.
 
 
 class GenerationSampleView(BaseModel):
@@ -286,3 +295,108 @@ def get_generation_image(
         media_type=mime_type,
         headers={"Cache-Control": "private, max-age=31536000, immutable"},
     )
+
+
+@router.post(
+    "/generations",
+    response_model=GenerationSampleView,
+    status_code=status.HTTP_201_CREATED,
+    summary="Record a design rendered outside the app",
+)
+async def ingest_generation(
+    session: SessionDependency,
+    settings: SettingsDependency,
+    image: Annotated[UploadFile, File()],
+    tradition: Annotated[str, Form()],
+    concept_text: Annotated[str, Form()],
+    prompt: Annotated[str, Form()],
+    batch: Annotated[str, Form()],
+    model: Annotated[str, Form()] = "session",
+) -> GenerationSampleView:
+    """Bring in a design generated through a real ChatGPT/Gemini login.
+
+    The replacement for ``scripts/eval_concept_batch.py``'s own insert: that
+    script called a metered image API directly, which is exactly the spend
+    the owner does not want -- generation now happens in a real browser
+    session against a paid subscription, and this is how the result gets
+    from there onto the box. Always lands as ``pending``: nobody has looked
+    at it yet, and the old "insert as kept" default is what let renders reach
+    the concept pool unreviewed in the first place.
+    """
+    data = await image.read()
+    if len(data) > MAX_GENERATION_UPLOAD_BYTES:
+        raise HTTPException(
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            f"That image is larger than {MAX_GENERATION_UPLOAD_BYTES // (1024 * 1024)}MB.",
+        )
+
+    try:
+        full_image = Image.open(io.BytesIO(data)).convert("RGB")
+    except Exception as error:  # any decode failure is reported the same way, as 422
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT, "That file isn't a readable image."
+        ) from error
+
+    full_buf = io.BytesIO()
+    full_image.save(full_buf, format="PNG")
+
+    w, h = full_image.size
+    thumb = full_image.resize((THUMB_WIDTH, round(h * (THUMB_WIDTH / w))), Image.Resampling.LANCZOS)
+    thumb_buf = io.BytesIO()
+    thumb.save(thumb_buf, format="JPEG", quality=78, optimize=True)
+
+    sample_id = uuid.uuid4()
+    full_key = f"design_generations/{batch}/{sample_id}_full.png"
+    thumb_key = f"design_generations/{batch}/{sample_id}_thumb.jpg"
+
+    store = FilesystemAssetStore(settings.assets_root_resolved)
+    store.save(full_key, full_buf.getvalue(), "image/png")
+    store.save(thumb_key, thumb_buf.getvalue(), "image/jpeg")
+
+    row = DesignGenerationSample(
+        id=sample_id,
+        tradition=tradition.strip() or "novelty",
+        concept_text=concept_text.strip(),
+        prompt=prompt.strip(),
+        image_relative_path=full_key,
+        thumb_relative_path=thumb_key,
+        status="pending",
+        batch=batch.strip(),
+        model=model.strip() or "session",
+    )
+    session.add(row)
+    session.commit()
+    session.refresh(row)
+    return _sample_view(row)
+
+
+class GenerationDecisionRequest(BaseModel):
+    decision: Literal["kept", "dropped"]
+    reason: str = ""
+
+
+@router.post(
+    "/generations/{sample_id}/decision",
+    response_model=GenerationSampleView,
+    summary="Approve or reject a rendered design",
+)
+def decide_generation(
+    sample_id: str,
+    payload: GenerationDecisionRequest,
+    session: SessionDependency,
+) -> GenerationSampleView:
+    """The one decision this screen exists for. Nothing else gates it."""
+    try:
+        parsed_id = uuid.UUID(sample_id)
+    except ValueError as error:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Not a valid sample id.") from error
+
+    row = session.get(DesignGenerationSample, parsed_id)
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "No sample with that id.")
+
+    row.status = payload.decision
+    row.drop_reason = payload.reason.strip() if payload.decision == "dropped" else None
+    session.commit()
+    session.refresh(row)
+    return _sample_view(row)

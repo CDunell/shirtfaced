@@ -75,7 +75,7 @@ describe("PromptWorkbench", () => {
     await chooseTheScene();
 
     expect(
-      await screen.findByText(/Nothing has been written for this scene yet/),
+      await screen.findByText(/No prompts yet for this scene/),
     ).toBeInTheDocument();
   });
 

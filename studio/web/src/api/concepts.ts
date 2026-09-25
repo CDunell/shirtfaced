@@ -567,7 +567,7 @@ export async function recordBriefTaken(attemptId: string): Promise<unknown> {
  * concept survived review. See app/db/generation_sample_models.py.
  */
 
-export type GenerationStatus = "kept" | "dropped";
+export type GenerationStatus = "pending" | "kept" | "dropped";
 
 export interface GenerationSample {
   id: string;
@@ -601,4 +601,16 @@ export async function fetchGenerations(
 
 export function generationImageUrl(sampleId: string, variant: "thumb" | "full" = "thumb"): string {
   return `/api/design/generations/${encodeURIComponent(sampleId)}/image?variant=${variant}`;
+}
+
+/** The one decision this screen exists for: kept it, or not. */
+export async function decideGeneration(
+  sampleId: string,
+  decision: "kept" | "dropped",
+  reason = "",
+): Promise<GenerationSample> {
+  return await json<GenerationSample>(
+    `/api/design/generations/${encodeURIComponent(sampleId)}/decision`,
+    { method: "POST", body: JSON.stringify({ decision, reason }) },
+  );
 }

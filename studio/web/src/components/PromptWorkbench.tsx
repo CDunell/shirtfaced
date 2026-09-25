@@ -17,7 +17,7 @@ import { useCallback, useEffect, useState } from "react";
 
 import { Button, Card, LabelSmall, Notification, ParagraphXSmall, Select, Tag } from "./ui";
 
-import { CopyButton, PageTitle } from "./chrome";
+import { CopyButton, PageTitle, Stepper, type StepState } from "./chrome";
 
 import {
   ApiError,
@@ -90,7 +90,7 @@ function UploadTheResult({ promptId }: { promptId: string }): React.JSX.Element 
           ? "Uploading…"
           : state === "done"
             ? "Uploaded — add another"
-            : "Upload the photo this made"}
+            : "3. Upload the photo you made from this"}
       </Button>
       <input
         id={inputId}
@@ -101,8 +101,8 @@ function UploadTheResult({ promptId }: { promptId: string }): React.JSX.Element 
       />
       <ParagraphXSmall className="text-ink/50">
         {state === "done"
-          ? "It is in the print bench, tagged with this prompt."
-          : (message ?? "Goes to the print bench, remembering it came from this prompt.")}
+          ? "Saved, and linked to this prompt."
+          : (message ?? "Saves the photo and remembers which prompt made it.")}
       </ParagraphXSmall>
     </div>
   );
@@ -225,13 +225,26 @@ export function PromptWorkbench(): React.JSX.Element {
       });
   }, [slug, named]);
 
+  const step1: StepState = slug ? "done" : "active";
+  const step2: StepState = !slug ? "upcoming" : variations.length > 0 ? "done" : "active";
+  const step3: StepState = variations.length > 0 ? "active" : "upcoming";
+
   return (
     <div className="mx-auto max-w-[760px]">
       <PageTitle>Prompts</PageTitle>
       <ParagraphXSmall className="text-ink/50">
-        Writes the prompt the canon implies. Generates no image and locks nothing. Every prompt
-        written is kept, so a variation sits beside the one it varies from.
+        Write a prompt for a shot, then copy it and generate the image somewhere else. This page
+        doesn't generate anything itself.
       </ParagraphXSmall>
+
+      <Stepper
+        className="mt-5"
+        steps={[
+          { label: "Choose a scene", state: step1 },
+          { label: "Write the prompt", state: step2 },
+          { label: "Copy it, then upload the result", state: step3 },
+        ]}
+      />
 
       {error && (
         <Notification kind="negative" className="mt-4">
@@ -269,8 +282,8 @@ export function PromptWorkbench(): React.JSX.Element {
             }}
           />
           <ParagraphXSmall className="text-ink/50">
-            Leave empty for the next planned shot. Choosing one shows what has already been
-            written for it; writing again adds a variation.
+            Leave blank to use whatever's next. If you pick a scene that already has prompts,
+            you'll see them below — writing again adds another one, it doesn't replace it.
           </ParagraphXSmall>
         </div>
 
@@ -280,12 +293,12 @@ export function PromptWorkbench(): React.JSX.Element {
       </Card>
 
       {loadingHistory && (
-        <ParagraphXSmall className="mt-6 text-ink/50">Looking up what exists…</ParagraphXSmall>
+        <ParagraphXSmall className="mt-6 text-ink/50">Checking for existing prompts…</ParagraphXSmall>
       )}
 
       {!loadingHistory && named && variations.length === 0 && (
         <ParagraphXSmall className="mt-6 text-ink/50">
-          Nothing has been written for this scene yet.
+          No prompts yet for this scene — write the first one above.
         </ParagraphXSmall>
       )}
 

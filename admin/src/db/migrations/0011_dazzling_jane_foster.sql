@@ -1,0 +1,2 @@
+ALTER TABLE "products" ADD COLUMN "studio_generation_sample_id" uuid;--> statement-breakpoint
+ALTER TABLE "products" ADD CONSTRAINT "products_studio_generation_sample_id_unique" UNIQUE("studio_generation_sample_id");
