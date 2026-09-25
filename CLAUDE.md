@@ -62,7 +62,43 @@ straight to code and produced a duplicate of something that already existed. It
 happened again afterwards. Reading it costs one turn; not reading it has cost
 several days.
 
+## Design generation — how it works now (settled 25 September 2026)
+
+When the owner says "run a batch", "generate some designs" or anything like
+it, this is what they mean:
+
+1. Follow `.claude/skills/design-batch/SKILL.md`. For more than a couple of
+   designs, hand the run to the `design-batch-runner` subagent
+   (`.claude/agents/design-batch-runner.md`) so it runs in the background.
+2. Generation goes through the owner's logged-in ChatGPT in their real
+   Chrome (the `claude-in-chrome` tools). **Never a billed image API.** The
+   owner already pays for the subscriptions and won't pay again per image.
+3. It only runs when the owner asks. Never schedule it, loop it or run it
+   unattended.
+4. Every design uses **Shirtfaced** as the brand, lettered in the
+   illustration's own style, never an invented brand name. The output is an
+   isolated graphic, not a garment mockup, in a chest-print shape (roughly
+   square to 2:1).
+5. Results land in **Gallery** as `pending`. Gallery is the front door and
+   the only review screen, and the owner decides kept or dropped there. The
+   older Work/Designs brief → attempt → scorecard pipeline is the path the
+   owner has rejected. Don't send them into it.
+
+The box host and SSH key are in the gitignored `.secrets/` (`box_host`,
+`oracle.key`). `studio/scripts/push_generation.sh` reads them itself.
+
 ## Standing rules, and why they exist
+
+**Ask before pushing.** A push to `main` deploys to production. Say "ready
+to push, confirm?" and wait for the answer. Don't announce a push and do it
+in the same message, and don't read frustration that something isn't live
+as a yes. The one exception is when the owner's own message says "commit
+and push". Learned 25 September 2026, when a push went out unasked.
+
+**Keep replies short and plain.** Long structured write-ups got "too many
+words". Lead with the answer. The same goes for UI copy: the app's
+dense audit-voice text was one of the owner's main complaints about Studio.
+
 
 These were each learned by breaking them. The reason matters more than the rule,
 because a rule with no reason gets re-derived away.
