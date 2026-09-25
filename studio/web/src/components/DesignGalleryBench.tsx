@@ -139,7 +139,6 @@ export function DesignGalleryBench(): React.JSX.Element {
             onChange={(value) => {
               setTradition(value);
             }}
-            placeholder="All traditions"
           />
         </div>
         <div className="min-w-[160px]">
@@ -242,21 +241,23 @@ export function DesignGalleryBench(): React.JSX.Element {
           onClick={() => {
             setLightboxIndex(null);
           }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/[0.82] p-6"
+          className="fixed inset-0 z-[100] flex items-center justify-center overflow-auto bg-ink p-6"
         >
           <div
             onClick={(e) => {
               e.stopPropagation();
             }}
-            className="flex max-h-[92vh] w-full max-w-[1000px] flex-col gap-4"
+            className="flex max-h-[92vh] w-full max-w-[1000px] min-w-0 flex-col gap-4 overflow-hidden rounded-xl bg-paper p-4 dark:bg-ink-soft"
           >
-            <div className="flex flex-wrap gap-5 overflow-auto">
-              <img
-                src={generationImageUrl(active.id, "full")}
-                alt={`${active.tradition} concept render, full size`}
-                className="max-h-[72vh] max-w-[min(480px,100%)] shrink-0 rounded-[6px] object-contain"
-              />
-              <div className="flex min-w-[260px] flex-1 flex-col gap-2.5">
+            <div className="flex min-w-0 flex-wrap gap-5 overflow-auto">
+              <div className="flex w-full shrink-0 justify-center rounded-[6px] bg-paper-2 sm:w-auto">
+                <img
+                  src={generationImageUrl(active.id, "full")}
+                  alt={`${active.tradition} concept render, full size`}
+                  className="max-h-[60vh] w-full max-w-[480px] rounded-[6px] object-contain sm:w-auto"
+                />
+              </div>
+              <div className="flex min-w-0 flex-1 flex-col gap-2.5 sm:min-w-[260px]">
                 <div className="flex items-center gap-2">
                   <LabelXSmall className="rounded-[3px] bg-ink px-2 py-[3px] text-paper uppercase tracking-[0.04em]">
                     {active.tradition}
