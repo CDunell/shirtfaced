@@ -112,9 +112,10 @@ export function App({ themeName, onToggleTheme }: AppProps): React.JSX.Element {
   // Base Web components keep taking their theme from BaseProvider in
   // main.tsx directly -- this only covers the Tailwind-rebuilt chrome.
   useSyncDarkClass(themeName);
-  // Work is the front door: it is the one screen that answers what to do
-  // without knowing which screen owns what.
-  const [view, setView] = useState<View>("work");
+  // Gallery is the front door: it's the review queue, the only screen most
+  // work actually happens on. Work still exists for the older concept
+  // pipeline but is no longer where the tool opens.
+  const [view, setView] = useState<View>("design-gallery");
   // What Work sent us to, so Designs can open straight onto it. Cleared once
   // consumed, so navigating away and back does not silently re-open it.
   const [focus, setFocus] = useState<{ conceptId: string; attemptId: string | null } | null>(null);

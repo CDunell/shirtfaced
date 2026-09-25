@@ -8,7 +8,7 @@ import {
   type GenerationSample,
   type GenerationStatus,
 } from "../api/concepts";
-import { CopyButton, PageTitle } from "./chrome";
+import { CopyButton, PageTitle, Stepper } from "./chrome";
 
 const MOBILE_PAGE_SIZE = 16;
 const DESKTOP_PAGE_SIZE = 30;
@@ -127,6 +127,20 @@ export function DesignGalleryBench(): React.JSX.Element {
         What the engine rendered from your evidence. Open one and say kept or dropped — that's
         the whole job.
       </ParagraphSmall>
+
+      <Stepper
+        className="mt-4"
+        steps={[
+          { label: "Ask Claude to run a batch", state: "upcoming" },
+          { label: "Review what comes back (here)", state: "active" },
+        ]}
+      />
+      <ParagraphXSmall className="mt-0 mb-5 text-ink/50">
+        Nothing here generates itself. New designs land as "needs review" when you ask a
+        session to run a batch — it works from your evidence corpus through a real ChatGPT or
+        Gemini login, not a billed API. No batch running right now means nothing new to see
+        yet, not that anything's broken.
+      </ParagraphXSmall>
 
       <div className="mt-3 mb-5 flex flex-wrap items-center gap-4">
         <div className="min-w-[200px]">

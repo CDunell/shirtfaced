@@ -26,7 +26,7 @@ function sidebar(): HTMLElement {
   return aside;
 }
 
-/** The shell opens on Work, so a dashboard assertion has to go there first. */
+/** The shell opens on Gallery, so a dashboard assertion has to go there first. */
 async function showDashboard(): Promise<void> {
   await userEvent.click(within(sidebar()).getByRole("button", { name: "Dashboard" }));
 }
@@ -39,10 +39,10 @@ describe("App", () => {
 
     // The wordmark is admin's, with the product name swapped.
     expect(sidebar()).toHaveTextContent("shirtfaced / studio");
-    // Work is the default view. It is the one screen that answers "what should I
-    // be doing" without requiring you to know which screen owns what, which is
-    // the plan's governing rule. It used to open on Prompts, which is world work.
-    expect(screen.getByRole("heading", { name: "Work" })).toBeInTheDocument();
+    // Gallery is the default view: it's the review queue, the screen almost
+    // all real work happens on. It used to open on Work, then on Prompts
+    // before that.
+    expect(screen.getByRole("heading", { name: "Gallery" })).toBeInTheDocument();
     await showDashboard();
     expect(screen.getByRole("heading", { name: "Dashboard" })).toBeInTheDocument();
     await waitFor(() => {
