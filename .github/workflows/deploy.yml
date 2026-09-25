@@ -18,6 +18,8 @@ on:
       - "scripts/curbstamps/**"
       - "docs/curbstamps/**"
       - ".github/workflows/deploy-curbstamps.yml"
+      # Claude Code skills/agents/settings. Nothing on the box reads them.
+      - ".claude/**"
 
 jobs:
   deploy:
@@ -33,8 +35,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Social change detection needs the previous push commit.
-          fetch-depth: 2
+          # Full history (commits and trees only -- blob:none keeps it light):
+          # "Decide what to deploy" diffs against whatever commit each app last
+          # deployed, which can be any distance back.
+          fetch-depth: 0
+          filter: blob:none
 
       - name: Set up deploy key
         run: |
@@ -42,6 +47,64 @@ jobs:
           echo "${{ secrets.ORACLE_DEPLOY_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.ORACLE_HOST }}" >> ~/.ssh/known_hosts
+
+      # Admin and Studio each rebuild only when something they depend on has
+      # changed since *that app's last successful deploy* -- read from a marker
+      # on the box, not github.event.before. The difference matters:
+      # cancel-in-progress means a push can be cancelled mid-deploy, and diffing
+      # only against the previous push would then silently skip whatever the
+      # cancelled one carried. Missing marker, unknown commit, or a manual run
+      # all mean "deploy it" -- the safe default is always the old behaviour.
+      #
+      # The storefront is deliberately NOT gated: it bakes Admin's product and
+      # content data in at build time (package.json prebuild), and a deploy is
+      # currently the only thing that rebuilds it -- skipping it would stop
+      # Admin edits reaching the shop.
+      - name: Decide what to deploy
+        id: plan
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "admin=true" >> "$GITHUB_OUTPUT"
+            echo "studio=true" >> "$GITHUB_OUTPUT"
+            echo "Manual deploy: deploying everything."
+            exit 0
+          fi
+
+          marker() {
+            ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+              "cat /home/ubuntu/.deploy-markers/$1 2>/dev/null || true" | tr -d '[:space:]'
+          }
+
+          decide() {
+            local name="$1" sha="$2"
+            shift 2
+            if [ -z "$sha" ]; then
+              echo "$name: no record of a previous deploy -- deploying."
+              echo "$name=true" >> "$GITHUB_OUTPUT"
+            elif ! git cat-file -e "${sha}^{commit}" 2>/dev/null; then
+              echo "$name: last deployed commit $sha isn't in history -- deploying."
+              echo "$name=true" >> "$GITHUB_OUTPUT"
+            elif git diff --quiet --no-renames "$sha" "$GITHUB_SHA" -- "$@"; then
+              echo "$name: nothing it depends on changed since $sha -- skipping."
+              echo "$name=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "$name: changed since $sha -- deploying. Files:"
+              git diff --name-only --no-renames "$sha" "$GITHUB_SHA" -- "$@" | head -20
+              echo "$name=true" >> "$GITHUB_OUTPUT"
+            fi
+          }
+
+          # This workflow file is in both lists: a change to how things deploy
+          # redeploys everything.
+          decide admin "$(marker shirtfaced-admin)" \
+            admin/ .github/workflows/deploy.yml
+          decide studio "$(marker shirtfaced-studio)" \
+            studio/ docs/design/ assets/garments/ \
+            scripts/prepare-social-brand-sources.mjs scripts/build-social-assets.mjs \
+            DEV/logo-lockup.svg DEV/shirtfaced.svg DEV/smiley.svg \
+            .github/workflows/deploy.yml
 
       - name: Detect Social asset changes
         id: social
@@ -98,6 +161,7 @@ jobs:
           fi
 
       - name: Sync admin app
+        if: steps.plan.outputs.admin == 'true'
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
@@ -105,6 +169,7 @@ jobs:
             admin/ ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-admin/
 
       - name: Build and restart admin app
+        if: steps.plan.outputs.admin == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/deploy-admin.sh'
@@ -122,6 +187,7 @@ jobs:
       # if it isn't already in node_modules, so this step doesn't depend on
       # that script's install flags either way.
       - name: Run admin database migrations
+        if: steps.plan.outputs.admin == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'cd /home/ubuntu/shirtfaced-admin && npx --yes drizzle-kit migrate'
@@ -131,6 +197,7 @@ jobs:
       # grep/replace means re-running this step (every deploy) never adds a
       # second copy of the line.
       - name: Schedule the abandoned-cart recovery job
+        if: steps.plan.outputs.admin == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} '
             (crontab -l 2>/dev/null | grep -v "notify-abandoned-orders.ts";
@@ -138,11 +205,20 @@ jobs:
             ) | crontab -
           '
 
+      # Only reached if every admin step above succeeded -- this is what the
+      # next run's "Decide what to deploy" compares against.
+      - name: Record admin deploy
+        if: steps.plan.outputs.admin == 'true'
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            "mkdir -p /home/ubuntu/.deploy-markers && echo $GITHUB_SHA > /home/ubuntu/.deploy-markers/shirtfaced-admin"
+
       # Studio owns mutable runtime/canon state on the box. Never let rsync --delete
       # erase var/ (canonical cast originals, cached derivatives, renderer results, etc.)
       # or worlds/. Canonical cast binaries are provisioned directly into persistent
       # server storage and are never repaired or replaced from Git.
       - name: Sync Studio
+        if: steps.plan.outputs.studio == 'true'
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
@@ -230,6 +306,7 @@ jobs:
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/public/social-assets/
 
       - name: Sync concept libraries into Studio
+        if: steps.plan.outputs.studio == 'true'
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
@@ -237,6 +314,7 @@ jobs:
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/docs/design/
 
       - name: Sync garments into Studio
+        if: steps.plan.outputs.studio == 'true'
         run: |
           rsync -az --delete \
             -e "ssh -i ~/.ssh/deploy_key" \
@@ -244,12 +322,14 @@ jobs:
             ubuntu@${{ secrets.ORACLE_HOST }}:/home/ubuntu/shirtfaced-studio/assets/garments/
 
       - name: Bootstrap Studio
+        if: steps.plan.outputs.studio == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'chmod +x /home/ubuntu/shirtfaced-studio/deploy/*.sh &&
              bash /home/ubuntu/shirtfaced-studio/deploy/bootstrap-studio.sh'
 
       - name: Place the OpenAI key
+        if: steps.plan.outputs.studio == 'true'
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
@@ -262,6 +342,7 @@ jobs:
             'bash /home/ubuntu/shirtfaced-studio/deploy/set-openai-key.sh'
 
       - name: Place the Gemini renderer key
+        if: steps.plan.outputs.studio == 'true'
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
@@ -274,9 +355,16 @@ jobs:
             'bash /home/ubuntu/shirtfaced-studio/deploy/set-gemini-key.sh'
 
       - name: Build and restart Studio
+        if: steps.plan.outputs.studio == 'true'
         run: |
           ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
             'bash /home/ubuntu/shirtfaced-studio/deploy/deploy-studio.sh'
+
+      - name: Record Studio deploy
+        if: steps.plan.outputs.studio == 'true'
+        run: |
+          ssh -i ~/.ssh/deploy_key ubuntu@${{ secrets.ORACLE_HOST }} \
+            "mkdir -p /home/ubuntu/.deploy-markers && echo $GITHUB_SHA > /home/ubuntu/.deploy-markers/shirtfaced-studio"
 
       - name: Sync storefront
         run: |
@@ -299,6 +387,7 @@ jobs:
       # not the SESSION_SECRET itself, and expires long before this workflow
       # would ever run again.
       - name: Mint a CI session token for the smoke tests
+        if: steps.plan.outputs.studio == 'true'
         id: mint-token
         env:
           SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
@@ -317,11 +406,13 @@ jobs:
           echo "token=$token" >> "$GITHUB_OUTPUT"
 
       - name: Smoke the vintage chain
+        if: steps.plan.outputs.studio == 'true'
         env:
           SMOKE_SESSION_TOKEN: ${{ steps.mint-token.outputs.token }}
         run: python studio/scripts/smoke_vintage.py --base https://studio.shirtfaced.wtf
 
       - name: Smoke the design chain
+        if: steps.plan.outputs.studio == 'true'
         env:
           SMOKE_SESSION_TOKEN: ${{ steps.mint-token.outputs.token }}
         run: python studio/scripts/smoke_design_chain.py --base https://studio.shirtfaced.wtf
