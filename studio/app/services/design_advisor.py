@@ -482,9 +482,11 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
 
     polarity = by_field.get("Value polarity", "light on dark")
     polarity_prose = (
-        "Light-coloured ink on a black garment."
+        "Ink the artwork in light colours, as it will be screen-printed in light ink on a "
+        "black garment."
         if polarity == "light on dark"
-        else "Dark ink on a light or white garment."
+        else "Ink the artwork in dark colours, as it will be screen-printed in dark ink on a "
+        "light or white garment."
     )
 
     tradition_label = direction.tradition.replace("-", " ")
@@ -518,11 +520,15 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
     #   is the general guard; concepts written that way should still be
     #   fixed at the source when found.
     return (
-        f"T-shirt graphic design, {tradition_label} style.{idea_line} "
-        f"Scale: {scale_prose}. Placement: {placement_prose}. "
+        f"Standalone t-shirt graphic design, {tradition_label} style -- print-ready artwork, "
+        f"not a product photo.{idea_line} "
+        f"Scale: {scale_prose}. Placement (for reference only, so the composition reads "
+        f"correctly at that size and position -- do not draw a garment): {placement_prose}. "
         f"{polarity_prose} {archetype_prose} "
         "Flat vector illustration or clean halftone screen-print texture -- not a "
-        "photorealistic or painterly scene, and not extending past the garment itself. "
+        "photorealistic or painterly scene, and not extending past the image's own edges. "
+        "Deliver the graphic alone, isolated on a plain white or transparent background -- "
+        "no garment, no mockup, no model, no photograph, nothing but the artwork itself. "
         "Invent an appropriate short brand name or wordmark if the concept calls for "
         "lettering; do not render this description's own wording as the printed text, "
         "do not depict any real trademarked logo or brand name, and do not invent a name "
