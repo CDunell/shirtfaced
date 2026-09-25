@@ -24,16 +24,26 @@ using their paid subscription — never `GoogleImageClient` or any other
 API-billed path. This is a hard rule, not a preference: the owner pays for
 ChatGPT/Gemini already and does not want to pay again per image.
 
+## Running it in the background
+
+For anything past one or two designs, dispatch the `design-batch-runner`
+subagent (`.claude/agents/design-batch-runner.md`) with the count and any
+traditions or concepts the owner named. It follows this same procedure in
+its own Chrome tab and reports back, so the owner isn't watching every
+click. It never edits code or deploys, so a template regression it reports
+comes back to the main session to fix, with the owner's sign-off.
+
 ## Prerequisites
 
 - `claude-in-chrome` connected and logged into ChatGPT (verify with
   `list_connected_browsers` before starting if unsure).
-- SSH access to the production box: `SHIRTFACED_BOX_HOST` (e.g.
-  `ubuntu@<box-ip>`) and `SHIRTFACED_SSH_KEY` (defaults to
-  `~/.ssh/shirtfaced_box`) set in the environment. The host is deliberately
-  not written down anywhere in this repo — same reason `deploy.yml` keeps
-  it as a GitHub secret rather than a committed value. Ask the owner for it
-  if it isn't already set.
+- SSH access to the production box via the repo's gitignored `.secrets/`:
+  `.secrets/box_host` (the `ubuntu@<ip>` target) and `.secrets/oracle.key`
+  (see `.secrets/README.md`). `push_generation.sh` reads both on its own;
+  for the step-2 SSH call below, use
+  `ssh -i .secrets/oracle.key "$(cat .secrets/box_host)"`. Never copy the
+  host into a committed file — `deploy.yml` keeps it as a GitHub secret for
+  the same reason. If `.secrets/` is missing, ask the owner.
 
 ## Steps, per design
 
@@ -47,7 +57,7 @@ ChatGPT/Gemini already and does not want to pay again per image.
 
 2. **Get the real prompt** (evidence-informed, not hand-written):
    ```
-   ssh -i $SHIRTFACED_SSH_KEY $SHIRTFACED_BOX_HOST \
+   ssh -i .secrets/oracle.key "$(cat .secrets/box_host)" \
      "cd /home/ubuntu/shirtfaced-studio && .venv/bin/python scripts/render_prompt_for.py '<tradition>' '<concept text>'"
    ```
    If this refuses ("nothing evidence-backed to build a prompt from"), the

@@ -11,12 +11,14 @@
 # indistinguishable either way. Replaces the hand-typed multi-line python
 # heredoc a batch run used to need per image.
 #
-# Requires SHIRTFACED_BOX_HOST (e.g. "ubuntu@<box-ip>") and, unless the key
-# lives at the default path, SHIRTFACED_SSH_KEY. Neither is hardcoded here
-# on purpose -- the box's address is exactly what deploy.yml keeps as a
-# GitHub secret rather than committing, and this script holds to the same
-# rule.
+# Host and key come from the repo's gitignored .secrets/ (box_host,
+# oracle.key -- see .secrets/README.md), overridable with
+# SHIRTFACED_BOX_HOST / SHIRTFACED_SSH_KEY. Never hardcoded here: the box's
+# address is what deploy.yml keeps as a GitHub secret rather than
+# committing, and this script holds to the same rule.
 set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
 if [ "$#" -ne 5 ]; then
   echo "Usage: $0 <image_path> <tradition> <batch> <concept_text> <prompt_text>" >&2
@@ -29,12 +31,19 @@ BATCH="$3"
 CONCEPT_TEXT="$4"
 PROMPT_TEXT="$5"
 
+if [ -z "${SHIRTFACED_BOX_HOST:-}" ] && [ -f "$REPO_ROOT/.secrets/box_host" ]; then
+  SHIRTFACED_BOX_HOST="$(tr -d '[:space:]' < "$REPO_ROOT/.secrets/box_host")"
+fi
 if [ -z "${SHIRTFACED_BOX_HOST:-}" ]; then
-  echo "SHIRTFACED_BOX_HOST is not set (e.g. export SHIRTFACED_BOX_HOST=ubuntu@<box-ip>)." >&2
+  echo "No box host: set SHIRTFACED_BOX_HOST or write it to .secrets/box_host." >&2
   exit 1
 fi
 
-SSH_KEY="${SHIRTFACED_SSH_KEY:-$HOME/.ssh/shirtfaced_box}"
+SSH_KEY="${SHIRTFACED_SSH_KEY:-$REPO_ROOT/.secrets/oracle.key}"
+if [ ! -f "$SSH_KEY" ]; then
+  echo "No SSH key at $SSH_KEY: set SHIRTFACED_SSH_KEY." >&2
+  exit 1
+fi
 REMOTE_DIR="/home/ubuntu/shirtfaced-studio"
 
 TMP=$(mktemp -d)
