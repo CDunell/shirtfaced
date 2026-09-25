@@ -19,14 +19,15 @@ and risks the ChatGPT/Gemini account being flagged for automated use at
 real volume.
 
 **No metered API calls.** Generation happens through the owner's real,
-logged-in browser session (`claude-in-chrome` tools) against chatgpt.com,
-using their paid subscription — never `GoogleImageClient` or any other
+logged-in browser session (`claude-in-chrome` tools) against chatgpt.com —
+ChatGPT is the default; use Gemini only if the owner asks for it or ChatGPT
+is unavailable — using their paid subscription — never `GoogleImageClient` or any other
 API-billed path. This is a hard rule, not a preference: the owner pays for
 ChatGPT/Gemini already and does not want to pay again per image.
 
 ## Running it in the background
 
-For anything past one or two designs, dispatch the `design-batch-runner`
+For 1–2 designs, run them yourself in this session. For 3 or more, dispatch the `design-batch-runner`
 subagent (`.claude/agents/design-batch-runner.md`) with the count and any
 traditions or concepts the owner named. It follows this same procedure in
 its own Chrome tab and reports back, so the owner isn't watching every
@@ -79,8 +80,9 @@ comes back to the main session to fix, with the owner's sign-off.
      caption dropped underneath.
    Any of these wrong is a prompt-template bug, not a one-off bad render —
    fix `app/services/design_advisor.py`'s `render_generation_prompt()`,
-   redeploy, and regenerate rather than accepting a flawed image or
-   patching around it per-image.
+   commit, then **ask the owner before pushing** (a push to `main` deploys
+   to production — see CLAUDE.md), and regenerate once it's live. Don't
+   accept a flawed image or patch around it per-image.
 
 4. **Download it** (extension download UI is unreliable for blob URLs; do
    this instead):
