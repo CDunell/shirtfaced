@@ -15,7 +15,12 @@ from __future__ import annotations
 import sys
 
 from app.db.session import get_session_factory
-from app.services.design_advisor import advise, measurement_rows, render_generation_prompt
+from app.services.design_advisor import (
+    RETIRED_TRADITIONS,
+    advise,
+    measurement_rows,
+    render_generation_prompt,
+)
 
 
 def main() -> None:
@@ -24,6 +29,12 @@ def main() -> None:
         raise SystemExit(1)
 
     tradition = sys.argv[1]
+    if tradition in RETIRED_TRADITIONS:
+        print(
+            f"'{tradition}' is retired ({', '.join(sorted(RETIRED_TRADITIONS))}) -- "
+            "the owner ruled it out. Pick another tradition."
+        )
+        raise SystemExit(2)
     concept_text = " ".join(sys.argv[2:])
 
     session = get_session_factory()()

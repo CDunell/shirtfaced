@@ -51,7 +51,9 @@ comes back to the main session to fix, with the owner's sign-off.
 1. **Pick a tradition and a concept.** Traditions are the values already in
    `design_generation_samples.tradition` (au-surf, skate, streetwear,
    band-merch, moto, …) — pick one that's thin in the current pending queue
-   if no direction is given, otherwise use what the owner asked for. Write
+   if no direction is given, otherwise use what the owner asked for. Never
+   a retired one (`RETIRED_TRADITIONS` in `app/services/design_advisor.py`:
+   novelty, au-humour, cycling — "not us", per the owner). Write
    one or two sentences describing the actual graphic (motif, texture,
    mood) — this is the one genuinely creative step, still done by a person
    or by you, not automated.
@@ -67,17 +69,19 @@ comes back to the main session to fix, with the owner's sign-off.
 
 3. **Generate it.** Navigate `claude-in-chrome` to chatgpt.com, submit
    "Generate an image. " + the prompt from step 2, wait for the render
-   (usually 30-50s, poll with short waits and screenshots), and confirm
-   visually before moving on:
+   (usually 1.5–2 minutes; poll with short waits and screenshots), and
+   confirm visually before moving on. The prompt is ~2,300 characters —
+   typing it with the keyboard tool can time out; setting the message box's
+   text with `javascript_tool` and then sending is reliable. Check:
    - Isolated graphic on a plain background — no garment, no mockup, no
      model. If it drew a t-shirt photo instead, the prompt's own
      instruction already covers this; look again before assuming the model
      ignored it.
-   - Proportions plausible for a chest print (roughly square to ~2:1 wide),
-     not a stretched banner.
    - If lettering appears, it reads "Shirtfaced" (never an invented brand),
      lettered to match the illustration's own style — not a default-font
      caption dropped underneath.
+   Shape and proportions are not a check — tall, wide or square are all
+   fine. The owner rejects the ones that don't work, in Gallery.
    Any of these wrong is a prompt-template bug, not a one-off bad render —
    fix `app/services/design_advisor.py`'s `render_generation_prompt()`,
    commit, then **ask the owner before pushing** (a push to `main` deploys
@@ -110,7 +114,7 @@ comes back to the main session to fix, with the owner's sign-off.
 
 Don't quietly retry or patch around it — say what broke and fix the actual
 cause:
-- **Mockup photo instead of isolated artwork**, **impossible proportions**,
+- **Mockup photo instead of isolated artwork**, or a
   **generic-font or invented brand name** → the prompt template regressed;
   read `render_generation_prompt()` in `app/services/design_advisor.py`,
   fix it, redeploy, and only then regenerate. These have all happened

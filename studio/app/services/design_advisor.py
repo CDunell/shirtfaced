@@ -345,6 +345,12 @@ def advise(
     return direction
 
 
+# Traditions the owner has ruled out as "not us" (26 September 2026).
+# Batch generation refuses them; the corpus rows stay, since they still
+# inform whole-corpus fallbacks and the owner may reverse this.
+RETIRED_TRADITIONS = frozenset({"novelty", "au-humour", "cycling"})
+
+
 _SHAPE_PROSE = {
     "single wide mass": "one element spanning wide and shallow across the print area, not "
     "tall or narrow",
@@ -525,10 +531,6 @@ def render_generation_prompt(direction: DesignDirection, phrase: str = "") -> st
         f"Scale: {scale_prose}. Placement (for reference only, so the composition reads "
         f"correctly at that size and position -- do not draw a garment): {placement_prose}. "
         f"{polarity_prose} {archetype_prose} "
-        "Whatever the composition, the whole graphic still has to fit a garment's chest as a "
-        "print: keep the overall shape within roughly a square to about 2:1 wide -- 'wide and "
-        "shallow' means the elements inside it read that way, not a thin banner strip "
-        "stretched edge to edge. "
         "Flat vector illustration or clean halftone screen-print texture -- not a "
         "photorealistic or painterly scene, and not extending past the image's own edges. "
         "Deliver the graphic alone, isolated on a plain white or transparent background -- "

@@ -77,9 +77,11 @@ it, this is what they mean:
    unattended.
 4. Every design uses **Shirtfaced** as the brand, lettered in the
    illustration's own style, never an invented brand name. The output is an
-   isolated graphic, not a garment mockup, in a chest-print shape (roughly
-   square to 2:1).
-5. Results land in **Gallery** as `pending`. Gallery is the front door and
+   isolated graphic, not a garment mockup. Shape is open: tall, wide or
+   square. The owner rejects what doesn't work.
+5. Retired traditions, "not us": **novelty, au-humour, cycling**. The list
+   is `RETIRED_TRADITIONS` in `studio/app/services/design_advisor.py`.
+6. Results land in **Gallery** as `pending`. Gallery is the front door and
    the only review screen, and the owner decides kept or dropped there. The
    older Work/Designs brief → attempt → scorecard pipeline is the path the
    owner has rejected. Don't send them into it.

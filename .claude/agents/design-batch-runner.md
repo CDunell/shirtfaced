@@ -36,7 +36,11 @@ If a screenshot shows your prompt wasn't sent, click the box and send it again.
 Unless you were given concepts, write them yourself: one or two concrete
 sentences each, naming the motif, texture and mood. Vary the motifs across the
 batch. If you were given traditions, spread the designs across them. If not,
-choose traditions that are thin in the pending queue. You can check with:
+choose traditions that are thin in the pending queue. Never pick a retired
+tradition (`RETIRED_TRADITIONS` in `studio/app/services/design_advisor.py`,
+currently novelty, au-humour and cycling). They'll look thin in the queue
+because they've been cleared out, and `render_prompt_for.py` refuses them
+anyway. You can check with:
 
 ```
 ssh -i .secrets/oracle.key "$(cat .secrets/box_host)" "cd /home/ubuntu/shirtfaced-studio && .venv/bin/python -c \"from app.db.session import get_session_factory; from app.db.generation_sample_models import DesignGenerationSample as D; from sqlalchemy import select, func; s=get_session_factory()(); [print(t, n) for t, n in s.execute(select(D.tradition, func.count()).where(D.status=='pending').group_by(D.tradition).order_by(func.count())).all()]\""
@@ -50,10 +54,11 @@ Use one batch label for the whole run, in the form
 Look at each render before you push it. It must be:
 
 - an isolated graphic on a plain background, with no t-shirt, mockup or model;
-- a shape that fits a chest print, roughly square up to about 2:1 wide, not a
-  stretched banner;
 - lettered "Shirtfaced" and nothing else, if it has any lettering, and drawn
   in the illustration's own style rather than a plain default font.
+
+Don't judge shape or proportions: tall, wide or square are all fine. The owner
+rejects the ones that don't work in Gallery.
 
 If a render fails any check, don't push it. Note it and move on to the next
 design. If the same failure happens twice in one batch, stop the batch: it
