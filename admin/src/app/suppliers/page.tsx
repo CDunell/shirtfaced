@@ -26,7 +26,8 @@ export default async function SuppliersPage({
         <p className="max-w-[65ch] text-[14px] text-ink/70">
           Who can print our blanks, how big, how many, and for how much. The dot beside each figure
           shows where it came from, so a choice rests on what&rsquo;s confirmed rather than what&rsquo;s assumed.
-          &ldquo;Best&rdquo; is only awarded among confirmed figures.
+          &ldquo;Best&rdquo; is only awarded among confirmed figures. Prices are one tee (smallest size) with one
+          print, in AUD including GST unless the stated price underneath says otherwise.
         </p>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px] text-ink/60">
           {VERIFICATIONS.map((v) => (
