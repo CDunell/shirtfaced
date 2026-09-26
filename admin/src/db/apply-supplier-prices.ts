@@ -124,7 +124,7 @@ const UPDATES: Update[] = [
     verification: "api",
   })),
   /* Second pass, same day: gaps on the shortlist. */
-  ...([["as-colour-5026", 2455], ["as-colour-5080", 3055]] as const).map(([blank, exGst]): Update => ({
+  ...([["as-colour-5026", 2455], ["as-colour-5080", 3055], ["as-colour-5082", 3055], ["as-colour-5069", 2675]] as const).map(([blank, exGst]): Update => ({
     supplier: "dropshirt",
     blank,
     price: `Non-core style, ordered in (+4–5 working days): A$${(exGst / 100).toFixed(2)} ex GST (colours) incl. print up to A4; up to 35 × 40 cm +A$3.65, up to 40 × 50 cm +A$7.10`,
@@ -141,8 +141,9 @@ const UPDATES: Update[] = [
     verification: "page",
   })),
   printBar("as-colour-5080", "https://theprintbar.com/products/as-colour-mens-heavy-t-shirt-5080", 2896),
-  ...(["as-colour-5026", "as-colour-5080", "as-colour-5001", "as-colour-4062", "as-colour-5025"] as const).map((blank): Update => ({
-    ...merchSprint(blank, { "as-colour-5026": 1639, "as-colour-5080": 2040, "as-colour-5001": 1440, "as-colour-4062": 1360, "as-colour-5025": 1440 }[blank]),
+  printBar("as-colour-5082", "https://theprintbar.com/products/as-colour-mens-heavy-faded-t-shirt-5082", 2819),
+  ...(["as-colour-5026", "as-colour-5080", "as-colour-5082", "as-colour-5001", "as-colour-4062", "as-colour-5025"] as const).map((blank): Update => ({
+    ...merchSprint(blank, { "as-colour-5026": 1639, "as-colour-5080": 2040, "as-colour-5082": 2320, "as-colour-5001": 1440, "as-colour-4062": 1360, "as-colour-5025": 1440 }[blank]),
     maxFront: "39 × 48.75 cm, at no extra cost, in Create Apparel's designer (MerchSprint's print house); MerchSprint itself doesn't publish a size",
     maxPrintWidthMm: 390,
     maxPrintHeightMm: 488,

@@ -19,7 +19,8 @@ const SHORTLIST = new Set(["ogo", "merchsprint", "the-print-bar", "merchize", "d
 const USEFUL = SEED_SUPPLIERS.filter((s) => SHORTLIST.has(s.s));
 
 async function main() {
-  const blankRows = Object.values(SEED_BLANKS);
+  /* Premium Blanks Australia: store offline, no printer stocks it. */
+  const blankRows = Object.values(SEED_BLANKS).filter((b) => b.slug !== "premium-blanks-australia-heavyweight");
   const newBlanks = await db.insert(blanks).values(blankRows).onConflictDoNothing().returning({ id: blanks.id });
 
   const newSuppliers = await db
