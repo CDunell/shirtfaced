@@ -3,6 +3,8 @@
  * tables. Run with `npm run seed:suppliers`. Insert-only: a supplier, blank
  * or supplier-blank pairing that already exists is left alone, so edits made
  * in the admin are never overwritten and re-running only adds what's new.
+ * Suppliers with no print size and no priced record are skipped: a row with
+ * nothing to compare is noise.
  */
 import { inArray } from "drizzle-orm";
 import { db } from "./client";
@@ -12,6 +14,15 @@ import { SEED_BLANKS, SEED_SUPPLIERS, type BlankKey } from "./supplier-seed-data
 /* When the research was done. */
 const CHECKED_AT = new Date("2026-09-26T00:00:00+10:00");
 
+const USEFUL = SEED_SUPPLIERS.filter(
+  (s) =>
+    s.mw != null ||
+    s.sw != null ||
+    Object.values(s.o ?? {}).some(
+      (o) => o.pc != null || o.spc != null || o.mw != null || o.sw != null || /\d/.test(o.p ?? ""),
+    ),
+);
+
 async function main() {
   const blankRows = Object.values(SEED_BLANKS);
   const newBlanks = await db.insert(blanks).values(blankRows).onConflictDoNothing().returning({ id: blanks.id });
@@ -19,7 +30,7 @@ async function main() {
   const newSuppliers = await db
     .insert(suppliers)
     .values(
-      SEED_SUPPLIERS.map((s) => ({
+      USEFUL.map((s) => ({
         slug: s.s,
         name: s.n,
         kind: s.k,
@@ -54,11 +65,11 @@ async function main() {
   );
   const supplierIds = new Map(
     (await db.select({ id: suppliers.id, slug: suppliers.slug }).from(suppliers).where(
-      inArray(suppliers.slug, SEED_SUPPLIERS.map((s) => s.s)),
+      inArray(suppliers.slug, USEFUL.map((s) => s.s)),
     )).map((s) => [s.slug, s.id]),
   );
 
-  const offerings = SEED_SUPPLIERS.flatMap((s) =>
+  const offerings = USEFUL.flatMap((s) =>
     Object.entries(s.o ?? {}).map(([key, o]) => ({
       supplierId: supplierIds.get(s.s)!,
       blankId: blankIds.get(SEED_BLANKS[key as BlankKey].slug)!,
@@ -86,7 +97,7 @@ async function main() {
     : [];
 
   console.log(
-    `Added ${newBlanks.length}/${blankRows.length} blanks, ${newSuppliers.length}/${SEED_SUPPLIERS.length} suppliers, ` +
+    `Added ${newBlanks.length}/${blankRows.length} blanks, ${newSuppliers.length}/${USEFUL.length} suppliers, ` +
       `${newOfferings.length}/${offerings.length} supplier-blank records (the rest already existed).`,
   );
   process.exit(0);
