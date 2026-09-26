@@ -37,7 +37,7 @@ const QUALITY: Quality[] = [
     construction: "Side-seamed, shoulder-to-shoulder tape, pre-shrunk", dye: "Piece-dyed (not garment-dyed); ~57 colours",
     printNotes: `Combed cotton is the surface ${GUIDE} rates best for DTG and DTF. A US print shop finds AS Colour DTG "more predictable" than Comfort Colors, with the collar holding shape through washing.`,
     specUrl: "https://www.ascolour.com.au/classic-tee-5026",
-    notes: "Best all-round for large, detailed DTG prints with a premium feel. Locked main-range blank (GARMENT_BLANK_STRATEGY.md, 13 Aug 2026).",
+    notes: "Meets the brief (black/white; Rip Curl / Threadheads / Country Road feel): heavier than Threadheads' 200 gsm combed tee, same combed fabric, cleanest print. Locked main-range blank (GARMENT_BLANK_STRATEGY.md, 13 Aug 2026).",
   },
   {
     slug: "as-colour-5069", brand: "AS Colour", styleCode: "5069", name: "Classic Oversized Tee", category: "tee", sortOrder: 15,
@@ -46,7 +46,7 @@ const QUALITY: Quality[] = [
     construction: "Side-seamed, shoulder-to-shoulder tape, pre-shrunk", dye: "Piece-dyed; only 6 colours",
     printNotes: "Same fabric as the 5026, so the same clean DTG/DTF surface. No independent wash or print reviews found.",
     specUrl: "https://www.ascolour.com.au/classic-oversized-tee-5069",
-    notes: "The 5026's print quality in a boxy streetwear cut; the catch is the 6-colour range.",
+    notes: "The 5026's fabric in a boxy, dropped-shoulder cut, closest to the Threadheads fit. Only 6 colours, which doesn't matter for black and white.",
   },
   {
     slug: "as-colour-5080", brand: "AS Colour", styleCode: "5080", name: "Heavy Tee", category: "tee", sortOrder: 20,
@@ -55,7 +55,7 @@ const QUALITY: Quality[] = [
     construction: "Side-seamed, shoulder-to-shoulder tape, pre-shrunk", dye: "Piece-dyed; ~14 colours",
     printNotes: `Carded: ${GUIDE} says "rougher hand-feel", "slightly less crisp for fine detail prints. Best for bold graphics." Loose fibres can poke through DTG ink; DTF avoids that.`,
     specUrl: "https://www.ascolour.com.au/heavy-tee-5080",
-    notes: "Heaviest, most substantial in the hand. Pick it for bold graphics, printed DTF.",
+    notes: "Most substantial in the hand, but carded: rougher surface and softer print detail than the combed tees the benchmark brands use. Bold graphics, printed DTF.",
   },
   {
     slug: "as-colour-5082", brand: "AS Colour", styleCode: "5082", name: "Heavy Faded Tee", category: "tee", sortOrder: 25,
@@ -64,7 +64,7 @@ const QUALITY: Quality[] = [
     construction: "Side-seamed, shoulder-to-shoulder tape, pre-shrunk", dye: "Garment-dyed (faded); ~21 colours",
     printNotes: `AS Colour recommends a dye blocker on faded garments; loose dyes "cause severe dye migration" above ~145 °C. DTF with low-cure powder, test each colour.`,
     specUrl: "https://www.ascolour.com.au/heavy-faded-tee-5082",
-    notes: "Vintage look; a US printer calls it clients' favourite and hard to keep in stock. Not for large DTG.",
+    notes: "Out for the brief: garment-dyed faded colours give no crisp black or white. Not for large DTG.",
   },
   {
     slug: "comfort-colors-1717", brand: "Comfort Colors", styleCode: "1717", name: "Garment-Dyed Heavyweight Tee", category: "tee", sortOrder: 30,
@@ -73,7 +73,7 @@ const QUALITY: Quality[] = [
     construction: "Tubular (no side seams), twill shoulder tape, topstitched rib", dye: "Garment-dyed; smaller AU range than the US's 67",
     printNotes: "DTG pretreat can discolour light colours (forum reports on Butter); darks are fine with two light coats. DTF: press 143–154 °C with low-cure powder for dye bleed.",
     specUrl: "https://www.comfortcolors.com/us/en/1717-heavyweight-adult-tee-en_us",
-    notes: "Tubular, so it can twist after washing; a UK printer measured 2–3% shrink on a hot wash and sees colour vary batch to batch. Users report mixed fading.",
+    notes: "Out for the brief: garment-dyed, so black washes to charcoal and white to off-white. Tubular, so it can twist after washing; a UK printer measured 2–3% shrink on a hot wash and sees colour vary batch to batch. Users report mixed fading.",
   },
   {
     slug: "as-colour-5050", brand: "AS Colour", styleCode: "5050", name: "Block Tee", category: "tee", sortOrder: 45,
