@@ -111,9 +111,41 @@ export function RegionChip({ value }: { value: PrintRegion }) {
   );
 }
 
+const DOT_STYLE: Record<Verification, string> = {
+  api: "border-ink/60 bg-lime",
+  page: "border-ink bg-ink",
+  summary: "border-ink/50",
+  not_published: "border-dashed border-ink/30",
+};
+
+/* Per-figure trust marker: each figure can come from a different source. */
+export function TrustDot({ value }: { value: Verification }) {
+  return (
+    <span
+      role="img"
+      aria-label={VERIFICATION_LABEL[value]}
+      title={VERIFICATION_LABEL[value]}
+      className={`inline-block h-2 w-2 shrink-0 rounded-full border ${DOT_STYLE[value]}`}
+    />
+  );
+}
+
+/* Missing data, kept visibly distinct from a real value. */
+export function NotPublished({ children = "n/p" }: { children?: React.ReactNode }) {
+  return (
+    <span className="italic text-ink/35" title="Not published by the supplier">
+      {children}
+    </span>
+  );
+}
+
+function cm(mm: number): string {
+  return mm % 10 === 0 ? (mm / 10).toFixed(0) : (mm / 10).toFixed(1);
+}
+
 export function formatPrintArea(widthMm: number | null, heightMm: number | null): string | null {
   if (!widthMm || !heightMm) return null;
-  return `${(widthMm / 10).toFixed(0)} × ${(heightMm / 10).toFixed(0)} cm`;
+  return `${cm(widthMm)} × ${cm(heightMm)} cm`;
 }
 
 /* A4 is 210 × 297 mm; a print area covers it in either orientation. */
