@@ -14,6 +14,8 @@ import { blanks, supplierOfferings, suppliers, type Verification } from "./schem
 
 const CHECKED_AT = new Date("2026-09-26T12:00:00+10:00");
 const incGst = (exGstCents: number) => Math.round(exGstCents * 1.1);
+/* Frankfurter (ECB) rate for 25 Sep 2026, for suppliers that bill in USD. */
+const USD_AUD = 1.4224;
 
 type Update = {
   supplier: string;
@@ -120,6 +122,41 @@ const UPDATES: Update[] = [
     printedIn: "au",
     sourceUrl: "Merchize API /product/catalog",
     verification: "api",
+  })),
+  /* Second pass, same day: gaps on the shortlist. */
+  ...([["as-colour-5026", 2455], ["as-colour-5080", 3055]] as const).map(([blank, exGst]): Update => ({
+    supplier: "dropshirt",
+    blank,
+    price: `Non-core style, ordered in (+4–5 working days): A$${(exGst / 100).toFixed(2)} ex GST (colours) incl. print up to A4; up to 35 × 40 cm +A$3.65, up to 40 × 50 cm +A$7.10`,
+    standardPriceCents: incGst(exGst),
+    priceCents: incGst(exGst + 710),
+    standardPrint: "A4 (~21 × 29 cm) included",
+    standardPrintWidthMm: 210,
+    standardPrintHeightMm: 297,
+    maxFront: "40 × 50 cm (+A$7.10 ex GST)",
+    maxPrintWidthMm: 400,
+    maxPrintHeightMm: 500,
+    printedIn: "au",
+    sourceUrl: "https://dashboard.dropshirt.com.au/support/knowledgebase.php?article=54",
+    verification: "page",
+  })),
+  printBar("as-colour-5080", "https://theprintbar.com/products/as-colour-mens-heavy-t-shirt-5080", 2896),
+  ...(["as-colour-5026", "as-colour-5080", "as-colour-5001", "as-colour-4062", "as-colour-5025"] as const).map((blank): Update => ({
+    ...merchSprint(blank, { "as-colour-5026": 1639, "as-colour-5080": 2040, "as-colour-5001": 1440, "as-colour-4062": 1360, "as-colour-5025": 1440 }[blank]),
+    maxFront: "39 × 48.75 cm, at no extra cost, in Create Apparel's designer (MerchSprint's print house); MerchSprint itself doesn't publish a size",
+    maxPrintWidthMm: 390,
+    maxPrintHeightMm: 488,
+    printedIn: "au",
+  })),
+  ...([["comfort-colors-1717", 999], ["as-colour-5001", 1200], ["as-colour-4062", 999]] as const).map(([blank, usd]): Update => ({
+    supplier: "merchize",
+    blank,
+    price: `US$${(usd / 100).toFixed(2)} incl. one printed side (+US$4.50 double-sided) = A$${((usd * USD_AUD) / 100).toFixed(2)} at ${USD_AUD} (25 Sep 2026); AU shipping US$4.99 first item, US$2.50 each extra; print size not published; GST not stated`,
+    priceCents: Math.round(usd * USD_AUD),
+    standardPriceCents: Math.round(usd * USD_AUD),
+    printedIn: "au",
+    sourceUrl: "https://merchize.com/product/classic-unisex-t-shirt-comfort-colors-1717-(made-in-au)/",
+    verification: "page",
   })),
   { supplier: "mod-merch-on-demand", blank: "as-colour-5026", price: "A$25.00 tee (store currency AUD); per-side print cost not on the product page", sourceUrl: "https://merchondemand.com.au/products/bh-mens-as-colour-classic-tee-5026", verification: "page" },
 ];
