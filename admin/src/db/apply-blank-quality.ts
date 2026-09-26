@@ -76,6 +76,15 @@ const QUALITY: Quality[] = [
     notes: "Tubular, so it can twist after washing; a UK printer measured 2–3% shrink on a hot wash and sees colour vary batch to batch. Users report mixed fading.",
   },
   {
+    slug: "as-colour-5050", brand: "AS Colour", styleCode: "5050", name: "Block Tee", category: "tee", sortOrder: 45,
+    gsm: 200, fit: "Regular",
+    fibre: "100% carded cotton", yarn: "20-singles",
+    construction: "Tubular (no side seams), shoulder-to-shoulder tape, double-needle hems", dye: "Piece-dyed; 12 colours at House of Uniforms",
+    printNotes: `Carded, so ${GUIDE}'s "slightly less crisp for fine detail" applies; DropShirt: "Carded Cotton may not produce smoothest DTG print".`,
+    specUrl: "https://shop.houseofuniforms.com.au/products/the-block-tubular-tee-mens-short-sleeve",
+    notes: "Promo / workwear tee (House of Uniforms: A$10.45 blank). Tubular, so it can twist after washing. Below the 5026 on every build measure.",
+  },
+  {
     slug: "as-colour-5001", brand: "AS Colour", styleCode: "5001", name: "Staple Tee", category: "tee", sortOrder: 50,
     gsm: 180, fit: "Regular",
     fibre: "100% combed cotton", yarn: "28-singles",
