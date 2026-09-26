@@ -417,6 +417,154 @@ export const orderItems = pgTable("order_items", {
   unitPriceCents: integer("unit_price_cents").notNull(),
 });
 
+/* ---------------------------------------------------------------------------
+   Suppliers — who can print which blank, compared on sourced figures.
+
+   Every figure records where it came from and how far it can be trusted
+   (VERIFICATIONS), because the research behind it is uneven: some numbers
+   come straight from a supplier's API, some from their own page, some only
+   from a page summary, and many suppliers simply don't publish them. A
+   comparison that hides that difference invites a decision on a guess.
+--------------------------------------------------------------------------- */
+
+export const SUPPLIER_KINDS = ["pod", "print_shop", "wholesaler", "transfers"] as const;
+export type SupplierKind = (typeof SUPPLIER_KINDS)[number];
+
+/* Where the garment is actually printed for an Australian order. */
+export const PRINT_REGIONS = ["au", "nz", "overseas", "unknown"] as const;
+export type PrintRegion = (typeof PRINT_REGIONS)[number];
+
+/* yes / no / brand_only: they name the brand but not this exact style. */
+export const OFFER_STATUSES = ["yes", "no", "brand_only", "unknown"] as const;
+export type OfferStatus = (typeof OFFER_STATUSES)[number];
+
+export const VERIFICATIONS = ["api", "page", "summary", "not_published"] as const;
+export type Verification = (typeof VERIFICATIONS)[number];
+
+export const BLANK_CATEGORIES = [
+  "tee",
+  "tank",
+  "crop",
+  "v_neck",
+  "long_sleeve",
+  "hoodie",
+  "other",
+] as const;
+export type BlankCategory = (typeof BLANK_CATEGORIES)[number];
+
+export const suppliers = pgTable("suppliers", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  name: text("name").notNull(),
+  kind: text("kind", { enum: SUPPLIER_KINDS }).notNull(),
+  /* Suburb and city as the supplier states it. */
+  location: text("location"),
+  /* State code (QLD, NSW, ...), NZ, AU (national / state unstated) or INTL. */
+  region: text("region").notNull(),
+  printsIn: text("prints_in", { enum: PRINT_REGIONS }).notNull().default("unknown"),
+  methods: text("methods").array().notNull().default([]),
+  /* As the supplier words it; minOrderQty is the comparable number. */
+  minOrder: text("min_order"),
+  minOrderQty: integer("min_order_qty"),
+  /* Supplier-wide largest print, as stated, plus millimetres for sorting. */
+  maxPrint: text("max_print"),
+  maxPrintWidthMm: integer("max_print_width_mm"),
+  maxPrintHeightMm: integer("max_print_height_mm"),
+  /* The print the base price includes — often A4 — as distinct from the
+     largest they can do at a surcharge. */
+  standardPrint: text("standard_print"),
+  standardPrintWidthMm: integer("standard_print_width_mm"),
+  standardPrintHeightMm: integer("standard_print_height_mm"),
+  website: text("website"),
+  /* How an order reaches them: API, Shopify app, Printify provider, email... */
+  integration: text("integration"),
+  /* We already hold an account or API key with them. */
+  hasAccount: boolean("has_account").notNull().default(false),
+  sourceUrls: text("source_urls").array().notNull().default([]),
+  verification: text("verification", { enum: VERIFICATIONS })
+    .notNull()
+    .default("not_published"),
+  checkedAt: timestamp("checked_at", { withTimezone: true }),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const blanks = pgTable("blanks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  slug: text("slug").notNull().unique(),
+  brand: text("brand").notNull(),
+  styleCode: text("style_code").notNull(),
+  name: text("name").notNull(),
+  category: text("category", { enum: BLANK_CATEGORIES }).notNull(),
+  gsm: integer("gsm"),
+  fit: text("fit"),
+  notes: text("notes"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const supplierOfferings = pgTable(
+  "supplier_offerings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    supplierId: uuid("supplier_id")
+      .notNull()
+      .references(() => suppliers.id, { onDelete: "cascade" }),
+    blankId: uuid("blank_id")
+      .notNull()
+      .references(() => blanks.id, { onDelete: "cascade" }),
+    status: text("status", { enum: OFFER_STATUSES }).notNull().default("unknown"),
+    /* Can differ from the supplier's own printsIn: Printful prints some
+       blanks in Australia and ships others from the US. */
+    printedIn: text("printed_in", { enum: PRINT_REGIONS }).notNull().default("unknown"),
+    maxFront: text("max_front"),
+    maxBack: text("max_back"),
+    maxPrintWidthMm: integer("max_print_width_mm"),
+    maxPrintHeightMm: integer("max_print_height_mm"),
+    /* The print the base price includes (often A4). */
+    standardPrint: text("standard_print"),
+    standardPrintWidthMm: integer("standard_print_width_mm"),
+    standardPrintHeightMm: integer("standard_print_height_mm"),
+    /* As stated. The cents figures are one tee with one print, in AUD, only
+       when the supplier's own figures add up to exactly that: priceCents at
+       their largest print, standardPriceCents at their standard one. */
+    price: text("price"),
+    priceCents: integer("price_cents"),
+    standardPriceCents: integer("standard_price_cents"),
+    minOrderQty: integer("min_order_qty"),
+    sourceUrl: text("source_url"),
+    verification: text("verification", { enum: VERIFICATIONS })
+      .notNull()
+      .default("not_published"),
+    checkedAt: timestamp("checked_at", { withTimezone: true }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("supplier_offerings_supplier_blank_idx").on(t.supplierId, t.blankId)],
+);
+
+export const suppliersRelations = relations(suppliers, ({ many }) => ({
+  offerings: many(supplierOfferings),
+}));
+
+export const blanksRelations = relations(blanks, ({ many }) => ({
+  offerings: many(supplierOfferings),
+}));
+
+export const supplierOfferingsRelations = relations(supplierOfferings, ({ one }) => ({
+  supplier: one(suppliers, {
+    fields: [supplierOfferings.supplierId],
+    references: [suppliers.id],
+  }),
+  blank: one(blanks, {
+    fields: [supplierOfferings.blankId],
+    references: [blanks.id],
+  }),
+}));
+
 export const customersRelations = relations(customers, ({ many }) => ({
   orders: many(orders),
 }));
