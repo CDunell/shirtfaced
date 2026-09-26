@@ -192,11 +192,11 @@ export default async function ComparePage({
         const best = bestIndexes(row.cells, row.better);
         return (
           <tr key={row.label} className="align-top hover:bg-paper-2 [&>*]:border-b [&>*]:border-ink/5">
-            <th scope="row" className="sticky left-0 w-[190px] bg-paper px-3 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-ink/50">
+            <th scope="row" className="sticky left-0 z-[5] w-[92px] bg-paper px-2 py-3 text-left text-[10px] md:w-[190px] md:px-3 md:text-[11px] font-bold uppercase tracking-wide text-ink/50">
               {row.label}
             </th>
             {row.cells.map((cell, i) => (
-              <td key={i} className={`px-3 py-3 ${best.has(i) ? "bg-lime/30 font-semibold" : ""}`}>
+              <td key={i} className={`px-2 py-3 md:px-3 ${best.has(i) ? "bg-lime/30 font-semibold" : ""}`}>
                 {cell.node}
               </td>
             ))}
@@ -253,7 +253,7 @@ export default async function ComparePage({
       </div>
 
       <div className="max-h-[80vh] overflow-auto rounded-[var(--radius-card)] border border-ink/10 bg-paper">
-        <table className="w-full min-w-[720px] border-collapse text-[13px] [font-variant-numeric:tabular-nums]">
+        <table className="w-full min-w-[520px] border-collapse md:min-w-[720px] text-[13px] [font-variant-numeric:tabular-nums]">
           <thead>
             <tr>
               <th className="sticky left-0 top-0 z-20 border-b border-ink/10 bg-paper px-3 py-3" />

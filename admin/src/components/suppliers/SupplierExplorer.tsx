@@ -333,6 +333,92 @@ export function SupplierExplorer({
     );
   };
 
+  /* A row's figures, shared by the phone cards and the table. */
+  const cellsFor = ({ supplier, offering, widthMm, heightMm, stated, areaMm2, minQty, priceCents, printV, minV, priceV }: Row) => {
+    const isSelected = selected.includes(supplier.slug);
+    const printCm = formatPrintArea(widthMm, heightMm);
+    const offered = supplier.offerings
+      .filter((o) => o.status === "yes")
+      .map((o) => blankById.get(o.blankId))
+      .filter((b): b is Blank => Boolean(b));
+    return {
+      isSelected,
+      checkbox: (
+        <Checkbox
+          id={`cmp-${supplier.slug}`}
+          aria-label={`Compare ${supplier.name}`}
+          checked={isSelected}
+          disabled={!isSelected && selected.length >= MAX_COMPARE}
+          onChange={() => toggle(supplier.slug)}
+        />
+      ),
+      name: (
+        <>
+          <Link href={`/suppliers/${supplier.slug}`} className="font-semibold hover:underline">
+            {supplier.name}
+          </Link>
+          {supplier.hasAccount && (
+            <span className="ml-1.5 whitespace-nowrap rounded-full border border-ink/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-ink/60">Our account</span>
+          )}
+          <div className="text-[12px] text-ink/50">
+            {KIND_LABEL[supplier.kind]}{supplier.location ? ` · ${supplier.location}` : ""}
+          </div>
+        </>
+      ),
+      print: (
+        <>
+          {printCm ? (
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              {printV && <TrustDot value={printV} />}
+              {printCm}
+              {best.area && areaMm2 === best.area.value && isConfirmed(printV) && bestTag(best.area.of)}
+            </span>
+          ) : <NotPublished />}
+          {stated && <div className="stated text-[12px] text-ink/50">{stated}</div>}
+          {f.basis === "largest" && offering?.maxBack && <div className="text-[12px] text-ink/50">Back: {offering.maxBack}</div>}
+        </>
+      ),
+      a4: printCm ? (
+        coversA4(widthMm, heightMm) ? <span className="font-semibold">Yes</span> : <span className="text-ink/50">Smaller</span>
+      ) : <NotPublished>?</NotPublished>,
+      price: (
+        <>
+          {priceCents != null && (
+            <div className="inline-flex items-center gap-1.5 font-semibold">
+              {priceV && <TrustDot value={priceV} />}
+              {formatAud(priceCents)}
+              {best.price && priceCents === best.price.value && isConfirmed(priceV) && bestTag(best.price.of)}
+            </div>
+          )}
+          {offering?.price ? (
+            <div className={`stated ${priceCents != null ? "text-[12px] text-ink/50" : ""}`}>{offering.price}</div>
+          ) : priceCents == null ? <NotPublished /> : null}
+        </>
+      ),
+      blanks: (
+        <div className="flex max-w-[220px] flex-wrap gap-1">
+          {offered.length ? offered.map((b) => (
+            <span key={b.id} title={`${b.brand} ${b.styleCode} ${b.name}`} className="rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-semibold">{b.styleCode}</span>
+          )) : <NotPublished>None confirmed</NotPublished>}
+        </div>
+      ),
+      min: (
+        <>
+          {minQty != null && (
+            <span className="inline-flex items-center gap-1.5 font-semibold">
+              {minV && <TrustDot value={minV} />}
+              {minQty}
+              {best.min && minQty === best.min.value && isConfirmed(minV) && bestTag(best.min.of)}
+            </span>
+          )}
+          {supplier.minOrder ? (
+            <div className={`stated ${minQty != null ? "text-[12px] text-ink/50" : ""}`}>{supplier.minOrder}</div>
+          ) : minQty == null ? <NotPublished /> : null}
+        </>
+      ),
+    };
+  };
+
   return (
     <div className="flex flex-col gap-5">
       {/* Tabs: every supplier, then one per blank. Filters carry across. */}
@@ -458,129 +544,127 @@ export function SupplierExplorer({
           {chipList}
         </div>
       ) : (
-        <div className="max-h-[75vh] overflow-auto rounded-[var(--radius-card)] border border-ink/10 bg-paper">
-          <table className="w-full min-w-[860px] border-collapse text-left text-[13px] [font-variant-numeric:tabular-nums]">
-            <thead>
-              <tr className="text-[11px] font-bold uppercase tracking-wide text-ink/50 [&>th]:border-b [&>th]:border-ink/10">
-                <th scope="col" className={`${th} left-0 z-20 min-w-[240px]`}>
-                  <button
-                    type="button"
-                    onClick={() => sortBy("name")}
-                    aria-label="Sort by supplier name"
-                    className={`inline-flex items-center gap-1 pl-8 uppercase tracking-wide hover:text-ink ${f.sort === "name" ? "text-ink" : ""}`}
-                  >
-                    Supplier
-                    <span aria-hidden className={f.sort === "name" ? "" : "opacity-30"}>{f.sort === "name" ? (f.dir === "asc" ? "↑" : "↓") : "↕"}</span>
-                  </button>
-                </th>
-                <th scope="col" className={`${th} z-10`}>Prints in</th>
-                {activeBlank && <th scope="col" className={`${th} z-10`}>Offers it</th>}
-                {sortHeader("print", f.basis === "standard" ? "Standard print (W × H)" : "Largest print (W × H)", "right")}
-                <th scope="col" className={`${th} z-10 text-center`}>Covers A4</th>
-                {activeBlank ? (
-                  sortHeader("price", `AUD · 1 tee + ${printLabel} print`, "right")
-                ) : (
-                  <th scope="col" className={`${th} z-10`}>Blanks they print</th>
-                )}
-                {sortHeader("min", "Min order (units)", "right")}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(({ supplier, offering, printedIn, widthMm, heightMm, stated, areaMm2, minQty, priceCents, printV, minV, priceV }) => {
-                const isSelected = selected.includes(supplier.slug);
-                const printCm = formatPrintArea(widthMm, heightMm);
-                const offered = supplier.offerings
-                  .filter((o) => o.status === "yes")
-                  .map((o) => blankById.get(o.blankId))
-                  .filter((b): b is Blank => Boolean(b));
-                const rowBg = isSelected ? "bg-[#eaf5c9]" : "bg-paper group-hover:bg-paper-2";
+        <>
+          {/* Phones: one card per supplier, sorted from the dropdown. */}
+          <div className="flex flex-col gap-3 md:hidden">
+            <Select
+              id="supplier-sort-mobile"
+              aria-label="Sort"
+              value={`${f.sort}:${f.dir}`}
+              onChange={(e) => {
+                const [sort, dir] = e.target.value.split(":") as [SortKey, SortDir];
+                setF((prev) => ({ ...prev, sort, dir }));
+              }}
+            >
+              <option value="print:desc">Largest {printLabel} print first</option>
+              {activeBlank && <option value="price:asc">Lowest price first</option>}
+              <option value="min:asc">Lowest minimum first</option>
+              <option value="name:asc">Name A–Z</option>
+            </Select>
+            <ul className="flex flex-col gap-3">
+              {rows.map((row) => {
+                const c = cellsFor(row);
                 return (
-                  <tr key={supplier.id} className={`group align-top [&>td]:border-b [&>td]:border-ink/5 ${isSelected ? "bg-[#eaf5c9]" : "hover:bg-paper-2"}`}>
-                    <td className={`sticky left-0 z-[5] px-3 py-3 ${rowBg}`}>
-                      <div className="flex gap-3">
-                        <Checkbox
-                          id={`cmp-${supplier.slug}`}
-                          aria-label={`Compare ${supplier.name}`}
-                          checked={isSelected}
-                          disabled={!isSelected && selected.length >= MAX_COMPARE}
-                          onChange={() => toggle(supplier.slug)}
-                        />
-                        <div>
-                          <Link href={`/suppliers/${supplier.slug}`} className="font-semibold hover:underline">
-                            {supplier.name}
-                          </Link>
-                          {supplier.hasAccount && (
-                            <span className="ml-1.5 rounded-full border border-ink/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-ink/60">Our account</span>
-                          )}
-                          <div className="text-[12px] text-ink/50">
-                            {KIND_LABEL[supplier.kind]}{supplier.location ? ` · ${supplier.location}` : ""}
-                          </div>
-                        </div>
+                  <li
+                    key={row.supplier.id}
+                    className={`rounded-[var(--radius-card)] border p-4 ${c.isSelected ? "border-ink bg-[#eaf5c9]" : "border-ink/10 bg-white/60"}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {c.checkbox}
+                      <div className="min-w-0 flex-1">{c.name}</div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5 pl-8">
+                      <RegionChip value={row.printedIn} />
+                      {activeBlank && row.offering && <StatusChip value={row.offering.status} />}
+                    </div>
+                    <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-3 pl-8 text-[13px] [font-variant-numeric:tabular-nums]">
+                      <div className="col-span-2">
+                        <dt className="text-[10px] font-bold uppercase tracking-wide text-ink/50">{f.basis === "standard" ? "Standard print" : "Largest print"}</dt>
+                        <dd>{c.print}</dd>
                       </div>
-                    </td>
-                    <td className="px-3 py-3"><RegionChip value={printedIn} /></td>
-                    {activeBlank && offering && (
-                      <td className="px-3 py-3"><StatusChip value={offering.status} /></td>
-                    )}
-                    <td className="px-3 py-3 text-right">
-                      {printCm ? (
-                        <span className="inline-flex items-center gap-1.5 font-semibold">
-                          {printV && <TrustDot value={printV} />}
-                          {printCm}
-                          {best.area && areaMm2 === best.area.value && isConfirmed(printV) && bestTag(best.area.of)}
-                        </span>
-                      ) : <NotPublished />}
-                      {stated && <div className="ml-auto max-w-[240px] text-[12px] text-ink/50">{stated}</div>}
-                      {f.basis === "largest" && offering?.maxBack && <div className="text-[12px] text-ink/50">Back: {offering.maxBack}</div>}
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      {printCm ? (
-                        coversA4(widthMm, heightMm) ? <span className="font-semibold">Yes</span> : <span className="text-ink/50">Smaller</span>
-                      ) : <NotPublished>?</NotPublished>}
-                    </td>
-                    {activeBlank ? (
-                      <td className="px-3 py-3 text-right">
-                        {priceCents != null && (
-                          <div className="inline-flex items-center gap-1.5 font-semibold">
-                            {priceV && <TrustDot value={priceV} />}
-                            {formatAud(priceCents)}
-                            {best.price && priceCents === best.price.value && isConfirmed(priceV) && bestTag(best.price.of)}
-                          </div>
-                        )}
-                        {offering?.price ? (
-                          <div className={`ml-auto max-w-[260px] ${priceCents != null ? "text-[12px] text-ink/50" : ""}`}>{offering.price}</div>
-                        ) : priceCents == null ? <NotPublished /> : null}
-                      </td>
-                    ) : (
-                      <td className="px-3 py-3">
-                        <div className="flex max-w-[220px] flex-wrap gap-1">
-                          {offered.length ? offered.map((b) => (
-                            <span key={b.id} title={`${b.brand} ${b.styleCode} ${b.name}`} className="rounded-full bg-paper-2 px-2 py-0.5 text-[11px] font-semibold">{b.styleCode}</span>
-                          )) : <NotPublished>None confirmed</NotPublished>}
-                        </div>
-                      </td>
-                    )}
-                    <td className="px-3 py-3 text-right">
-                      {minQty != null && (
-                        <span className="inline-flex items-center gap-1.5 font-semibold">
-                          {minV && <TrustDot value={minV} />}
-                          {minQty}
-                          {best.min && minQty === best.min.value && isConfirmed(minV) && bestTag(best.min.of)}
-                        </span>
-                      )}
-                      {supplier.minOrder ? (
-                        <div className={`ml-auto max-w-[200px] ${minQty != null ? "text-[12px] text-ink/50" : ""}`}>{supplier.minOrder}</div>
-                      ) : minQty == null ? <NotPublished /> : null}
-                    </td>
-                  </tr>
+                      <div>
+                        <dt className="text-[10px] font-bold uppercase tracking-wide text-ink/50">Covers A4</dt>
+                        <dd>{c.a4}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-[10px] font-bold uppercase tracking-wide text-ink/50">Min order</dt>
+                        <dd>{c.min}</dd>
+                      </div>
+                      <div className="col-span-2">
+                        <dt className="text-[10px] font-bold uppercase tracking-wide text-ink/50">
+                          {activeBlank ? `AUD · 1 tee + ${printLabel} print` : "Blanks they print"}
+                        </dt>
+                        <dd>{activeBlank ? c.price : c.blanks}</dd>
+                      </div>
+                    </dl>
+                  </li>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </ul>
+          </div>
+
+          {/* Wider screens: the sortable table. */}
+          <div className="hidden max-h-[75vh] overflow-auto rounded-[var(--radius-card)] border border-ink/10 bg-paper md:block">
+            <table className="w-full min-w-[860px] border-collapse text-left text-[13px] [font-variant-numeric:tabular-nums]">
+              <thead>
+                <tr className="text-[11px] font-bold uppercase tracking-wide text-ink/50 [&>th]:border-b [&>th]:border-ink/10">
+                  <th scope="col" className={`${th} left-0 z-20 min-w-[240px]`}>
+                    <button
+                      type="button"
+                      onClick={() => sortBy("name")}
+                      aria-label="Sort by supplier name"
+                      className={`inline-flex items-center gap-1 pl-8 uppercase tracking-wide hover:text-ink ${f.sort === "name" ? "text-ink" : ""}`}
+                    >
+                      Supplier
+                      <span aria-hidden className={f.sort === "name" ? "" : "opacity-30"}>{f.sort === "name" ? (f.dir === "asc" ? "↑" : "↓") : "↕"}</span>
+                    </button>
+                  </th>
+                  <th scope="col" className={`${th} z-10`}>Prints in</th>
+                  {activeBlank && <th scope="col" className={`${th} z-10`}>Offers it</th>}
+                  {sortHeader("print", f.basis === "standard" ? "Standard print (W × H)" : "Largest print (W × H)", "right")}
+                  <th scope="col" className={`${th} z-10 text-center`}>Covers A4</th>
+                  {activeBlank ? (
+                    sortHeader("price", `AUD · 1 tee + ${printLabel} print`, "right")
+                  ) : (
+                    <th scope="col" className={`${th} z-10`}>Blanks they print</th>
+                  )}
+                  {sortHeader("min", "Min order (units)", "right")}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const c = cellsFor(row);
+                  const rowBg = c.isSelected ? "bg-[#eaf5c9]" : "bg-paper group-hover:bg-paper-2";
+                  return (
+                    <tr key={row.supplier.id} className={`group align-top [&>td]:border-b [&>td]:border-ink/5 ${c.isSelected ? "bg-[#eaf5c9]" : "hover:bg-paper-2"}`}>
+                      <td className={`sticky left-0 z-[5] px-3 py-3 ${rowBg}`}>
+                        <div className="flex gap-3">
+                          {c.checkbox}
+                          <div>{c.name}</div>
+                        </div>
+                      </td>
+                      <td className="px-3 py-3"><RegionChip value={row.printedIn} /></td>
+                      {activeBlank && row.offering && (
+                        <td className="px-3 py-3"><StatusChip value={row.offering.status} /></td>
+                      )}
+                      <td className="px-3 py-3 text-right [&_.stated]:ml-auto [&_.stated]:max-w-[240px]">{c.print}</td>
+                      <td className="px-3 py-3 text-center">{c.a4}</td>
+                      {activeBlank ? (
+                        <td className="px-3 py-3 text-right [&_.stated]:ml-auto [&_.stated]:max-w-[260px]">{c.price}</td>
+                      ) : (
+                        <td className="px-3 py-3">{c.blanks}</td>
+                      )}
+                      <td className="px-3 py-3 text-right [&_.stated]:ml-auto [&_.stated]:max-w-[200px]">{c.min}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
-      <div className="sticky bottom-[env(safe-area-inset-bottom,0px)] z-30 flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] bg-ink p-3 text-paper shadow-lg">
+      <div className={`sticky bottom-[env(safe-area-inset-bottom,0px)] z-30 flex-wrap items-center gap-2 rounded-[var(--radius-card)] bg-ink p-3 text-paper shadow-lg ${selected.length === 0 ? "hidden md:flex" : "flex"}`}>
         {selected.length === 0 ? (
           <span className="px-1 text-[13px] text-paper/60">Tick up to {MAX_COMPARE} suppliers to compare them side by side.</span>
         ) : (
