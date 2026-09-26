@@ -32,6 +32,26 @@ export function BlankForm() {
           <Input id="b-fit" name="fit" placeholder="Relaxed, boxy" />
         </Field>
       </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Fibre" htmlFor="b-fibre">
+          <Input id="b-fibre" name="fibre" placeholder="100% combed cotton" />
+        </Field>
+        <Field label="Yarn" htmlFor="b-yarn">
+          <Input id="b-yarn" name="yarn" placeholder="22 singles" />
+        </Field>
+        <Field label="Construction" htmlFor="b-construction">
+          <Input id="b-construction" name="construction" placeholder="Side-seamed, shoulder tape, 2 cm rib" />
+        </Field>
+        <Field label="Dye" htmlFor="b-dye">
+          <Input id="b-dye" name="dye" placeholder="Piece-dyed / garment-dyed" />
+        </Field>
+      </div>
+      <Field label="How it prints (DTG / DTF)" htmlFor="b-print">
+        <Textarea id="b-print" name="printNotes" rows={2} />
+      </Field>
+      <Field label="Maker spec page" htmlFor="b-spec">
+        <Input id="b-spec" name="specUrl" type="url" placeholder="https://" />
+      </Field>
       <Field label="Notes" htmlFor="b-notes">
         <Textarea id="b-notes" name="notes" rows={2} />
       </Field>

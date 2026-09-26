@@ -113,6 +113,12 @@ export type BlankInput = {
   category: BlankCategory;
   gsm: number | null;
   fit: string | null;
+  fibre: string | null;
+  yarn: string | null;
+  construction: string | null;
+  dye: string | null;
+  printNotes: string | null;
+  specUrl: string | null;
   notes: string | null;
 };
 

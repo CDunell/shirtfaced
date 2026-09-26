@@ -499,6 +499,14 @@ export const blanks = pgTable("blanks", {
   category: text("category", { enum: BLANK_CATEGORIES }).notNull(),
   gsm: integer("gsm"),
   fit: text("fit"),
+  /* Build quality, from the maker's spec page (specUrl). */
+  fibre: text("fibre"),
+  yarn: text("yarn"),
+  construction: text("construction"),
+  dye: text("dye"),
+  /* How it takes a DTG / DTF print, from printers and reviews. */
+  printNotes: text("print_notes"),
+  specUrl: text("spec_url"),
   notes: text("notes"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

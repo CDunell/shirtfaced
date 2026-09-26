@@ -191,7 +191,7 @@ async function main() {
       maxPrint: "40 × 50 cm (+A$7.10 ex GST); 35 × 40 cm (+A$3.65)",
       verification: "page",
       checkedAt: CHECKED_AT,
-      notes: "Our live AU fulfiller for My Mixups. Wholesale prices are ex GST and include one A4 print (pricing page, 26 Sep 2026). Second print position: +$6.50 (10 × 10 cm), +$11 (A4), +$14 (A3 35 × 40 cm). Can order non-core AS Colour styles (how the My Mixups hoodie is done) — ask about 5026/5080.",
+      notes: "Our live AU fulfiller for My Mixups. First My Mixups sample (22 Sep 2026): print excellent, but the Sportage SP2644 basic tee blank felt cheap, so My Mixups moved to AS Colour 3005/3006 through DropShirt. Wholesale prices are ex GST and include one A4 print (pricing page, 26 Sep 2026). Second print position: +$6.50 (10 × 10 cm), +$11 (A4), +$14 (A3 35 × 40 cm). Can order non-core AS Colour styles (how the My Mixups hoodie is done) — ask about 5026/5080.",
       updatedAt: new Date(),
     })
     .where(eq(suppliers.slug, "dropshirt"));

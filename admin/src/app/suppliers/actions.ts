@@ -128,6 +128,12 @@ const blankSchema = z.object({
   category: z.enum(BLANK_CATEGORIES),
   gsm: optionalInt,
   fit: optionalText,
+  fibre: optionalText,
+  yarn: optionalText,
+  construction: optionalText,
+  dye: optionalText,
+  printNotes: optionalText,
+  specUrl: optionalText,
   notes: optionalText,
 });
 
